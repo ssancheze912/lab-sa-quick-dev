@@ -7,5 +7,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj" />
+    <Project Path="tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj" />
   </Folder>
 </Solution>
