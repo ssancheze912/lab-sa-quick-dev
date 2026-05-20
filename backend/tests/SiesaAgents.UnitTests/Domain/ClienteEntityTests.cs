@@ -98,8 +98,6 @@ public class ClienteEntityTests
     {
         var entity = ClienteEntity.Create("Empresa", "900", "300", "Bogotá");
         var createdAt = entity.CreatedAt;
-        // Force a small delay so UpdatedAt can be observably later
-        System.Threading.Thread.Sleep(10);
 
         entity.Update("Empresa Mod", "900-1", "301", "Cali");
 
