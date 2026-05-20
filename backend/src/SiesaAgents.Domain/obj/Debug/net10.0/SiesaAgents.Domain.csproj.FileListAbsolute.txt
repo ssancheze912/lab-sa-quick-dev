@@ -1,0 +1,11 @@
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/bin/Debug/net10.0/SiesaAgents.Domain.deps.json
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/bin/Debug/net10.0/SiesaAgents.Domain.dll
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/bin/Debug/net10.0/SiesaAgents.Domain.pdb
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/obj/Debug/net10.0/SiesaAgents.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/obj/Debug/net10.0/SiesaAgents.Domain.AssemblyInfoInputs.cache
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/obj/Debug/net10.0/SiesaAgents.Domain.AssemblyInfo.cs
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/obj/Debug/net10.0/SiesaAgents.Domain.csproj.CoreCompileInputs.cache
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/obj/Debug/net10.0/SiesaAgents.Domain.dll
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/obj/Debug/net10.0/refint/SiesaAgents.Domain.dll
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/obj/Debug/net10.0/SiesaAgents.Domain.pdb
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/obj/Debug/net10.0/ref/SiesaAgents.Domain.dll

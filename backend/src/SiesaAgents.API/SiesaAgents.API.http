@@ -1,0 +1,6 @@
+@SiesaAgents.API_HostAddress = http://localhost:5087
+
+GET {{SiesaAgents.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
