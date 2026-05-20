@@ -1,5 +1,4 @@
 using System.IO;
-using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -14,9 +13,7 @@ namespace SiesaAgents.UnitTests.Middleware;
 /// </summary>
 public class ExceptionHandlingMiddlewareEdgeCaseTests
 {
-    // ────────────────────────────────────────────────────────────────
     // Exception-to-status-code mapping — boundary / exhaustive
-    // ────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// InvalidOperationException MUST map to 409 Conflict per the middleware switch expression.
@@ -89,9 +86,7 @@ public class ExceptionHandlingMiddlewareEdgeCaseTests
         Assert.Equal(400, context.Response.StatusCode);
     }
 
-    // ────────────────────────────────────────────────────────────────
     // 4xx non-exception path — WriteStatusCodeProblemDetailsAsync
-    // ────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// When _next sets a 404 status code without throwing and without writing a body,
@@ -185,9 +180,7 @@ public class ExceptionHandlingMiddlewareEdgeCaseTests
         Assert.Equal(expectedBody, body);
     }
 
-    // ────────────────────────────────────────────────────────────────
     // Security: no internal details exposed in any error path
-    // ────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// For a 409 Conflict response triggered by exception, the body must
@@ -214,9 +207,7 @@ public class ExceptionHandlingMiddlewareEdgeCaseTests
         Assert.DoesNotContain("System.", body);
     }
 
-    // ────────────────────────────────────────────────────────────────
     // Response shape — camelCase JSON per RFC 7807
-    // ────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// The Problem Details JSON MUST use camelCase property names (status, title, detail)
@@ -277,9 +268,7 @@ public class ExceptionHandlingMiddlewareEdgeCaseTests
         Assert.DoesNotContain("\"Title\"", rawBody);
     }
 
-    // ────────────────────────────────────────────────────────────────
     // Constructor null guard (boundary)
-    // ────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// When the middleware is constructed with a null logger, it MUST throw
