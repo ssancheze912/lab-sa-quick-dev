@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: ready
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,44 +22,44 @@ so that I can move between sections without full page reloads from any device.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Define TanStack Router route tree with shell layout (AC: 1, 2, 3)
-  - [ ] Create `frontend/src/routes/__root.tsx` — root layout wrapping all routes with `<Outlet />`
-  - [ ] Create `frontend/src/routes/_app.tsx` — pathless layout route (shell with NavigationRail/NavigationBar)
-  - [ ] Create `frontend/src/routes/_app/clientes.tsx` — `/clientes` route (placeholder view)
-  - [ ] Create `frontend/src/routes/_app/contactos.tsx` — `/contactos` route (placeholder view)
-  - [ ] Create `frontend/src/routes/index.tsx` — root index route that redirects to `/clientes`
-  - [ ] Create `frontend/src/routes/not-found.tsx` — catch-all 404 route
-  - [ ] Verify TanStack Router generates `routeTree.gen.ts` on `npm run dev`
+- [x] Task 1 — Define TanStack Router route tree with shell layout (AC: 1, 2, 3)
+  - [x] Create `frontend/src/routes/__root.tsx` — root layout wrapping all routes with `<Outlet />`
+  - [x] Create `frontend/src/routes/_app.tsx` — pathless layout route (shell with NavigationRail/NavigationBar)
+  - [x] Create `frontend/src/routes/_app/clientes.tsx` — `/clientes` route (placeholder view)
+  - [x] Create `frontend/src/routes/_app/contactos.tsx` — `/contactos` route (placeholder view)
+  - [x] Create `frontend/src/routes/index.tsx` — root index route that redirects to `/clientes`
+  - [x] Create `frontend/src/routes/not-found.tsx` — catch-all 404 route (via notFoundComponent in __root.tsx)
+  - [x] Verify TanStack Router generates `routeTree.gen.ts` on `npm run dev`
 
-- [ ] Task 2 — Implement AppShell layout component with NavigationRail (desktop) (AC: 1)
-  - [ ] Create `frontend/src/shared/components/AppShell.tsx`
-  - [ ] Use `NavigationRail` from siesa-ui-kit with items: Clientes, Contactos
-  - [ ] Wire navigation items to `/clientes` and `/contactos` using TanStack Router `<Link>`
-  - [ ] Apply active state styling to the current route item using `useMatchRoute()` or `useRouterState()`
-  - [ ] Use Heroicons for nav item icons (e.g., `UsersIcon` for Clientes, `UserIcon` for Contactos)
-  - [ ] Ensure NavigationRail is only rendered when viewport ≥ 1024px (Tailwind `hidden lg:flex`)
+- [x] Task 2 — Implement AppShell layout component with NavigationRail (desktop) (AC: 1)
+  - [x] Create `frontend/src/shared/components/AppShell.tsx`
+  - [x] Use `NavigationRail` from siesa-ui-kit with items: Clientes, Contactos
+  - [x] Wire navigation items to `/clientes` and `/contactos` using TanStack Router `<Link>`
+  - [x] Apply active state styling to the current route item using `useRouterState()`
+  - [x] Use Heroicons for nav item icons (e.g., `UsersIcon` for Clientes, `UserIcon` for Contactos)
+  - [x] Ensure NavigationRail is only rendered when viewport ≥ 1024px (Tailwind `hidden lg:flex`)
 
-- [ ] Task 3 — Implement responsive NavigationBar for mobile (AC: 2)
-  - [ ] Add `NavigationBar` from siesa-ui-kit inside `AppShell.tsx`
-  - [ ] Wire same navigation items (Clientes, Contactos) with same TanStack Router `<Link>`
-  - [ ] Show NavigationBar only when viewport < 1024px (Tailwind `flex lg:hidden`)
-  - [ ] Verify touch targets are ≥ 44px for tappability on 375px viewport
+- [x] Task 3 — Implement responsive NavigationBar for mobile (AC: 2)
+  - [x] Add `NavigationBar` from siesa-ui-kit inside `AppShell.tsx`
+  - [x] Wire same navigation items (Clientes, Contactos) with same TanStack Router `<Link>`
+  - [x] Show NavigationBar only when viewport < 1024px (Tailwind `flex lg:hidden`)
+  - [x] Verify touch targets are ≥ 44px for tappability on 375px viewport
 
-- [ ] Task 4 — Implement 404 not-found view (AC: 4)
-  - [ ] Create `frontend/src/shared/components/NotFoundView.tsx` with Spanish message ("Página no encontrada")
-  - [ ] Register as catch-all route using TanStack Router `notFoundComponent` or `CatchBoundary`
-  - [ ] Provide a navigation link back to Clientes ("Ir a Clientes") in the 404 view
+- [x] Task 4 — Implement 404 not-found view (AC: 4)
+  - [x] Create `frontend/src/shared/components/NotFoundView.tsx` with Spanish message ("Página no encontrada")
+  - [x] Register as catch-all route using TanStack Router `notFoundComponent` or `CatchBoundary`
+  - [x] Provide a navigation link back to Clientes ("Ir a Clientes") in the 404 view
 
-- [ ] Task 5 — Configure TanStack Query provider and router in `main.tsx` (dependency)
-  - [ ] Ensure `RouterProvider` is mounted in `frontend/src/main.tsx`
-  - [ ] Ensure `QueryClientProvider` wraps `RouterProvider`
-  - [ ] Import from `frontend/src/shared/lib/queryClient.ts` (create if not present in Story 1.1)
+- [x] Task 5 — Configure TanStack Query provider and router in `main.tsx` (dependency)
+  - [x] Ensure `RouterProvider` is mounted in `frontend/src/main.tsx`
+  - [x] Ensure `QueryClientProvider` wraps `RouterProvider`
+  - [x] Import from `frontend/src/shared/lib/queryClient.ts` (create if not present in Story 1.1)
 
-- [ ] Task 6 — Write unit tests for routing (AC: 1, 2, 3)
-  - [ ] Create `frontend/src/routes/__tests__/routing.test.ts`
-  - [ ] UNIT-F-01: Assert `/clientes` route is registered in the route tree
-  - [ ] UNIT-F-02: Assert `/contactos` route is registered in the route tree
-  - [ ] UNIT-F-03: Assert root layout renders `NavigationRail` on desktop viewport
+- [x] Task 6 — Write unit tests for routing (AC: 1, 2, 3)
+  - [x] Create `frontend/src/routes/__tests__/-routing.test.ts`
+  - [x] UNIT-F-01: Assert `/clientes` route is registered in the route tree
+  - [x] UNIT-F-02: Assert `/contactos` route is registered in the route tree
+  - [x] UNIT-F-03: Assert root layout renders `NavigationRail` on desktop viewport
 
 ## Dev Notes
 
