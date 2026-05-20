@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Siesa-Agents — Direcciones de Diseño UX (LayoutBase)</title>
+  <style>
+    /* ── Siesa UI Kit Design Tokens (aproximados) ─────────────────────── */
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --bg-inverse: #1e293b;
+      --border-primary: #e2e8f0;
+      --border-secondary: #cbd5e1;
+      --content-primary: #1e293b;
+      --content-secondary: #475569;
+      --content-tertiary: #94a3b8;
+      --primary: #0e79fd;
+      --primary-hover: #0f6ae3;
+      --primary-bg: #eff6ff;       /* primary-50 */
+      --primary-border: #bfe2fe;   /* primary-200 */
+      --tertiary: #154ca9;
+      --rail-width: 72px;          /* collapsed */
+      --rail-width-expanded: 220px;
+      --navbar-height: 64px;
+      --amber-bg: #fef3c7;
+      --amber-text: #b45309;
+      --green-bg: #dcfce7;
+      --green-text: #15803d;
+      --red-bg: #fee2e2;
+      --red-text: #dc2626;
+      --blue-bg: #dbeafe;
+      --blue-text: #1d4ed8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: #e2e8f0; color: var(--content-primary); font-size: 14px; }
+
+    /* ── Selector bar ─────────────────────────────────────────────────── */
+    .selector-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: var(--tertiary); padding: 10px 20px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    }
+    .selector-bar h1 { color: white; font-size: 14px; font-weight: 700; margin-right: 8px; white-space: nowrap; }
+    .dir-btn {
+      padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1.5px solid rgba(255,255,255,.35);
+      background: transparent; color: rgba(255,255,255,.85); transition: all .15s;
+    }
+    .dir-btn:hover { background: rgba(255,255,255,.15); color: white; }
+    .dir-btn.active { background: white; color: var(--tertiary); border-color: white; }
+
+    /* ── Showcase wrapper ─────────────────────────────────────────────── */
+    .showcase { display: none; padding: 20px; }
+    .showcase.active { display: block; }
+    .dir-label {
+      background: white; border-radius: 10px; border: 1px solid var(--border-primary);
+      padding: 14px 20px; margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    }
+    .dir-label h2 { font-size: 15px; font-weight: 800; color: var(--content-primary); }
+    .dir-label p { font-size: 12px; color: var(--content-secondary); margin-top: 2px; }
+    .tag { display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 99px; }
+    .tag-blue { background: var(--primary-bg); color: var(--primary); border: 1px solid var(--primary-border); }
+    .tag-amber { background: var(--amber-bg); color: var(--amber-text); }
+    .tag-green { background: var(--green-bg); color: var(--green-text); }
+
+    /* ── Browser chrome ───────────────────────────────────────────────── */
+    .browser {
+      background: white; border-radius: 10px; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10); margin-bottom: 16px;
+    }
+    .chrome {
+      background: #f1f5f9; padding: 9px 14px;
+      border-bottom: 1px solid var(--border-primary);
+      display: flex; align-items: center; gap: 7px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #fc5753; } .dot-y { background: #fdbc40; } .dot-g { background: #33c748; }
+    .url { flex: 1; background: white; border-radius: 4px;
+      padding: 3px 10px; font-size: 11px; color: var(--content-tertiary);
+      border: 1px solid var(--border-primary); }
+
+    /* ════════════════════════════════════════════════════════════════════
+       SIESA UI KIT — LAYOUT BASE SHELL
+       Navbar (64px) + NavigationRail (72px collapsed) + Content
+       ════════════════════════════════════════════════════════════════════ */
+
+    /* ── Navbar ───────────────────────────────────────────────────────── */
+    .sk-navbar {
+      height: var(--navbar-height);
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-primary);
+      display: flex; align-items: center;
+      padding: 0 16px 0 0;
+      gap: 0;
+      flex-shrink: 0;
+    }
+    .sk-navbar-brand {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 16px; height: 100%;
+      border-right: 1px solid var(--border-primary);
+      min-width: var(--rail-width);
+      justify-content: center;
+    }
+    .sk-navbar-brand .siesa-logo {
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .siesa-logo-full {
+      height: 22px; width: auto;
+    }
+    .sk-navbar-product { font-size: 14px; font-weight: 700; color: var(--content-primary); white-space: nowrap; padding-left: 12px; }
+    .sk-navbar-spacer { flex: 1; }
+    .sk-navbar-env {
+      background: var(--amber-bg); color: var(--amber-text);
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 99px;
+      border: 1px solid #f59e0b40; margin-right: 12px;
+    }
+    .sk-navbar-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: transparent; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--content-secondary); font-size: 16px;
+      transition: background .12s;
+    }
+    .sk-navbar-icon:hover { background: var(--bg-secondary); }
+    .sk-navbar-user {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px; border-radius: 8px; cursor: pointer;
+      transition: background .12s; margin-left: 4px;
+    }
+    .sk-navbar-user:hover { background: var(--bg-secondary); }
+    .sk-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--primary); color: white;
+      font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sk-user-name { font-size: 13px; font-weight: 600; color: var(--content-primary); }
+    .sk-user-role { font-size: 11px; color: var(--content-tertiary); }
+
+    /* ── App shell body (below navbar) ───────────────────────────────── */
+    .sk-shell { display: flex; }
+
+    /* ── NavigationRail ───────────────────────────────────────────────── */
+    .sk-rail {
+      width: var(--rail-width);
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border-primary);
+      display: flex; flex-direction: column;
+      padding: 8px 0;
+      flex-shrink: 0;
+    }
+    .sk-rail-item {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 3px; padding: 10px 6px; margin: 2px 6px;
+      border-radius: 8px; cursor: pointer;
+      transition: background .12s, color .12s;
+      color: var(--content-secondary);
+    }
+    .sk-rail-item:hover { background: var(--bg-secondary); color: var(--content-primary); }
+    .sk-rail-item.active {
+      background: var(--primary-bg); color: var(--primary);
+    }
+    .sk-rail-item .icon { font-size: 20px; line-height: 1; }
+    .sk-rail-item .lbl { font-size: 10px; font-weight: 600; text-align: center; line-height: 1.2; }
+    .sk-rail-item.active .icon, .sk-rail-item.active .lbl { color: var(--primary); }
+    .sk-rail-divider { height: 1px; background: var(--border-primary); margin: 6px 10px; }
+    .sk-rail-spacer { flex: 1; }
+
+    /* ── Content area ─────────────────────────────────────────────────── */
+    .sk-content {
+      flex: 1; overflow: auto;
+      background: var(--bg-secondary);
+      min-height: 540px;
+    }
+
+    /* ── Shared UI atoms ──────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center;
+      font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 99px; white-space: nowrap;
+    }
+    .badge-blue { background: var(--blue-bg); color: var(--blue-text); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber-text); }
+    .badge-green { background: var(--green-bg); color: var(--green-text); }
+    .badge-gray { background: #f1f5f9; color: var(--content-secondary); }
+    .badge-red { background: var(--red-bg); color: var(--red-text); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 14px; border-radius: 7px;
+      font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+      transition: background .12s;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline {
+      background: transparent; color: var(--primary);
+      border: 1.5px solid var(--primary); padding: 6px 13px;
+    }
+    .btn-ghost { background: transparent; color: var(--content-secondary);
+      border: 1px solid var(--border-primary); }
+    .btn-sm { font-size: 12px; padding: 5px 10px; border-radius: 6px; }
+    .btn-danger { background: transparent; color: var(--red-text); border: 1px solid var(--red-bg); }
+
+    .search-wrap { position: relative; }
+    .search-wrap .s-icon {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--content-tertiary); font-size: 14px; pointer-events: none;
+    }
+    .sk-input {
+      width: 100%; padding: 8px 12px 8px 34px;
+      border: 1.5px solid var(--border-primary); border-radius: 7px;
+      font-size: 13px; color: var(--content-primary);
+      background: white; outline: none;
+    }
+    .sk-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(14,121,253,.12); }
+    .sk-input-plain {
+      width: 100%; padding: 8px 12px;
+      border: 1.5px solid var(--border-primary); border-radius: 7px;
+      font-size: 13px; color: var(--content-primary);
+      background: white; outline: none;
+    }
+    .sk-input-plain:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(14,121,253,.12); }
+    .field-lbl { font-size: 12px; font-weight: 600; color: var(--content-secondary); margin-bottom: 4px; }
+    .field-val { font-size: 13px; color: var(--content-primary); }
+
+    /* Avatar initials */
+    .av {
+      border-radius: 50%; color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; flex-shrink: 0;
+    }
+    .av-sm { width: 28px; height: 28px; font-size: 10px; }
+    .av-md { width: 36px; height: 36px; font-size: 13px; }
+    .av-lg { width: 44px; height: 44px; font-size: 16px; }
+
+    /* Page header */
+    .page-header {
+      padding: 16px 20px;
+      background: white; border-bottom: 1px solid var(--border-primary);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .page-title { font-size: 18px; font-weight: 800; color: var(--content-primary); }
+    .page-sub { font-size: 12px; color: var(--content-tertiary); margin-top: 2px; }
+
+    /* Annotation cards */
+    .ann-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
+    .ann-card {
+      background: white; border-radius: 8px; border: 1px solid var(--border-primary);
+      padding: 12px 14px;
+    }
+    .ann-card h4 { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+    .ann-card p { font-size: 11px; color: var(--content-secondary); line-height: 1.5; }
+    .ann-pro { border-left: 3px solid var(--green-text); }
+    .ann-pro h4 { color: var(--green-text); }
+    .ann-con { border-left: 3px solid var(--amber-text); }
+    .ann-con h4 { color: var(--amber-text); }
+    .ann-best { border-left: 3px solid var(--primary); }
+    .ann-best h4 { color: var(--primary); }
+
+    /* ════════════════════════════════════════════
+       DIR A — SEARCH HERO en Content area
+       ════════════════════════════════════════════ */
+    .dir-a-hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--tertiary) 100%);
+      padding: 28px 24px 24px;
+    }
+    .dir-a-hero h2 { color: white; font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+    .dir-a-hero p { color: rgba(255,255,255,.75); font-size: 12px; margin-bottom: 16px; }
+    .dir-a-search-hero {
+      max-width: 500px;
+      position: relative;
+    }
+    .dir-a-search-hero .hero-s-icon {
+      position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+      font-size: 16px; color: var(--content-tertiary); pointer-events: none;
+    }
+    .dir-a-search-hero input {
+      width: 100%; padding: 12px 16px 12px 42px;
+      border-radius: 9px; border: none; font-size: 14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.15); outline: none;
+    }
+    .dir-a-results { padding: 16px 24px; }
+    .dir-a-result {
+      background: white; border: 1.5px solid var(--border-primary); border-radius: 9px;
+      padding: 12px 16px; margin-bottom: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: border-color .12s, box-shadow .12s;
+    }
+    .dir-a-result:hover { border-color: var(--primary); box-shadow: 0 2px 12px rgba(14,121,253,.1); }
+    .dir-a-result.sel { border-color: var(--primary); background: var(--primary-bg); }
+    .dir-a-result .rc-name { font-weight: 700; font-size: 13px; }
+    .dir-a-result .rc-name em { color: var(--primary); font-style: normal; }
+    .dir-a-result .rc-meta { font-size: 11px; color: var(--content-tertiary); margin-top: 2px; }
+
+    /* ════════════════════════════════════════════
+       DIR B — LIST + DETAIL (MasterCrud style)
+       ════════════════════════════════════════════ */
+    .dir-b-shell { display: flex; height: 540px; }
+    .dir-b-list {
+      width: 300px; min-width: 300px;
+      background: white; border-right: 1px solid var(--border-primary);
+      display: flex; flex-direction: column;
+    }
+    .dir-b-list-header {
+      padding: 12px 14px; border-bottom: 1px solid var(--border-primary);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dir-b-list-title { font-size: 13px; font-weight: 700; }
+    .dir-b-search { padding: 10px 12px; border-bottom: 1px solid var(--border-primary); }
+    .dir-b-items { flex: 1; overflow-y: auto; }
+    .dir-b-item {
+      padding: 11px 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: background .1s;
+    }
+    .dir-b-item:hover { background: var(--bg-secondary); }
+    .dir-b-item.active { background: var(--primary-bg); border-left: 3px solid var(--primary); }
+    .dir-b-item .item-name { font-size: 13px; font-weight: 600; }
+    .dir-b-item .item-city { font-size: 11px; color: var(--content-tertiary); }
+    .dir-b-detail { flex: 1; overflow-y: auto; }
+    .dir-b-detail-header {
+      padding: 16px 20px;
+      background: white; border-bottom: 1px solid var(--border-primary);
+      display: flex; align-items: flex-start; justify-content: space-between;
+    }
+    .dir-b-detail-name { font-size: 17px; font-weight: 800; }
+    .dir-b-detail-sub { font-size: 11px; color: var(--content-tertiary); margin-top: 3px; }
+    .dir-b-section-title {
+      font-size: 11px; font-weight: 700; color: var(--content-tertiary);
+      text-transform: uppercase; letter-spacing: .5px;
+      padding: 14px 20px 8px;
+    }
+    .dir-b-contact {
+      background: white; border: 1px solid var(--border-primary); border-radius: 8px;
+      margin: 0 20px 8px; padding: 12px 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .dir-b-contact .c-info { flex: 1; }
+    .dir-b-contact .c-name { font-size: 13px; font-weight: 700; }
+    .dir-b-contact .c-role { font-size: 11px; color: var(--content-tertiary); }
+    .dir-b-contact .c-phone { font-size: 12px; color: var(--primary); margin-top: 2px; }
+    .dir-b-contact .c-actions { display: flex; gap: 5px; }
+
+    /* ════════════════════════════════════════════
+       DIR C — MASTERCRUD TABLE
+       ════════════════════════════════════════════ */
+    .sk-table { width: 100%; border-collapse: collapse; }
+    .sk-table thead th {
+      text-align: left; font-size: 11px; font-weight: 700;
+      color: var(--content-secondary); text-transform: uppercase; letter-spacing: .4px;
+      padding: 10px 14px 9px; border-bottom: 1px solid var(--border-primary);
+      background: #f8fafc; white-space: nowrap;
+    }
+    .sk-table tbody tr { border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background .1s; }
+    .sk-table tbody tr:hover { background: var(--primary-bg); }
+    .sk-table tbody td { padding: 10px 14px; font-size: 13px; color: var(--content-primary); }
+    .sk-table .td-main { font-weight: 700; }
+    .sk-table .td-meta { color: var(--content-tertiary); font-size: 12px; }
+    .sk-table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; }
+    .sk-table-toolbar {
+      padding: 12px 16px;
+      background: white; border-bottom: 1px solid var(--border-primary);
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    /* ════════════════════════════════════════════
+       DIR D — CARD GRID
+       ════════════════════════════════════════════ */
+    .dir-d-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 16px 20px; }
+    .dir-d-card {
+      background: white; border: 1.5px solid var(--border-primary); border-radius: 10px;
+      padding: 14px 16px; cursor: pointer; transition: border-color .12s, box-shadow .12s;
+    }
+    .dir-d-card:hover { border-color: var(--primary); box-shadow: 0 3px 12px rgba(14,121,253,.1); }
+    .dir-d-card .card-name { font-size: 14px; font-weight: 800; color: var(--content-primary); }
+    .dir-d-card .card-city { font-size: 11px; color: var(--content-tertiary); margin: 3px 0 10px; }
+    .dir-d-card .card-sep { height: 1px; background: #f1f5f9; margin-bottom: 8px; }
+    .dir-d-card .mini-c {
+      display: flex; align-items: center; gap: 8px; padding: 4px 0;
+    }
+    .dir-d-card .mini-c .mn { font-size: 12px; font-weight: 600; }
+    .dir-d-card .mini-c .mr { font-size: 11px; color: var(--content-tertiary); }
+
+    /* ════════════════════════════════════════════
+       DIR E — EXPANDED RAIL (labels visible)
+       ════════════════════════════════════════════ */
+    .sk-rail-expanded {
+      width: var(--rail-width-expanded);
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border-primary);
+      display: flex; flex-direction: column;
+      padding: 10px 8px;
+      flex-shrink: 0;
+    }
+    .sk-rail-expanded .rail-section {
+      font-size: 10px; font-weight: 700; color: var(--content-tertiary);
+      text-transform: uppercase; letter-spacing: .5px;
+      padding: 8px 10px 4px;
+    }
+    .sk-rail-expanded .rail-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 7px; cursor: pointer;
+      transition: background .1s; color: var(--content-secondary);
+      font-size: 13px; font-weight: 500; margin-bottom: 2px;
+    }
+    .sk-rail-expanded .rail-item:hover { background: var(--bg-secondary); color: var(--content-primary); }
+    .sk-rail-expanded .rail-item.active { background: var(--primary-bg); color: var(--primary); font-weight: 700; }
+    .sk-rail-expanded .rail-item .r-icon { font-size: 17px; flex-shrink: 0; }
+
+    /* ════════════════════════════════════════════
+       DIR F — CONTACT MANAGER PANEL
+       (dentro del LayoutBase shell)
+       ════════════════════════════════════════════ */
+    .cm-shell { display: flex; height: 540px; }
+    .cm-list {
+      width: 280px; min-width: 280px; background: white;
+      border-right: 1px solid var(--border-primary);
+      display: flex; flex-direction: column;
+    }
+    .cm-list-header { padding: 12px 14px; border-bottom: 1px solid var(--border-primary); }
+    .cm-items { flex: 1; overflow-y: auto; }
+    .cm-item {
+      padding: 10px 14px; border-bottom: 1px solid #f1f5f9;
+      cursor: pointer; display: flex; align-items: center; gap: 10px;
+    }
+    .cm-item:hover { background: var(--bg-secondary); }
+    .cm-item.active { background: var(--primary-bg); border-left: 3px solid var(--primary); }
+    .cm-detail { flex: 1; overflow-y: auto; background: var(--bg-secondary); }
+    .cm-detail-header {
+      background: white; border-bottom: 1px solid var(--border-primary);
+      padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    /* ContactManager component representation */
+    .contact-mgr {
+      background: white; border: 1px solid var(--border-primary);
+      border-radius: 10px; margin: 16px 20px;
+      overflow: hidden;
+    }
+    .contact-mgr-header {
+      padding: 12px 16px; background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-primary);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .contact-mgr-header h3 { font-size: 13px; font-weight: 700; }
+    .contact-mgr-table { width: 100%; border-collapse: collapse; }
+    .contact-mgr-table thead th {
+      text-align: left; font-size: 11px; font-weight: 700; color: var(--content-secondary);
+      text-transform: uppercase; letter-spacing: .3px;
+      padding: 9px 12px 8px; border-bottom: 1px solid var(--border-primary);
+      background: white;
+    }
+    .contact-mgr-table tbody tr { border-bottom: 1px solid #f1f5f9; }
+    .contact-mgr-table tbody tr:hover { background: #fafafa; }
+    .contact-mgr-table tbody td { padding: 9px 12px; font-size: 12px; vertical-align: middle; }
+    .cm-state-new { border-left: 3px solid var(--green-text); }
+    .cm-state-edit { border-left: 3px solid var(--primary); }
+    .cm-state-del { border-left: 3px solid var(--red-text); background: var(--red-bg); }
+  </style>
+</head>
+<body>
+
+<!-- SELECTOR BAR -->
+<div class="selector-bar">
+  <h1>🎨 Siesa-Agents — Direcciones de Diseño (LayoutBase)</h1>
+  <button class="dir-btn active" onclick="show('a')">A: Search Hero</button>
+  <button class="dir-btn" onclick="show('b')">B: Lista + Detalle</button>
+  <button class="dir-btn" onclick="show('c')">C: MasterCrud Table</button>
+  <button class="dir-btn" onclick="show('d')">D: Card Grid</button>
+  <button class="dir-btn" onclick="show('e')">E: Rail Expandido</button>
+  <button class="dir-btn" onclick="show('f')">F: ContactManager</button>
+</div>
+
+<!-- ================================================================
+     DIRECTION A — SEARCH HERO (Carlos-first)
+     Shell: Navbar + NavigationRail collapsed + Content hero
+     ================================================================ -->
+<div class="showcase active" id="dir-a">
+  <div class="dir-label">
+    <div>
+      <h2>Dirección A — Search Hero</h2>
+      <p>LayoutBase con gradiente brand en el content area. Búsqueda como protagonista visual. Inspirado en Linear. NavigationRail colapsado (solo íconos).</p>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <span class="tag tag-blue">Mejor para: Carlos en llamada</span>
+      <span class="tag tag-green">Zero-training</span>
+    </div>
+  </div>
+  <div class="browser">
+    <div class="chrome">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <div class="url">siesa-agents.local/clientes</div>
+    </div>
+    <!-- NAVBAR -->
+    <div class="sk-navbar">
+      <div class="sk-navbar-brand">
+        <div class="siesa-logo"><svg viewBox="0 0 500 500" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><polygon fill="#0e79fd" points="0,300 0,0 300,0"/><polygon fill="#0e79fd" points="0,500 0,300 200,300"/><polygon fill="#0e79fd" points="500,0 500,300 200,300"/><polygon fill="#0e79fd" points="500,300 500,500 300,500"/></svg></div>
+      </div>
+      <span class="sk-navbar-product">Siesa Agents</span>
+      <span class="sk-navbar-spacer"></span>
+      <span class="sk-navbar-env">Pruebas</span>
+      <button class="sk-navbar-icon">🔔</button>
+      <div class="sk-navbar-user">
+        <div class="sk-avatar">CM</div>
+        <div>
+          <div class="sk-user-name">Carlos Mendez</div>
+          <div class="sk-user-role">Ejecutivo Comercial</div>
+        </div>
+      </div>
+    </div>
+    <!-- SHELL -->
+    <div class="sk-shell">
+      <!-- NAV RAIL -->
+      <nav class="sk-rail">
+        <div class="sk-rail-item active">
+          <span class="icon">👥</span>
+          <span class="lbl">Clientes</span>
+        </div>
+        <div class="sk-rail-item">
+          <span class="icon">🙋</span>
+          <span class="lbl">Contactos</span>
+        </div>
+        <div class="sk-rail-spacer"></div>
+        <div class="sk-rail-divider"></div>
+        <div class="sk-rail-item">
+          <span class="icon">⚙️</span>
+          <span class="lbl">Config</span>
+        </div>
+      </nav>
+      <!-- CONTENT: SEARCH HERO -->
+      <div class="sk-content">
+        <div class="dir-a-hero">
+          <h2>Gestión de Clientes</h2>
+          <p>Encuentra cualquier cliente y sus contactos en segundos</p>
+          <div class="dir-a-search-hero">
+            <span class="hero-s-icon">🔍</span>
+            <input type="text" value="Andina" placeholder="Buscar cliente por nombre o NIT..." />
+          </div>
+        </div>
+        <div class="dir-a-results">
+          <div style="font-size:11px;color:var(--content-tertiary);margin-bottom:10px;">3 resultados para "<strong>Andina</strong>"</div>
+          <div class="dir-a-result sel">
+            <div>
+              <div class="rc-name"><em>Andina</em> Distribuciones S.A.</div>
+              <div class="rc-meta">Bogotá · NIT 900.123.456 · 4 contactos</div>
+            </div>
+            <span class="badge badge-blue">4 contactos</span>
+          </div>
+          <div class="dir-a-result">
+            <div>
+              <div class="rc-name">Grupo <em>Andina</em> Ltda.</div>
+              <div class="rc-meta">Medellín · NIT 800.987.321 · 2 contactos</div>
+            </div>
+            <span class="badge badge-gray">2 contactos</span>
+          </div>
+          <div class="dir-a-result">
+            <div>
+              <div class="rc-name"><em>Andina</em> Tech Services</div>
+              <div class="rc-meta">Cali · NIT 901.555.789 · <strong style="color:var(--amber-text)">Sin contactos</strong></div>
+            </div>
+            <span class="badge badge-amber">⚠ Sin contactos</span>
+          </div>
+          <div style="margin-top:14px;">
+            <button class="btn btn-primary btn-sm">+ Nuevo cliente</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ann-grid">
+    <div class="ann-card ann-pro"><h4>✅ Fortalezas</h4><p>Carlos llega y sabe exactamente qué hacer — ninguna instrucción necesaria. Gradiente brand Siesa con impacto visual. NavigationRail colapsado maximiza el ancho de contenido.</p></div>
+    <div class="ann-card ann-con"><h4>⚠️ Consideraciones</h4><p>El hero ocupa espacio vertical en viewports pequeños. Para Marcela la lista completa requiere un segundo paso. Considerar un shortcut "Ver todos" debajo del hero.</p></div>
+    <div class="ann-card ann-best"><h4>🎯 Estructura LayoutBase</h4><p>Navbar estándar + NavigationRail colapsado (72px) con "Clientes" activo. Content area = hero gradient + results. Botón "+ Nuevo cliente" al final de resultados.</p></div>
+  </div>
+</div>
+
+<!-- ================================================================
+     DIRECTION B — LIST + DETAIL (HubSpot / MasterCrud style)
+     Shell: Navbar + NavigationRail + Content split (list | detail)
+     ================================================================ -->
+<div class="showcase" id="dir-b">
+  <div class="dir-label">
+    <div>
+      <h2>Dirección B — Lista + Panel de Detalle</h2>
+      <p>LayoutBase con content area dividida: lista de clientes izquierda + detalle derecha. Contactos inline en el detalle. Patrón MasterCrud del siesa-ui-kit.</p>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <span class="tag tag-blue">Mejor para: Marcela — mantenimiento</span>
+      <span class="tag tag-green">MasterCrud pattern</span>
+    </div>
+  </div>
+  <div class="browser">
+    <div class="chrome">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <div class="url">siesa-agents.local/clientes/andina-distribuciones</div>
+    </div>
+    <div class="sk-navbar">
+      <div class="sk-navbar-brand"><div class="siesa-logo"><svg viewBox="0 0 500 500" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><polygon fill="#0e79fd" points="0,300 0,0 300,0"/><polygon fill="#0e79fd" points="0,500 0,300 200,300"/><polygon fill="#0e79fd" points="500,0 500,300 200,300"/><polygon fill="#0e79fd" points="500,300 500,500 300,500"/></svg></div></div>
+      <span class="sk-navbar-product">Siesa Agents</span>
+      <span class="sk-navbar-spacer"></span>
+      <span class="sk-navbar-env">Pruebas</span>
+      <button class="sk-navbar-icon">🔔</button>
+      <div class="sk-navbar-user">
+        <div class="sk-avatar" style="background:var(--tertiary);">MR</div>
+        <div>
+          <div class="sk-user-name">Marcela Rueda</div>
+          <div class="sk-user-role">Coordinadora Comercial</div>
+        </div>
+      </div>
+    </div>
+    <div class="sk-shell">
+      <nav class="sk-rail">
+        <div class="sk-rail-item active"><span class="icon">👥</span><span class="lbl">Clientes</span></div>
+        <div class="sk-rail-item"><span class="icon">🙋</span><span class="lbl">Contactos</span></div>
+        <div class="sk-rail-spacer"></div>
+        <div class="sk-rail-divider"></div>
+        <div class="sk-rail-item"><span class="icon">⚙️</span><span class="lbl">Config</span></div>
+      </nav>
+      <div class="sk-content" style="padding:0;">
+        <div class="dir-b-shell">
+          <!-- CLIENT LIST -->
+          <div class="dir-b-list">
+            <div class="dir-b-list-header">
+              <span class="dir-b-list-title">Clientes <span class="badge badge-gray" style="margin-left:4px;">87</span></span>
+              <button class="btn btn-primary btn-sm">+ Nuevo</button>
+            </div>
+            <div class="dir-b-search">
+              <div class="search-wrap">
+                <span class="s-icon">🔍</span>
+                <input class="sk-input" placeholder="Buscar..." style="font-size:12px;padding:7px 12px 7px 30px;" />
+              </div>
+            </div>
+            <div class="dir-b-items">
+              <div class="dir-b-item active">
+                <div><div class="item-name">Andina Distribuciones S.A.</div><div class="item-city">Bogotá</div></div>
+                <span class="badge badge-blue">4</span>
+              </div>
+              <div class="dir-b-item">
+                <div><div class="item-name">Construcciones del Valle</div><div class="item-city">Cali</div></div>
+                <span class="badge badge-gray">2</span>
+              </div>
+              <div class="dir-b-item" style="border-left:3px solid var(--amber-text);">
+                <div><div class="item-name">Andina Tech Services</div><div class="item-city">Cali</div></div>
+                <span class="badge badge-amber">⚠ 0</span>
+              </div>
+              <div class="dir-b-item">
+                <div><div class="item-name">Textiles Ramírez S.A.</div><div class="item-city">Barranquilla</div></div>
+                <span class="badge badge-gray">3</span>
+              </div>
+              <div class="dir-b-item">
+                <div><div class="item-name">Grupo Andina Ltda.</div><div class="item-city">Medellín</div></div>
+                <span class="badge badge-gray">2</span>
+              </div>
+              <div class="dir-b-item">
+                <div><div class="item-name">Inversiones Caribe</div><div class="item-city">Cartagena</div></div>
+                <span class="badge badge-gray">1</span>
+              </div>
+            </div>
+          </div>
+          <!-- CLIENT DETAIL -->
+          <div class="dir-b-detail">
+            <div class="dir-b-detail-header">
+              <div>
+                <div class="dir-b-detail-name">Andina Distribuciones S.A.</div>
+                <div class="dir-b-detail-sub">NIT 900.123.456 · Bogotá · +57 601 234 5678</div>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-ghost btn-sm">✏️ Editar</button>
+                <button class="btn btn-danger btn-sm">🗑 Eliminar</button>
+              </div>
+            </div>
+            <div class="dir-b-section-title">Contactos (4)</div>
+            <div class="dir-b-contact">
+              <div class="av av-md" style="background:var(--primary);">RV</div>
+              <div class="c-info">
+                <div class="c-name">Ramiro Vega</div>
+                <div class="c-role">Gerente de Compras</div>
+                <div class="c-phone">+57 310 456 7890</div>
+              </div>
+              <div class="c-actions">
+                <button class="btn btn-ghost btn-sm">✏️</button>
+                <button class="btn btn-ghost btn-sm">🔗</button>
+              </div>
+            </div>
+            <div class="dir-b-contact">
+              <div class="av av-md" style="background:var(--tertiary);">LP</div>
+              <div class="c-info">
+                <div class="c-name">Laura Pedraza</div>
+                <div class="c-role">Directora General</div>
+                <div class="c-phone">+57 315 789 0123</div>
+              </div>
+              <div class="c-actions">
+                <button class="btn btn-ghost btn-sm">✏️</button>
+                <button class="btn btn-ghost btn-sm">🔗</button>
+              </div>
+            </div>
+            <div class="dir-b-contact">
+              <div class="av av-md" style="background:#6366f1;">MC</div>
+              <div class="c-info">
+                <div class="c-name">Miguel Castro</div>
+                <div class="c-role">Coordinador Técnico</div>
+                <div class="c-phone">+57 300 111 2233</div>
+              </div>
+              <div class="c-actions">
+                <button class="btn btn-ghost btn-sm">✏️</button>
+                <button class="btn btn-ghost btn-sm">🔗</button>
+              </div>
+            </div>
+            <div style="padding:4px 20px 16px;">
+              <button class="btn btn-outline btn-sm">+ Agregar contacto</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ann-grid">
+    <div class="ann-card ann-pro"><h4>✅ Fortalezas</h4><p>Marcela trabaja sin navegar — lista y detalle siempre visibles. Clientes sin contacto marcados con ⚠ en la lista. Patrón MasterCrud nativo del siesa-ui-kit.</p></div>
+    <div class="ann-card ann-con"><h4>⚠️ Consideraciones</h4><p>En mobile la lista debe colapsar (overlay). El panel list ocupa 300px + rail 72px = 372px antes del contenido real. Requiere viewport ≥ 900px para comodidad.</p></div>
+    <div class="ann-card ann-best"><h4>🎯 Estructura LayoutBase</h4><p>Navbar + Rail colapsado + Content split [300px list | flex detail]. LayoutBase.content = &lt;MasterCrud&gt;-style panel. Alineado con patterns del kit.</p></div>
+  </div>
+</div>
+
+<!-- ================================================================
+     DIRECTION C — MASTERCRUD TABLE
+     Shell: Navbar + NavigationRail + Full-width table content
+     ================================================================ -->
+<div class="showcase" id="dir-c">
+  <div class="dir-label">
+    <div>
+      <h2>Dirección C — MasterCrud Table View</h2>
+      <p>LayoutBase con el componente MasterCrud del siesa-ui-kit como área de contenido. Tabla con buscador, filtros, acciones inline. Máxima densidad de datos.</p>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <span class="tag tag-blue">MasterCrud nativo</span>
+      <span class="tag tag-amber">Power users / Marcela</span>
+    </div>
+  </div>
+  <div class="browser">
+    <div class="chrome">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <div class="url">siesa-agents.local/clientes</div>
+    </div>
+    <div class="sk-navbar">
+      <div class="sk-navbar-brand"><div class="siesa-logo"><svg viewBox="0 0 500 500" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><polygon fill="#0e79fd" points="0,300 0,0 300,0"/><polygon fill="#0e79fd" points="0,500 0,300 200,300"/><polygon fill="#0e79fd" points="500,0 500,300 200,300"/><polygon fill="#0e79fd" points="500,300 500,500 300,500"/></svg></div></div>
+      <span class="sk-navbar-product">Siesa Agents</span>
+      <span class="sk-navbar-spacer"></span>
+      <span class="sk-navbar-env">Pruebas</span>
+      <button class="sk-navbar-icon">🔔</button>
+      <div class="sk-navbar-user">
+        <div class="sk-avatar" style="background:var(--tertiary);">MR</div>
+        <div><div class="sk-user-name">Marcela Rueda</div><div class="sk-user-role">Coordinadora</div></div>
+      </div>
+    </div>
+    <div class="sk-shell">
+      <nav class="sk-rail">
+        <div class="sk-rail-item active"><span class="icon">👥</span><span class="lbl">Clientes</span></div>
+        <div class="sk-rail-item"><span class="icon">🙋</span><span class="lbl">Contactos</span></div>
+        <div class="sk-rail-spacer"></div>
+        <div class="sk-rail-divider"></div>
+        <div class="sk-rail-item"><span class="icon">⚙️</span><span class="lbl">Config</span></div>
+      </nav>
+      <div class="sk-content" style="padding:0;">
+        <div class="page-header">
+          <div><div class="page-title">Clientes</div><div class="page-sub">87 registros</div></div>
+          <button class="btn btn-primary">+ Nuevo cliente</button>
+        </div>
+        <div class="sk-table-toolbar">
+          <div class="search-wrap" style="flex:1;max-width:320px;">
+            <span class="s-icon">🔍</span>
+            <input class="sk-input" placeholder="Buscar por nombre o NIT..." />
+          </div>
+          <button class="btn btn-ghost btn-sm">Sin contactos ✕</button>
+          <button class="btn btn-ghost btn-sm">Ciudad ▾</button>
+          <span style="margin-left:auto;font-size:12px;color:var(--content-tertiary);">87 resultados</span>
+        </div>
+        <div class="sk-table-wrap">
+          <table class="sk-table">
+            <thead>
+              <tr>
+                <th>Nombre</th><th>NIT / RUC</th><th>Ciudad</th><th>Teléfono</th><th>Contactos</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-main">Andina Distribuciones S.A.</td>
+                <td class="td-meta">900.123.456</td><td>Bogotá</td><td class="td-meta">+57 601 234 5678</td>
+                <td><span class="badge badge-blue">4</span></td>
+                <td><div style="display:flex;gap:5px;">
+                  <button class="btn btn-ghost btn-sm">Ver</button>
+                  <button class="btn btn-ghost btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="td-main">Construcciones del Valle</td>
+                <td class="td-meta">901.555.123</td><td>Cali</td><td class="td-meta">+57 602 789 0111</td>
+                <td><span class="badge badge-gray">2</span></td>
+                <td><div style="display:flex;gap:5px;">
+                  <button class="btn btn-ghost btn-sm">Ver</button>
+                  <button class="btn btn-ghost btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑</button>
+                </div></td>
+              </tr>
+              <tr style="background:var(--amber-bg);">
+                <td class="td-main">Andina Tech Services</td>
+                <td class="td-meta">901.555.789</td><td>Cali</td><td class="td-meta">+57 604 321 0987</td>
+                <td><span class="badge badge-amber">⚠ Sin contactos</span></td>
+                <td><div style="display:flex;gap:5px;">
+                  <button class="btn btn-ghost btn-sm">Ver</button>
+                  <button class="btn btn-primary btn-sm">+ Contacto</button>
+                  <button class="btn btn-danger btn-sm">🗑</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="td-main">Textiles Ramírez S.A.</td>
+                <td class="td-meta">800.777.456</td><td>Barranquilla</td><td class="td-meta">+57 605 432 1098</td>
+                <td><span class="badge badge-gray">3</span></td>
+                <td><div style="display:flex;gap:5px;">
+                  <button class="btn btn-ghost btn-sm">Ver</button>
+                  <button class="btn btn-ghost btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="td-main">Grupo Andina Ltda.</td>
+                <td class="td-meta">800.987.321</td><td>Medellín</td><td class="td-meta">+57 604 567 8900</td>
+                <td><span class="badge badge-gray">2</span></td>
+                <td><div style="display:flex;gap:5px;">
+                  <button class="btn btn-ghost btn-sm">Ver</button>
+                  <button class="btn btn-ghost btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑</button>
+                </div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ann-grid">
+    <div class="ann-card ann-pro"><h4>✅ Fortalezas</h4><p>Máxima densidad — Marcela ve 20+ clientes sin scroll. Clientes sin contacto resaltados en ámbar automáticamente. Acciones directas inline. Patrón MasterCrud del kit.</p></div>
+    <div class="ann-card ann-con"><h4>⚠️ Consideraciones</h4><p>Inutilizable en mobile (columnas se desbordan). Carlos en llamada necesita demasiados pasos para ver contactos. Vista de tabla complementaria, no primaria.</p></div>
+    <div class="ann-card ann-best"><h4>🎯 Estructura LayoutBase</h4><p>Navbar + Rail + Content = &lt;MasterCrud&gt; directo. Este patrón ya existe en siesa-ui-kit. Mínima implementación personalizada. Ideal si se combina con Dir B para detalle.</p></div>
+  </div>
+</div>
+
+<!-- ================================================================
+     DIRECTION D — CARD GRID
+     Shell: Navbar + NavigationRail + Card grid content
+     ================================================================ -->
+<div class="showcase" id="dir-d">
+  <div class="dir-label">
+    <div>
+      <h2>Dirección D — Card Grid</h2>
+      <p>LayoutBase con grid de tarjetas de clientes. Contactos visibles en cada card sin entrar al detalle. Brand Siesa más presente con navbar azul en Rail activo.</p>
+    </div>
+    <span class="tag tag-blue">Overview visual — exploración</span>
+  </div>
+  <div class="browser">
+    <div class="chrome">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <div class="url">siesa-agents.local/clientes</div>
+    </div>
+    <div class="sk-navbar">
+      <div class="sk-navbar-brand"><div class="siesa-logo"><svg viewBox="0 0 500 500" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><polygon fill="#0e79fd" points="0,300 0,0 300,0"/><polygon fill="#0e79fd" points="0,500 0,300 200,300"/><polygon fill="#0e79fd" points="500,0 500,300 200,300"/><polygon fill="#0e79fd" points="500,300 500,500 300,500"/></svg></div></div>
+      <span class="sk-navbar-product">Siesa Agents</span>
+      <span class="sk-navbar-spacer"></span>
+      <button class="sk-navbar-icon">🔔</button>
+      <div class="sk-navbar-user">
+        <div class="sk-avatar">CM</div>
+        <div><div class="sk-user-name">Carlos Mendez</div><div class="sk-user-role">Ejecutivo</div></div>
+      </div>
+    </div>
+    <div class="sk-shell">
+      <nav class="sk-rail">
+        <div class="sk-rail-item active"><span class="icon">👥</span><span class="lbl">Clientes</span></div>
+        <div class="sk-rail-item"><span class="icon">🙋</span><span class="lbl">Contactos</span></div>
+        <div class="sk-rail-spacer"></div>
+        <div class="sk-rail-divider"></div>
+        <div class="sk-rail-item"><span class="icon">⚙️</span><span class="lbl">Config</span></div>
+      </nav>
+      <div class="sk-content">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Clientes</div>
+            <div class="page-sub">87 registros activos</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div class="search-wrap" style="width:220px;">
+              <span class="s-icon">🔍</span>
+              <input class="sk-input" placeholder="Buscar..." style="font-size:12px;" />
+            </div>
+            <button class="btn btn-primary btn-sm">+ Nuevo cliente</button>
+          </div>
+        </div>
+        <div class="dir-d-grid">
+          <div class="dir-d-card">
+            <div class="card-name">Andina Distribuciones S.A.</div>
+            <div class="card-city">📍 Bogotá · NIT 900.123.456</div>
+            <div class="card-sep"></div>
+            <div class="mini-c"><div class="av av-sm" style="background:var(--primary);">RV</div><div><div class="mn">Ramiro Vega</div><div class="mr">Gerente de Compras</div></div></div>
+            <div class="mini-c"><div class="av av-sm" style="background:var(--tertiary);">LP</div><div><div class="mn">Laura Pedraza</div><div class="mr">Directora General</div></div></div>
+            <div style="margin-top:6px;"><span class="badge badge-blue">+2 contactos</span></div>
+          </div>
+          <div class="dir-d-card">
+            <div class="card-name">Construcciones del Valle</div>
+            <div class="card-city">📍 Cali · NIT 901.555.123</div>
+            <div class="card-sep"></div>
+            <div class="mini-c"><div class="av av-sm" style="background:#6366f1;">JM</div><div><div class="mn">Jorge Morales</div><div class="mr">Gerente General</div></div></div>
+            <div class="mini-c"><div class="av av-sm" style="background:#0891b2;">AR</div><div><div class="mn">Ana Ríos</div><div class="mr">Coord. Operaciones</div></div></div>
+          </div>
+          <div class="dir-d-card" style="border-color:var(--amber-text);background:var(--amber-bg);">
+            <div class="card-name">Andina Tech Services</div>
+            <div class="card-city">📍 Cali · NIT 901.555.789</div>
+            <div class="card-sep"></div>
+            <div style="padding:8px 0;"><span class="badge badge-amber">⚠ Sin contactos asignados</span></div>
+            <button class="btn btn-outline btn-sm" style="margin-top:4px;">+ Agregar contacto</button>
+          </div>
+          <div class="dir-d-card">
+            <div class="card-name">Textiles Ramírez S.A.</div>
+            <div class="card-city">📍 Barranquilla · NIT 800.777.456</div>
+            <div class="card-sep"></div>
+            <div class="mini-c"><div class="av av-sm" style="background:#d97706;">CR</div><div><div class="mn">Carlos Ramírez</div><div class="mr">Propietario</div></div></div>
+            <div style="margin-top:6px;"><span class="badge badge-gray">+2 más</span></div>
+          </div>
+          <div class="dir-d-card">
+            <div class="card-name">Grupo Andina Ltda.</div>
+            <div class="card-city">📍 Medellín · NIT 800.987.321</div>
+            <div class="card-sep"></div>
+            <div class="mini-c"><div class="av av-sm" style="background:#7c3aed;">PG</div><div><div class="mn">Pedro González</div><div class="mr">CEO</div></div></div>
+            <div class="mini-c"><div class="av av-sm" style="background:#db2777;">SM</div><div><div class="mn">Sandra Mesa</div><div class="mr">Gerente Comercial</div></div></div>
+          </div>
+          <div class="dir-d-card" style="border-style:dashed;border-color:var(--border-secondary);background:transparent;display:flex;align-items:center;justify-content:center;min-height:120px;cursor:pointer;">
+            <div style="text-align:center;color:var(--content-tertiary);">
+              <div style="font-size:28px;margin-bottom:6px;">+</div>
+              <div style="font-size:12px;font-weight:600;">Nuevo cliente</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ann-grid">
+    <div class="ann-card ann-pro"><h4>✅ Fortalezas</h4><p>Contactos visibles sin entrar al detalle. Cards con estado visual claro (ámbar = sin contactos). Botón CTA en card vacía muy intuitivo. Buen balance visual.</p></div>
+    <div class="ann-card ann-con"><h4>⚠️ Consideraciones</h4><p>3 columnas colapsan en tablet/mobile. Con 87 clientes la grid es muy larga. La búsqueda no tiene el protagonismo que necesita para el flujo de Carlos.</p></div>
+    <div class="ann-card ann-best"><h4>🎯 Estructura LayoutBase</h4><p>Navbar + Rail colapsado + Content = page-header + grid. Puede combinarse con Dir A: Hero search → resultados en card grid. Búsqueda arriba, grid debajo.</p></div>
+  </div>
+</div>
+
+<!-- ================================================================
+     DIRECTION E — EXPANDED NAVIGATION RAIL (labels visible)
+     Shell: Navbar + NavigationRail EXPANDED + Content
+     ================================================================ -->
+<div class="showcase" id="dir-e">
+  <div class="dir-label">
+    <div>
+      <h2>Dirección E — Rail Expandido (labels visibles)</h2>
+      <p>LayoutBase con NavigationRail en modo expandido (220px con íconos + labels). Muestra el estado de navegación de forma más explícita. Útil si el producto crece.</p>
+    </div>
+    <span class="tag tag-blue">NavigationRail expanded mode</span>
+  </div>
+  <div class="browser">
+    <div class="chrome">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <div class="url">siesa-agents.local/clientes</div>
+    </div>
+    <div class="sk-navbar">
+      <div class="sk-navbar-brand" style="min-width:var(--rail-width-expanded);justify-content:flex-start;gap:10px;">
+        <svg class="siesa-logo-full" viewBox="0 0 1999.86 500" xmlns="http://www.w3.org/2000/svg">
+          <polygon fill="#0e79fd" points="0,300 0,0 300,0"/>
+          <polygon fill="#0e79fd" points="0,500 0,300 200,300"/>
+          <polygon fill="#0e79fd" points="500,0 500,300 200,300"/>
+          <polygon fill="#0e79fd" points="500,300 500,500 300,500"/>
+          <path fill="#0e79fd" d="M812.95,404.07c-165.79,0-171.25-110.18-171.25-115.7h52.63s-.61,74.35,119.46,74.35h1.25c64.32,0,104-20.88,104-55.55v-1.67c0-27.57-23.81-38.43-95.65-47.2l-49.7-6.27c-76.85-9.61-123.63-33.41-123.63-90.64v-2.09c0-64.74,59.73-98.57,151.62-98.57h.84c161.01,0,161.4,108.26,161.4,108.26h-51.68s1.14-66.9-110.55-66.9h-.84c-61.82,0-98.16,20.47-98.16,55.13v1.67c0,27.15,22.14,43.44,91.89,52.21l47.2,5.85c89.8,10.86,130.74,37.17,130.74,87.71v2.09c0,64.74-64.74,97.32-158.72,97.32h-.85Z"/>
+          <path fill="#0e79fd" d="M1560.56,404.07c-142.87,0-142.85-87.71-142.85-87.71h49.07c0,4.14,13.22,50.96,97.96,50.96h.84c53.88,0,80.61-12.11,80.61-36.76v-1.25c0-22.56-23.39-30.07-69.34-34.67l-55.13-5.01c-59.31-5.43-100.24-22.55-100.24-67.66v-1.67c0-47.62,48.87-74.77,131.15-74.77h.84c126.87,0,134.91,71.8,134.91,86.46h-50.12s2.54-49.7-84.79-49.7h-.84c-49.29,0-81.03,14.2-81.03,39.26v.84c0,22.97,27.57,30.91,73.93,35.5l57.22,5.43c65.16,6.68,93.98,26.73,93.98,64.74v2.09c0,48.87-45.95,73.93-135.33,73.93h-.84Z"/>
+          <rect fill="#0e79fd" x="1014.63" y="168.99" width="47.02" height="230.9"/>
+          <rect fill="#0e79fd" x="1012.55" y="65.58" width="51.18" height="51.18"/>
+          <path fill="#0e79fd" d="M1984.7,190.65c-10.2-15.12-25.5-26.43-45.89-33.91-20.4-7.47-46.41-11.22-78.02-11.22-94.51,0-129.22,41.19-133.11,86.46h50.32c1.68-35.05,41.78-49.7,81.77-49.7,31.62,0,54.73,3.6,69.35,13.11,14.61,9.52,21.93,23.8,21.93,42.84v15.07c-108.47-.19-227.95-1.17-227.95,79.57,0,69.38,81.08,71.4,99.44,71.4,80.19,0,127.96-48.44,127.96-48.44l.04,43.8h49.47v-155.17c0-20.73-5.1-38.67-15.3-53.8h-.01ZM1935.49,326.23c-10.37,12.24-24.57,21.85-42.58,28.81-18.02,6.97-37.91,10.45-59.66,10.45-13.26,0-59.16-5.05-59.16-33.66,0-21.16,11.93-42.1,176.9-43.02-.54,13.38-5.71,25.85-15.5,37.41h0Z"/>
+          <path fill="#0e79fd" d="M1390.14,272.08c-2.09-79.78-53.88-126.56-141.18-126.56h-.84c-90.22,0-144.52,47.2-144.52,126.14v2.09c0,81.45,55.97,130.32,149.53,130.32h.84c64.52,0,117.2-37.61,130.2-87.71l-48.33-.11c-8.77,26.73-35.5,48.15-81.87,48.15h-.84c-60.15,0-95.23-25.48-100.24-75.6h236.61c.71-4.3.63-16.71.63-16.71h0ZM1247.29,182.28h.84c53.21,0,85.14,26.08,91.91,72.32h-186.73c6.81-46.24,39.97-72.32,93.99-72.32h-.01Z"/>
+        </svg>
+      </div>
+      <span class="sk-navbar-spacer"></span>
+      <span class="sk-navbar-env">Pruebas</span>
+      <button class="sk-navbar-icon">🔔</button>
+      <div class="sk-navbar-user">
+        <div class="sk-avatar">CM</div>
+        <div><div class="sk-user-name">Carlos Mendez</div><div class="sk-user-role">Ejecutivo</div></div>
+      </div>
+    </div>
+    <div class="sk-shell">
+      <!-- EXPANDED RAIL -->
+      <nav class="sk-rail-expanded">
+        <div class="rail-section">Principal</div>
+        <div class="rail-item active">
+          <span class="r-icon">👥</span> Clientes
+          <span class="badge badge-blue" style="margin-left:auto;font-size:10px;">87</span>
+        </div>
+        <div class="rail-item">
+          <span class="r-icon">🙋</span> Contactos
+        </div>
+        <div class="sk-rail-spacer"></div>
+        <div class="sk-rail-divider"></div>
+        <div class="rail-section">Sistema</div>
+        <div class="rail-item">
+          <span class="r-icon">⚙️</span> Configuración
+        </div>
+        <div class="rail-item">
+          <span class="r-icon">❓</span> Ayuda
+        </div>
+      </nav>
+      <div class="sk-content">
+        <div class="page-header">
+          <div><div class="page-title">Clientes</div><div class="page-sub">87 registros activos</div></div>
+          <button class="btn btn-primary">+ Nuevo cliente</button>
+        </div>
+        <div style="padding:16px 20px;">
+          <div class="search-wrap" style="margin-bottom:16px;">
+            <span class="s-icon">🔍</span>
+            <input class="sk-input" placeholder="Buscar cliente por nombre o NIT..." />
+          </div>
+          <!-- List items -->
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="background:white;border:1.5px solid var(--primary);border-radius:9px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:14px;font-weight:700;">Andina Distribuciones S.A.</div>
+                <div style="font-size:11px;color:var(--content-tertiary);">Bogotá · NIT 900.123.456</div>
+              </div>
+              <span class="badge badge-blue">4 contactos</span>
+            </div>
+            <div style="background:white;border:1px solid var(--border-primary);border-radius:9px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:14px;font-weight:700;">Construcciones del Valle</div>
+                <div style="font-size:11px;color:var(--content-tertiary);">Cali · NIT 901.555.123</div>
+              </div>
+              <span class="badge badge-gray">2 contactos</span>
+            </div>
+            <div style="background:var(--amber-bg);border:1px solid var(--amber-text);border-radius:9px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:14px;font-weight:700;">Andina Tech Services</div>
+                <div style="font-size:11px;color:var(--content-tertiary);">Cali · NIT 901.555.789</div>
+              </div>
+              <span class="badge badge-amber">⚠ Sin contactos</span>
+            </div>
+            <div style="background:white;border:1px solid var(--border-primary);border-radius:9px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:14px;font-weight:700;">Textiles Ramírez S.A.</div>
+                <div style="font-size:11px;color:var(--content-tertiary);">Barranquilla · NIT 800.777.456</div>
+              </div>
+              <span class="badge badge-gray">3 contactos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ann-grid">
+    <div class="ann-card ann-pro"><h4>✅ Fortalezas</h4><p>Labels de navegación visibles eliminan ambigüedad de íconos. Badge "87" en el rail da contexto inmediato. El logo aparece en el brand area del rail expandido (estándar Siesa).</p></div>
+    <div class="ann-card ann-con"><h4>⚠️ Consideraciones</h4><p>Rail 220px + Navbar brand 220px consume más espacio horizontal. Solo justificado si hay ≥4 secciones de nav. Para 2 secciones (Clientes + Contactos) puede sentirse excesivo.</p></div>
+    <div class="ann-card ann-best"><h4>🎯 Estructura LayoutBase</h4><p>Navbar con brand area de 220px + Rail expandido 220px. NavigationRailTypes del kit soporta collapsed/expanded. Mismo patrón que apps Siesa enterprise existentes.</p></div>
+  </div>
+</div>
+
+<!-- ================================================================
+     DIRECTION F — CONTACTMANAGER COMPONENT (siesa-ui-kit native)
+     Shell: Navbar + Rail + Content con ContactManager del kit
+     ================================================================ -->
+<div class="showcase" id="dir-f">
+  <div class="dir-label">
+    <div>
+      <h2>Dirección F — ContactManager (siesa-ui-kit nativo)</h2>
+      <p>LayoutBase + ContactManager del siesa-ui-kit como componente del detalle de cliente. El kit ya tiene un CRUD de contactos completo con estados de cambios, validación Zod y responsive.</p>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <span class="tag tag-green">✅ Componente nativo del kit</span>
+      <span class="tag tag-blue">Mínima implementación</span>
+    </div>
+  </div>
+  <div class="browser">
+    <div class="chrome">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <div class="url">siesa-agents.local/clientes/andina-distribuciones</div>
+    </div>
+    <div class="sk-navbar">
+      <div class="sk-navbar-brand"><div class="siesa-logo"><svg viewBox="0 0 500 500" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><polygon fill="#0e79fd" points="0,300 0,0 300,0"/><polygon fill="#0e79fd" points="0,500 0,300 200,300"/><polygon fill="#0e79fd" points="500,0 500,300 200,300"/><polygon fill="#0e79fd" points="500,300 500,500 300,500"/></svg></div></div>
+      <span class="sk-navbar-product">Siesa Agents</span>
+      <span class="sk-navbar-spacer"></span>
+      <span class="sk-navbar-env">Pruebas</span>
+      <button class="sk-navbar-icon">🔔</button>
+      <div class="sk-navbar-user">
+        <div class="sk-avatar" style="background:var(--tertiary);">MR</div>
+        <div><div class="sk-user-name">Marcela Rueda</div><div class="sk-user-role">Coordinadora</div></div>
+      </div>
+    </div>
+    <div class="sk-shell">
+      <nav class="sk-rail">
+        <div class="sk-rail-item active"><span class="icon">👥</span><span class="lbl">Clientes</span></div>
+        <div class="sk-rail-item"><span class="icon">🙋</span><span class="lbl">Contactos</span></div>
+        <div class="sk-rail-spacer"></div>
+        <div class="sk-rail-divider"></div>
+        <div class="sk-rail-item"><span class="icon">⚙️</span><span class="lbl">Config</span></div>
+      </nav>
+      <div class="sk-content" style="padding:0;">
+        <div class="cm-shell">
+          <!-- CLIENT LIST -->
+          <div class="cm-list">
+            <div class="cm-list-header">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <span style="font-size:13px;font-weight:700;">Clientes</span>
+                <button class="btn btn-primary btn-sm">+ Nuevo</button>
+              </div>
+              <div class="search-wrap">
+                <span class="s-icon">🔍</span>
+                <input class="sk-input" placeholder="Buscar..." style="font-size:12px;padding:6px 10px 6px 28px;" />
+              </div>
+            </div>
+            <div class="cm-items">
+              <div class="cm-item active">
+                <div class="av av-sm" style="background:var(--primary);">AD</div>
+                <div><div style="font-size:12px;font-weight:700;">Andina Distribuciones</div><div style="font-size:10px;color:var(--content-tertiary);">Bogotá · 4 contactos</div></div>
+              </div>
+              <div class="cm-item">
+                <div class="av av-sm" style="background:var(--tertiary);">CV</div>
+                <div><div style="font-size:12px;font-weight:700;">Construcciones del Valle</div><div style="font-size:10px;color:var(--content-tertiary);">Cali · 2 contactos</div></div>
+              </div>
+              <div class="cm-item" style="background:var(--amber-bg);">
+                <div class="av av-sm" style="background:var(--amber-text);">AT</div>
+                <div><div style="font-size:12px;font-weight:700;">Andina Tech Services</div><div style="font-size:10px;color:var(--amber-text);">⚠ Sin contactos</div></div>
+              </div>
+              <div class="cm-item">
+                <div class="av av-sm" style="background:#6366f1;">TR</div>
+                <div><div style="font-size:12px;font-weight:700;">Textiles Ramírez S.A.</div><div style="font-size:10px;color:var(--content-tertiary);">Barranquilla · 3 contactos</div></div>
+              </div>
+            </div>
+          </div>
+          <!-- CLIENT DETAIL + ContactManager component -->
+          <div class="cm-detail">
+            <div class="cm-detail-header">
+              <div>
+                <div style="font-size:16px;font-weight:800;">Andina Distribuciones S.A.</div>
+                <div style="font-size:11px;color:var(--content-tertiary);">NIT 900.123.456 · Bogotá · +57 601 234 5678</div>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-ghost btn-sm">✏️ Editar cliente</button>
+                <button class="btn btn-danger btn-sm">🗑</button>
+              </div>
+            </div>
+            <!-- ContactManager component (siesa-ui-kit) -->
+            <div class="contact-mgr">
+              <div class="contact-mgr-header">
+                <h3>Contactos <span class="badge badge-blue" style="margin-left:6px;">4</span></h3>
+                <button class="btn btn-primary btn-sm">+ Agregar contacto</button>
+              </div>
+              <table class="contact-mgr-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th><th>Correo</th><th>Clasificación</th><th>Teléfono</th><th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="cm-state-new">
+                    <td><div style="font-weight:700;">Ramiro Vega</div><div style="font-size:10px;color:var(--content-tertiary);">Gerente de Compras</div></td>
+                    <td style="color:var(--primary);">rvega@andina.com</td>
+                    <td><span class="badge badge-blue" style="font-size:10px;">Predeterminado</span></td>
+                    <td style="font-size:12px;">+57 310 456 7890</td>
+                    <td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm">✏️</button><button class="btn btn-danger btn-sm">🗑</button></div></td>
+                  </tr>
+                  <tr class="cm-state-edit">
+                    <td><div style="font-weight:700;">Laura Pedraza</div><div style="font-size:10px;color:var(--content-tertiary);">Directora General</div></td>
+                    <td style="color:var(--primary);">lpedraza@andina.com</td>
+                    <td><span class="badge badge-gray" style="font-size:10px;">Facturación</span></td>
+                    <td style="font-size:12px;">+57 315 789 0123</td>
+                    <td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm">✏️</button><button class="btn btn-danger btn-sm">🗑</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><div style="font-weight:700;">Miguel Castro</div><div style="font-size:10px;color:var(--content-tertiary);">Coordinador Técnico</div></td>
+                    <td style="color:var(--content-tertiary);font-size:11px;font-style:italic;">Sin correo</td>
+                    <td><span class="badge badge-gray" style="font-size:10px;">Despacho</span></td>
+                    <td style="font-size:12px;">+57 300 111 2233</td>
+                    <td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm">✏️</button><button class="btn btn-danger btn-sm">🗑</button></div></td>
+                  </tr>
+                  <tr class="cm-state-del">
+                    <td><div style="font-weight:700;text-decoration:line-through;color:var(--red-text);">Sandra López</div><div style="font-size:10px;color:var(--red-text);">Asistente (eliminando)</div></td>
+                    <td style="font-size:12px;text-decoration:line-through;color:var(--red-text);">slopez@andina.com</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td><button class="btn btn-outline btn-sm" style="font-size:11px;">↩ Deshacer</button></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div style="padding:10px 16px;background:var(--bg-secondary);border-top:1px solid var(--border-primary);display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:11px;color:var(--content-secondary);">🔵 Editado &nbsp; 🟢 Nuevo &nbsp; 🔴 Por eliminar</span>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn btn-ghost btn-sm">Cancelar cambios</button>
+                  <button class="btn btn-primary btn-sm">💾 Guardar cambios</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ann-grid">
+    <div class="ann-card ann-pro"><h4>✅ Fortalezas</h4><p>ContactManager es un componente nativo del siesa-ui-kit con CRUD completo, validación Zod, estados visuales de cambios (verde/azul/rojo), i18n en español por defecto. Mínima implementación.</p></div>
+    <div class="ann-card ann-con"><h4>⚠️ Consideraciones</h4><p>ContactManager es más complejo que lo que el PRD pide (tiene teléfonos segmentados, redes sociales, geografía). Requiere evaluar si se usa tal cual o se adapta/simplifica para el MVP.</p></div>
+    <div class="ann-card ann-best"><h4>🎯 Estructura LayoutBase</h4><p>LayoutBase + Dir B para navegación [lista|detalle] + ContactManager como content del panel derecho. Aprovecha al máximo el siesa-ui-kit. Menor tiempo de desarrollo del MVP.</p></div>
+  </div>
+</div>
+
+<script>
+function show(dir) {
+  document.querySelectorAll('.showcase').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.dir-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('dir-' + dir).classList.add('active');
+  document.querySelectorAll('.dir-btn')[['a','b','c','d','e','f'].indexOf(dir)].classList.add('active');
+}
+</script>
+</body>
+</html>

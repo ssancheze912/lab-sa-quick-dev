@@ -1,0 +1,38 @@
+# BMM Workflow Status
+# Tracks completion of all planning workflows for this project
+
+workflows:
+  product-brief:
+    status: completed
+    output_file: "_bmad-output/planning-artifacts/product-brief-Siesa-Agents-2026-03-10.md"
+    completed_at: "2026-03-11"
+    steps_completed: [1, 2, 3, 4, 5, 6]
+
+  create-ux-design:
+    status: completed
+    output_file: "_bmad-output/planning-artifacts/ux-design-specification.md"
+    completed_at: "2026-03-12"
+    steps_completed: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    supporting_assets:
+      - "_bmad-output/planning-artifacts/ux-design-directions.html"
+
+  create-architecture:
+    status: completed
+    output_file: "_bmad-output/planning-artifacts/architecture.md"
+    completed_at: "2026-03-12"
+    steps_completed: [1, 2, 3, 4, 5, 6, 7, 8]
+    workflow_mode: strict
+
+  prd:
+    status: completed
+    output_file: "_bmad-output/planning-artifacts/prd/index.md"
+
+  epics_and_stories:
+    status: completed
+    output_file: "_bmad-output/planning-artifacts/epics.md"
+    completed_at: "2026-03-13"
+    steps_completed: [1, 2, 3, 4]
+
+  sprint_planning:
+    status: not_started
+    output_file: ~
