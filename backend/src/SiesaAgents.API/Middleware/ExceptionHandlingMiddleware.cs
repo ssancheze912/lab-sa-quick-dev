@@ -10,8 +10,8 @@ public class ExceptionHandlingMiddleware
 
     public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
     {
-        _next = next;
-        _logger = logger;
+        _next = next ?? throw new ArgumentNullException(nameof(next));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -47,7 +47,8 @@ public class ExceptionHandlingMiddleware
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
         }));
     }
 
@@ -74,7 +75,8 @@ public class ExceptionHandlingMiddleware
         // CRITICAL: serialize ONLY the ProblemDetails fields — NEVER include ex.StackTrace or ex.GetType().Name
         await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
         }));
     }
 

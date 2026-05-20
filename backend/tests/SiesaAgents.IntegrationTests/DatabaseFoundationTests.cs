@@ -24,6 +24,7 @@ namespace SiesaAgents.IntegrationTests;
 public class DatabaseFoundationTests : IDisposable
 {
     private readonly AppDbContext _context;
+    private readonly ServiceProvider _serviceProvider;
 
     public DatabaseFoundationTests()
     {
@@ -40,8 +41,8 @@ public class DatabaseFoundationTests : IDisposable
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
 
-        var provider = services.BuildServiceProvider();
-        _context = provider.GetRequiredService<AppDbContext>();
+        _serviceProvider = services.BuildServiceProvider();
+        _context = _serviceProvider.GetRequiredService<AppDbContext>();
     }
 
     /// <summary>
@@ -121,5 +122,6 @@ public class DatabaseFoundationTests : IDisposable
     public void Dispose()
     {
         _context.Dispose();
+        _serviceProvider.Dispose();
     }
 }
