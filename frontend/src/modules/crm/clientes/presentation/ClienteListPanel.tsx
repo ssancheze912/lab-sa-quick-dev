@@ -59,7 +59,7 @@ export function ClienteListPanel() {
         )}
 
         {!isLoading && !isError && filteredClientes.length > 0 && (
-          <ul role="list" className="flex flex-col gap-0.5 p-2">
+          <ul role="list" aria-label="Lista de clientes" className="flex flex-col gap-0.5 p-2">
             {filteredClientes.map((cliente) => (
               <li key={cliente.id}>
                 <ClientListItem nombre={cliente.nombre} nit={cliente.nit} />

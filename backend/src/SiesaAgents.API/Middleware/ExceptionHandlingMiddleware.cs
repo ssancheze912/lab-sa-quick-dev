@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -56,6 +57,7 @@ public class ExceptionHandlingMiddleware
     {
         var statusCode = ex switch
         {
+            ValidationException => StatusCodes.Status400BadRequest,
             ArgumentException => StatusCodes.Status400BadRequest,
             KeyNotFoundException => StatusCodes.Status404NotFound,
             InvalidOperationException => StatusCodes.Status409Conflict,

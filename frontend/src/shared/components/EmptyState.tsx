@@ -1,14 +1,15 @@
+import type { ReactNode } from 'react'
 import { UsersIcon } from '@heroicons/react/24/outline'
 
 interface EmptyStateProps {
   title?: string
   description?: string
-  action?: React.ReactNode
+  action?: ReactNode
 }
 
 export function EmptyState({
   title = 'No hay clientes registrados',
-  description = 'Agrega el primer registro para comenzar.',
+  description = 'Crea el primer cliente para comenzar.',
   action,
 }: EmptyStateProps) {
   return (

@@ -85,15 +85,13 @@ public class AppDbContextTests
     }
 
     /// <summary>
-    /// UNIT-F-06d (P2 — AC3)
+    /// UNIT-F-06d (P2 — updated for Story 2.1)
     /// Given AppDbContext built with an in-memory provider
     /// When the EF Core model is inspected
-    /// Then no DbSet&lt;&gt; properties exist (scope: this story adds no entities)
-    /// This guard prevents accidental introduction of ClienteEntity or ContactoEntity
-    /// in Story 1.3 (which violates the scope note in the story).
+    /// Then exactly one DbSet&lt;&gt; property exists: Clientes (added in Story 2.1)
     /// </summary>
     [Fact]
-    public void AppDbContext_HasNoDbSetProperties_EmptyMigrationScope()
+    public void AppDbContext_HasClientesDbSet_AfterStory21()
     {
         // GIVEN: AppDbContext type reflection
         var dbSetType = typeof(DbSet<>);
@@ -106,7 +104,8 @@ public class AppDbContextTests
                         p.PropertyType.GetGenericTypeDefinition() == dbSetType)
             .ToList();
 
-        // THEN: Zero DbSet<> properties — no entities in this story
-        Assert.Empty(dbSetProperties);
+        // THEN: Exactly one DbSet<ClienteEntity> — Clientes added in Story 2.1
+        Assert.Single(dbSetProperties);
+        Assert.Equal("Clientes", dbSetProperties[0].Name);
     }
 }
