@@ -58,6 +58,10 @@ function RootLayout() {
                 data-testid={`nav-item-${item.id}`}
                 data-active={item.id === activeId ? 'true' : 'false'}
                 onClick={() => handleNavSelect(item.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNavSelect(item.id) } }}
+                tabIndex={0}
+                role="button"
+                aria-label={item.label}
                 style={{ cursor: 'pointer' }}
               >
                 <NavigationRailItem
@@ -65,9 +69,9 @@ function RootLayout() {
                   label={item.label}
                   icon={
                     item.id === 'clientes' ? (
-                      <UsersIcon className="h-4 w-4" />
+                      <UsersIcon className="h-5 w-5" />
                     ) : (
-                      <UserGroupIcon className="h-4 w-4" />
+                      <UserGroupIcon className="h-5 w-5" />
                     )
                   }
                   selected={item.id === activeId}
@@ -90,6 +94,10 @@ function RootLayout() {
                 data-testid={`nav-item-${item.id}`}
                 data-active={item.id === activeId ? 'true' : 'false'}
                 onClick={() => handleNavSelect(item.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNavSelect(item.id) } }}
+                tabIndex={0}
+                role="button"
+                aria-label={item.label}
                 style={{ cursor: 'pointer', flex: 1 }}
               >
                 <NavigationRailItem
@@ -97,9 +105,9 @@ function RootLayout() {
                   label={item.label}
                   icon={
                     item.id === 'clientes' ? (
-                      <UsersIcon className="h-4 w-4" />
+                      <UsersIcon className="h-5 w-5" />
                     ) : (
-                      <UserGroupIcon className="h-4 w-4" />
+                      <UserGroupIcon className="h-5 w-5" />
                     )
                   }
                   selected={item.id === activeId}
