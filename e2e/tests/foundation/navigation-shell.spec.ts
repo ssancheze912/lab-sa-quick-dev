@@ -125,8 +125,8 @@ test.describe('Story 1.2 — Frontend Navigation Shell', () => {
     await page.route('**/api/**', (route) => route.continue());
     await page.goto('/');
 
-    // WHEN: The "Clientes" item in NavigationBar is tapped
-    await page.getByTestId('nav-item-clientes').tap();
+    // WHEN: The "Clientes" item in NavigationBar is clicked
+    await page.getByTestId('nav-item-clientes').click();
 
     // THEN: URL changes to /clientes
     await expect(page).toHaveURL(/\/clientes/);
@@ -138,8 +138,8 @@ test.describe('Story 1.2 — Frontend Navigation Shell', () => {
     await page.route('**/api/**', (route) => route.continue());
     await page.goto('/');
 
-    // WHEN: The "Contactos" item in NavigationBar is tapped
-    await page.getByTestId('nav-item-contactos').tap();
+    // WHEN: The "Contactos" item in NavigationBar is clicked
+    await page.getByTestId('nav-item-contactos').click();
 
     // THEN: URL changes to /contactos
     await expect(page).toHaveURL(/\/contactos/);
