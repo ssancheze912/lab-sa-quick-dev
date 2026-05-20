@@ -21,7 +21,7 @@ namespace SiesaAgents.IntegrationTests;
 ///
 /// Test IDs: INT-F-01, INT-F-02
 /// </summary>
-public class DatabaseFoundationTests
+public class DatabaseFoundationTests : IDisposable
 {
     private readonly AppDbContext _context;
 
@@ -73,7 +73,7 @@ public class DatabaseFoundationTests
         // GIVEN: Database has been updated with the initial migration
         // WHEN: Query the EF migrations history table directly via raw SQL
         var migrationCount = await _context.Database
-            .SqlQueryRaw<int>("SELECT COUNT(*)::int FROM \"__EFMigrationsHistory\"")
+            .SqlQueryRaw<int>("SELECT COUNT(*)::int AS \"Value\" FROM \"__EFMigrationsHistory\"")
             .FirstAsync();
 
         // THEN: Exactly one migration entry exists (the empty InitialCreate migration)

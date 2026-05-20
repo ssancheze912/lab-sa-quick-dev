@@ -19,12 +19,36 @@ public class ExceptionHandlingMiddleware
         try
         {
             await _next(context);
+
+            // Handle non-exception 4xx/5xx responses with empty bodies (e.g. routing 404)
+            if (context.Response.StatusCode >= 400 && !context.Response.HasStarted)
+            {
+                await WriteStatusCodeProblemDetailsAsync(context, context.Response.StatusCode);
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception");
             await WriteProblemDetailsAsync(context, ex);
         }
+    }
+
+    private static async Task WriteStatusCodeProblemDetailsAsync(HttpContext context, int statusCode)
+    {
+        var problemDetails = new ProblemDetails
+        {
+            Status = statusCode,
+            Title = GetTitle(statusCode),
+            Detail = GetDetail(statusCode),
+        };
+
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/problem+json";
+
+        await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        }));
     }
 
     private static async Task WriteProblemDetailsAsync(HttpContext context, Exception ex)
@@ -60,5 +84,13 @@ public class ExceptionHandlingMiddleware
         404 => "Not Found",
         409 => "Conflict",
         _ => "Internal Server Error"
+    };
+
+    private static string GetDetail(int statusCode) => statusCode switch
+    {
+        404 => "The requested resource was not found.",
+        400 => "The request was invalid.",
+        409 => "A conflict occurred with the current state of the resource.",
+        _ => "An unexpected error occurred. Please try again later."
     };
 }

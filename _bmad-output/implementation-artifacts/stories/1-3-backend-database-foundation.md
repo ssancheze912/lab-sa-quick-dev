@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,47 +24,47 @@ so that subsequent stories can define entities and run migrations against a work
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Create `AppDbContext` in SiesaAgents.Infrastructure (AC: 1, 3)
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
-  - [ ] Inherit from `DbContext`; inject `DbContextOptions<AppDbContext>` via constructor
-  - [ ] Override `OnModelCreating`: call `modelBuilder.ApplySnakeCaseNaming()` as the last statement
-  - [ ] Do NOT add any `DbSet<>` properties — entities are added in later stories
+- [x] Task 1 — Create `AppDbContext` in SiesaAgents.Infrastructure (AC: 1, 3)
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
+  - [x] Inherit from `DbContext`; inject `DbContextOptions<AppDbContext>` via constructor
+  - [x] Override `OnModelCreating`: call `modelBuilder.ApplySnakeCaseNaming()` as the last statement
+  - [x] Do NOT add any `DbSet<>` properties — entities are added in later stories
 
-- [ ] Task 2 — Register DbContext and connection string (AC: 1, 4)
-  - [ ] Add connection string `"DefaultConnection"` to `backend/src/SiesaAgents.API/appsettings.Development.json` pointing to `siesa_agents_db`
-  - [ ] Register `AppDbContext` in `Program.cs` using `builder.Services.AddDbContext<AppDbContext>(...)` with Npgsql provider
-  - [ ] Reference `SiesaAgents.Infrastructure` from `SiesaAgents.API` project if not already referenced
+- [x] Task 2 — Register DbContext and connection string (AC: 1, 4)
+  - [x] Add connection string `"DefaultConnection"` to `backend/src/SiesaAgents.API/appsettings.Development.json` pointing to `siesa_agents_db`
+  - [x] Register `AppDbContext` in `Program.cs` using `builder.Services.AddDbContext<AppDbContext>(...)` with Npgsql provider
+  - [x] Reference `SiesaAgents.Infrastructure` from `SiesaAgents.API` project if not already referenced
 
-- [ ] Task 3 — Install EF Core tooling and create initial migration (AC: 1)
-  - [ ] Ensure `Microsoft.EntityFrameworkCore.Design` package is referenced in `SiesaAgents.API` (needed for `dotnet ef` to locate startup project)
-  - [ ] Ensure `Microsoft.EntityFrameworkCore.Tools` package is referenced in `SiesaAgents.Infrastructure`
-  - [ ] Run `dotnet ef migrations add InitialCreate --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API -o Data/Migrations` from `backend/`
-  - [ ] Verify `backend/src/SiesaAgents.Infrastructure/Data/Migrations/` folder is created with snapshot and migration files
-  - [ ] Run `dotnet ef database update --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API` — confirm exit code 0 and `siesa_agents_db` is created
+- [x] Task 3 — Install EF Core tooling and create initial migration (AC: 1)
+  - [x] Ensure `Microsoft.EntityFrameworkCore.Design` package is referenced in `SiesaAgents.API` (needed for `dotnet ef` to locate startup project)
+  - [x] Ensure `Microsoft.EntityFrameworkCore.Tools` package is referenced in `SiesaAgents.Infrastructure`
+  - [x] Run `dotnet ef migrations add InitialCreate --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API -o Data/Migrations` from `backend/`
+  - [x] Verify `backend/src/SiesaAgents.Infrastructure/Data/Migrations/` folder is created with snapshot and migration files
+  - [x] Run `dotnet ef database update --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API` — confirm exit code 0 and `siesa_agents_db` is created
 
-- [ ] Task 4 — Implement `ExceptionHandlingMiddleware` for Problem Details RFC 7807 (AC: 2)
-  - [ ] Create `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs`
-  - [ ] Catch all unhandled exceptions; write `application/problem+json` response
-  - [ ] Response MUST include: `status` (int), `title` (string), `detail` (string)
-  - [ ] Response MUST NOT include: `stackTrace`, exception type, inner exception details
-  - [ ] Map domain-level exceptions to appropriate HTTP status codes (default: 500)
-  - [ ] Register middleware in `Program.cs` via `app.UseMiddleware<ExceptionHandlingMiddleware>()` — place before `app.UseCors()`
+- [x] Task 4 — Implement `ExceptionHandlingMiddleware` for Problem Details RFC 7807 (AC: 2)
+  - [x] Create `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs`
+  - [x] Catch all unhandled exceptions; write `application/problem+json` response
+  - [x] Response MUST include: `status` (int), `title` (string), `detail` (string)
+  - [x] Response MUST NOT include: `stackTrace`, exception type, inner exception details
+  - [x] Map domain-level exceptions to appropriate HTTP status codes (default: 500)
+  - [x] Register middleware in `Program.cs` via `app.UseMiddleware<ExceptionHandlingMiddleware>()` — place before `app.UseCors()`
 
-- [ ] Task 5 — Write xUnit unit tests for ExceptionHandlingMiddleware (AC: 2)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs`
-  - [ ] UNIT-F-04: Unhandled exception → response has `status`, `title`, `detail` fields (Problem Details RFC 7807)
-  - [ ] UNIT-F-05: Response body does NOT contain `stackTrace` or exception type key
+- [x] Task 5 — Write xUnit unit tests for ExceptionHandlingMiddleware (AC: 2)
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs`
+  - [x] UNIT-F-04: Unhandled exception → response has `status`, `title`, `detail` fields (Problem Details RFC 7807)
+  - [x] UNIT-F-05: Response body does NOT contain `stackTrace` or exception type key
 
-- [ ] Task 6 — Write xUnit integration tests for database foundation (AC: 1, 4)
-  - [ ] Create `backend/tests/SiesaAgents.IntegrationTests/DatabaseFoundationTests.cs`
-  - [ ] Add `SiesaAgents.IntegrationTests` xUnit project to solution if it does not exist
-  - [ ] INT-F-01: `AppDbContext.Database.CanConnectAsync()` returns `true` for `siesa_agents_db`
-  - [ ] INT-F-02: `__EFMigrationsHistory` table exists and contains exactly one entry after `dotnet ef database update`
-  - [ ] Use test connection string from environment variable `ConnectionStrings__DefaultConnection` or `appsettings.Test.json`
+- [x] Task 6 — Write xUnit integration tests for database foundation (AC: 1, 4)
+  - [x] Create `backend/tests/SiesaAgents.IntegrationTests/DatabaseFoundationTests.cs`
+  - [x] Add `SiesaAgents.IntegrationTests` xUnit project to solution if it does not exist
+  - [x] INT-F-01: `AppDbContext.Database.CanConnectAsync()` returns `true` for `siesa_agents_db`
+  - [x] INT-F-02: `__EFMigrationsHistory` table exists and contains exactly one entry after `dotnet ef database update`
+  - [x] Use test connection string from environment variable `ConnectionStrings__DefaultConnection` or `appsettings.Test.json`
 
-- [ ] Task 7 — Write xUnit unit test for snake_case naming (AC: 3)
-  - [ ] Create or extend `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs`
-  - [ ] UNIT-F-06: Verify `ApplySnakeCaseNaming()` is configured (assert `__EFMigrationsHistory` default table name is unaffected; or add a minimal test entity in-memory to verify column name transform)
+- [x] Task 7 — Write xUnit unit test for snake_case naming (AC: 3)
+  - [x] Create or extend `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs`
+  - [x] UNIT-F-06: Verify `ApplySnakeCaseNaming()` is configured (assert `__EFMigrationsHistory` default table name is unaffected; or add a minimal test entity in-memory to verify column name transform)
 
 ## Dev Notes
 
@@ -423,4 +423,20 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- `ApplySnakeCaseNaming()` implemented as custom extension in `ModelBuilderExtensions.cs` (EFCore.NamingConventions package not available in offline environment).
+- `ExceptionHandlingMiddleware` updated to handle non-exception 4xx/5xx responses (e.g. routing 404) in addition to thrown exceptions.
+- `DatabaseFoundationTests.cs` updated: added `IDisposable` interface, added `Microsoft.Extensions.Configuration.EnvironmentVariables` package, fixed `SqlQueryRaw<int>` column alias to `"Value"` for PostgreSQL compatibility.
+- EF Core InitialCreate migration applied — `siesa_agents_db` created with `__EFMigrationsHistory` containing exactly 1 entry.
+
 ### File List
+
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` (existing, verified)
+- `backend/src/SiesaAgents.Infrastructure/Data/ModelBuilderExtensions.cs` (created)
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/` (created via dotnet-ef)
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` (updated - added status code handler)
+- `backend/src/SiesaAgents.API/Program.cs` (existing, verified)
+- `backend/src/SiesaAgents.API/appsettings.Development.json` (existing, verified)
+- `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs` (existing, all pass)
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` (existing, all pass)
+- `backend/tests/SiesaAgents.IntegrationTests/DatabaseFoundationTests.cs` (updated - IDisposable, SQL alias fix)
+- `backend/tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj` (updated - added EnvironmentVariables package)
