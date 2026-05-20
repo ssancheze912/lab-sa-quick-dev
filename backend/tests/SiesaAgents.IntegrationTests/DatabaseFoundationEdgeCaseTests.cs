@@ -20,6 +20,7 @@ public class DatabaseFoundationEdgeCaseTests : IDisposable
 {
     private readonly AppDbContext _context;
     private readonly string _connectionString;
+    private readonly ServiceProvider _serviceProvider;
 
     public DatabaseFoundationEdgeCaseTests()
     {
@@ -35,8 +36,8 @@ public class DatabaseFoundationEdgeCaseTests : IDisposable
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(_connectionString));
 
-        var provider = services.BuildServiceProvider();
-        _context = provider.GetRequiredService<AppDbContext>();
+        _serviceProvider = services.BuildServiceProvider();
+        _context = _serviceProvider.GetRequiredService<AppDbContext>();
     }
 
     /// <summary>
@@ -164,5 +165,6 @@ public class DatabaseFoundationEdgeCaseTests : IDisposable
     public void Dispose()
     {
         _context.Dispose();
+        _serviceProvider.Dispose();
     }
 }
