@@ -157,23 +157,39 @@ test.describe('Story 1.1 — Backend HTTP Protocol Edge Cases', () => {
   /**
    * API-EDGE-07 (P1 — AC 2)
    * Boundary: Backend must NOT redirect HTTP → HTTPS in development mode.
-   * UseHttpsRedirection is conditionally excluded in dev; a 301/302 here would
+   * UseHttpsRedirection is conditionally excluded in dev; an HTTPS redirect would
    * break all frontend API calls which use plain HTTP.
+   *
+   * Healing note (iteration 1): Scalar.AspNetCore performs a 302 redirect from
+   * /scalar → /scalar/ (canonical trailing-slash normalization). This is a library
+   * behavior and NOT an HTTP→HTTPS redirect. The test now verifies that:
+   *  (a) any redirect from /scalar is to the same HTTP scheme (not https://)
+   *  (b) following redirects, the final response is 200 OK on HTTP
    */
   test('API-EDGE-07 — Backend no redirige HTTP a HTTPS en modo Development', async ({
     request,
   }) => {
+    // GIVEN: Backend running in Development mode
+    // WHEN: GET /scalar with maxRedirects=0 to capture any redirect
     const response = await request.get(`${BACKEND_BASE}/scalar`, {
       maxRedirects: 0,
     });
 
-    // Must not return a redirect (301/302/307/308)
-    expect(response.status()).not.toBe(301);
-    expect(response.status()).not.toBe(302);
-    expect(response.status()).not.toBe(307);
-    expect(response.status()).not.toBe(308);
-    // Should return the actual content
-    expect(response.status()).toBe(200);
+    // THEN: If there is a redirect (e.g. /scalar → /scalar/ by Scalar library),
+    //       the Location header must NOT point to an HTTPS URL.
+    //       HTTP→HTTPS redirects (301/302 to https://) are forbidden in dev mode.
+    const location = response.headers()['location'] ?? '';
+    if (location) {
+      expect(location, 'Redirect location must not be an HTTPS URL in dev mode').not.toMatch(
+        /^https:\/\//i,
+      );
+    }
+
+    // WHEN: Following redirects automatically to the final destination
+    const finalResponse = await request.get(`${BACKEND_BASE}/scalar`);
+
+    // THEN: The final response must be 200 OK (server is serving content over HTTP)
+    expect(finalResponse.status()).toBe(200);
   });
 
   /**
