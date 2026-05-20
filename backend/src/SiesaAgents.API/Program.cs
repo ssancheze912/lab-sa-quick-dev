@@ -1,7 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Commands;
+using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +14,10 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<GetClientesQueryHandler>();
+builder.Services.AddScoped<CreateClienteCommandHandler>();
 
 builder.Services.AddCors(options =>
 {
@@ -33,6 +42,8 @@ if (!app.Environment.IsDevelopment())
 app.UseCors();
 
 app.MapHealthChecks("/health");
+
+app.MapClienteEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
 
 namespace SiesaAgents.Infrastructure.Data;
 
@@ -8,7 +9,7 @@ public class AppDbContext : DbContext
     {
     }
 
-    // No DbSet<> properties in this story — entities added in Epic 2 and 3
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
