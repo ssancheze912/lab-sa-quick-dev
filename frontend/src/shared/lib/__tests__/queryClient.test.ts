@@ -59,7 +59,7 @@ describe('queryClient configuration', () => {
     // A freshly imported module should not have stale queries from other tests
     // (Vitest isolates modules between test files by default)
     expect(cache).toBeDefined()
-    // Verify it is a proper QueryCache instance (has 'getAll' method)
-    expect(typeof cache.getAll).toBe('function')
+    // Verify that no query entries exist at initialization
+    expect(cache.getAll()).toHaveLength(0)
   })
 })
