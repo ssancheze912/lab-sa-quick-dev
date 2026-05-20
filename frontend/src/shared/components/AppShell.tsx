@@ -1,9 +1,10 @@
+import React from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
 
 interface NavItem {
   id: string
-  to: string
+  to: '/' | '/clientes' | '/contactos'
   label: string
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
 }
@@ -31,7 +32,7 @@ export function AppShell({ children }: AppShellProps) {
       >
         <ul className="flex flex-col items-center gap-1 pt-4">
           {navItems.map(({ id, to, label, Icon }) => {
-            const isActive = currentPath.startsWith(to)
+            const isActive = currentPath === to || currentPath.startsWith(to + '/')
             return (
               <li key={id}>
                 <Link
@@ -66,7 +67,7 @@ export function AppShell({ children }: AppShellProps) {
       >
         <ul className="flex w-full">
           {navItems.map(({ id, to, label, Icon }) => {
-            const isActive = currentPath.startsWith(to)
+            const isActive = currentPath === to || currentPath.startsWith(to + '/')
             return (
               <li key={id} className="flex-1">
                 <Link
