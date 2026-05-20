@@ -61,9 +61,9 @@ public class AppDbContextEdgeCaseTests
         using var ctx1 = new AppDbContext(options1);
         using var ctx2 = new AppDbContext(options2);
 
-        // THEN: Each context is a distinct instance with its own model
+        // THEN: Each context instance is distinct (EF Core may share compiled model across
+        // instances of the same type — that is an internal caching optimization, not a bug)
         Assert.NotSame(ctx1, ctx2);
-        Assert.NotSame(ctx1.Model, ctx2.Model);
     }
 
     [Fact]
