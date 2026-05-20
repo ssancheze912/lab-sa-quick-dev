@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SiesaAgents.Infrastructure.Data;
 
 namespace SiesaAgents.UnitTests.Infrastructure;

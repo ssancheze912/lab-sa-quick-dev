@@ -13,7 +13,7 @@ public class AppDbContext : DbContext
         // Apply IEntityTypeConfiguration<T> files here in future stories:
         // modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-        // MUST be called LAST — converts all PascalCase names to snake_case automatically
-        modelBuilder.ApplySnakeCaseNaming();
+        // snake_case naming convention is applied via UseSnakeCaseNamingConvention()
+        // registered in DbContextOptions (see Program.cs) — no manual [Column]/[Table] attributes needed
     }
 }

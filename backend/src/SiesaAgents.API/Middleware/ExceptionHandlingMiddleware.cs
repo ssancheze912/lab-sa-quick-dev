@@ -1,9 +1,12 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SiesaAgents.API.Middleware;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next)
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -26,9 +29,6 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
         };
 
-        context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/problem+json";
-
         var problemDetails = new ProblemDetails
         {
             Status = statusCode,
@@ -36,6 +36,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
             Detail = exception.Message   // Message only — never StackTrace
         };
 
-        await context.Response.WriteAsJsonAsync(problemDetails);
+        var json = JsonSerializer.Serialize(problemDetails, JsonOptions);
+
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsync(json);
     }
 }

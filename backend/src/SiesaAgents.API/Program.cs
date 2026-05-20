@@ -20,9 +20,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
-
-builder.Services.AddTransient<ExceptionHandlingMiddleware>();
+    options.UseNpgsql(connectionString)
+           .UseSnakeCaseNamingConvention());
 
 var app = builder.Build();
 
