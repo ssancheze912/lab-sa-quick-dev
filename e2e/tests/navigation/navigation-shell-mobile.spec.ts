@@ -113,8 +113,8 @@ test.describe('Story 1.2 — NavigationBar (Mobile <1024px)', () => {
     await nav.goto();
     await expect(nav.navigationBar).toBeVisible();
 
-    // WHEN: user taps Clientes
-    await nav.clientesLink.tap();
+    // WHEN: user taps Clientes (click() works across touch and non-touch contexts)
+    await nav.clientesLink.click();
 
     // THEN: URL is /clientes
     await expect(page).toHaveURL(/\/clientes$/);
@@ -133,8 +133,8 @@ test.describe('Story 1.2 — NavigationBar (Mobile <1024px)', () => {
     await nav.goto();
     await expect(nav.navigationBar).toBeVisible();
 
-    // WHEN: user taps Contactos
-    await nav.contactosLink.tap();
+    // WHEN: user taps Contactos (click() works across touch and non-touch contexts)
+    await nav.contactosLink.click();
 
     // THEN: URL is /contactos
     await expect(page).toHaveURL(/\/contactos$/);
