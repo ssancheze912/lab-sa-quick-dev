@@ -3,14 +3,18 @@ import { test, expect } from '@playwright/test';
 const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
 
 /**
- * ATDD — Story 2.1: Client List & Search — API Integration Tests
+ * ATDD — Story 2.1 + Story 2.2: Client API Integration Tests
  *
- * Tests are in RED phase — they validate the REST contract for GET /api/v1/clientes
- * BEFORE the endpoint exists.
+ * Tests are in RED phase — they validate the REST contract for:
+ *   GET /api/v1/clientes         (Story 2.1)
+ *   GET /api/v1/clientes/:id     (Story 2.2)
+ * BEFORE the endpoints exist.
  *
  * Coverage:
  *   API-C-07  P1  — GET /api/v1/clientes returns a JSON array where each item
  *                   contains at minimum: id (UUID), nombre, nit fields
+ *   API-C-08  P1  — GET /api/v1/clientes/:id with valid ID returns 200 + full ClienteDto
+ *   API-C-09  P1  — GET /api/v1/clientes/:id with non-existent ID returns 404 + Problem Details (no stackTrace)
  */
 
 test.describe('Story 2.1 — API: GET /api/v1/clientes', () => {
