@@ -1,38 +1,37 @@
 ---
 epic: 1
 title: "Project Foundation & Application Shell"
-phase: 4
 mode: epic-level
-date: 2026-05-20
+phase: 4
+createdAt: "2026-05-20"
 stories:
-  - "1.1: Project Initialization & Repository Structure"
-  - "1.2: Frontend Navigation Shell"
-  - "1.3: Backend Database Foundation"
+  - "1.1 — Project Initialization & Repository Structure"
+  - "1.2 — Frontend Navigation Shell"
+  - "1.3 — Backend Database Foundation"
 status: complete
 ---
 
 # Test Design — Epic 1: Project Foundation & Application Shell
 
-## 1. Epic Overview
+## 1. Epic Overview & Test Scope
 
-Epic 1 establishes the runnable skeleton of Siesa Agents CRM. It covers three stories:
+### Epic Summary
 
-| Story | Scope |
-|---|---|
-| 1.1 | Vite + React frontend initialized; .NET 10 Clean Architecture backend initialized; CORS configured |
-| 1.2 | NavigationRail (desktop) + NavigationBar (mobile) from siesa-ui-kit; SPA routing via TanStack Router; 404 handling |
-| 1.3 | PostgreSQL connection; EF Core DbContext + ApplySnakeCaseNaming(); initial empty migration; Problem Details middleware |
+Epic 1 establishes the complete technical foundation for Siesa Agents: a Vite/React/TypeScript frontend and a .NET 10 Clean Architecture backend, both connected to a PostgreSQL database, with functional SPA navigation (NavigationRail/NavigationBar), responsive layout, deep-linking routes, and backend error-handling middleware conforming to Problem Details RFC 7807.
 
-**Acceptance Criteria (epic-level, from epic-01-foundation.md):**
+### Stories in Scope
 
-| AC | Description |
-|---|---|
-| AC-E1.1 | App loads and shows accessible navigation structure on desktop and mobile browser |
-| AC-E1.2 | User can navigate between Clientes and Contactos without full page reloads |
-| AC-E1.3 | Direct URL access to `/clientes` and `/contactos` renders the correct views (deep linking) |
+| Story | Title | Key Concerns |
+|-------|-------|-------------|
+| 1.1 | Project Initialization & Repository Structure | Dev environment, toolchain, CORS, TypeScript strict, Scalar |
+| 1.2 | Frontend Navigation Shell | SPA routing, responsive nav (desktop/mobile), deep linking, 404 |
+| 1.3 | Backend Database Foundation | EF Core / PostgreSQL wiring, migrations, snake_case naming, Problem Details middleware |
 
-**FRs covered:** FR28, FR29, FR30
-**NFRs relevant:** NFR4 (HTTPS non-local), NFR6 (no stack traces — Problem Details RFC 7807), NFR11 (no hardcoded limits — UUID PKs, snake_case schema)
+### Out of Scope for This Epic
+
+- Domain entity tables (`clientes`, `contactos`) — created in Epics 2 and 3
+- Authentication / authorization — explicitly deferred (MVP)
+- HTTPS configuration — non-local deployments only (NFR4)
 
 ---
 
@@ -40,256 +39,519 @@ Epic 1 establishes the runnable skeleton of Siesa Agents CRM. It covers three st
 
 ### Risk Matrix
 
-| ID | Risk | Probability | Impact | Priority | Mitigation |
-|---|---|---|---|---|---|
-| R1 | NavigationRail/NavigationBar siesa-ui-kit components not rendered correctly (wrong breakpoint, wrong component variant) | High | High | P0 | Explicit viewport-based assertions in E2E for both desktop and mobile; verify siesa-ui-kit version in package.json |
-| R2 | TanStack Router deep linking returns blank screen or redirects to home on direct URL access | High | High | P0 | Direct navigation tests to `/clientes` and `/contactos` as isolated test cases |
-| R3 | CORS misconfiguration blocks frontend → backend communication | Medium | High | P0 | API health check test via Playwright APIRequestContext from browser origin |
-| R4 | EF Core migration fails or ApplySnakeCaseNaming() not applied, causing column name mismatches | Medium | High | P1 | Backend integration test verifying DB connection and snake_case column resolution |
-| R5 | Problem Details middleware not intercepting unhandled exceptions (stack traces exposed) | Low | High | P1 | Unit test for ExceptionHandlingMiddleware; API integration test with forced error path |
-| R6 | Mobile viewport rendering — NavigationRail shown on mobile instead of NavigationBar | Medium | Medium | P1 | Playwright mobile-chrome project (Pixel 5) explicit component visibility assertions |
-| R7 | Frontend TypeScript strict mode compile errors — project not buildable | Low | High | P1 | Build smoke test (npm run build exits 0) as pre-test gate |
-| R8 | SPA navigation causes full page reload — FR28 violated | Low | High | P1 | Playwright navigation event listener (no 'load' event during in-app routing) |
-| R9 | Backend Scalar documentation page not reachable (misconfigured DI) | Low | Low | P3 | Simple HTTP check to `/scalar` endpoint |
+| # | Risk Area | Probability | Impact | Priority | Mitigation Strategy |
+|---|-----------|-------------|--------|----------|---------------------|
+| R1 | **CORS misconfiguration** between frontend (5173) and backend (5000) silently blocks all API calls | High | Critical | P0 | Explicit integration test: verify OPTIONS preflight + actual request returns 200 from `localhost:5173` |
+| R2 | **TypeScript strict mode** breaks compilation on first run (implicit `any`, missing types in dependencies) | Medium | High | P0 | Unit/build test: `npx tsc --noEmit` exits with code 0 |
+| R3 | **ExceptionHandlingMiddleware** missing or mis-ordered exposes raw stack traces to clients | Medium | Critical | P0 | Integration test: trigger unhandled exception, assert Problem Details RFC 7807 format with no `stackTrace` key |
+| R4 | **TanStack Router deep-linking** fails on direct URL access due to missing server-side fallback (SPA 404 issue) | Medium | High | P1 | E2E/Component test: navigate directly to `/clientes` and `/contactos`, assert correct view without redirect |
+| R5 | **EF Core `ApplySnakeCaseNaming()`** not applied or applied before other configurations, breaking future migrations | Low | High | P1 | Integration test: verify `siesa_agents_db` created, assert `__EFMigrationsHistory` table uses snake_case |
+| R6 | **PostgreSQL connection string** missing in `appsettings.Development.json`, causing silent startup failure | Medium | Medium | P1 | Integration test: `dotnet run` health check endpoint responds 200 |
+| R7 | **NavigationRail/NavigationBar** from siesa-ui-kit renders incorrectly at responsive breakpoint (lg: 1024px) | Low | Medium | P2 | Component test with viewport resize: assert rail visible at 1280px, navbar visible at 375px |
+| R8 | **Scalar registration** accidentally replaced by Swagger middleware, violating corporate standards | Low | Low | P2 | Smoke test: GET `/scalar` returns 200 |
+| R9 | **Solution project references** (.csproj not correctly linked in .sln) cause build failures in CI | Low | Medium | P2 | Build test: `dotnet build SiesaAgents.sln` exits 0 |
 
-**Top 3 critical risk areas:**
-1. Navigation shell rendering correctness across breakpoints (R1, R6) — foundation for all future UI testing
-2. TanStack Router deep linking and SPA-mode navigation (R2, R8) — AC-E1.2 and AC-E1.3 depend entirely on this
-3. CORS + backend foundation (R3, R4) — any misconfig blocks all subsequent epics from day one
+### Top 3 Risk Areas for Epic 1
+
+1. **CORS + API connectivity** (R1) — the frontend and backend are on different ports; any misconfiguration blocks the entire app and is invisible until runtime.
+2. **Problem Details middleware** (R3) — if `ExceptionHandlingMiddleware` is unregistered or ordered after the terminal middleware, stack traces leak to end users, violating NFR6.
+3. **TypeScript strict compilation** (R2) — a single implicit `any` or missing type causes the entire build to fail, blocking all subsequent development.
 
 ---
 
-## 3. Test Strategy by Level
+## 3. Testing Strategy by Level
 
 ### Level Distribution
 
-| Level | Tool | Volume | Focus |
-|---|---|---|---|
-| E2E (UI) | Playwright | 8 tests | Navigation shell, deep linking, responsive layout, SPA routing |
-| API / Integration | Playwright APIRequestContext + .NET integration test | 5 tests | Backend health, CORS, Problem Details, database connection |
-| Component / Unit | Vitest + RTL (frontend), xUnit (backend) | 6 tests | Route configuration, ExceptionHandlingMiddleware, DB context |
-| Smoke / Build | CLI (npm run build, dotnet build) | 2 checks | TypeScript strict compile, .NET solution build |
-
-**Total: 21 test cases**
-
-### Playwright Projects Applicable
-
-| Project | Rationale |
-|---|---|
-| chromium (Desktop Chrome) | Primary browser — all E2E tests |
-| mobile-chrome (Pixel 5) | Mobile layout verification — R1, R6 |
-| firefox | Secondary coverage for navigation tests |
-| edge | Tertiary coverage — smoke only |
-
----
-
-## 4. Test Cases
-
-### 4.1 E2E Tests (Playwright)
-
-#### File: `e2e/tests/foundation/navigation-shell.spec.ts`
-
-| Test ID | Priority | Story | AC | Description |
-|---|---|---|---|---|
-| E2E-F-01 | P0 | 1.2 | AC-E1.1 | Desktop: NavigationRail is visible on left side with Clientes and Contactos entries |
-| E2E-F-02 | P0 | 1.2 | AC-E1.2 | Desktop: Clicking "Clientes" navigates to `/clientes` without full page reload |
-| E2E-F-03 | P0 | 1.2 | AC-E1.2 | Desktop: Clicking "Contactos" navigates to `/contactos` without full page reload |
-| E2E-F-04 | P0 | 1.2 | AC-E1.3 | Deep link: Direct URL `/clientes` renders Clientes view (not redirect) |
-| E2E-F-05 | P0 | 1.2 | AC-E1.3 | Deep link: Direct URL `/contactos` renders Contactos view (not redirect) |
-| E2E-F-06 | P1 | 1.2 | AC-E1.1 | Mobile (Pixel 5): NavigationBar is visible (not NavigationRail) |
-| E2E-F-07 | P1 | 1.2 | AC-E1.1 | Mobile (Pixel 5): Navigation items Clientes and Contactos are tappable |
-| E2E-F-08 | P2 | 1.2 | — | Unknown route displays 404 / not-found view gracefully |
-
-**Implementation notes:**
-- E2E-F-02 and E2E-F-03: Use `page.on('load', ...)` listener to assert no full-page reload occurs during in-app navigation.
-- E2E-F-04 and E2E-F-05: Use `page.goto('/clientes')` directly (no prior app state). Assert route-specific heading or page container is visible.
-- E2E-F-06: Run under `{ use: { ...devices['Pixel 5'] } }` project or set viewport in test.
-
-**Fixture usage:** Use `base.fixture.ts` for navigation. No API data setup needed for Epic 1 shell tests.
-
----
-
-### 4.2 API / Integration Tests
-
-#### Backend Health & CORS (Playwright APIRequestContext)
-##### File: `e2e/tests/foundation/backend-health.spec.ts`
-
-| Test ID | Priority | Story | AC | Description |
-|---|---|---|---|---|
-| API-F-01 | P0 | 1.1 | — | Backend health: GET `http://localhost:5000/scalar` returns 200 |
-| API-F-02 | P0 | 1.1 | — | CORS: Preflight OPTIONS to `/api/v1/clientes` from origin `http://localhost:5173` returns CORS headers |
-| API-F-03 | P1 | 1.3 | — | Problem Details: Hitting non-existent route returns JSON with `status`, `title` fields (no stack trace) |
-
-**Implementation notes:**
-- API-F-02: Use `request.fetch` with method `OPTIONS` and `Origin: http://localhost:5173` header. Assert `Access-Control-Allow-Origin` in response headers.
-- API-F-03: Assert response Content-Type is `application/problem+json`. Assert body has no `stackTrace` or `exception` key.
-
-#### Backend Database Integration (xUnit)
-##### File: `backend/tests/SiesaAgents.IntegrationTests/DatabaseFoundationTests.cs`
-
-| Test ID | Priority | Story | Description |
-|---|---|---|---|
-| INT-F-01 | P1 | 1.3 | AppDbContext can connect to `siesa_agents_db` and `CanConnectAsync()` returns true |
-| INT-F-02 | P1 | 1.3 | Initial migration applied: `__EFMigrationsHistory` table exists and has one entry |
-
-**Notes:** These tests require a running PostgreSQL instance (local dev or testcontainers). Use `WebApplicationFactory` or direct `AppDbContext` with test connection string.
-
----
-
-### 4.3 Component / Unit Tests
-
-#### Frontend Unit Tests (Vitest)
-##### File: `frontend/src/routes/__tests__/routing.test.ts`
-
-| Test ID | Priority | Story | Description |
-|---|---|---|---|
-| UNIT-F-01 | P1 | 1.2 | TanStack Router: route `/clientes` is registered in the route tree |
-| UNIT-F-02 | P1 | 1.2 | TanStack Router: route `/contactos` is registered in the route tree |
-| UNIT-F-03 | P2 | 1.2 | Root layout renders NavigationRail component (desktop viewport) |
-
-#### Backend Unit Tests (xUnit)
-##### File: `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs`
-
-| Test ID | Priority | Story | Description |
-|---|---|---|---|
-| UNIT-F-04 | P1 | 1.3 | ExceptionHandlingMiddleware: unhandled exception returns Problem Details RFC 7807 (status + title + detail) |
-| UNIT-F-05 | P1 | 1.3 | ExceptionHandlingMiddleware: response does not contain `stackTrace` or exception type in body |
-| UNIT-F-06 | P2 | 1.3 | AppDbContext.OnModelCreating: ApplySnakeCaseNaming is called (verified by checking `__EFMigrationsHistory` naming) |
-
----
-
-### 4.4 Build Smoke Checks
-
-| Check ID | Priority | Story | Command | Expected |
-|---|---|---|---|---|
-| BUILD-F-01 | P0 | 1.1 | `pnpm --filter frontend build` | Exit code 0, no TypeScript strict errors |
-| BUILD-F-02 | P0 | 1.1 | `dotnet build SiesaAgents.sln` | Exit code 0, zero errors |
-
-**These must pass before any other tests run. Treat as pre-flight gate.**
-
----
-
-## 5. Test Execution Order & Priority
-
-### P0 — Blocking (must pass before any Epic 2 work)
-
-1. BUILD-F-01 — Frontend compiles without errors
-2. BUILD-F-02 — Backend compiles without errors
-3. E2E-F-01 — NavigationRail visible desktop
-4. E2E-F-02 — SPA navigation Clientes (no full reload)
-5. E2E-F-03 — SPA navigation Contactos (no full reload)
-6. E2E-F-04 — Deep link `/clientes`
-7. E2E-F-05 — Deep link `/contactos`
-8. API-F-01 — Backend health (Scalar loads)
-9. API-F-02 — CORS configured correctly
-
-### P1 — High (should pass before Epic 2 stories begin)
-
-- E2E-F-06, E2E-F-07 — Mobile navigation
-- API-F-03 — Problem Details (no stack trace)
-- INT-F-01, INT-F-02 — Database connected and migrated
-- UNIT-F-04, UNIT-F-05 — Exception middleware correct
-- BUILD-F-01, BUILD-F-02 already covered under P0
-
-### P2 — Medium (complete within sprint)
-
-- E2E-F-08 — 404 route
-- UNIT-F-01, UNIT-F-02, UNIT-F-03 — Route registration and root layout
-- UNIT-F-06 — Snake case naming
-
-### P3 — Low (nice to have)
-
-- API-F-01 with Scalar page rendering assertion (visual check beyond HTTP 200)
-- Cross-browser smoke (firefox, edge) for E2E-F-04 and E2E-F-05
-
----
-
-## 6. Test File Structure
-
 ```
-e2e/
-  tests/
-    foundation/
-      navigation-shell.spec.ts      # E2E-F-01 through E2E-F-08
-      backend-health.spec.ts        # API-F-01, API-F-02, API-F-03
-  pages/
-    navigation.page.ts              # New: NavigationShellPage POM
-  fixtures/
-    base.fixture.ts                 # Existing — reuse as-is
-
-frontend/src/routes/__tests__/
-  routing.test.ts                   # UNIT-F-01, UNIT-F-02, UNIT-F-03
-
-backend/tests/
-  SiesaAgents.UnitTests/
-    Middleware/
-      ExceptionHandlingMiddlewareTests.cs   # UNIT-F-04, UNIT-F-05
-    Infrastructure/
-      AppDbContextTests.cs                  # UNIT-F-06
-  SiesaAgents.IntegrationTests/
-    DatabaseFoundationTests.cs             # INT-F-01, INT-F-02
+Epic 1 Test Pyramid
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  E2E (Playwright)          ▌▌▌▌▌▌▌▌         2 tests
+  API Integration (xUnit)   ▌▌▌▌▌▌▌▌▌▌▌▌▌   7 tests
+  Component (Vitest+RTL)    ▌▌▌▌▌▌▌▌▌▌▌▌     6 tests
+  Unit (Vitest/xUnit)       ▌▌▌▌▌▌            4 tests
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total                                        19 tests
 ```
 
+### Rationale
+
+- **Epic 1 is infrastructure-heavy, not domain-heavy** — most value comes from integration and build validation, not unit tests.
+- **E2E coverage is minimal** (2 tests) because there is no business logic to exercise end-to-end yet; the shell is verified via component tests which are faster and sufficient.
+- **API integration tests dominate** because CORS, middleware ordering, database connectivity, and endpoint configuration are the primary risks.
+
 ---
 
-## 7. Page Object — NavigationShellPage (to create)
+## 4. Test Cases by Priority
 
-```typescript
-// e2e/pages/navigation.page.ts
-export class NavigationShellPage {
-  readonly navigationRail: Locator;   // siesa-ui-kit NavigationRail root
-  readonly navigationBar: Locator;    // siesa-ui-kit NavigationBar root (mobile)
-  readonly clientesLink: Locator;
-  readonly contactosLink: Locator;
+### P0 — Must Pass Before Any Story Begins Implementation
 
-  constructor(private readonly page: Page) {
-    this.navigationRail   = page.getByRole('navigation', { name: /rail/i });
-    this.navigationBar    = page.getByRole('navigation', { name: /bar/i });
-    this.clientesLink     = page.getByRole('link', { name: /clientes/i });
-    this.contactosLink    = page.getByRole('link', { name: /contactos/i });
-  }
+#### TC-E1-P0-01: Frontend TypeScript Build Passes in Strict Mode
 
-  async goto() {
-    await this.page.goto('/');
-  }
-}
+**Level:** Unit / Build
+**Story:** 1.1
+**Requirement:** AC-1.1 (TypeScript strict mode enabled)
+**Risk covered:** R2
+
+**Precondition:** Frontend project initialized with `npm create vite@latest -- --template react-ts`, `tsconfig.json` has `"strict": true`.
+
+**Test Steps:**
+1. Run `npx tsc --noEmit` from the `frontend/` directory.
+2. Run `npm run build` and observe exit code.
+
+**Expected Result:**
+- `tsc --noEmit` exits with code 0 and zero errors.
+- `npm run build` produces a `dist/` folder with no TypeScript compilation errors.
+
+**Automation:** Vitest/build script — runs as part of CI pre-check.
+
+---
+
+#### TC-E1-P0-02: Frontend Dev Server Starts on Port 5173
+
+**Level:** Unit / Smoke
+**Story:** 1.1
+**Requirement:** AC-1.1 (`npm run dev` starts on port 5173 with no errors)
+**Risk covered:** R2
+
+**Precondition:** All `npm install` dependencies are installed.
+
+**Test Steps:**
+1. Run `npm run dev` in `frontend/`.
+2. After server is ready, perform GET request to `http://localhost:5173`.
+
+**Expected Result:**
+- Process starts without errors in stdout.
+- HTTP 200 response with HTML content containing Vite entry point.
+
+**Automation:** Shell test or Playwright launch fixture.
+
+---
+
+#### TC-E1-P0-03: Backend Starts and Scalar Loads
+
+**Level:** API Integration
+**Story:** 1.1
+**Requirement:** AC-1.1 (backend starts on port 5000, Scalar loads at `/scalar`)
+**Risk covered:** R8
+
+**Precondition:** `dotnet run` in `SiesaAgents.API/`. PostgreSQL running locally.
+
+**Test Steps:**
+1. Start backend.
+2. GET `http://localhost:5000/scalar`.
+
+**Expected Result:**
+- HTTP 200 with HTML containing Scalar UI (not Swagger).
+- No `swagger-ui` string present in response body.
+
+**Automation:** xUnit integration test using `WebApplicationFactory<Program>`.
+
+---
+
+#### TC-E1-P0-04: CORS Allows Requests from localhost:5173
+
+**Level:** API Integration
+**Story:** 1.1
+**Requirement:** AC-1.1 (CORS from localhost:5173 without errors)
+**Risk covered:** R1
+
+**Precondition:** Backend running. CORS configured in `Program.cs`.
+
+**Test Steps:**
+1. Send OPTIONS preflight to `http://localhost:5000/api/v1/` with headers:
+   - `Origin: http://localhost:5173`
+   - `Access-Control-Request-Method: GET`
+2. Send GET `http://localhost:5000/api/v1/` with `Origin: http://localhost:5173`.
+
+**Expected Result:**
+- OPTIONS returns 204 with `Access-Control-Allow-Origin: http://localhost:5173`.
+- GET returns with `Access-Control-Allow-Origin` header present.
+- No `403` or missing CORS header.
+
+**Automation:** xUnit integration test with `HttpClient`.
+
+---
+
+#### TC-E1-P0-05: ExceptionHandlingMiddleware Returns Problem Details RFC 7807
+
+**Level:** API Integration
+**Story:** 1.3
+**Requirement:** AC-1.3 (Problem Details on unhandled exception, NFR6)
+**Risk covered:** R3
+
+**Precondition:** Backend running. A test endpoint that intentionally throws `Exception("test error")` exists (or use a minimal endpoint registered only in test configuration).
+
+**Test Steps:**
+1. Register a test endpoint `GET /api/v1/test-error` that throws `new Exception("internal test")`.
+2. Call the endpoint via `WebApplicationFactory`.
+3. Inspect the response body.
+
+**Expected Result:**
+- HTTP status: 500 (or appropriate mapped status).
+- `Content-Type: application/problem+json`.
+- Response JSON contains `status`, `title`, `detail` fields.
+- Response JSON does NOT contain `stackTrace`, `exception`, or `innerException` keys.
+- No raw C# exception message exposed.
+
+**Automation:** xUnit integration test.
+
+---
+
+### P1 — Must Pass Before Story is Closed as Done
+
+#### TC-E1-P1-01: SPA Navigation — No Full Page Reload Between Routes
+
+**Level:** Component (Vitest + RTL)
+**Story:** 1.2
+**Requirement:** AC-E1.2 (navigate between Clientes and Contactos without full page reloads), FR28
+
+**Precondition:** TanStack Router configured with `/clientes` and `/contactos` routes. Root layout with NavigationRail rendered.
+
+**Test Steps:**
+1. Render `<RouterProvider>` wrapping the app shell.
+2. Simulate user click on "Clientes" nav item.
+3. Assert URL is `/clientes` and view content renders.
+4. Simulate user click on "Contactos" nav item.
+5. Assert URL is `/contactos` and view content renders.
+6. Verify `window.location.reload()` was NOT called (router navigation, not full reload).
+
+**Expected Result:**
+- `useNavigate()` / router link navigation occurs (no `window.location.href` assignment).
+- Both route views render without unmounting the shell layout.
+
+**Automation:** Vitest + `@testing-library/react` + `@tanstack/react-router` test utilities.
+
+---
+
+#### TC-E1-P1-02: Deep Linking — Direct URL Access to /clientes
+
+**Level:** E2E (Playwright)
+**Story:** 1.2
+**Requirement:** AC-E1.3 (deep linking), FR30
+
+**Precondition:** Frontend dev server running.
+
+**Test Steps:**
+1. Open browser directly to `http://localhost:5173/clientes` (no prior navigation).
+2. Wait for page to render.
+
+**Expected Result:**
+- The Clientes view is rendered (contains expected heading or route-specific content).
+- No redirect to a home/root screen.
+- No 404 or blank page.
+
+**Automation:** Playwright E2E test.
+
+---
+
+#### TC-E1-P1-03: Deep Linking — Direct URL Access to /contactos
+
+**Level:** E2E (Playwright)
+**Story:** 1.2
+**Requirement:** AC-E1.3 (deep linking), FR30
+
+**Precondition:** Frontend dev server running.
+
+**Test Steps:**
+1. Open browser directly to `http://localhost:5173/contactos`.
+2. Wait for page to render.
+
+**Expected Result:**
+- The Contactos view is rendered.
+- No redirect or blank page.
+
+**Automation:** Playwright E2E test.
+
+---
+
+#### TC-E1-P1-04: 404 Route — Unknown URL Shows Not-Found View
+
+**Level:** Component (Vitest + RTL)
+**Story:** 1.2
+**Requirement:** AC-1.2 (404 / not-found view displayed gracefully)
+
+**Test Steps:**
+1. Render router with path set to `/ruta-que-no-existe`.
+2. Assert a "not found" or 404 component is displayed.
+
+**Expected Result:**
+- A not-found component renders (not a blank screen, not a JS error).
+- Navigation shell is still visible (layout persists).
+
+**Automation:** Vitest + RTL.
+
+---
+
+#### TC-E1-P1-05: EF Core Migration Creates Database and Migrations Table
+
+**Level:** API Integration
+**Story:** 1.3
+**Requirement:** AC-1.3 (database created with no errors, migrations folder exists)
+**Risk covered:** R5, R6
+
+**Precondition:** PostgreSQL running locally at connection string in `appsettings.Development.json`. No `siesa_agents_db` database exists.
+
+**Test Steps:**
+1. Run `dotnet ef database update` in `SiesaAgents.Infrastructure`.
+2. Connect to PostgreSQL and query `information_schema.tables` in `siesa_agents_db`.
+
+**Expected Result:**
+- `siesa_agents_db` database created with no errors.
+- `__ef_migrations_history` table exists (snake_case — confirms `ApplySnakeCaseNaming()` is active).
+- No domain tables exist yet (`clientes`, `contactos` absent — scope note respected).
+
+**Automation:** xUnit integration test using `TestContainers` (Postgres) or local test database.
+
+---
+
+#### TC-E1-P1-06: Clean Architecture Solution Builds Without Errors
+
+**Level:** Unit / Build
+**Story:** 1.1
+**Requirement:** AC-1.1 (four CA projects referenced correctly in solution)
+**Risk covered:** R9
+
+**Test Steps:**
+1. Run `dotnet build SiesaAgents.sln` from the `backend/` directory.
+
+**Expected Result:**
+- All four projects build successfully: `SiesaAgents.API`, `SiesaAgents.Application`, `SiesaAgents.Domain`, `SiesaAgents.Infrastructure`.
+- Zero errors, zero unresolved project references.
+- `dotnet build` exits with code 0.
+
+**Automation:** CI build step / shell test.
+
+---
+
+### P2 — Should Pass Before Epic Is Marked Complete
+
+#### TC-E1-P2-01: NavigationRail Visible on Desktop Viewport
+
+**Level:** Component (Vitest + RTL)
+**Story:** 1.2
+**Requirement:** AC-1.2 (NavigationRail visible on desktop, siesa-ui-kit)
+
+**Test Steps:**
+1. Render the root layout at viewport width 1280px.
+2. Query for the `NavigationRail` component (siesa-ui-kit).
+
+**Expected Result:**
+- NavigationRail component is in the DOM and visible.
+- Contains "Clientes" and "Contactos" navigation entries.
+
+**Automation:** Vitest + RTL with `jsdom` viewport configuration.
+
+---
+
+#### TC-E1-P2-02: NavigationBar Visible on Mobile Viewport
+
+**Level:** Component (Vitest + RTL)
+**Story:** 1.2
+**Requirement:** AC-1.2 (mobile NavigationBar, FR29)
+**Risk covered:** R7
+
+**Test Steps:**
+1. Render the root layout at viewport width 375px.
+2. Query for the `NavigationBar` component (siesa-ui-kit) from siesa-ui-kit.
+
+**Expected Result:**
+- NavigationBar component is in the DOM and visible.
+- NavigationRail is NOT rendered (or is hidden/display:none).
+- All navigation items are present and tappable (accessible).
+
+**Automation:** Vitest + RTL.
+
+---
+
+#### TC-E1-P2-03: Index Route Redirects to /clientes
+
+**Level:** Component (Vitest + RTL)
+**Story:** 1.2
+
+**Test Steps:**
+1. Render router with path set to `/` (root index).
+2. Assert redirect occurs to `/clientes`.
+
+**Expected Result:**
+- URL changes to `/clientes`.
+- Clientes view content is rendered (not a blank page at `/`).
+
+**Automation:** Vitest + RTL.
+
+---
+
+#### TC-E1-P2-04: snake_case Column Naming Applied via ApplySnakeCaseNaming
+
+**Level:** API Integration
+**Story:** 1.3
+**Requirement:** AC-1.3 (snake_case convention applied)
+**Risk covered:** R5
+
+**Test Steps:**
+1. After running `dotnet ef database update`, inspect the SQL schema of `__ef_migrations_history`.
+2. Verify the column names are `migration_id`, `product_version` (snake_case).
+3. Alternatively: confirm `AppDbContext.OnModelCreating` contains `modelBuilder.ApplySnakeCaseNaming()` as the last call.
+
+**Expected Result:**
+- All EF-managed column names in the database are lowercase snake_case.
+- No PascalCase column names exist (e.g., no `MigrationId` — must be `migration_id`).
+
+**Automation:** xUnit integration test querying `information_schema.columns`.
+
+---
+
+### P3 — Nice to Have / Future Sprint
+
+#### TC-E1-P3-01: Vitest Unit Tests Pass in Frontend
+
+**Level:** Unit
+**Story:** 1.1
+
+**Test Steps:**
+1. Run `npx vitest run` from `frontend/`.
+
+**Expected Result:**
+- All unit tests pass.
+- Coverage report generated.
+
+**Automation:** Vitest.
+
+---
+
+#### TC-E1-P3-02: xUnit Unit Tests Pass in Backend
+
+**Level:** Unit
+**Story:** 1.1
+
+**Test Steps:**
+1. Run `dotnet test tests/SiesaAgents.UnitTests` from `backend/`.
+
+**Expected Result:**
+- All unit tests pass.
+- Zero test failures.
+
+**Automation:** xUnit.
+
+---
+
+## 5. Acceptance Criteria Coverage Matrix
+
+| Epic AC | Stories | Test Cases | Status |
+|---------|---------|------------|--------|
+| AC-E1.1: App loads with accessible navigation on mobile and desktop | 1.2 | TC-E1-P2-01, TC-E1-P2-02 | Covered |
+| AC-E1.2: Navigate between Clientes/Contactos without full reload | 1.2 | TC-E1-P1-01 | Covered |
+| AC-E1.3: Direct URL to /clientes and /contactos renders correct views | 1.2 | TC-E1-P1-02, TC-E1-P1-03 | Covered |
+| AC-1.1.a: `npm run dev` starts on 5173 with no errors | 1.1 | TC-E1-P0-01, TC-E1-P0-02 | Covered |
+| AC-1.1.b: TypeScript strict mode enabled | 1.1 | TC-E1-P0-01 | Covered |
+| AC-1.1.c: Backend starts on 5000, Scalar loads at /scalar | 1.1 | TC-E1-P0-03 | Covered |
+| AC-1.1.d: Four CA projects referenced correctly | 1.1 | TC-E1-P1-06 | Covered |
+| AC-1.1.e: CORS allows requests from localhost:5173 | 1.1 | TC-E1-P0-04 | Covered |
+| AC-1.2.a: NavigationRail on desktop with Clientes/Contactos entries | 1.2 | TC-E1-P2-01 | Covered |
+| AC-1.2.b: NavigationBar on mobile, items tappable | 1.2 | TC-E1-P2-02 | Covered |
+| AC-1.2.c: SPA navigation (no full reload) | 1.2 | TC-E1-P1-01 | Covered |
+| AC-1.2.d: Deep linking via URL bar | 1.2 | TC-E1-P1-02, TC-E1-P1-03 | Covered |
+| AC-1.2.e: 404 / not-found view on unknown route | 1.2 | TC-E1-P1-04 | Covered |
+| AC-1.3.a: `siesa_agents_db` created with no errors | 1.3 | TC-E1-P1-05 | Covered |
+| AC-1.3.b: EF Core migrations folder exists | 1.3 | TC-E1-P1-05 | Covered |
+| AC-1.3.c: Problem Details RFC 7807 on unhandled exception (NFR6) | 1.3 | TC-E1-P0-05 | Covered |
+| AC-1.3.d: `ApplySnakeCaseNaming()` applied | 1.3 | TC-E1-P2-04 | Covered |
+
+---
+
+## 6. NFR Coverage
+
+| NFR | Requirement | Covered By | Level |
+|-----|-------------|------------|-------|
+| NFR4 | HTTPS in non-local deployments | Out of scope for Epic 1 (local dev only) | N/A |
+| NFR5 | Input validation / sanitization | No user input in Epic 1 — deferred to Epic 2+ | N/A |
+| NFR6 | No stack traces exposed | TC-E1-P0-05 | API Integration |
+
+---
+
+## 7. Test Execution Order
+
+The following execution order minimizes blocked tests due to environment dependencies:
+
+```
+Phase 1 — Build Gate (P0, no DB needed)
+  1. TC-E1-P0-01  TypeScript strict build
+  2. TC-E1-P0-02  Frontend dev server on 5173
+  3. TC-E1-P1-06  Solution build (dotnet)
+
+Phase 2 — Backend API Gate (P0, DB needed)
+  4. TC-E1-P0-03  Scalar loads
+  5. TC-E1-P0-04  CORS preflight
+  6. TC-E1-P0-05  Problem Details middleware
+
+Phase 3 — Database Gate (P1)
+  7. TC-E1-P1-05  EF Core migration + snake_case
+  8. TC-E1-P2-04  snake_case column verification
+
+Phase 4 — Frontend Shell Tests (P1-P2)
+  9. TC-E1-P1-01  SPA navigation no reload
+ 10. TC-E1-P1-02  Deep link /clientes
+ 11. TC-E1-P1-03  Deep link /contactos
+ 12. TC-E1-P1-04  404 route
+ 13. TC-E1-P2-01  NavigationRail desktop
+ 14. TC-E1-P2-02  NavigationBar mobile
+ 15. TC-E1-P2-03  Index redirect to /clientes
+
+Phase 5 — Unit Test Suites (P3)
+ 16. TC-E1-P3-01  Vitest unit tests
+ 17. TC-E1-P3-02  xUnit unit tests
 ```
 
-**Note:** Locator selectors should be adjusted to match actual siesa-ui-kit rendered HTML. ARIA roles are assumed — validate against component catalog.
+---
+
+## 8. Test Tooling & Environment Requirements
+
+| Tool | Purpose | Project |
+|------|---------|---------|
+| Vitest 2+ | Unit + Component tests | Frontend |
+| @testing-library/react | Component rendering | Frontend |
+| @testing-library/jest-dom | DOM matchers | Frontend |
+| Playwright | E2E tests (deep linking) | Frontend/E2E |
+| xUnit | Unit + Integration tests | Backend |
+| WebApplicationFactory\<Program\> | In-process API testing | Backend |
+| TestContainers (Postgres) | Isolated DB for integration tests | Backend |
+| MSW | API mock for component tests | Frontend |
+
+### Environment Prerequisites
+
+```
+- Node.js 20+ with npm
+- .NET 10 SDK
+- PostgreSQL 18+ running locally on default port 5432
+- Database user with CREATE DATABASE privilege
+- All npm dependencies installed (npm install)
+- All NuGet packages restored (dotnet restore)
+```
 
 ---
 
-## 8. Coverage Matrix — Epic 1
+## 9. Definition of Done for Epic 1
 
-| Requirement | Test IDs | Level | Status |
-|---|---|---|---|
-| AC-E1.1 (accessible navigation desktop + mobile) | E2E-F-01, E2E-F-06, E2E-F-07 | E2E | Designed |
-| AC-E1.2 (navigate without full reload) | E2E-F-02, E2E-F-03 | E2E | Designed |
-| AC-E1.3 (deep linking /clientes, /contactos) | E2E-F-04, E2E-F-05 | E2E | Designed |
-| FR28 (SPA routing, no reload) | E2E-F-02, E2E-F-03 | E2E | Designed |
-| FR29 (mobile access) | E2E-F-06, E2E-F-07 | E2E | Designed |
-| FR30 (deep linking) | E2E-F-04, E2E-F-05 | E2E | Designed |
-| NFR6 (no stack traces) | API-F-03, UNIT-F-04, UNIT-F-05 | API + Unit | Designed |
-| Story 1.1 (frontend compiles, TS strict) | BUILD-F-01 | Smoke | Designed |
-| Story 1.1 (backend compiles, 4 projects) | BUILD-F-02 | Smoke | Designed |
-| Story 1.1 (CORS configured) | API-F-02 | API | Designed |
-| Story 1.3 (DB connected + migrated) | INT-F-01, INT-F-02 | Integration | Designed |
-| Story 1.3 (snake_case naming) | UNIT-F-06 | Unit | Designed |
-| Story 1.3 (Scalar docs) | API-F-01 | API | Designed |
-| Story 1.2 (routes registered) | UNIT-F-01, UNIT-F-02 | Unit | Designed |
-| Story 1.2 (404 handling) | E2E-F-08 | E2E | Designed |
+The epic is considered test-complete when:
 
-**Coverage: 15/15 requirements addressed — 100%**
+- [ ] All P0 test cases pass (TC-E1-P0-01 through TC-E1-P0-05)
+- [ ] All P1 test cases pass (TC-E1-P1-01 through TC-E1-P1-06)
+- [ ] P2 test cases pass or are formally deferred with justification
+- [ ] No P0/P1 test case is skipped without a documented reason
+- [ ] TypeScript build produces zero errors in strict mode
+- [ ] `dotnet build` and `dotnet test` pass with zero failures
+- [ ] CORS, middleware ordering, and Problem Details format manually verified in development environment
 
 ---
 
-## 9. Definition of Done (Epic 1 Testing)
+## 10. Notes for Story Implementation Agents
 
-- [ ] All P0 tests pass (10 test cases / build checks)
-- [ ] All P1 tests pass (9 additional test cases)
-- [ ] NavigationShellPage POM created in `e2e/pages/navigation.page.ts`
-- [ ] `e2e/tests/foundation/` directory and spec files created
-- [ ] Backend unit tests for ExceptionHandlingMiddleware created and passing
-- [ ] Integration test confirms `siesa_agents_db` accessible and migration applied
-- [ ] No Playwright test uses English UI text assertions — all label matchers use Spanish (`/clientes/i`, `/contactos/i`)
-- [ ] Mobile test runs confirmed on `mobile-chrome` project (Pixel 5)
+The following constraints must be enforced during implementation for tests to pass:
+
+1. `ExceptionHandlingMiddleware` must be registered BEFORE endpoint mapping in `Program.cs` middleware pipeline.
+2. `modelBuilder.ApplySnakeCaseNaming()` must be the LAST call inside `OnModelCreating`.
+3. `app.UseSwagger()` must NOT appear anywhere — use `app.MapScalarApiReference()` only.
+4. CORS policy must explicitly allow `http://localhost:5173` as origin.
+5. TanStack Router must be configured with a catch-all `*` route pointing to a NotFound component.
+6. The index route (`/`) must redirect to `/clientes` via `<Navigate to="/clientes" />` or TanStack Router's `redirect`.
+7. Frontend viewport breakpoint for nav component swap is `lg: 1024px` — use Tailwind responsive classes, not JS media queries, where possible.
