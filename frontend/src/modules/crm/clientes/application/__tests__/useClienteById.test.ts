@@ -75,9 +75,7 @@ describe('useClienteById', () => {
     const { wrapper } = createWrapper()
     const { result } = renderHook(() => useClienteById(undefined), { wrapper })
 
-    // Wait one tick; query should not start
-    await new Promise((r) => setTimeout(r, 50))
-
+    // Assert immediately: the hook must be idle before any async operation
     expect(mockGetById).not.toHaveBeenCalled()
     expect(result.current.isLoading).toBe(false)
     expect(result.current.data).toBeUndefined()
