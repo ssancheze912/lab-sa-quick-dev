@@ -55,6 +55,9 @@ public class GetClientesQueryHandlerTests
         public Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken ct)
             => Task.FromResult(_data);
 
+        public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+            => Task.FromResult(_data.FirstOrDefault(c => c.Id == id));
+
         public Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
             => Task.CompletedTask;
 
