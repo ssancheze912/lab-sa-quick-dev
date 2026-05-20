@@ -72,8 +72,8 @@ test.describe('Story 1.1 — Frontend Edge Cases & Boundary Conditions', () => {
     await page.goto('/');
     // Wait for React hydration to complete
     await page.waitForLoadState('domcontentloaded');
-    // Give React strict mode time to complete the double-render
-    await page.waitForTimeout(500);
+    // Wait for React strict mode double-render cycle to complete
+    await page.waitForLoadState('networkidle');
 
     const jsErrors = runtimeErrors.filter(
       (e) =>
