@@ -1,8 +1,14 @@
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddCors(options =>
 {
@@ -12,19 +18,12 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-builder.Services.AddProblemDetails(options =>
-{
-    options.CustomizeProblemDetails = ctx =>
-    {
-        ctx.ProblemDetails.Extensions.Remove("traceId");
-        ctx.ProblemDetails.Instance = null;
-    };
-});
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
-app.UseExceptionHandler();
-app.UseStatusCodePages();
+// ExceptionHandlingMiddleware must be BEFORE UseCors and routing (AC2, NFR6)
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -32,6 +31,8 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+
+app.MapHealthChecks("/health");
 
 if (app.Environment.IsDevelopment())
 {
