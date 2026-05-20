@@ -108,11 +108,12 @@ describe('ClienteDetailPanel', () => {
   // ---------------------------------------------------------------------------
   // UNIT-C-FE-CDP-05: 404 error state renders data-testid="cliente-not-found"
   // Boundary: E2E-C-10 depends on this element being present for non-existent IDs
+  // The component checks error?.response?.status === 404 (axios-shaped error).
   // ---------------------------------------------------------------------------
   it('UNIT-C-FE-CDP-05 — 404 error renders "cliente-not-found" testid', () => {
-    const notFoundError = Object.assign(new Error('Not Found'), {
-      response: { status: 404 },
-    })
+    // Simulate an axios-shaped 404 error with a plain object (not new Error())
+    // to avoid any property enumeration issues with Error instances in mocks.
+    const notFoundError = { message: 'Not Found', response: { status: 404 } }
 
     mockUseClienteById.mockReturnValue({
       data: undefined,
@@ -131,9 +132,7 @@ describe('ClienteDetailPanel', () => {
   // Boundary: E2E-C-10 asserts /cliente no encontrado/i
   // ---------------------------------------------------------------------------
   it('UNIT-C-FE-CDP-06 — 404 error shows "Cliente no encontrado" text', () => {
-    const notFoundError = Object.assign(new Error('Not Found'), {
-      response: { status: 404 },
-    })
+    const notFoundError = { message: 'Not Found', response: { status: 404 } }
 
     mockUseClienteById.mockReturnValue({
       data: undefined,
@@ -152,9 +151,7 @@ describe('ClienteDetailPanel', () => {
   // Error path: not-found state must not show any stale field content
   // ---------------------------------------------------------------------------
   it('UNIT-C-FE-CDP-07 — 404 error does not render any field testids', () => {
-    const notFoundError = Object.assign(new Error('Not Found'), {
-      response: { status: 404 },
-    })
+    const notFoundError = { message: 'Not Found', response: { status: 404 } }
 
     mockUseClienteById.mockReturnValue({
       data: undefined,
