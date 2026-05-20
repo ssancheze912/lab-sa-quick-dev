@@ -10,16 +10,32 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         {
             await next(context);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            context.Response.ContentType = "application/problem+json";
-            context.Response.StatusCode = 500;
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Status = 500,
-                Title = "An unexpected error occurred.",
-                Detail = null
-            });
+            await HandleExceptionAsync(context, ex);
         }
+    }
+
+    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        var (statusCode, title) = exception switch
+        {
+            KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
+            ArgumentException => (StatusCodes.Status400BadRequest, "Bad request"),
+            InvalidOperationException => (StatusCodes.Status409Conflict, "Conflict"),
+            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
+        };
+
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/problem+json";
+
+        var problemDetails = new ProblemDetails
+        {
+            Status = statusCode,
+            Title = title,
+            Detail = exception.Message   // Message only — never StackTrace
+        };
+
+        await context.Response.WriteAsJsonAsync(problemDetails);
     }
 }
