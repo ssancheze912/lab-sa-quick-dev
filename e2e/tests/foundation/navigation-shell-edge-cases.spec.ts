@@ -224,21 +224,15 @@ test.describe('Story 1.2 — Navigation Shell E2E Edge Cases', () => {
       await page.keyboard.press('Tab');
 
       // THEN: A nav item becomes focused (either clientes or contactos)
-      const focusedTestId = await page.evaluate(() => {
-        const el = document.activeElement;
-        return el?.getAttribute('data-testid') ?? '';
-      });
-
-      // At least one focusable element is a nav item or within the nav
       const focusedEl = await page.evaluate(() => {
         const el = document.activeElement;
         return el?.closest('[data-testid^="nav-item-"]')?.getAttribute('data-testid') ??
           el?.getAttribute('data-testid') ?? '';
       });
 
-      // The focused element should be somewhere in the page (not stuck at body)
-      const bodyHasFocus = await page.evaluate(() => document.activeElement === document.body);
-      expect(bodyHasFocus).toBe(false);
+      // The focused element must be a nav item — not just any element on the page
+      // TODO (TEA Review): Strengthen assertion if Tab order lands on a non-nav element first; consider pressing Tab multiple times - See test-review-1-2.md
+      expect(focusedEl).toMatch(/^nav-item-(clientes|contactos)$/);
     });
   });
 
