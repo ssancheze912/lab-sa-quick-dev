@@ -3,14 +3,13 @@ import { test, expect } from '@playwright/test';
 const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
 
 /**
- * ATDD — Story 2.1: Client List & Search — API Integration Tests
- *
- * Tests are in RED phase — they validate the REST contract for GET /api/v1/clientes
- * BEFORE the endpoint exists.
+ * ATDD — Story 2.1 & 2.2: Client API Integration Tests
  *
  * Coverage:
  *   API-C-07  P1  — GET /api/v1/clientes returns a JSON array where each item
  *                   contains at minimum: id (UUID), nombre, nit fields
+ *   API-C-08  P1  — GET /api/v1/clientes/:id with valid ID returns 200 and full client object
+ *   API-C-09  P1  — GET /api/v1/clientes/:id with non-existent ID returns 404 Problem Details
  */
 
 test.describe('Story 2.1 — API: GET /api/v1/clientes', () => {
@@ -84,5 +83,83 @@ test.describe('Story 2.1 — API: GET /api/v1/clientes', () => {
     expect(Array.isArray(body)).toBe(true);
     expect((body as Record<string, unknown>).title).toBeUndefined();
     expect((body as Record<string, unknown>).status).toBeUndefined();
+  });
+});
+
+test.describe('Story 2.2 — API: GET /api/v1/clientes/:id', () => {
+  const createdIds: string[] = [];
+
+  test.afterEach(async ({ request }) => {
+    for (const id of createdIds) {
+      await request.delete(`${API_BASE_URL}/api/v1/clientes/${id}`).catch(() => null);
+    }
+    createdIds.length = 0;
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-C-08 (P1)
+  // Given a valid clienteId that exists in the system
+  // When GET /api/v1/clientes/:id is called
+  // Then the response is 200 OK with full client object
+  // ---------------------------------------------------------------------------
+  test('API-C-08 — GET /api/v1/clientes/:id con ID válido devuelve 200 y el objeto completo del cliente', async ({ request }) => {
+    // GIVEN — a client is created
+    const payload = {
+      nombre: 'Empresa API-C-08 Test',
+      nit: `900${Date.now().toString().slice(-9)}`,
+      telefono: '+57 1 234 5678',
+      ciudad: 'Bogotá',
+    };
+    const createResponse = await request.post(`${API_BASE_URL}/api/v1/clientes`, { data: payload });
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+    createdIds.push(created.id);
+
+    // WHEN — GET /api/v1/clientes/:id is called
+    const response = await request.get(`${API_BASE_URL}/api/v1/clientes/${created.id}`);
+
+    // THEN — response is 200 OK
+    expect(response.status()).toBe(200);
+
+    // AND — body contains all required fields
+    const body = await response.json();
+    expect(body.id).toBe(created.id);
+    expect(body.nombre).toBe(payload.nombre);
+    expect(body.nit).toBe(payload.nit);
+    expect(body.telefono).toBe(payload.telefono);
+    expect(body.ciudad).toBe(payload.ciudad);
+
+    // AND — createdAt is ISO 8601 with timezone (DateTimeOffset)
+    expect(typeof body.createdAt).toBe('string');
+    expect(body.createdAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+    );
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-C-09 (P1)
+  // Given a clienteId that does NOT exist in the system
+  // When GET /api/v1/clientes/:id is called
+  // Then the response is 404 with Problem Details (no stack trace — NFR6)
+  // ---------------------------------------------------------------------------
+  test('API-C-09 — GET /api/v1/clientes/:id con ID inexistente devuelve 404 Problem Details sin stack trace', async ({ request }) => {
+    // GIVEN — a UUID that does not exist in the system
+    const nonExistentId = '00000000-0000-4000-8000-000000000000';
+
+    // WHEN — GET /api/v1/clientes/:id is called
+    const response = await request.get(`${API_BASE_URL}/api/v1/clientes/${nonExistentId}`);
+
+    // THEN — response is 404
+    expect(response.status()).toBe(404);
+
+    // AND — body is Problem Details (RFC 7807)
+    const body = await response.json();
+    expect(body.status).toBe(404);
+    expect(typeof body.title).toBe('string');
+
+    // AND — no stack trace is exposed (NFR6)
+    expect(body.stackTrace).toBeUndefined();
+    expect(body.exception).toBeUndefined();
+    expect(body.detail).not.toMatch(/at SiesaAgents/i);
   });
 });

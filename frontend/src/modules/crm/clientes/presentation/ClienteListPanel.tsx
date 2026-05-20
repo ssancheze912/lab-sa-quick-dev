@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { Link, useParams } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useClientes } from '../application/useClientes'
@@ -9,6 +10,8 @@ import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 export function ClienteListPanel() {
   const [searchQuery, setSearchQuery] = useState('')
   const { data = [], isLoading, isError, refetch } = useClientes()
+  const params = useParams({ strict: false }) as { clienteId?: string }
+  const activeClienteId = params.clienteId
 
   const filteredClientes = useMemo(() => {
     if (!searchQuery.trim()) return data
@@ -62,7 +65,17 @@ export function ClienteListPanel() {
           <ul role="list" className="flex flex-col gap-0.5 p-2">
             {filteredClientes.map((cliente) => (
               <li key={cliente.id}>
-                <ClientListItem nombre={cliente.nombre} nit={cliente.nit} />
+                <Link
+                  to="/clientes/$clienteId"
+                  params={{ clienteId: cliente.id }}
+                  style={{ textDecoration: 'none' }}
+                >
+                  <ClientListItem
+                    nombre={cliente.nombre}
+                    nit={cliente.nit}
+                    isActive={cliente.id === activeClienteId}
+                  />
+                </Link>
               </li>
             ))}
           </ul>

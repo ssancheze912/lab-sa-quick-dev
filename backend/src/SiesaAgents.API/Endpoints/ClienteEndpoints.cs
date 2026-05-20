@@ -20,6 +20,20 @@ public static class ClienteEndpoints
         .WithName("GetClientes")
         .Produces<ClienteDto[]>(StatusCodes.Status200OK);
 
+        group.MapGet("/{id:guid}", async (Guid id, GetClienteByIdQueryHandler handler, CancellationToken ct) =>
+        {
+            var result = await handler.HandleAsync(new GetClienteByIdQuery(id), ct);
+            if (result is null)
+                return Results.Problem(
+                    title: "Cliente no encontrado",
+                    detail: $"No existe un cliente con id '{id}'.",
+                    statusCode: StatusCodes.Status404NotFound);
+            return Results.Ok(result);
+        })
+        .WithName("GetClienteById")
+        .Produces<ClienteDto>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status404NotFound);
+
         group.MapPost("/", async (CreateClienteCommand command, CreateClienteCommandHandler handler, CancellationToken ct) =>
         {
             var result = await handler.HandleAsync(command, ct);
