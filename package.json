@@ -1,0 +1,13 @@
+{
+  "name": "siesa-agents-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:foundation": "playwright test e2e/tests/foundation"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "typescript": "^5.0.0"
+  }
+}

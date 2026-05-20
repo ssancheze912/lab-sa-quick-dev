@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,43 +22,43 @@ so that the team has a working development environment with both servers running
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Initialize Frontend project (AC: 1)
-  - [ ] Run `npm create vite@latest frontend -- --template react-ts` in project root
-  - [ ] Enable TypeScript strict mode in `tsconfig.app.json` (`"strict": true`)
-  - [ ] Install all required dependencies (see Dev Notes for exact commands)
-  - [ ] Configure `vite.config.ts` with server port 5173 and `@tanstack/router-plugin`
-  - [ ] Configure TailwindCSS v4 via `@tailwindcss/vite` plugin
-  - [ ] Initialize shadcn/ui with `npx shadcn@latest init && npx shadcn@latest add dialog breadcrumb`
-  - [ ] Verify `npm run dev` starts without errors
+- [x] Task 1 — Initialize Frontend project (AC: 1)
+  - [x] Run `npm create vite@latest frontend -- --template react-ts` in project root
+  - [x] Enable TypeScript strict mode in `tsconfig.app.json` (`"strict": true`)
+  - [x] Install all required dependencies (see Dev Notes for exact commands)
+  - [x] Configure `vite.config.ts` with server port 5173 and `@tanstack/router-plugin`
+  - [x] Configure TailwindCSS v4 via `@tailwindcss/vite` plugin
+  - [x] Initialize shadcn/ui with `npx shadcn@latest init && npx shadcn@latest add dialog breadcrumb`
+  - [x] Verify `npm run dev` starts without errors
 
-- [ ] Task 2 — Initialize Backend solution with 4 Clean Architecture projects (AC: 2, 3)
-  - [ ] Create solution: `dotnet new sln -n SiesaAgents`
-  - [ ] Create API project: `dotnet new webapi -n SiesaAgents.API --no-openapi -o src/SiesaAgents.API`
-  - [ ] Create Application layer: `dotnet new classlib -n SiesaAgents.Application -o src/SiesaAgents.Application`
-  - [ ] Create Domain layer: `dotnet new classlib -n SiesaAgents.Domain -o src/SiesaAgents.Domain`
-  - [ ] Create Infrastructure layer: `dotnet new classlib -n SiesaAgents.Infrastructure -o src/SiesaAgents.Infrastructure`
-  - [ ] Create unit test project: `dotnet new xunit -n SiesaAgents.UnitTests -o tests/SiesaAgents.UnitTests`
-  - [ ] Add all 4 projects to the solution file
-  - [ ] Add project references: API → Application + Infrastructure; Application → Domain; Infrastructure → Domain + Application
-  - [ ] Verify `dotnet build` exits 0
+- [x] Task 2 — Initialize Backend solution with 4 Clean Architecture projects (AC: 2, 3)
+  - [x] Create solution: `dotnet new sln -n SiesaAgents`
+  - [x] Create API project: `dotnet new webapi -n SiesaAgents.API --no-openapi -o src/SiesaAgents.API`
+  - [x] Create Application layer: `dotnet new classlib -n SiesaAgents.Application -o src/SiesaAgents.Application`
+  - [x] Create Domain layer: `dotnet new classlib -n SiesaAgents.Domain -o src/SiesaAgents.Domain`
+  - [x] Create Infrastructure layer: `dotnet new classlib -n SiesaAgents.Infrastructure -o src/SiesaAgents.Infrastructure`
+  - [x] Create unit test project: `dotnet new xunit -n SiesaAgents.UnitTests -o tests/SiesaAgents.UnitTests`
+  - [x] Add all 4 projects to the solution file
+  - [x] Add project references: API → Application + Infrastructure; Application → Domain; Infrastructure → Domain + Application
+  - [x] Verify `dotnet build` exits 0
 
-- [ ] Task 3 — Configure Scalar for API documentation (AC: 2)
-  - [ ] Add Scalar package: `dotnet add src/SiesaAgents.API package Scalar.AspNetCore`
-  - [ ] Register `builder.Services.AddOpenApi()` and `app.MapOpenApi()` in `Program.cs`
-  - [ ] Register `app.MapScalarApiReference()` in `Program.cs`
-  - [ ] **NEVER** use `app.UseSwagger()` or `app.UseSwaggerUI()`
-  - [ ] Configure Kestrel to listen on port 5000 via `launchSettings.json` or `appsettings.Development.json`
-  - [ ] Verify GET `/scalar` returns HTTP 200
+- [x] Task 3 — Configure Scalar for API documentation (AC: 2)
+  - [x] Add Scalar package: `dotnet add src/SiesaAgents.API package Scalar.AspNetCore`
+  - [x] Register `builder.Services.AddOpenApi()` and `app.MapOpenApi()` in `Program.cs`
+  - [x] Register `app.MapScalarApiReference()` in `Program.cs`
+  - [x] **NEVER** use `app.UseSwagger()` or `app.UseSwaggerUI()`
+  - [x] Configure Kestrel to listen on port 5000 via `launchSettings.json` or `appsettings.Development.json`
+  - [x] Verify GET `/scalar` returns HTTP 200
 
-- [ ] Task 4 — Configure CORS (AC: 4)
-  - [ ] In `Program.cs`, register CORS policy allowing origin `http://localhost:5173`
-  - [ ] Apply CORS middleware before routing: `app.UseCors()`
-  - [ ] Verify preflight OPTIONS request from `localhost:5173` returns `Access-Control-Allow-Origin`
+- [x] Task 4 — Configure CORS (AC: 4)
+  - [x] In `Program.cs`, register CORS policy allowing origin `http://localhost:5173`
+  - [x] Apply CORS middleware before routing: `app.UseCors()`
+  - [x] Verify preflight OPTIONS request from `localhost:5173` returns `Access-Control-Allow-Origin`
 
-- [ ] Task 5 — Install required backend packages
-  - [ ] `dotnet add src/SiesaAgents.Application package FluentValidation`
-  - [ ] `dotnet add src/SiesaAgents.Infrastructure package Npgsql.EntityFrameworkCore.PostgreSQL`
-  - [ ] Verify `dotnet restore` completes without errors
+- [x] Task 5 — Install required backend packages
+  - [x] `dotnet add src/SiesaAgents.Application package FluentValidation`
+  - [x] `dotnet add src/SiesaAgents.Infrastructure package Npgsql.EntityFrameworkCore.PostgreSQL`
+  - [x] Verify `dotnet restore` completes without errors
 
 ## Dev Notes
 
@@ -259,6 +259,47 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+- `UseHttpsRedirection` moved to production-only block to prevent HTTP→HTTPS redirect in dev that broke API tests.
+- Added `Microsoft.AspNetCore.OpenApi` package since `--no-openapi` flag excluded it from the webapi template.
+- Problem Details configured with `traceId` removed to satisfy API-F-03 test requirement (no stackTrace/exception/traceId in error responses).
+- TanStack Router plugin generates `routeTree.gen.ts` on first vite build; must run `npx vite build --mode development` before `tsc -b` to generate the file.
+- Playwright version pinned to 1.56.1 (global version) to use pre-installed Chromium browser at `/opt/pw-browsers/chromium_headless_shell-1194`.
+- `playwright.config.ts` updated to use `npm run dev` with `cwd: './frontend'` instead of `pnpm --filter frontend dev`.
+
 ### Completion Notes List
 
+- All 9 E2E tests pass (GREEN): API-F-01, API-F-02, API-F-03, E2E-INIT-01, E2E-INIT-02, E2E-INIT-03, E2E-INIT-04, API-S-01, API-S-02
+- Frontend builds with TypeScript strict mode (`npm run build` exits 0)
+- Backend solution builds with all 4 Clean Architecture projects (`dotnet build` exits 0)
+- dotnet test: 1 test passed (0 failures)
+- CORS configured for `http://localhost:5173`
+- Scalar API docs accessible at `http://localhost:5000/scalar`
+- OpenAPI spec at `http://localhost:5000/openapi/v1.json`
+- Problem Details RFC 7807 responses configured without traceId exposure
+
 ### File List
+
+**Created:**
+- `frontend/` — Vite react-ts project scaffold
+- `frontend/vite.config.ts` — TanStackRouterVite + TailwindCSS v4 + port 5173
+- `frontend/tsconfig.app.json` — TypeScript strict mode enabled
+- `frontend/src/main.tsx` — TanStack Router entry point
+- `frontend/src/routes/__root.tsx` — Root route
+- `frontend/src/routes/index.tsx` — Index route
+- `frontend/src/routeTree.gen.ts` — Auto-generated route tree
+- `frontend/package.json` — All required dependencies
+- `backend/SiesaAgents.sln` — Solution file with 5 projects
+- `backend/src/SiesaAgents.API/` — Minimal API project
+- `backend/src/SiesaAgents.API/Program.cs` — Scalar + CORS + Problem Details
+- `backend/src/SiesaAgents.API/Properties/launchSettings.json` — Port 5000
+- `backend/src/SiesaAgents.Application/` — Application layer (FluentValidation)
+- `backend/src/SiesaAgents.Domain/` — Domain layer (no dependencies)
+- `backend/src/SiesaAgents.Infrastructure/` — Infrastructure (EF Core PostgreSQL)
+- `backend/tests/SiesaAgents.UnitTests/` — xUnit test project
+- `e2e/tests/foundation/project-initialization.spec.ts` — Frontend E2E tests
+- `e2e/tests/foundation/backend-health.spec.ts` — Backend API tests
+- `e2e/tests/foundation/solution-structure.spec.ts` — Architecture tests
+- `package.json` — Root E2E package with @playwright/test@1.56.1
+
+**Modified:**
+- `playwright.config.ts` — Updated webServer command to `npm run dev` with `cwd: './frontend'`
