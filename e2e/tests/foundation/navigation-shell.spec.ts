@@ -1,21 +1,17 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * E2E Acceptance Tests: Story 1.2 — Frontend Navigation Shell
- *
- * RED PHASE: These tests are written BEFORE implementation.
- * They will FAIL until the navigation shell is implemented.
+ * E2E Acceptance Tests: Story 1.2 — Frontend Navigation Shell (Part 1)
  *
  * Covers:
  *   AC1 — NavigationRail (desktop) visible on left with Clientes + Contactos entries; SPA navigation (no full reload)
  *   AC2 — NavigationBar (mobile, < 1024px) visible at bottom; items accessible and tappable
  *   AC3 — Deep linking: /clientes and /contactos render directly without redirection
- *   AC4 — Unknown route renders graceful 404 view (no crash, no blank screen)
- *   AC5 — Nav landmark has aria-label="Navegación principal"; items have Spanish visible labels (WCAG 2.1 AA)
- *   AC6 — Active/selected state on nav item reflects current route
+ *
+ * See navigation-shell-ac4-ac6.spec.ts for AC4, AC5, AC6 and index redirect.
  */
 
-test.describe('Story 1.2 — Frontend Navigation Shell', () => {
+test.describe('Story 1.2 — Frontend Navigation Shell (AC1–AC3)', () => {
 
   // ─── AC1: Desktop NavigationRail ─────────────────────────────────────────
 
@@ -63,21 +59,21 @@ test.describe('Story 1.2 — Frontend Navigation Shell', () => {
     await page.route('**/api/**', (route) => route.continue());
     await page.goto('/');
 
-    // Detect full page reloads via navigation events
+    // Detect full page reloads: a full document reload triggers 'load' on the frame,
+    // whereas TanStack Router pushState navigation does NOT trigger a new document load.
     let hadFullReload = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame() && frame.url().includes('/clientes')) {
-        // TanStack Router uses pushState — no full reload is expected
-        // A full reload would trigger a new document load
-        hadFullReload = true;
-      }
+    page.on('load', () => {
+      hadFullReload = true;
     });
+    // Reset after initial page load is complete
+    hadFullReload = false;
 
     // WHEN: The user clicks the "Clientes" nav item
     await page.getByTestId('nav-item-clientes').click();
 
-    // THEN: URL is /clientes
+    // THEN: URL is /clientes and no full page reload occurred
     await expect(page).toHaveURL(/\/clientes/);
+    expect(hadFullReload, 'SPA navigation should not trigger a full page reload').toBe(false);
   });
 
   test('AC1 — Clicking "Contactos" in NavigationRail navigates to /contactos', async ({ page }) => {
@@ -193,149 +189,5 @@ test.describe('Story 1.2 — Frontend Navigation Shell', () => {
 
     // THEN: The Contactos view content is visible (not blank, not error)
     await expect(page.getByTestId('contactos-view')).toBeVisible();
-  });
-
-  // ─── AC4: 404 Not-Found Route ─────────────────────────────────────────────
-
-  test('AC4 — Unknown route /unknown renders a graceful 404 view (no crash)', async ({ page }) => {
-    // GIVEN: A user navigates to a route that does not exist
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: The page loads at /unknown
-    await page.goto('/unknown');
-
-    // THEN: A 404 view is displayed, no crash, no blank screen
-    await expect(page.getByTestId('not-found-view')).toBeVisible();
-  });
-
-  test('AC4 — 404 view does not show a blank screen', async ({ page }) => {
-    // GIVEN: Navigation to an unknown route
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: Page loads at non-existent route
-    await page.goto('/ruta-que-no-existe');
-
-    // THEN: The body has content (not empty/blank)
-    const bodyText = await page.locator('body').innerText();
-    expect(bodyText.trim().length).toBeGreaterThan(0);
-  });
-
-  test('AC4 — 404 view contains a link back to /clientes', async ({ page }) => {
-    // GIVEN: User lands on a 404 page
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.route('**/api/**', (route) => route.continue());
-    await page.goto('/unknown');
-
-    // THEN: There is a link that navigates back to /clientes
-    const backLink = page.getByTestId('not-found-back-link');
-    await expect(backLink).toBeVisible();
-    await backLink.click();
-    await expect(page).toHaveURL(/\/clientes/);
-  });
-
-  // ─── AC5: Accessibility (WCAG 2.1 AA) ────────────────────────────────────
-
-  test('AC5 — Nav landmark has aria-label="Navegación principal"', async ({ page }) => {
-    // GIVEN: The navigation is rendered on desktop
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: The page loads
-    await page.goto('/');
-
-    // THEN: A nav element with aria-label="Navegación principal" exists
-    await expect(
-      page.locator('nav[aria-label="Navegación principal"]').first()
-    ).toBeAttached();
-  });
-
-  test('AC5 — "Clientes" nav item has visible Spanish label text', async ({ page }) => {
-    // GIVEN: The navigation is rendered
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: The app loads
-    await page.goto('/');
-
-    // THEN: "Clientes" label is visible (Spanish, not english "Clients")
-    await expect(page.getByTestId('nav-item-clientes')).toContainText('Clientes');
-  });
-
-  test('AC5 — "Contactos" nav item has visible Spanish label text', async ({ page }) => {
-    // GIVEN: The navigation is rendered
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: The app loads
-    await page.goto('/');
-
-    // THEN: "Contactos" label is visible (Spanish)
-    await expect(page.getByTestId('nav-item-contactos')).toContainText('Contactos');
-  });
-
-  // ─── AC6: Active/Selected State ───────────────────────────────────────────
-
-  test('AC6 — "Clientes" nav item appears in active/selected state when on /clientes', async ({ page }) => {
-    // GIVEN: The user is on /clientes
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: Navigation renders on /clientes
-    await page.goto('/clientes');
-
-    // THEN: The "Clientes" item has the active marker attribute
-    await expect(page.getByTestId('nav-item-clientes')).toHaveAttribute('data-active', 'true');
-  });
-
-  test('AC6 — "Contactos" nav item is NOT in active state when on /clientes', async ({ page }) => {
-    // GIVEN: The user is on /clientes
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: Navigation renders on /clientes
-    await page.goto('/clientes');
-
-    // THEN: The "Contactos" item does NOT have the active marker
-    await expect(page.getByTestId('nav-item-contactos')).not.toHaveAttribute('data-active', 'true');
-  });
-
-  test('AC6 — "Contactos" nav item appears in active/selected state when on /contactos', async ({ page }) => {
-    // GIVEN: The user is on /contactos
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: Navigation renders on /contactos
-    await page.goto('/contactos');
-
-    // THEN: The "Contactos" item has the active marker attribute
-    await expect(page.getByTestId('nav-item-contactos')).toHaveAttribute('data-active', 'true');
-  });
-
-  test('AC6 — "Clientes" nav item is NOT in active state when on /contactos', async ({ page }) => {
-    // GIVEN: The user is on /contactos
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: Navigation renders on /contactos
-    await page.goto('/contactos');
-
-    // THEN: The "Clientes" item does NOT have the active marker
-    await expect(page.getByTestId('nav-item-clientes')).not.toHaveAttribute('data-active', 'true');
-  });
-
-  // ─── Index Redirect ───────────────────────────────────────────────────────
-
-  test('Index / redirects to /clientes', async ({ page }) => {
-    // GIVEN: The root URL is visited
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: The page loads at /
-    await page.goto('/');
-
-    // THEN: Redirected to /clientes automatically
-    await expect(page).toHaveURL(/\/clientes/);
   });
 });
