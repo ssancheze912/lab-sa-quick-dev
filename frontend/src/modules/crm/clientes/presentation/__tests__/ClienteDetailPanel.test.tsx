@@ -1,7 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
+import axios from 'axios'
 import { ClienteDetailPanel } from '../ClienteDetailPanel'
+
+/**
+ * Creates a real AxiosError with the given HTTP status code.
+ * The component uses isAxiosError(error) from axios, so the error must be
+ * a proper AxiosError instance (not a plain object).
+ */
+function buildAxiosError(status: number) {
+  return axios.isAxiosError
+    ? Object.assign(
+        new axios.AxiosError(`Request failed with status code ${status}`, String(status)),
+        {
+          response: {
+            status,
+            data: {},
+            headers: {},
+            config: {} as never,
+            statusText: status === 404 ? 'Not Found' : 'Internal Server Error',
+          },
+        }
+      )
+    : { response: { status } }
+}
 
 // Mock useClienteById to control all states
 vi.mock('../../application/useClienteById', () => ({
@@ -108,12 +131,10 @@ describe('ClienteDetailPanel', () => {
   // ---------------------------------------------------------------------------
   // UNIT-C-FE-CDP-05: 404 error state renders data-testid="cliente-not-found"
   // Boundary: E2E-C-10 depends on this element being present for non-existent IDs
-  // The component checks error?.response?.status === 404 (axios-shaped error).
+  // The component uses isAxiosError(error) from axios to detect 404 responses.
   // ---------------------------------------------------------------------------
   it('UNIT-C-FE-CDP-05 — 404 error renders "cliente-not-found" testid', () => {
-    // Simulate an axios-shaped 404 error with a plain object (not new Error())
-    // to avoid any property enumeration issues with Error instances in mocks.
-    const notFoundError = { message: 'Not Found', response: { status: 404 } }
+    const notFoundError = buildAxiosError(404)
 
     mockUseClienteById.mockReturnValue({
       data: undefined,
@@ -132,7 +153,7 @@ describe('ClienteDetailPanel', () => {
   // Boundary: E2E-C-10 asserts /cliente no encontrado/i
   // ---------------------------------------------------------------------------
   it('UNIT-C-FE-CDP-06 — 404 error shows "Cliente no encontrado" text', () => {
-    const notFoundError = { message: 'Not Found', response: { status: 404 } }
+    const notFoundError = buildAxiosError(404)
 
     mockUseClienteById.mockReturnValue({
       data: undefined,
@@ -151,7 +172,7 @@ describe('ClienteDetailPanel', () => {
   // Error path: not-found state must not show any stale field content
   // ---------------------------------------------------------------------------
   it('UNIT-C-FE-CDP-07 — 404 error does not render any field testids', () => {
-    const notFoundError = { message: 'Not Found', response: { status: 404 } }
+    const notFoundError = buildAxiosError(404)
 
     mockUseClienteById.mockReturnValue({
       data: undefined,
@@ -167,19 +188,17 @@ describe('ClienteDetailPanel', () => {
   })
 
   // ---------------------------------------------------------------------------
-  // UNIT-C-FE-CDP-08: Generic error (non-404) renders error message
-  // Error path: network error / 500 → shows generic error, not not-found
+  // UNIT-C-FE-CDP-08: Generic error (non-404 AxiosError) renders error message
+  // Error path: 500 status → shows generic error, not not-found
   // ---------------------------------------------------------------------------
   it('UNIT-C-FE-CDP-08 — generic error renders error message (not the 404 message)', () => {
-    const networkError = Object.assign(new Error('Network Error'), {
-      response: { status: 500 },
-    })
+    const serverError = buildAxiosError(500)
 
     mockUseClienteById.mockReturnValue({
       data: undefined,
       isLoading: false,
       isError: true,
-      error: networkError,
+      error: serverError,
     })
 
     render(<ClienteDetailPanel clienteId="some-id" />)
