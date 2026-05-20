@@ -22,7 +22,7 @@ import { test, expect } from '@playwright/test';
  *       xUnit unit tests in backend/tests/SiesaAgents.UnitTests/.
  */
 
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
 
 // ---------------------------------------------------------------------------
 // AC#2 — ExceptionHandlingMiddleware: Problem Details RFC 7807 (NFR6)

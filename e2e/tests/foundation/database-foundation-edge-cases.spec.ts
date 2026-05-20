@@ -25,7 +25,7 @@ import { test, expect } from '@playwright/test';
  *       That spec covers: basic 500 shape, /scalar 200, /swagger 404, server startup.
  */
 
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
 
 // ---------------------------------------------------------------------------
 // AC#2 — ExceptionHandlingMiddleware: Problem Details edge cases
