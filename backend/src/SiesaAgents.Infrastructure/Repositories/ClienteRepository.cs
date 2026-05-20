@@ -22,6 +22,9 @@ public class ClienteRepository : IClienteRepository
             .ToListAsync(ct);
     }
 
+    public async Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+        => await _context.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, ct);
+
     public async Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
     {
         _context.Clientes.Add(cliente);
