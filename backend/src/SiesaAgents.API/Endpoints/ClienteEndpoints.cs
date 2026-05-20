@@ -32,7 +32,7 @@ public static class ClienteEndpoints
         })
         .WithName("GetClienteById")
         .Produces<ClienteDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound);
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPost("/", async (CreateClienteCommand command, CreateClienteCommandHandler handler, CancellationToken ct) =>
         {

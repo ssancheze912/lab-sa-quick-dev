@@ -106,6 +106,9 @@ public class CreateClienteCommandHandlerTests
         public Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken ct)
             => Task.FromResult<IEnumerable<ClienteEntity>>(Array.Empty<ClienteEntity>());
 
+        public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+            => Task.FromResult<ClienteEntity?>(null);
+
         public Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
         {
             CreateCallCount++;
@@ -128,6 +131,9 @@ public class CreateClienteCommandHandlerTests
 
         public Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken ct)
             => Task.FromResult<IEnumerable<ClienteEntity>>(Array.Empty<ClienteEntity>());
+
+        public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+            => Task.FromResult<ClienteEntity?>(null);
 
         public Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
             => Task.FromException(_exception);

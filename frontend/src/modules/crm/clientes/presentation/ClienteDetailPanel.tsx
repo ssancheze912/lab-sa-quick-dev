@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useClienteById } from '../application/useClienteById'
@@ -11,7 +12,8 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
 
   const is404 =
     isError &&
-    (error as { response?: { status?: number } })?.response?.status === 404
+    isAxiosError(error) &&
+    error.response?.status === 404
 
   if (isLoading) {
     return (
