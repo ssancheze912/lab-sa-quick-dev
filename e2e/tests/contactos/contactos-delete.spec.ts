@@ -218,7 +218,7 @@ test.describe('Story 3.5 — Eliminar contacto (E2E)', () => {
     // AND — the contact row is still visible in the list (record unchanged)
     await expect(
       contactosPage.contactoRows.filter({ hasText: contactoData.nombre })
-    ).toBeVisible();
+    ).toHaveCount(1);
 
     // AND — detail panel still shows the contact (it was not removed)
     await expect(contactosPage.detailPanel).toContainText(contactoData.nombre);
