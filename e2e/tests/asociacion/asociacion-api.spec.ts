@@ -487,3 +487,107 @@ test.describe('Story 4.2 — API: PUT /api/v1/contactos/{id}/cliente', () => {
     expect(afterBody.clienteId).toBeNull();
   });
 });
+
+// =============================================================================
+// Story 4.5 — Orphan Contacts Filter: API Integration Tests
+// =============================================================================
+
+test.describe('Story 4.5 — API: GET /api/v1/contactos?sinCliente=true', () => {
+  let apiHelper: ApiHelper;
+  const createdClienteIds: string[] = [];
+  const createdContactoIds: string[] = [];
+
+  test.beforeEach(async ({ request }) => {
+    apiHelper = new ApiHelper(request);
+  });
+
+  test.afterEach(async () => {
+    for (const id of createdContactoIds) {
+      await apiHelper.deleteContacto(id).catch(() => null);
+    }
+    for (const id of createdClienteIds) {
+      await apiHelper.deleteCliente(id).catch(() => null);
+    }
+    createdContactoIds.length = 0;
+    createdClienteIds.length = 0;
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-AC-06 (P0 · AC1 · FR25)
+  // Given 3 contacts exist — 2 with a clienteId, 1 without
+  // When GET /api/v1/contactos?sinCliente=true is called
+  // Then the response is 200 OK
+  //   AND the response body is an array with exactly 1 item
+  //   AND the returned contact has clienteId === null
+  //   AND the 2 contacts with a clienteId are NOT included
+  // ---------------------------------------------------------------------------
+  test('API-AC-06 — GET /api/v1/contactos?sinCliente=true devuelve solo los contactos sin cliente (FR25)', async ({ request }) => {
+    // GIVEN — Create a client to associate 2 contacts with
+    const clienteResponse = await request.post(`${API_BASE_URL}/api/v1/clientes`, {
+      data: {
+        nombre: `Cliente API-AC-06 ${Date.now()}`,
+        nit: `70${Date.now().toString().slice(-9)}`,
+        telefono: '+57 1 500 5000',
+        ciudad: 'Bogotá',
+      },
+    });
+    expect(clienteResponse.status()).toBe(201);
+    const cliente = await clienteResponse.json();
+    createdClienteIds.push(cliente.id);
+
+    // AND — Create 2 contacts WITH a clienteId (should NOT be returned by sinCliente=true)
+    const contacto1Response = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
+      data: buildContacto({ nombre: `Con Cliente API-AC-06 A ${Date.now()}`, clienteId: cliente.id }),
+    });
+    expect(contacto1Response.status()).toBe(201);
+    const contacto1 = await contacto1Response.json();
+    createdContactoIds.push(contacto1.id);
+
+    const contacto2Response = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
+      data: buildContacto({ nombre: `Con Cliente API-AC-06 B ${Date.now()}`, clienteId: cliente.id }),
+    });
+    expect(contacto2Response.status()).toBe(201);
+    const contacto2 = await contacto2Response.json();
+    createdContactoIds.push(contacto2.id);
+
+    // AND — Create 1 orphan contact (clienteId = null — should be returned)
+    const huerfanoResponse = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
+      data: buildContacto({ nombre: `Huerfano API-AC-06 ${Date.now()}`, clienteId: null }),
+    });
+    expect(huerfanoResponse.status()).toBe(201);
+    const huerfano = await huerfanoResponse.json();
+    createdContactoIds.push(huerfano.id);
+
+    // WHEN — GET /api/v1/contactos?sinCliente=true
+    const response = await request.get(`${API_BASE_URL}/api/v1/contactos?sinCliente=true`);
+
+    // THEN — Response is 200 OK
+    expect(response.status()).toBe(200);
+
+    // AND — Body is a direct JSON array (no wrapper object)
+    const body = await response.json();
+    expect(Array.isArray(body)).toBe(true);
+
+    // AND — The array contains exactly 1 item (the orphan contact we created)
+    // Note: filter by id to isolate from other contacts that may exist in the DB
+    const returnedIds = body.map((c: { id: string }) => c.id);
+    expect(returnedIds).toContain(huerfano.id);
+
+    // AND — The contacts with a clienteId are NOT in the response
+    expect(returnedIds).not.toContain(contacto1.id);
+    expect(returnedIds).not.toContain(contacto2.id);
+
+    // AND — Every item in the response has clienteId === null
+    for (const item of body) {
+      expect(item.clienteId).toBeNull();
+    }
+
+    // AND — The returned orphan contact's clienteId is null
+    const returnedHuerfano = body.find((c: { id: string }) => c.id === huerfano.id);
+    expect(returnedHuerfano).toBeDefined();
+    expect(returnedHuerfano!.clienteId).toBeNull();
+
+    // AND — Response is NOT a wrapper object
+    expect((body as Record<string, unknown>).data).toBeUndefined();
+  });
+});

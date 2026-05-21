@@ -1,6 +1,6 @@
 # Story 4.5: Orphan Contacts Filter
 
-Status: ready
+Status: ready-for-dev
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -336,3 +336,15 @@ public async Task<IEnumerable<ContactoEntity>> GetOrphanAsync(CancellationToken 
 - Predecessor stories:
   - `_bmad-output/implementation-artifacts/stories/3-1-contact-list-and-search.md` — `ContactoListView`, `useContactos`, `filterContactos`, `contactoApiRepository`, `Contacto` interface, `EmptyState`, `ErrorPanel`
   - `_bmad-output/implementation-artifacts/stories/4-1-view-associated-contacts-in-client-detail.md` — `IContactoRepository.GetByClienteIdAsync` pattern (reference for adding `GetOrphanAsync`)
+
+## Dev Agent Record
+
+### Agent Model Used
+
+claude-sonnet-4-6
+
+### Debug Log References
+
+### Completion Notes List
+
+### File List

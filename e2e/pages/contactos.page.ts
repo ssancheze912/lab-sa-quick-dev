@@ -15,6 +15,7 @@ export class ContactosPage {
   readonly contactoRows: Locator;
   readonly btnNuevoContacto: Locator;
   readonly filtroSinCliente: Locator;
+  readonly orphanCount: Locator;
 
   // Form (dialog/drawer)
   readonly form: Locator;
@@ -41,7 +42,8 @@ export class ContactosPage {
     this.searchInput = page.getByPlaceholder(/buscar contacto/i);
     this.contactoRows = page.getByTestId('contacto-row');
     this.btnNuevoContacto = page.getByRole('button', { name: /nuevo contacto/i });
-    this.filtroSinCliente = page.getByRole('checkbox', { name: /sin cliente/i });
+    this.filtroSinCliente = page.getByTestId('filtro-sin-cliente');
+    this.orphanCount = page.getByTestId('orphan-count');
 
     this.form = page.getByRole('dialog');
     this.inputNombre = page.getByLabel(/nombre/i);
