@@ -31,6 +31,9 @@ export class ContactosPage {
   readonly detailPanel: Locator;
   readonly clienteAsociadoLink: Locator;
 
+  // Back navigation (Story 4.3)
+  readonly btnVolver: Locator;
+
   constructor(page: Page) {
     this.page = page;
 
@@ -53,6 +56,9 @@ export class ContactosPage {
 
     this.detailPanel = page.getByTestId('contacto-detail-panel');
     this.clienteAsociadoLink = page.getByTestId('cliente-asociado-link');
+
+    // Back navigation button in ContactoDetailView (Story 4.3)
+    this.btnVolver = page.getByTestId('btn-volver');
   }
 
   async goto() {
