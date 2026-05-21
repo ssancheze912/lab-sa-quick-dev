@@ -232,6 +232,12 @@ public class CreateContactoCommandHandlerEdgeCaseTests
             LastCreated = entity;
             return Task.FromResult(entity);
         }
+
+        public Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.FromResult(entity);
+
+        public Task DeleteAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.CompletedTask;
     }
 
     /// <summary>
@@ -251,5 +257,11 @@ public class CreateContactoCommandHandlerEdgeCaseTests
 
         public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
             => Task.FromException<ContactoEntity>(_exception);
+
+        public Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.FromException<ContactoEntity>(_exception);
+
+        public Task DeleteAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.FromException(_exception);
     }
 }

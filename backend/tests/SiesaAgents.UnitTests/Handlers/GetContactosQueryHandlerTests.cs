@@ -60,5 +60,11 @@ public class GetContactosQueryHandlerTests
 
         public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
             => Task.FromResult(entity);
+
+        public Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.FromResult(entity);
+
+        public Task DeleteAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.CompletedTask;
     }
 }
