@@ -2,7 +2,6 @@ import { createRootRoute, Outlet, useRouter, useNavigate, Link } from '@tanstack
 import { useState, useEffect } from 'react'
 import { NavigationRailItem } from 'siesa-ui-kit'
 import { UsersIcon, UserGroupIcon } from '@heroicons/react/24/outline'
-import { ToastContainer } from '../shared/components/ToastContainer'
 import 'siesa-ui-kit/styles.css'
 
 const DESKTOP_BREAKPOINT = 1024
