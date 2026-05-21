@@ -242,7 +242,7 @@ test.describe('Story 3.1 — Lista y búsqueda de contactos', () => {
 
     // AND — EmptyState contains a Spanish guidance message
     await expect(
-      page.getByText(/no hay contactos|primer contacto/i)
+      page.getByTestId('empty-state').getByText(/no hay contactos/i).first()
     ).toBeVisible();
 
     // AND — no contact rows are rendered
