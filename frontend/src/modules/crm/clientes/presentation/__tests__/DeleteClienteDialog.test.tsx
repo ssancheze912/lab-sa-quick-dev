@@ -1,241 +1,200 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
+import { DeleteClienteDialog } from '../DeleteClienteDialog'
+
+vi.mock('../../application/useDeleteCliente', () => ({
+  useDeleteCliente: vi.fn(),
+}))
+
+vi.mock('../../../../../shared/lib/toastStore', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}))
+
+import { useDeleteCliente } from '../../application/useDeleteCliente'
+import { toast } from '../../../../../shared/lib/toastStore'
+
+const mockUseDeleteCliente = useDeleteCliente as ReturnType<typeof vi.fn>
+const mockToastSuccess = toast.success as ReturnType<typeof vi.fn>
+
+const CLIENT_ID = '550e8400-e29b-41d4-a716-446655440099'
 
 /**
- * Component tests for DeleteClienteDialog — Story 2.5: Delete Client
- *
- * Tests are in RED phase — they define the expected behaviour BEFORE implementation.
- * Make these tests GREEN by:
- *   - Creating DeleteClienteDialog.tsx in the presentation folder
- *   - Using Radix UI Dialog with role="alertdialog" and aria-labelledby
- *   - Adding data-testid="delete-cliente-dialog" on DialogContent
- *   - Adding data-testid="btn-confirmar-eliminar" on the confirm button
- *   - Adding data-testid="btn-cancelar-eliminar" on the cancel button
- *   - Wiring the confirm button to call onConfirm prop
- *   - Wiring the cancel button to call onClose prop without triggering mutation
- *   - Showing loading state (disabled + "Eliminando...") while isPending is true
- *
- * Coverage:
- *   UNIT-C-FE-DCD-01  AC1   — Dialog renders with data-testid="delete-cliente-dialog" when open=true
- *   UNIT-C-FE-DCD-02  AC1   — Dialog contains question text "¿Eliminar este cliente?"
- *   UNIT-C-FE-DCD-03  AC1   — Dialog has "Confirmar" button (data-testid="btn-confirmar-eliminar")
- *   UNIT-C-FE-DCD-04  AC1   — Dialog has "Cancelar" button (data-testid="btn-cancelar-eliminar")
- *   UNIT-C-FE-DCD-05  AC4   — Clicking "Cancelar" calls onClose without calling onConfirm
- *   UNIT-C-FE-DCD-06  AC2   — Clicking "Confirmar" calls onConfirm with the clienteId
- *   UNIT-C-FE-DCD-07  AC2   — When isPending=true confirm button is disabled and shows "Eliminando..."
- *   UNIT-C-FE-DCD-08  AC1   — Dialog does not render (or is hidden) when open=false
- *   UNIT-C-FE-DCD-09  AC1   — Dialog has role="alertdialog" for accessibility (WCAG 2.1 AA)
- *   UNIT-C-FE-DCD-10  AC2   — When isPending=false confirm button is enabled
+ * Component tests for DeleteClienteDialog — Story 2.5.
+ * Covers AC1 (dialog shows), AC2 (confirm deletes), AC4 (cancel does not delete).
  */
-
-// ---------------------------------------------------------------------------
-// Mock: DeleteClienteDialog does not exist yet — tests will fail (RED phase)
-// ---------------------------------------------------------------------------
-// NOTE: Uncomment the import below once the component is implemented:
-// import { DeleteClienteDialog } from '../DeleteClienteDialog'
-//
-// For the RED phase we define a minimal stub so the test file itself
-// can be loaded. The stubs intentionally do NOT satisfy the test assertions.
-// ---------------------------------------------------------------------------
-
-const DeleteClienteDialogStub = (_props: {
-  open: boolean
-  onClose: () => void
-  onConfirm: (clienteId: string) => void
-  clienteId: string
-  hasContacts: boolean
-  isPending?: boolean
-}) => null
-
-// Use the stub during RED phase; replace with the real component when implementing
-const DeleteClienteDialog = DeleteClienteDialogStub
-
-// ---------------------------------------------------------------------------
-// Component tests
-// ---------------------------------------------------------------------------
-
 describe('DeleteClienteDialog', () => {
-  const defaultProps = {
-    open: true,
-    onClose: vi.fn(),
-    onConfirm: vi.fn(),
-    clienteId: '550e8400-e29b-41d4-a716-446655440001',
-    hasContacts: false,
-    isPending: false,
-  }
+  const mockOnClose = vi.fn()
+  const mockOnDeleted = vi.fn()
+
+  const defaultMutate = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseDeleteCliente.mockReturnValue({
+      mutate: defaultMutate,
+      isPending: false,
+    })
   })
 
-  // -------------------------------------------------------------------------
-  // UNIT-C-FE-DCD-01 (AC1)
-  // Given DeleteClienteDialog is rendered with open=true
-  // When the component mounts
-  // Then the dialog container has data-testid="delete-cliente-dialog"
-  // -------------------------------------------------------------------------
-  it('UNIT-C-FE-DCD-01 — renders dialog with data-testid="delete-cliente-dialog" when open=true', () => {
-    render(<DeleteClienteDialog {...defaultProps} />)
+  // ---------------------------------------------------------------------------
+  // AC1: Dialog renders title and both buttons when open
+  // ---------------------------------------------------------------------------
+  it('renders dialog with title and Cancelar/Confirmar buttons when open', () => {
+    render(
+      <DeleteClienteDialog
+        open={true}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
+      />
+    )
 
-    // THEN — dialog is visible with the correct testid
     expect(screen.getByTestId('delete-cliente-dialog')).toBeInTheDocument()
-  })
-
-  // -------------------------------------------------------------------------
-  // UNIT-C-FE-DCD-02 (AC1)
-  // Given the dialog is open
-  // When the component mounts
-  // Then the dialog body contains the Spanish confirmation question
-  // -------------------------------------------------------------------------
-  it('UNIT-C-FE-DCD-02 — dialog contains "¿Eliminar este cliente?" text', () => {
-    render(<DeleteClienteDialog {...defaultProps} />)
-
-    // THEN — the question text is present
-    expect(screen.getByTestId('delete-cliente-dialog')).toHaveTextContent(/eliminar este cliente/i)
-  })
-
-  // -------------------------------------------------------------------------
-  // UNIT-C-FE-DCD-03 (AC1)
-  // Given the dialog is open
-  // When the component mounts
-  // Then the "Confirmar" button is rendered with the correct testid
-  // -------------------------------------------------------------------------
-  it('UNIT-C-FE-DCD-03 — renders "Confirmar" button with data-testid="btn-confirmar-eliminar"', () => {
-    render(<DeleteClienteDialog {...defaultProps} />)
-
-    // THEN — confirm button is present
+    expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument()
+    expect(screen.getByTestId('btn-cancelar-eliminar')).toBeInTheDocument()
     expect(screen.getByTestId('btn-confirmar-eliminar')).toBeInTheDocument()
   })
 
-  // -------------------------------------------------------------------------
-  // UNIT-C-FE-DCD-04 (AC1)
-  // Given the dialog is open
-  // When the component mounts
-  // Then the "Cancelar" button is rendered with the correct testid
-  // -------------------------------------------------------------------------
-  it('UNIT-C-FE-DCD-04 — renders "Cancelar" button with data-testid="btn-cancelar-eliminar"', () => {
-    render(<DeleteClienteDialog {...defaultProps} />)
-
-    // THEN — cancel button is present
-    expect(screen.getByTestId('btn-cancelar-eliminar')).toBeInTheDocument()
-  })
-
-  // -------------------------------------------------------------------------
-  // UNIT-C-FE-DCD-05 (AC4)
-  // Given the dialog is open
-  // When the user clicks "Cancelar"
-  // Then onClose is called exactly once
-  //   AND onConfirm is NOT called
-  // -------------------------------------------------------------------------
-  it('UNIT-C-FE-DCD-05 — clicking "Cancelar" calls onClose without calling onConfirm', () => {
-    const onClose = vi.fn()
-    const onConfirm = vi.fn()
-
+  // ---------------------------------------------------------------------------
+  // AC4: Cancel button calls onClose without firing delete mutation
+  // ---------------------------------------------------------------------------
+  it('cancel button calls onClose and does not call mutate', () => {
     render(
       <DeleteClienteDialog
-        {...defaultProps}
-        onClose={onClose}
-        onConfirm={onConfirm}
+        open={true}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
       />
     )
 
-    // WHEN — user clicks "Cancelar"
     fireEvent.click(screen.getByTestId('btn-cancelar-eliminar'))
 
-    // THEN — onClose called once
-    expect(onClose).toHaveBeenCalledTimes(1)
-
-    // AND — onConfirm is NOT triggered
-    expect(onConfirm).not.toHaveBeenCalled()
+    expect(mockOnClose).toHaveBeenCalledOnce()
+    expect(defaultMutate).not.toHaveBeenCalled()
   })
 
-  // -------------------------------------------------------------------------
-  // UNIT-C-FE-DCD-06 (AC2)
-  // Given the dialog is open and isPending=false
-  // When the user clicks "Confirmar"
-  // Then onConfirm is called with the clienteId
-  //   AND onClose is NOT immediately called by the dialog itself
-  // -------------------------------------------------------------------------
-  it('UNIT-C-FE-DCD-06 — clicking "Confirmar" calls onConfirm with the correct clienteId', () => {
-    const onClose = vi.fn()
-    const onConfirm = vi.fn()
-    const clienteId = '550e8400-e29b-41d4-a716-446655440001'
-
+  // ---------------------------------------------------------------------------
+  // AC2: Confirm button calls mutate with clienteId
+  // ---------------------------------------------------------------------------
+  it('confirm button calls mutate with clienteId', () => {
     render(
       <DeleteClienteDialog
-        {...defaultProps}
-        clienteId={clienteId}
-        onClose={onClose}
-        onConfirm={onConfirm}
-        isPending={false}
+        open={true}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
       />
     )
 
-    // WHEN — user clicks "Confirmar"
     fireEvent.click(screen.getByTestId('btn-confirmar-eliminar'))
 
-    // THEN — onConfirm called with the clienteId
-    expect(onConfirm).toHaveBeenCalledWith(clienteId)
+    expect(defaultMutate).toHaveBeenCalledWith(CLIENT_ID, expect.any(Object))
   })
 
-  // -------------------------------------------------------------------------
-  // UNIT-C-FE-DCD-07 (AC2)
-  // Given the dialog is open and isPending=true (deletion in progress)
-  // When the component renders
-  // Then the "Confirmar" button is disabled
-  //   AND the button label changes to "Eliminando..."
-  // -------------------------------------------------------------------------
-  it('UNIT-C-FE-DCD-07 — when isPending=true, confirm button is disabled and shows "Eliminando..."', () => {
-    render(<DeleteClienteDialog {...defaultProps} isPending={true} />)
+  // ---------------------------------------------------------------------------
+  // AC2: Toast "Cliente eliminado correctamente" shown when hasContacts = false
+  // ---------------------------------------------------------------------------
+  it('shows "Cliente eliminado correctamente" toast when hasContacts is false', async () => {
+    mockUseDeleteCliente.mockReturnValue({
+      mutate: vi.fn((id, options) => { options.onSuccess() }),
+      isPending: false,
+    })
 
-    const confirmBtn = screen.getByTestId('btn-confirmar-eliminar')
+    render(
+      <DeleteClienteDialog
+        open={true}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
+      />
+    )
 
-    // THEN — button is disabled during pending state
-    expect(confirmBtn).toBeDisabled()
+    fireEvent.click(screen.getByTestId('btn-confirmar-eliminar'))
 
-    // AND — button label reflects loading state
-    expect(confirmBtn).toHaveTextContent(/eliminando/i)
+    await waitFor(() => {
+      expect(mockToastSuccess).toHaveBeenCalledWith('Cliente eliminado correctamente')
+    })
+    expect(mockOnClose).toHaveBeenCalledOnce()
+    expect(mockOnDeleted).toHaveBeenCalledOnce()
   })
 
-  // -------------------------------------------------------------------------
-  // UNIT-C-FE-DCD-08 (AC1)
-  // Given DeleteClienteDialog is rendered with open=false
-  // When the component mounts
-  // Then the dialog is not visible (not in the DOM or has hidden state)
-  // -------------------------------------------------------------------------
-  it('UNIT-C-FE-DCD-08 — dialog is not rendered or is hidden when open=false', () => {
-    render(<DeleteClienteDialog {...defaultProps} open={false} />)
+  // ---------------------------------------------------------------------------
+  // AC3: Toast with contact message shown when hasContacts = true
+  // ---------------------------------------------------------------------------
+  it('shows contact-unassignment toast when hasContacts is true', async () => {
+    mockUseDeleteCliente.mockReturnValue({
+      mutate: vi.fn((id, options) => { options.onSuccess() }),
+      isPending: false,
+    })
 
-    // THEN — dialog is absent from the DOM
-    expect(screen.queryByTestId('delete-cliente-dialog')).not.toBeInTheDocument()
+    render(
+      <DeleteClienteDialog
+        open={true}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={true}
+        onDeleted={mockOnDeleted}
+      />
+    )
+
+    fireEvent.click(screen.getByTestId('btn-confirmar-eliminar'))
+
+    await waitFor(() => {
+      expect(mockToastSuccess).toHaveBeenCalledWith(
+        'Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado.'
+      )
+    })
   })
 
-  // -------------------------------------------------------------------------
-  // UNIT-C-FE-DCD-09 (AC1)
-  // Given the dialog is open
-  // When the component mounts
-  // Then the dialog root has role="alertdialog" for WCAG 2.1 AA accessibility
-  // -------------------------------------------------------------------------
-  it('UNIT-C-FE-DCD-09 — dialog has role="alertdialog" for WCAG 2.1 AA compliance', () => {
-    render(<DeleteClienteDialog {...defaultProps} />)
+  // ---------------------------------------------------------------------------
+  // Loading state: confirm button shows "Eliminando..." and is disabled
+  // ---------------------------------------------------------------------------
+  it('shows "Eliminando..." and disables buttons while isPending is true', () => {
+    mockUseDeleteCliente.mockReturnValue({
+      mutate: defaultMutate,
+      isPending: true,
+    })
 
-    // THEN — dialog uses alertdialog role (required for destructive action confirmations)
-    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+    render(
+      <DeleteClienteDialog
+        open={true}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
+      />
+    )
+
+    expect(screen.getByTestId('btn-confirmar-eliminar')).toHaveTextContent('Eliminando...')
+    expect(screen.getByTestId('btn-confirmar-eliminar')).toBeDisabled()
+    expect(screen.getByTestId('btn-cancelar-eliminar')).toBeDisabled()
   })
 
-  // -------------------------------------------------------------------------
-  // UNIT-C-FE-DCD-10 (AC2)
-  // Given the dialog is open and isPending=false (default)
-  // When the component mounts
-  // Then the "Confirmar" button is enabled and ready for interaction
-  // -------------------------------------------------------------------------
-  it('UNIT-C-FE-DCD-10 — when isPending=false, confirm button is enabled', () => {
-    render(<DeleteClienteDialog {...defaultProps} isPending={false} />)
+  // ---------------------------------------------------------------------------
+  // ARIA accessibility: dialog has role="alertdialog" and aria-labelledby
+  // ---------------------------------------------------------------------------
+  it('dialog content has role="alertdialog" and aria-labelledby pointing to title', () => {
+    render(
+      <DeleteClienteDialog
+        open={true}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
+      />
+    )
 
-    const confirmBtn = screen.getByTestId('btn-confirmar-eliminar')
-
-    // THEN — button is enabled (not disabled)
-    expect(confirmBtn).not.toBeDisabled()
+    const dialog = screen.getByTestId('delete-cliente-dialog')
+    expect(dialog).toHaveAttribute('role', 'alertdialog')
+    expect(dialog).toHaveAttribute('aria-labelledby', 'delete-dialog-title')
   })
 })

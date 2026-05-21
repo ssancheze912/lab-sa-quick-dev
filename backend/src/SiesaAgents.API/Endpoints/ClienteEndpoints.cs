@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.DTOs;
 using SiesaAgents.Application.Clientes.Queries;
-using SiesaAgents.Domain.Clientes.Interfaces;
 
 namespace SiesaAgents.API.Endpoints;
 
@@ -56,12 +55,13 @@ public static class ClienteEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        group.MapDelete("/{id:guid}", async (Guid id, IClienteRepository repository, CancellationToken ct) =>
+        group.MapDelete("/{id:guid}", async (Guid id, DeleteClienteCommandHandler handler, CancellationToken ct) =>
         {
-            await repository.DeleteAsync(id, ct);
+            await handler.HandleAsync(new DeleteClienteCommand(id), ct);
             return Results.NoContent();
         })
         .WithName("DeleteCliente")
-        .Produces(StatusCodes.Status204NoContent);
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

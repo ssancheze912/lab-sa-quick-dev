@@ -31,13 +31,21 @@ vi.mock('../../application/useClienteById', () => ({
   useClienteById: vi.fn(),
 }))
 
-// Mock mutation hooks used by ClienteFormDialog (rendered inside ClienteDetailPanel)
+// Mock mutation hooks used by ClienteFormDialog and DeleteClienteDialog (rendered inside ClienteDetailPanel)
 vi.mock('../../application/useCreateCliente', () => ({
   useCreateCliente: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }))
 
 vi.mock('../../application/useUpdateCliente', () => ({
   useUpdateCliente: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+}))
+
+vi.mock('../../application/useDeleteCliente', () => ({
+  useDeleteCliente: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+}))
+
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: vi.fn(() => vi.fn()),
 }))
 
 import { useClienteById } from '../../application/useClienteById'

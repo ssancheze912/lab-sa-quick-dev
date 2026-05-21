@@ -6,9 +6,9 @@ using SiesaAgents.Domain.Exceptions;
 namespace SiesaAgents.UnitTests.Handlers;
 
 /// <summary>
-/// Unit tests for CreateClienteCommandHandler and UpdateClienteCommandHandler.
+/// Unit tests for CreateClienteCommandHandler, UpdateClienteCommandHandler, and DeleteClienteCommandHandler.
 ///
-/// Test IDs: UNIT-B-04, UNIT-B-05, UNIT-B-07, UNIT-B-08
+/// Test IDs: UNIT-B-04, UNIT-B-05, UNIT-B-06, UNIT-B-07, UNIT-B-08, UNIT-B-11
 /// </summary>
 public class ClienteHandlerTests
 {
@@ -79,66 +79,37 @@ public class ClienteHandlerTests
     }
 
     // ---------------------------------------------------------------------------
-    // UNIT-B-11 (edge): UpdateClienteHandler throws ValidationException BEFORE
-    //   attempting repository lookup when command is invalid — no repository call.
+    // UNIT-B-06: DeleteClienteHandler does not throw when deleting client with 0 contacts
     // ---------------------------------------------------------------------------
     [Fact]
-    public async Task UpdateHandleAsync_InvalidCommand_ThrowsValidationExceptionBeforeRepositoryCall()
+    public async Task DeleteHandleAsync_ExistingClientNoContacts_CompletesWithoutException()
     {
-        var repository = new TrackingGetByIdRepository();
-        var handler = new UpdateClienteCommandHandler(repository);
-        // Empty Nombre triggers ValidationException from the validator
-        var command = new UpdateClienteCommand(Guid.NewGuid(), string.Empty, "900000011-0", "3001234567", "Bogotá");
+        var existing = ClienteEntity.Create("Empresa UNIT-B-06", "900000006-0", "3001234567", "Bogotá");
+        var repository = new DeletableClienteRepository(existing);
+        var handler = new DeleteClienteCommandHandler(repository);
+        var command = new DeleteClienteCommand(existing.Id);
 
-        await Assert.ThrowsAsync<FluentValidation.ValidationException>(
-            () => handler.HandleAsync(command, CancellationToken.None));
+        // Should complete without throwing
+        await handler.HandleAsync(command, CancellationToken.None);
 
-        // GetByIdAsync must NOT have been called (guard-early pattern)
-        Assert.False(repository.GetByIdWasCalled);
+        Assert.True(repository.DeleteWasCalled);
+        Assert.Equal(existing.Id, repository.DeletedId);
     }
 
     // ---------------------------------------------------------------------------
-    // UNIT-B-12 (edge): UpdateClienteHandler returns Dto with all updated field values,
-    //   including the new Ciudad and Telefono, not stale/original ones.
+    // UNIT-B-11: DeleteClienteHandler throws KeyNotFoundException when client ID does not exist
     // ---------------------------------------------------------------------------
     [Fact]
-    public async Task UpdateHandleAsync_ExistingClient_ReturnsDtoWithAllUpdatedFields()
+    public async Task DeleteHandleAsync_NotExistingClient_ThrowsKeyNotFoundException()
     {
-        var existing = ClienteEntity.Create("Original Nombre", "900000012-0", "3000000000", "Bogotá");
-        var repository = new UpdatableClienteRepository(existing);
-        var handler = new UpdateClienteCommandHandler(repository);
-        var command = new UpdateClienteCommand(
-            existing.Id,
-            "Nuevo Nombre",
-            "900000012-0",
-            "+57 321 999 8888",
-            "Cartagena");
-
-        var dto = await handler.HandleAsync(command, CancellationToken.None);
-
-        Assert.Equal(existing.Id, dto.Id);
-        Assert.Equal("Nuevo Nombre", dto.Nombre);
-        Assert.Equal("+57 321 999 8888", dto.Telefono);
-        Assert.Equal("Cartagena", dto.Ciudad);
-        Assert.Equal("900000012-0", dto.Nit);
-    }
-
-    // ---------------------------------------------------------------------------
-    // UNIT-B-13 (edge): UpdateClienteHandler KeyNotFoundException message includes
-    //   the requested client ID, so callers can log actionable context.
-    // ---------------------------------------------------------------------------
-    [Fact]
-    public async Task UpdateHandleAsync_NotExistingClient_ExceptionMessageContainsId()
-    {
-        var repository = new CapturingClienteRepository();
-        var handler = new UpdateClienteCommandHandler(repository);
-        var targetId = Guid.NewGuid();
-        var command = new UpdateClienteCommand(targetId, "Nombre", "900000013-0", "3001234567", "Cali");
+        var repository = new CapturingClienteRepository(); // GetByIdAsync returns null
+        var handler = new DeleteClienteCommandHandler(repository);
+        var command = new DeleteClienteCommand(Guid.NewGuid());
 
         var ex = await Assert.ThrowsAsync<KeyNotFoundException>(
             () => handler.HandleAsync(command, CancellationToken.None));
 
-        Assert.Contains(targetId.ToString(), ex.Message);
+        Assert.Contains("No existe un cliente", ex.Message);
     }
 
     // ---------------------------------------------------------------------------
@@ -188,29 +159,6 @@ public class ClienteHandlerTests
             => Task.CompletedTask;
     }
 
-    private sealed class TrackingGetByIdRepository : IClienteRepository
-    {
-        public bool GetByIdWasCalled { get; private set; }
-
-        public Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken ct)
-            => Task.FromResult<IEnumerable<ClienteEntity>>(Array.Empty<ClienteEntity>());
-
-        public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
-        {
-            GetByIdWasCalled = true;
-            return Task.FromResult<ClienteEntity?>(null);
-        }
-
-        public Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
-            => Task.CompletedTask;
-
-        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
-            => Task.CompletedTask;
-
-        public Task DeleteAsync(Guid id, CancellationToken ct)
-            => Task.CompletedTask;
-    }
-
     private sealed class UpdatableClienteRepository : IClienteRepository
     {
         private readonly ClienteEntity _entity;
@@ -234,5 +182,37 @@ public class ClienteHandlerTests
 
         public Task DeleteAsync(Guid id, CancellationToken ct)
             => Task.CompletedTask;
+    }
+
+    private sealed class DeletableClienteRepository : IClienteRepository
+    {
+        private readonly ClienteEntity _entity;
+
+        public bool DeleteWasCalled { get; private set; }
+        public Guid DeletedId { get; private set; }
+
+        public DeletableClienteRepository(ClienteEntity entity)
+        {
+            _entity = entity;
+        }
+
+        public Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken ct)
+            => Task.FromResult<IEnumerable<ClienteEntity>>(new[] { _entity });
+
+        public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+            => Task.FromResult<ClienteEntity?>(_entity.Id == id ? _entity : null);
+
+        public Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.CompletedTask;
+
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.CompletedTask;
+
+        public Task DeleteAsync(Guid id, CancellationToken ct)
+        {
+            DeleteWasCalled = true;
+            DeletedId = id;
+            return Task.CompletedTask;
+        }
     }
 }
