@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SiesaAgents.Domain.Clientes.Entities;
 using SiesaAgents.Domain.Clientes.Interfaces;
+using SiesaAgents.Domain.Exceptions;
 using SiesaAgents.Infrastructure.Data;
 
 namespace SiesaAgents.Infrastructure.Repositories;
@@ -28,7 +30,15 @@ public class ClienteRepository : IClienteRepository
     public async Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
     {
         _context.Clientes.Add(cliente);
-        await _context.SaveChangesAsync(ct);
+        try
+        {
+            await _context.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex)
+            when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == "23505")
+        {
+            throw new ConflictException("El NIT/RUC ya está registrado");
+        }
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
