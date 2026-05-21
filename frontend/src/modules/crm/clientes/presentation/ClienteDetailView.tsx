@@ -1,5 +1,5 @@
 import { isAxiosError } from 'axios'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
@@ -19,7 +19,7 @@ export function ClienteDetailView({ clienteId }: Props) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const navigate = useNavigate()
 
-  const adapter = new ClienteContactServiceAdapter(clienteId)
+  const adapter = useMemo(() => new ClienteContactServiceAdapter(clienteId), [clienteId])
 
   const is404 = isError && isAxiosError(error) && error.response?.status === 404
 
