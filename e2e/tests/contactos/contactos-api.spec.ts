@@ -123,6 +123,195 @@ test.describe('Story 3.1 — API: GET /api/v1/contactos', () => {
 // Story 3.2 — API: GET /api/v1/contactos/:id
 // =============================================================================
 
+// =============================================================================
+// Story 3.3 — API: POST /api/v1/contactos
+// =============================================================================
+
+test.describe('Story 3.3 — API: POST /api/v1/contactos', () => {
+  const createdIds: string[] = [];
+
+  test.afterAll(async ({ request }) => {
+    for (const id of createdIds) {
+      await request.delete(`${API_BASE_URL}/api/v1/contactos/${id}`).catch(() => null);
+    }
+    createdIds.length = 0;
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-CT-01 (P0 · AC2)
+  // Given a valid payload with nombre, cargo, telefono, email
+  // When POST /api/v1/contactos is called
+  // Then the response is 201 Created
+  //   AND the body includes a UUID id, all fields, clienteId: null, ISO 8601 createdAt
+  // ---------------------------------------------------------------------------
+  test('API-CT-01 — POST payload válido → 201 + body con UUID id, clienteId: null, createdAt ISO 8601', async ({ request }) => {
+    // GIVEN — a valid payload (all 4 required fields)
+    const data = buildContacto({ nombre: 'María García API-CT-01' });
+
+    // WHEN — POST request
+    const response = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
+      data: {
+        nombre: data.nombre,
+        cargo: data.cargo,
+        telefono: data.telefono,
+        email: data.email,
+      },
+    });
+
+    // THEN — status is 201 Created
+    expect(response.status()).toBe(201);
+
+    // AND — body matches the ContactoDto contract
+    const body = await response.json();
+
+    // id must be a non-empty UUID v4 string
+    expect(typeof body.id).toBe('string');
+    expect(body.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    );
+
+    // Fields must match the submitted payload
+    expect(body.nombre).toBe(data.nombre);
+    expect(body.cargo).toBe(data.cargo);
+    expect(body.telefono).toBe(data.telefono);
+    expect(body.email).toBe(data.email);
+
+    // clienteId must be null (Epic 3 scope: no automatic client association)
+    expect(body.clienteId).toBeNull();
+
+    // createdAt must be ISO 8601 with timezone (DateTimeOffset — not plain DateTime)
+    expect(typeof body.createdAt).toBe('string');
+    expect(body.createdAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+    );
+
+    // updatedAt must also be ISO 8601 with timezone
+    expect(typeof body.updatedAt).toBe('string');
+    expect(body.updatedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+    );
+
+    // Response must NOT contain a stackTrace key (NFR6)
+    expect((body as Record<string, unknown>).stackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).StackTrace).toBeUndefined();
+
+    createdIds.push(body.id);
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-CT-02 (P0 · AC3, AC4 — NFR6)
+  // Given a payload missing the nombre field
+  // When POST /api/v1/contactos is called
+  // Then the response is 400 Bad Request
+  //   AND the body is Problem Details (RFC 7807)
+  //   AND the body does NOT contain a stackTrace key (NFR6)
+  // ---------------------------------------------------------------------------
+  test('API-CT-02 — POST sin nombre → 400 Problem Details sin stackTrace', async ({ request }) => {
+    // GIVEN — payload with missing nombre
+    const data = buildContacto();
+
+    // WHEN — POST request with nombre omitted
+    const response = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
+      data: {
+        // nombre intentionally omitted
+        cargo: data.cargo,
+        telefono: data.telefono,
+        email: data.email,
+      },
+    });
+
+    // THEN — status is 400 Bad Request
+    expect(response.status()).toBe(400);
+
+    // AND — body is a Problem Details object (RFC 7807)
+    const body = await response.json();
+    expect(typeof body).toBe('object');
+    expect(Array.isArray(body)).toBe(false);
+
+    // AND — status field is 400
+    expect(body.status).toBe(400);
+
+    // AND — body does NOT expose a stackTrace key (NFR6)
+    expect((body as Record<string, unknown>).stackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).StackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).stack_trace).toBeUndefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-CT-03 (P0 · AC3, AC4 — NFR6)
+  // Given a payload missing the email field
+  // When POST /api/v1/contactos is called
+  // Then the response is 400 Bad Request
+  //   AND the body is Problem Details without stackTrace (NFR6)
+  // ---------------------------------------------------------------------------
+  test('API-CT-03 — POST sin email → 400 Problem Details sin stackTrace', async ({ request }) => {
+    // GIVEN — payload with missing email
+    const data = buildContacto();
+
+    // WHEN — POST request with email omitted
+    const response = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
+      data: {
+        nombre: data.nombre,
+        cargo: data.cargo,
+        telefono: data.telefono,
+        // email intentionally omitted
+      },
+    });
+
+    // THEN — status is 400 Bad Request
+    expect(response.status()).toBe(400);
+
+    // AND — body is a valid Problem Details object
+    const body = await response.json();
+    expect(typeof body).toBe('object');
+    expect(Array.isArray(body)).toBe(false);
+    expect(body.status).toBe(400);
+
+    // AND — no stackTrace exposed (NFR6)
+    expect((body as Record<string, unknown>).stackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).StackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).stack_trace).toBeUndefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-CT-04 (P0 · AC3, AC4 — NFR6)
+  // Given a payload missing the cargo field
+  // When POST /api/v1/contactos is called
+  // Then the response is 400 Bad Request
+  //   AND the body is Problem Details without stackTrace (NFR6)
+  // ---------------------------------------------------------------------------
+  test('API-CT-04 — POST sin cargo → 400 Problem Details sin stackTrace', async ({ request }) => {
+    // GIVEN — payload with missing cargo
+    const data = buildContacto();
+
+    // WHEN — POST request with cargo omitted
+    const response = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
+      data: {
+        nombre: data.nombre,
+        // cargo intentionally omitted
+        telefono: data.telefono,
+        email: data.email,
+      },
+    });
+
+    // THEN — status is 400 Bad Request
+    expect(response.status()).toBe(400);
+
+    // AND — body is a valid Problem Details object
+    const body = await response.json();
+    expect(typeof body).toBe('object');
+    expect(Array.isArray(body)).toBe(false);
+    expect(body.status).toBe(400);
+
+    // AND — no stackTrace exposed (NFR6)
+    expect((body as Record<string, unknown>).stackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).StackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).stack_trace).toBeUndefined();
+  });
+});
+
+// =============================================================================
+
 test.describe('Story 3.2 — API: GET /api/v1/contactos/:id', () => {
   const createdIds: string[] = [];
 
