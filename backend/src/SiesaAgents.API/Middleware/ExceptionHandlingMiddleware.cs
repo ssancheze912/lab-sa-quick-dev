@@ -1,4 +1,6 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using SiesaAgents.Domain.Exceptions;
 using System.Text.Json;
 
 namespace SiesaAgents.API.Middleware;
@@ -56,17 +58,26 @@ public class ExceptionHandlingMiddleware
     {
         var statusCode = ex switch
         {
+            ValidationException => StatusCodes.Status400BadRequest,
             ArgumentException => StatusCodes.Status400BadRequest,
             KeyNotFoundException => StatusCodes.Status404NotFound,
+            ConflictException => StatusCodes.Status409Conflict,
             InvalidOperationException => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
+        };
+
+        var detail = ex switch
+        {
+            ValidationException vex => string.Join("; ", vex.Errors.Select(e => e.ErrorMessage)),
+            ConflictException cex => cex.Message,
+            _ => "An unexpected error occurred. Please try again later.",
         };
 
         var problemDetails = new ProblemDetails
         {
             Status = statusCode,
             Title = GetTitle(statusCode),
-            Detail = "An unexpected error occurred. Please try again later.",
+            Detail = detail,
         };
 
         context.Response.StatusCode = statusCode;

@@ -6,9 +6,11 @@ import { useClientes } from '../application/useClientes'
 import { ClientListItem } from '../../../../shared/components/ClientListItem'
 import { EmptyState } from '../../../../shared/components/EmptyState'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
+import { ClienteFormDialog } from './ClienteFormDialog'
 
 export function ClienteListPanel() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { data = [], isLoading, isError, refetch } = useClientes()
   const params = useParams({ strict: false }) as { clienteId?: string }
   const activeClienteId = params.clienteId
@@ -28,8 +30,20 @@ export function ClienteListPanel() {
       data-testid="clientes-list-panel"
       className="w-[280px] shrink-0 flex flex-col h-full border-r border-slate-200 bg-white"
     >
+      {/* Header: Nuevo cliente button */}
+      <div className="px-3 pt-3 pb-2">
+        <button
+          type="button"
+          data-testid="btn-nuevo-cliente"
+          onClick={() => setIsDialogOpen(true)}
+          className="w-full px-3 py-2 text-sm font-medium text-white bg-[#0e79fd] rounded-lg hover:bg-[#154ca9] transition-colors"
+        >
+          Nuevo cliente
+        </button>
+      </div>
+
       {/* Search input */}
-      <div className="px-3 py-3 border-b border-slate-100">
+      <div className="px-3 py-2 border-b border-slate-100">
         <input
           type="search"
           placeholder="Buscar cliente por nombre o NIT/RUC"
@@ -62,7 +76,7 @@ export function ClienteListPanel() {
         )}
 
         {!isLoading && !isError && filteredClientes.length > 0 && (
-          <ul role="list" className="flex flex-col gap-0.5 p-2">
+          <ul role="list" aria-label="Lista de clientes" className="flex flex-col gap-0.5 p-2">
             {filteredClientes.map((cliente) => (
               <li key={cliente.id}>
                 <Link
@@ -81,6 +95,12 @@ export function ClienteListPanel() {
           </ul>
         )}
       </div>
+
+      {/* Create client dialog */}
+      <ClienteFormDialog
+        open={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+      />
     </aside>
   )
 }
