@@ -9,38 +9,85 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppContactosRouteImport } from './routes/_app/contactos'
+import { Route as AppClientesRouteImport } from './routes/_app/clientes'
+import { Route as AppClientesClienteIdRouteImport } from './routes/_app/clientes.$clienteId'
 
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppContactosRoute = AppContactosRouteImport.update({
+  id: '/contactos',
+  path: '/contactos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppClientesRoute = AppClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppClientesClienteIdRoute = AppClientesClienteIdRouteImport.update({
+  id: '/$clienteId',
+  path: '/$clienteId',
+  getParentRoute: () => AppClientesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/clientes': typeof AppClientesRouteWithChildren
+  '/contactos': typeof AppContactosRoute
+  '/clientes/$clienteId': typeof AppClientesClienteIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/clientes': typeof AppClientesRouteWithChildren
+  '/contactos': typeof AppContactosRoute
+  '/clientes/$clienteId': typeof AppClientesClienteIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/_app/clientes': typeof AppClientesRouteWithChildren
+  '/_app/contactos': typeof AppContactosRoute
+  '/_app/clientes/$clienteId': typeof AppClientesClienteIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/clientes' | '/contactos' | '/clientes/$clienteId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/clientes' | '/contactos' | '/clientes/$clienteId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/_app/clientes'
+    | '/_app/contactos'
+    | '/_app/clientes/$clienteId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +95,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/contactos': {
+      id: '/_app/contactos'
+      path: '/contactos'
+      fullPath: '/contactos'
+      preLoaderRoute: typeof AppContactosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/clientes': {
+      id: '/_app/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof AppClientesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/clientes/$clienteId': {
+      id: '/_app/clientes/$clienteId'
+      path: '/$clienteId'
+      fullPath: '/clientes/$clienteId'
+      preLoaderRoute: typeof AppClientesClienteIdRouteImport
+      parentRoute: typeof AppClientesRoute
+    }
   }
 }
 
+interface AppClientesRouteChildren {
+  AppClientesClienteIdRoute: typeof AppClientesClienteIdRoute
+}
+
+const AppClientesRouteChildren: AppClientesRouteChildren = {
+  AppClientesClienteIdRoute: AppClientesClienteIdRoute,
+}
+
+const AppClientesRouteWithChildren = AppClientesRoute._addFileChildren(
+  AppClientesRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppClientesRoute: typeof AppClientesRouteWithChildren
+  AppContactosRoute: typeof AppContactosRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppClientesRoute: AppClientesRouteWithChildren,
+  AppContactosRoute: AppContactosRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
