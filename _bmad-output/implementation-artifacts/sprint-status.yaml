@@ -12,7 +12,7 @@ development_status:
   # Epic statuses
   epic-1: done
   epic-2: done
-  epic-3: in-progress
+  epic-3: done
   epic-4: pending
 
   # Epic 1 — Project Foundation & Application Shell
