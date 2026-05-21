@@ -18,8 +18,6 @@ import { buildCliente, buildContacto } from '../../helpers/data.helper';
  *   - E2E-43-EDGE-10 [P2] JS errors are not thrown during the client→contact navigation flow
  */
 
-const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
-
 test.describe('Story 4.3 — Edge Cases: Navigate from Client Detail to Contact Detail', () => {
   let apiHelper: ApiHelper;
   const createdClienteIds: string[] = [];
@@ -329,9 +327,9 @@ test.describe('Story 4.3 — Edge Cases: Navigate from Client Detail to Contact 
     const cliente = await apiHelper.createCliente(buildCliente());
     createdClienteIds.push(cliente.id);
 
+    // buildContacto already generates unique names via internal counter — no Date.now() needed
     const contactoData = buildContacto({
       clienteId: cliente.id,
-      nombre: `ContactoUnico ${Date.now()}`,
     });
     const contacto = await apiHelper.createContacto(contactoData);
     createdContactoIds.push(contacto.id);

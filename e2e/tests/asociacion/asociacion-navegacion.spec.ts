@@ -16,8 +16,6 @@ import { buildCliente, buildContacto } from '../../helpers/data.helper';
  *                         returns to client detail view at /clientes/:clienteId
  */
 
-const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
-
 test.describe('Story 4.3 — Navigate from Client Detail to Contact Detail', () => {
   let apiHelper: ApiHelper;
   const createdClienteIds: string[] = [];
@@ -112,13 +110,8 @@ test.describe('Story 4.3 — Navigate from Client Detail to Contact Detail', () 
       await route.continue();
     });
 
-    // Track click count via CDP/page events
+    // Track click count manually (SPA navigation does not fire standard navigation requests)
     let clickCount = 0;
-    page.on('request', (req) => {
-      if (req.isNavigationRequest()) {
-        // Navigation requests are triggered by clicks — track SPA route changes
-      }
-    });
 
     // WHEN — User starts from /clientes (the client listing page)
     await page.goto('/clientes');
