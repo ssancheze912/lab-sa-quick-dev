@@ -128,6 +128,9 @@ public class AssignClienteCommandHandlerTests
         public Task<IEnumerable<ContactoEntity>> GetByClienteIdAsync(Guid clienteId, CancellationToken ct)
             => Task.FromResult<IEnumerable<ContactoEntity>>(Array.Empty<ContactoEntity>());
 
+        public Task<IEnumerable<ContactoEntity>> GetOrphanAsync(CancellationToken ct)
+            => Task.FromResult<IEnumerable<ContactoEntity>>(Array.Empty<ContactoEntity>());
+
         public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
             => Task.FromResult(entity);
 

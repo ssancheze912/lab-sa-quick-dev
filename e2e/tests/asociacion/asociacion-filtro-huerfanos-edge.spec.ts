@@ -11,6 +11,12 @@ import { buildCliente, buildContacto } from '../../helpers/data.helper';
  *   - EDGE-E2E-03 [P1] Toggle aria-pressed reflects active/inactive state for WCAG 2.1 AA compliance
  *   - EDGE-E2E-04 [P2] Filter toggle visual: active state has Siesa Blue bg; inactive has slate-100 bg
  *   - EDGE-E2E-05 [P2] Multiple rapid toggle clicks correctly restore filter state (even number = off, odd = on)
+ *
+ * API Edge Cases (GET ?sinCliente=true boundary conditions):
+ *   - API-ORPHAN-EDGE-01 [P1] Full ContactoDto contract (8 fields) present and typed correctly
+ *   - API-ORPHAN-EDGE-02 [P1] GET ?sinCliente=false returns all contacts (not orphan-only path)
+ *   - API-ORPHAN-EDGE-03 [P1] GET ?sinCliente=true returns 200 empty array when no orphans exist (not 404)
+ *   - API-ORPHAN-EDGE-04 [P1] GET ?sinCliente=true&clienteId={id} — sinCliente branch takes priority
  */
 
 test.describe('Story 4.5 — E2E Edge Cases: Orphan Contacts Filter', () => {

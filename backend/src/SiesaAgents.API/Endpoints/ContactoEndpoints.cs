@@ -15,16 +15,22 @@ public static class ContactoEndpoints
 
         group.MapGet("/", async (
             [FromQuery] Guid? clienteId,
+            [FromQuery] bool? sinCliente,
             GetContactosQueryHandler allHandler,
             GetContactosByClienteIdQueryHandler byClienteHandler,
+            GetOrphanContactosQueryHandler orphanHandler,
             CancellationToken ct) =>
         {
+            if (sinCliente == true)
+            {
+                var result = await orphanHandler.HandleAsync(new GetOrphanContactosQuery(), ct);
+                return Results.Ok(result);
+            }
             if (clienteId.HasValue)
             {
                 var result = await byClienteHandler.HandleAsync(new GetContactosByClienteIdQuery(clienteId.Value), ct);
                 return Results.Ok(result);
             }
-            else
             {
                 var result = await allHandler.HandleAsync(new GetContactosQuery(), ct);
                 return Results.Ok(result);

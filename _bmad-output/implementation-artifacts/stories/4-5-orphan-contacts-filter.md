@@ -1,6 +1,6 @@
 # Story 4.5: Orphan Contacts Filter
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -357,6 +357,31 @@ claude-sonnet-4-6
 - Task 8 (API integration): Added API-AC-06 to `asociacion-api.spec.ts`.
 - Pre-existing frontend test failures (staleTime assertions): 4 tests unrelated to story 4.5 — pre-existing in the branch.
 
+### Senior Developer Review (AI) — 2026-05-21
+
+**Verdict: PASS (post auto-fix)**
+
+**Critical Issues Auto-Fixed (3):**
+1. [CRITICAL] `backend/src/SiesaAgents.API/Program.cs` — `GetOrphanContactosQueryHandler` was NOT registered in `develop` branch. The implementation commit (32b8cc3) added Query/Handler/Interface/Repository files but missed wiring the handler into DI. API-AC-06 test would have failed at runtime with a 500 error. Auto-fixed: added `builder.Services.AddScoped<GetOrphanContactosQueryHandler>()`.
+2. [CRITICAL] `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` — `GET /api/v1/contactos` in `develop` branch did NOT accept `?sinCliente=true` param. The `rq4` feature branch had this, but the `develop` implementation commit missed it. Auto-fixed: added `sinCliente` query param + `orphanHandler` dispatch branch.
+3. [CRITICAL] `backend/tests/SiesaAgents.UnitTests/Handlers/AssignClienteCommandHandlerEdgeCaseTests.cs` + `AssignClienteCommandHandlerTests.cs` — Both `CapturingContactoRepository` and `CancellingContactoRepository` fake implementations did NOT implement `GetOrphanAsync`, causing compilation failure. Dev notes falsely claimed these were updated. Auto-fixed: added `GetOrphanAsync` returning empty collection to all 3 non-implementing fakes.
+
+**Warnings (1):**
+1. [WARN] `e2e/tests/asociacion/asociacion-filtro-huerfanos.spec.ts` E2E-AC-16/17 — `toHaveCount(2)` and `/2 sin cliente/i` assertions assume no pre-existing orphan contacts in the test DB. Parallel test execution or leftover cleanup failures can cause flakiness. Mitigation: existing `afterEach` cleanup and use of unique names reduces risk to acceptable level.
+
+**Suggestions (1):**
+1. [INFO] `e2e/tests/asociacion/asociacion-filtro-huerfanos-edge.spec.ts` was not documented in the story File List. Added to file list.
+
+**Compliance:**
+- Clean Architecture: correct — filterOrphanContactos in application/, handler in Application layer, repo in Infrastructure
+- DateTimeOffset: correct — ContactoEntity uses DateTimeOffset, tests assert DateTimeOffset type
+- UUID PKs: correct — Guid.NewGuid() in ContactoEntity.Create
+- TypeScript strict: correct — no `any` usage, proper type imports
+- Spanish UI: correct — "Sin cliente", "Todos los contactos tienen cliente" etc.
+- WCAG 2.1 AA: correct — aria-pressed, aria-label on toggle
+- Skeleton loading: correct — react-loading-skeleton used
+- FluentValidation: no new validator needed (read-only query, no input validation required)
+
 ### File List
 
 - `frontend/src/modules/crm/contactos/application/filterOrphanContactos.ts` (NEW)
@@ -372,3 +397,7 @@ claude-sonnet-4-6
 - `backend/tests/SiesaAgents.UnitTests/Handlers/CreateContactoCommandHandlerEdgeCaseTests.cs` (MODIFIED — GetOrphanAsync added)
 - `backend/tests/SiesaAgents.UnitTests/Handlers/ContactoHandlerTests.cs` (MODIFIED — GetOrphanAsync added)
 - `backend/tests/SiesaAgents.UnitTests/Handlers/AssignClienteCommandHandlerTests.cs` (MODIFIED — GetOrphanAsync added)
+- `backend/tests/SiesaAgents.UnitTests/Handlers/AssignClienteCommandHandlerEdgeCaseTests.cs` (MODIFIED — GetOrphanAsync added, auto-fixed by code-review)
+- `backend/src/SiesaAgents.API/Program.cs` (MODIFIED — GetOrphanContactosQueryHandler DI registration, auto-fixed by code-review)
+- `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` (MODIFIED — sinCliente query param + orphanHandler dispatch, auto-fixed by code-review)
+- `e2e/tests/asociacion/asociacion-filtro-huerfanos-edge.spec.ts` (NEW — edge case E2E tests EDGE-E2E-01 through EDGE-E2E-05)
