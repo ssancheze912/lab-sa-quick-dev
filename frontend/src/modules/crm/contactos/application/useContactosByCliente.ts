@@ -6,5 +6,6 @@ export function useContactosByCliente(clienteId: string | undefined) {
     queryKey: ['contactos', { clienteId }],
     queryFn: () => contactoApiRepository.getByClienteId(clienteId!),
     enabled: !!clienteId,
+    staleTime: 1000 * 60 * 5,
   })
 }
