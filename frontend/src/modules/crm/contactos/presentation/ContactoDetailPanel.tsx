@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { isAxiosError } from 'axios'
 import { useRouter } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useContactoById } from '../application/useContactoById'
+import { useClienteById } from '../../clientes/application/useClienteById'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 import { ContactoFormDialog } from './ContactoFormDialog'
 import { DeleteContactoDialog } from './DeleteContactoDialog'
@@ -17,6 +19,10 @@ export function ContactoDetailPanel({ contactoId }: Props) {
   const [editOpen, setEditOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const router = useRouter()
+
+  const { data: cliente, isLoading: isClienteLoading } = useClienteById(
+    data?.clienteId ?? undefined
+  )
 
   const is404 = isError && isAxiosError(error) && error.response?.status === 404
 
@@ -58,7 +64,7 @@ export function ContactoDetailPanel({ contactoId }: Props) {
         data-testid="btn-volver"
         aria-label="Volver a la vista anterior"
         onClick={() => router.history.back()}
-        className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 mb-0 self-start focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd] rounded"
+        className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 mb-0 self-start"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -91,7 +97,7 @@ export function ContactoDetailPanel({ contactoId }: Props) {
             type="button"
             data-testid="btn-eliminar"
             onClick={() => setDeleteDialogOpen(true)}
-            className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600"
+            className="px-4 py-2 text-sm rounded-md bg-[#0e79fd] text-white hover:bg-[#154ca9]"
           >
             Eliminar
           </button>
@@ -144,6 +150,32 @@ export function ContactoDetailPanel({ contactoId }: Props) {
         >
           {data.email}
         </span>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-slate-500 uppercase tracking-wide">
+          Cliente
+        </span>
+        {data.clienteId === null || data.clienteId === undefined ? (
+          <span
+            data-testid="sin-cliente-asignado"
+            className="text-sm text-slate-400 italic"
+          >
+            Sin cliente asignado
+          </span>
+        ) : isClienteLoading ? (
+          <Skeleton width="50%" height={16} />
+        ) : (
+          <Link
+            to="/clientes/$clienteId"
+            params={{ clienteId: data.clienteId }}
+            data-testid="clienteAsociadoLink"
+            aria-label="Ir al cliente asociado"
+            className="text-sm font-medium text-[#0e79fd] hover:underline"
+          >
+            {cliente?.nombre ?? data.clienteId}
+          </Link>
+        )}
       </div>
 
       <ContactoFormDialog

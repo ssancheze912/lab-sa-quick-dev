@@ -29,9 +29,7 @@ export class ContactosPage {
 
   // Detail
   readonly detailPanel: Locator;
-  /** Link to associated client in contact detail — data-testid="clienteAsociadoLink" (Story 4.4 · FR23 · FR24) */
   readonly clienteAsociadoLink: Locator;
-  /** "Sin cliente asignado" message when contact has no client — data-testid="sin-cliente-asignado" (Story 4.4 · FR23 · AC3) */
   readonly sinClienteAsignado: Locator;
   readonly btnVolver: Locator;
 
@@ -56,9 +54,7 @@ export class ContactosPage {
     this.btnConfirmarEliminar = page.getByRole('button', { name: /confirmar/i });
 
     this.detailPanel = page.getByTestId('contacto-detail-panel');
-    // Story 4.4: data-testid must be "clienteAsociadoLink" — matches ContactoDetailPanel implementation
     this.clienteAsociadoLink = page.getByTestId('clienteAsociadoLink');
-    // Story 4.4: data-testid must be "sin-cliente-asignado" — matches ContactoDetailPanel implementation
     this.sinClienteAsignado = page.getByTestId('sin-cliente-asignado');
     this.btnVolver = page.getByTestId('btn-volver');
   }

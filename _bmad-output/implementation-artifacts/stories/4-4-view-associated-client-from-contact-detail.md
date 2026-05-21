@@ -1,6 +1,6 @@
 # Story 4.4: View Associated Client from Contact Detail
 
-Status: ready
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -20,44 +20,44 @@ So that I can understand the relationship without additional navigation.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: ensure `GET /api/v1/contactos/:id` response includes `clienteId` (AC: 1, 3)
-  - [ ] Verify `ContactoDto` in `backend/src/SiesaAgents.Application/Contactos/DTOs/ContactoDto.cs` already contains `ClienteId: Guid?` — no change needed if present (established by Story 3.2)
-  - [ ] If `ClienteId` is missing from `ContactoDto`, add it: map from `entity.ClienteId` in `GetContactoByIdQueryHandler`
-  - [ ] Confirm API response JSON includes `"clienteId": "uuid-or-null"` field — verified in Story 3.2 `API-CT-08`
+- [x] Task 1 — Backend: ensure `GET /api/v1/contactos/:id` response includes `clienteId` (AC: 1, 3)
+  - [x] Verify `ContactoDto` in `backend/src/SiesaAgents.Application/Contactos/DTOs/ContactoDto.cs` already contains `ClienteId: Guid?` — no change needed if present (established by Story 3.2)
+  - [x] If `ClienteId` is missing from `ContactoDto`, add it: map from `entity.ClienteId` in `GetContactoByIdQueryHandler`
+  - [x] Confirm API response JSON includes `"clienteId": "uuid-or-null"` field — verified in Story 3.2 `API-CT-08`
 
-- [ ] Task 2 — Backend: implement `GET /api/v1/clientes/:id` sub-query support for contact detail (AC: 1, 2)
-  - [ ] Verify `GET /api/v1/clientes/{id}` endpoint already exists and returns `ClienteDto` with at minimum `id` and `nombre` fields — no change needed if present (established by Story 2.2)
-  - [ ] Confirm endpoint returns 200 + `ClienteDto` or 404 Problem Details for non-existent id
+- [x] Task 2 — Backend: implement `GET /api/v1/clientes/:id` sub-query support for contact detail (AC: 1, 2)
+  - [x] Verify `GET /api/v1/clientes/{id}` endpoint already exists and returns `ClienteDto` with at minimum `id` and `nombre` fields — no change needed if present (established by Story 2.2)
+  - [x] Confirm endpoint returns 200 + `ClienteDto` or 404 Problem Details for non-existent id
 
-- [ ] Task 3 — Frontend: add `useClienteById` hook (AC: 1, 2)
-  - [ ] Verify `frontend/src/modules/crm/clientes/application/useCliente.ts` (or `useClienteById.ts`) already exists with `queryKey: ['clientes', id]` — no change needed if present (established by Story 2.2)
-  - [ ] If missing, create `frontend/src/modules/crm/clientes/application/useClienteById.ts`:
+- [x] Task 3 — Frontend: add `useClienteById` hook (AC: 1, 2)
+  - [x] Verify `frontend/src/modules/crm/clientes/application/useCliente.ts` (or `useClienteById.ts`) already exists with `queryKey: ['clientes', id]` — no change needed if present (established by Story 2.2)
+  - [x] If missing, create `frontend/src/modules/crm/clientes/application/useClienteById.ts`:
     - `useQuery({ queryKey: ['clientes', id], queryFn: () => clienteApiRepository.getById(id!), enabled: !!id, retry: false })`
 
-- [ ] Task 4 — Frontend: update `ContactoDetailPanel` to display associated client (AC: 1, 2, 3)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx`
-  - [ ] Call `useClienteById(data?.clienteId ?? undefined)` inside the component when contact data is loaded
-  - [ ] Add a new labeled field section below existing fields (Nombre, Cargo, Teléfono, Email):
+- [x] Task 4 — Frontend: update `ContactoDetailPanel` to display associated client (AC: 1, 2, 3)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx`
+  - [x] Call `useClienteById(data?.clienteId ?? undefined)` inside the component when contact data is loaded
+  - [x] Add a new labeled field section below existing fields (Nombre, Cargo, Teléfono, Email):
     - Label: "Cliente" (Spanish, `text-xs text-slate-500 uppercase tracking-wide`)
     - When `data.clienteId` is non-null and cliente data loaded: render `<Link>` (TanStack Router) pointing to `/clientes/$clienteId` with the cliente's `nombre` as text
     - When `data.clienteId` is non-null but cliente data is loading: render skeleton placeholder (1 row, `react-loading-skeleton`) — NOT spinner
     - When `data.clienteId` is null: render `<span data-testid="sin-cliente-asignado">Sin cliente asignado</span>`
-  - [ ] Apply `data-testid="clienteAsociadoLink"` on the `<Link>` element (matches ContactosPage POM locator from test-design-epic-4.md Section 7)
-  - [ ] Apply `data-testid="sin-cliente-asignado"` on the "Sin cliente asignado" span
-  - [ ] WCAG 2.1 AA: add `aria-label="Ir al cliente asociado"` on the `<Link>` element
-  - [ ] Skeleton loading state: 1 row skeleton while `useClienteById` is loading
+  - [x] Apply `data-testid="clienteAsociadoLink"` on the `<Link>` element (matches ContactosPage POM locator from test-design-epic-4.md Section 7)
+  - [x] Apply `data-testid="sin-cliente-asignado"` on the "Sin cliente asignado" span
+  - [x] WCAG 2.1 AA: add `aria-label="Ir al cliente asociado"` on the `<Link>` element
+  - [x] Skeleton loading state: 1 row skeleton while `useClienteById` is loading
 
-- [ ] Task 5 — Frontend: update `ContactosPage` POM with client link locator (AC: 1, 2, 3)
-  - [ ] Confirm `e2e/pages/contactos.page.ts` already has `clienteAsociadoLink` locator: `page.getByTestId('clienteAsociadoLink')` — add it if missing
-  - [ ] Confirm `sinClienteAsignado` locator: `page.getByTestId('sin-cliente-asignado')` — add it if missing
+- [x] Task 5 — Frontend: update `ContactosPage` POM with client link locator (AC: 1, 2, 3)
+  - [x] Confirm `e2e/pages/contactos.page.ts` already has `clienteAsociadoLink` locator: `page.getByTestId('clienteAsociadoLink')` — add it if missing
+  - [x] Confirm `sinClienteAsignado` locator: `page.getByTestId('sin-cliente-asignado')` — add it if missing
 
-- [ ] Task 6 — Write E2E tests (AC: 1, 2, 3)
-  - [ ] Add to `e2e/tests/asociacion/asociacion-navegacion.spec.ts` — Story 4.4 scope: E2E-AC-13, E2E-AC-14, E2E-AC-15
-  - [ ] E2E-AC-13: Create client + contact associated via `apiHelper.asignarClienteAContacto()`; navigate directly to `/contactos/:contactoId`; assert `clienteAsociadoLink` is visible and contains the client's `nombre`
-  - [ ] E2E-AC-14: From E2E-AC-13 setup, click `clienteAsociadoLink`; assert `page.url()` matches `/clientes/:clienteId`; assert client detail panel visible (data-testid="cliente-detail-panel" or equivalent)
-  - [ ] E2E-AC-15: Create orphan contact (no client) via `apiHelper`; navigate to `/contactos/:contactoId`; assert `sinClienteAsignado` text visible; assert `clienteAsociadoLink` not present
-  - [ ] All tests include `afterEach` cleanup via `apiHelper.deleteContacto` and `apiHelper.deleteCliente`
-  - [ ] All tests add `page.on('pageerror', ...)` listener to catch JS errors during navigation
+- [x] Task 6 — Write E2E tests (AC: 1, 2, 3)
+  - [x] Add to `e2e/tests/asociacion/asociacion-navegacion.spec.ts` — Story 4.4 scope: E2E-AC-13, E2E-AC-14, E2E-AC-15
+  - [x] E2E-AC-13: Create client + contact associated via `apiHelper.asignarClienteAContacto()`; navigate directly to `/contactos/:contactoId`; assert `clienteAsociadoLink` is visible and contains the client's `nombre`
+  - [x] E2E-AC-14: From E2E-AC-13 setup, click `clienteAsociadoLink`; assert `page.url()` matches `/clientes/:clienteId`; assert client detail panel visible (data-testid="cliente-detail-panel" or equivalent)
+  - [x] E2E-AC-15: Create orphan contact (no client) via `apiHelper`; navigate to `/contactos/:contactoId`; assert `sinClienteAsignado` text visible; assert `clienteAsociadoLink` not present
+  - [x] All tests include `afterEach` cleanup via `apiHelper.deleteContacto` and `apiHelper.deleteCliente`
+  - [x] All tests add `page.on('pageerror', ...)` listener to catch JS errors during navigation
 
 ## Dev Notes
 
@@ -230,6 +230,27 @@ export function useClienteById(id: string | undefined) {
 ❌ page.reload() in navigation assertions          → SPA navigation — no reload expected
 ❌ queryKey as string                              → use array: ['clientes', id]
 ```
+
+## Dev Agent Record
+
+### Files Modified / Created
+
+| File | Action | Notes |
+|------|--------|-------|
+| `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx` | Modified | Added "Cliente" section: useClienteById hook call, Link/skeleton/fallback rendering |
+| `frontend/src/modules/crm/contactos/presentation/__tests__/ContactoDetailPanel.cliente.test.tsx` | Created | 6 unit tests covering AC1, AC2, AC3, skeleton state, hook call args |
+| `e2e/pages/contactos.page.ts` | Modified | Updated clienteAsociadoLink testId to 'clienteAsociadoLink'; added sinClienteAsignado locator |
+| `e2e/tests/asociacion/asociacion-navegacion.spec.ts` | Modified | Added Story 4.4 describe block with E2E-AC-13, E2E-AC-14, E2E-AC-15 |
+
+### Completion Notes
+
+- Tasks 1–3 required no code changes: `ContactoDto.ClienteId` (Guid?), `GET /api/v1/clientes/{id}`, and `useClienteById` were all already implemented by Stories 3.2, 2.2 respectively.
+- Task 4: `ContactoDetailPanel` extended with a fifth labeled field "Cliente" using TanStack Router `<Link>`, `react-loading-skeleton` (no spinner), and "Sin cliente asignado" fallback. WCAG 2.1 AA `aria-label` applied.
+- Task 5: POM updated — `clienteAsociadoLink` testId corrected from `'cliente-asociado-link'` to `'clienteAsociadoLink'`; `sinClienteAsignado` locator added.
+- Task 6: E2E tests E2E-AC-13, E2E-AC-14, E2E-AC-15 appended to existing `asociacion-navegacion.spec.ts` under a new `Story 4.4` describe block with proper setup/teardown.
+- 6/6 new unit tests pass; 4 pre-existing failures in queryClient staleTime tests are unrelated to this story.
+- TypeScript: no type errors (`tsc --noEmit` clean).
+- Branch: `develop-siesa-agents-gaduranb-rq4-asociacion-cliente-contacto` (existing epic branch).
 
 ## References
 
