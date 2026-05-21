@@ -6,6 +6,7 @@ export type UpdateContactoPayload = Pick<Contacto, 'nombre' | 'cargo' | 'telefon
 export interface IContactoRepository {
   getAll(): Promise<Contacto[]>
   getById(id: string): Promise<Contacto>
+  getByClienteId(clienteId: string): Promise<Contacto[]>
   create(data: CreateContactoPayload): Promise<Contacto>
   update(id: string, data: UpdateContactoPayload): Promise<Contacto>
   delete(id: string): Promise<void>

@@ -12,14 +12,14 @@ public class ClienteEntity
 
     private ClienteEntity() { } // EF Core constructor
 
-    public static ClienteEntity Create(string nombre, string nit, string telefono, string ciudad)
+    public static ClienteEntity Create(string nombre, string nit, string? telefono, string ciudad)
     {
         return new ClienteEntity
         {
             Id = Guid.NewGuid(),
             Nombre = nombre,
             Nit = nit,
-            Telefono = telefono,
+            Telefono = telefono ?? string.Empty,
             Ciudad = ciudad,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,

@@ -15,9 +15,13 @@ public class CreateClienteCommandValidator : AbstractValidator<CreateClienteComm
             .NotEmpty().WithMessage("El NIT/RUC es requerido")
             .MaximumLength(50).WithMessage("El NIT/RUC no puede superar 50 caracteres");
 
-        RuleFor(x => x.Telefono)
-            .NotEmpty().WithMessage("El teléfono es requerido")
-            .MaximumLength(50).WithMessage("El teléfono no puede superar 50 caracteres");
+        // Telefono is optional; when provided it must not be whitespace and must respect max length
+        When(x => x.Telefono != null, () =>
+        {
+            RuleFor(x => x.Telefono)
+                .NotEmpty().WithMessage("El teléfono no puede estar vacío si se especifica")
+                .MaximumLength(50).WithMessage("El teléfono no puede superar 50 caracteres");
+        });
 
         RuleFor(x => x.Ciudad)
             .NotEmpty().WithMessage("La ciudad es requerida")

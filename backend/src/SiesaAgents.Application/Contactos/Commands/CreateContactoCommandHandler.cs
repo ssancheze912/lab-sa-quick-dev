@@ -23,7 +23,7 @@ public class CreateContactoCommandHandler
         if (!result.IsValid)
             throw new ValidationException(result.Errors);
 
-        var entity = ContactoEntity.Create(command.Nombre, command.Cargo, command.Telefono, command.Email);
+        var entity = ContactoEntity.Create(command.Nombre, command.Cargo, command.Telefono, command.Email, command.ClienteId);
         var created = await _repository.CreateAsync(entity, ct);
 
         return new ContactoDto(

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ClienteDetailPanel } from '../../modules/crm/clientes/presentation/ClienteDetailPanel'
+import { ClienteDetailView } from '../../modules/crm/clientes/presentation/ClienteDetailView'
 
 export const Route = createFileRoute('/_app/clientes/$clienteId')({
   component: ClienteDetailRoute,
@@ -7,5 +7,5 @@ export const Route = createFileRoute('/_app/clientes/$clienteId')({
 
 function ClienteDetailRoute() {
   const { clienteId } = Route.useParams()
-  return <ClienteDetailPanel clienteId={clienteId} />
+  return <ClienteDetailView clienteId={clienteId} />
 }

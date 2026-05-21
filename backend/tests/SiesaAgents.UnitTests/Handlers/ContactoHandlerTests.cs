@@ -247,6 +247,12 @@ public class ContactoHandlerTests
                 ? _existingEntity
                 : null);
 
+        public Task<IEnumerable<ContactoEntity>> GetByClienteIdAsync(Guid clienteId, CancellationToken ct)
+            => Task.FromResult<IEnumerable<ContactoEntity>>(
+                _existingEntity is not null && _existingEntity.ClienteId == clienteId
+                    ? new[] { _existingEntity }
+                    : Array.Empty<ContactoEntity>());
+
         public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
         {
             CreateCallCount++;

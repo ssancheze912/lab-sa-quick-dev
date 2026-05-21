@@ -153,6 +153,9 @@ public class GetContactosQueryHandlerEdgeCaseTests
         public Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct)
             => Task.FromResult(_data.FirstOrDefault(c => c.Id == id));
 
+        public Task<IEnumerable<ContactoEntity>> GetByClienteIdAsync(Guid clienteId, CancellationToken ct)
+            => Task.FromResult(_data.Where(c => c.ClienteId == clienteId));
+
         public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
             => Task.FromResult(entity);
 
@@ -174,6 +177,9 @@ public class GetContactosQueryHandlerEdgeCaseTests
 
         public Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct)
             => Task.FromException<ContactoEntity?>(_exception);
+
+        public Task<IEnumerable<ContactoEntity>> GetByClienteIdAsync(Guid clienteId, CancellationToken ct)
+            => Task.FromException<IEnumerable<ContactoEntity>>(_exception);
 
         public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
             => Task.FromException<ContactoEntity>(_exception);

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using SiesaAgents.Application.Contactos.Commands;
 using SiesaAgents.Application.Contactos.DTOs;
 using SiesaAgents.Application.Contactos.Queries;
@@ -11,10 +12,22 @@ public static class ContactoEndpoints
     {
         var group = app.MapGroup("/api/v1/contactos").WithTags("Contactos");
 
-        group.MapGet("/", async (GetContactosQueryHandler handler, CancellationToken ct) =>
+        group.MapGet("/", async (
+            [FromQuery] Guid? clienteId,
+            GetContactosQueryHandler allHandler,
+            GetContactosByClienteIdQueryHandler byClienteHandler,
+            CancellationToken ct) =>
         {
-            var result = await handler.HandleAsync(new GetContactosQuery(), ct);
-            return Results.Ok(result);
+            if (clienteId.HasValue)
+            {
+                var result = await byClienteHandler.HandleAsync(new GetContactosByClienteIdQuery(clienteId.Value), ct);
+                return Results.Ok(result);
+            }
+            else
+            {
+                var result = await allHandler.HandleAsync(new GetContactosQuery(), ct);
+                return Results.Ok(result);
+            }
         })
         .WithName("GetContactos")
         .Produces<ContactoDto[]>(StatusCodes.Status200OK);

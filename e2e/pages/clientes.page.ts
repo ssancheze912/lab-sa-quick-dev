@@ -55,6 +55,12 @@ export class ClientesPage {
     // Sort control — data-testid="sort-control" on root/trigger element
     this.sortControl = page.getByTestId('sort-control');
 
+    // ContactManager locators (Story 4.1)
+    // Rows: each contact row has an "Editar" button — works for both desktop (table) and mobile (cards)
+    this.contactManagerContainer = page.getByTestId('contact-manager')
+    this.contactManagerRows = page.getByTestId('contact-manager').getByRole('button', { name: 'Editar' })
+    this.btnAgregarContacto = page.getByRole('button', { name: /agregar contacto|nuevo contacto/i })
+
     this.form = page.getByRole('dialog');
     this.inputNombre = page.getByLabel(/nombre/i);
     this.inputNit = page.getByLabel(/nit/i);

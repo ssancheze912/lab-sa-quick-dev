@@ -1,9 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { ClienteListPanel } from '../../modules/crm/clientes/presentation/ClienteListPanel'
 
 function ClientesPage() {
   return (
-    <div className="p-8" data-testid="clientes-view">
-      <h1 className="text-2xl font-bold">Clientes</h1>
+    <div className="flex h-full" data-testid="clientes-view">
+      <ClienteListPanel />
+      <Outlet />
     </div>
   )
 }
