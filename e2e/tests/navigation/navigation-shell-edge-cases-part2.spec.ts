@@ -29,11 +29,18 @@ test.describe('Story 1.2 — Breakpoint boundary (1023px / 1024px)', () => {
   test('E2E-EC-14 — Viewport exacto 1024px muestra NavigationRail (no NavigationBar)', async ({
     page,
   }) => {
+    // GIVEN: viewport is exactly 1024px wide (Tailwind lg: breakpoint boundary)
     await page.setViewportSize({ width: 1024, height: 768 });
+
+    // WHEN: the app loads at /clientes
     await page.goto('/clientes');
 
     const nav = new NavigationShellPage(page);
+
+    // THEN: NavigationRail is visible (desktop mode)
     await expect(nav.navigationRail).toBeVisible();
+
+    // AND: NavigationBar is not visible (mobile nav hidden at desktop breakpoint)
     await expect(nav.navigationBar).not.toBeVisible();
   });
 
@@ -46,11 +53,18 @@ test.describe('Story 1.2 — Breakpoint boundary (1023px / 1024px)', () => {
   test('E2E-EC-15 — Viewport exacto 1023px muestra NavigationBar (no NavigationRail)', async ({
     page,
   }) => {
+    // GIVEN: viewport is exactly 1023px wide (one pixel below Tailwind lg: breakpoint)
     await page.setViewportSize({ width: 1023, height: 768 });
+
+    // WHEN: the app loads at /clientes
     await page.goto('/clientes');
 
     const nav = new NavigationShellPage(page);
+
+    // THEN: NavigationBar is visible (mobile mode)
     await expect(nav.navigationBar).toBeVisible();
+
+    // AND: NavigationRail is not visible (desktop nav hidden below lg: breakpoint)
     await expect(nav.navigationRail).not.toBeVisible();
   });
 });
@@ -68,18 +82,23 @@ test.describe('Story 1.2 — Persistencia del shell de navegación', () => {
   test('E2E-EC-16 — NavigationRail persiste al navegar entre rutas en desktop', async ({
     page,
   }) => {
+    // GIVEN: desktop viewport, app loaded at /clientes
     await page.setViewportSize({ width: 1280, height: 800 });
     const nav = new NavigationShellPage(page);
     await nav.goto();
 
-    // Clientes → Contactos
+    // WHEN: user navigates Clientes → Contactos
     await nav.contactosLink.click();
     await expect(page).toHaveURL(/\/contactos/);
+
+    // THEN: NavigationRail remains visible after navigation
     await expect(nav.navigationRail).toBeVisible();
 
-    // Contactos → Clientes
+    // WHEN: user navigates Contactos → Clientes
     await nav.clientesLink.click();
     await expect(page).toHaveURL(/\/clientes/);
+
+    // THEN: NavigationRail still visible (shell is persistent across routes)
     await expect(nav.navigationRail).toBeVisible();
   });
 
@@ -92,18 +111,23 @@ test.describe('Story 1.2 — Persistencia del shell de navegación', () => {
   test('E2E-EC-17 — NavigationBar persiste al navegar entre rutas en móvil', async ({
     page,
   }) => {
+    // GIVEN: mobile viewport (Pixel 5 equivalent), app loaded at /clientes
     await page.setViewportSize({ width: 393, height: 851 });
     const nav = new NavigationShellPage(page);
     await nav.goto();
 
-    // Clientes → Contactos
+    // WHEN: user navigates Clientes → Contactos
     await nav.contactosLink.click();
     await expect(page).toHaveURL(/\/contactos/);
+
+    // THEN: NavigationBar remains visible after navigation
     await expect(nav.navigationBar).toBeVisible();
 
-    // Contactos → Clientes
+    // WHEN: user navigates Contactos → Clientes
     await nav.clientesLink.click();
     await expect(page).toHaveURL(/\/clientes/);
+
+    // THEN: NavigationBar still visible (shell is persistent on mobile)
     await expect(nav.navigationBar).toBeVisible();
   });
 
@@ -116,19 +140,22 @@ test.describe('Story 1.2 — Persistencia del shell de navegación', () => {
   test('E2E-EC-18 — Botón Atrás del navegador funciona correctamente con el shell', async ({
     page,
   }) => {
+    // GIVEN: desktop viewport, user has navigated to /clientes then /contactos
     await page.setViewportSize({ width: 1280, height: 800 });
     const nav = new NavigationShellPage(page);
     await nav.goto();
 
-    // Navigate to /contactos
+    // Navigate to /contactos to create history entry
     await nav.contactosLink.click();
     await expect(page).toHaveURL(/\/contactos/);
 
-    // Use browser back
+    // WHEN: user presses the browser back button
     await page.goBack();
+
+    // THEN: URL returns to /clientes
     await expect(page).toHaveURL(/\/clientes/);
 
-    // Shell still intact
+    // AND: NavigationRail shell is still intact (not a full reload)
     await expect(nav.navigationRail).toBeVisible();
   });
 });
