@@ -1,6 +1,6 @@
 # Story 4.6: Reassign Contact to Different Client
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,74 +22,74 @@ So that I can correct associations or reflect organizational changes.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Frontend: create `useReassignContacto` mutation hook (AC: 2)
-  - [ ] Create `frontend/src/modules/crm/contactos/application/useReassignContacto.ts`
-  - [ ] Signature: `useReassignContacto(contactoId: string, oldClienteId: string | null)`
-  - [ ] `mutationFn`: calls `contactoApiRepository.assignCliente(contactoId, newClienteId)` — which sends `PUT /api/v1/contactos/{id}/cliente` with `{ clienteId: newClienteId }`
-  - [ ] `onSuccess`: invalidate three query keys:
+- [x] Task 1 — Frontend: create `useReassignContacto` mutation hook (AC: 2)
+  - [x] Create `frontend/src/modules/crm/contactos/application/useReassignContacto.ts`
+  - [x] Signature: `useReassignContacto(contactoId: string, oldClienteId: string | null)`
+  - [x] `mutationFn`: calls `contactoApiRepository.assignCliente(contactoId, newClienteId)` — which sends `PUT /api/v1/contactos/{id}/cliente` with `{ clienteId: newClienteId }`
+  - [x] `onSuccess`: invalidate three query keys:
     - `queryClient.invalidateQueries({ queryKey: ['contactos'] })`
     - `queryClient.invalidateQueries({ queryKey: ['contactos', { clienteId: oldClienteId }] })` — only if `oldClienteId` is non-null
     - `queryClient.invalidateQueries({ queryKey: ['contactos', { clienteId: newClienteId }] })`
     - `queryClient.invalidateQueries({ queryKey: ['contactos', contactoId] })`
-  - [ ] `onSuccess`: `toast.success('Contacto reasignado correctamente')` (Spanish)
-  - [ ] `onError`: `toast.error('No se pudo reasignar el contacto. Intenta de nuevo.')` (Spanish)
+  - [x] `onSuccess`: `toast.success('Contacto reasignado correctamente')` (Spanish)
+  - [x] `onError`: `toast.error('No se pudo reasignar el contacto. Intenta de nuevo.')` (Spanish)
 
-- [ ] Task 2 — Frontend: create `ReassignClienteDialog` component (AC: 1, 4)
-  - [ ] Create `frontend/src/modules/crm/contactos/presentation/ReassignClienteDialog.tsx`
-  - [ ] Props: `{ isOpen: boolean; onClose: () => void; contactoId: string; currentClienteId: string | null; contactoNombre: string }`
-  - [ ] Inside the dialog, call `useClientes()` to fetch all available clients — queryKey `['clientes']`
-  - [ ] While clients are loading: render skeleton rows (react-loading-skeleton, NOT spinner)
-  - [ ] Render a scrollable list or combobox of all clients (exclude the currently assigned client from the selectable list to prevent re-assigning to the same client)
-  - [ ] Each client option: `data-testid="cliente-option"`, displays client `nombre`
-  - [ ] Selected client tracked in local state `selectedClienteId: string | null` initialized to `null`
-  - [ ] "Confirmar" button: disabled when `selectedClienteId === null`; `data-testid="btn-confirmar-reasignar"`
-  - [ ] "Cancelar" button: `data-testid="btn-cancelar-reasignar"`; calls `onClose()` without mutation
-  - [ ] Clicking "Confirmar": calls `reassignMutation.mutate(selectedClienteId)`, then calls `onClose()` on success
-  - [ ] Dialog title: "Reasignar contacto" (Spanish); use shadcn/ui `Dialog` component
-  - [ ] WCAG 2.1 AA: `aria-label="Seleccionar nuevo cliente"` on the client selection control
-  - [ ] `data-testid="reassign-cliente-dialog"` on the dialog container
+- [x] Task 2 — Frontend: create `ReassignClienteDialog` component (AC: 1, 4)
+  - [x] Create `frontend/src/modules/crm/contactos/presentation/ReassignClienteDialog.tsx`
+  - [x] Props: `{ isOpen: boolean; onClose: () => void; contactoId: string; currentClienteId: string | null; contactoNombre: string }`
+  - [x] Inside the dialog, call `useClientes()` to fetch all available clients — queryKey `['clientes']`
+  - [x] While clients are loading: render skeleton rows (react-loading-skeleton, NOT spinner)
+  - [x] Render a scrollable list or combobox of all clients (exclude the currently assigned client from the selectable list to prevent re-assigning to the same client)
+  - [x] Each client option: `data-testid="cliente-option"`, displays client `nombre`
+  - [x] Selected client tracked in local state `selectedClienteId: string | null` initialized to `null`
+  - [x] "Confirmar" button: disabled when `selectedClienteId === null`; `data-testid="btn-confirmar-reasignar"`
+  - [x] "Cancelar" button: `data-testid="btn-cancelar-reasignar"`; calls `onClose()` without mutation
+  - [x] Clicking "Confirmar": calls `reassignMutation.mutate(selectedClienteId)`, then calls `onClose()` on success
+  - [x] Dialog title: "Reasignar contacto" (Spanish); use shadcn/ui `Dialog` component
+  - [x] WCAG 2.1 AA: `aria-label="Seleccionar nuevo cliente"` on the client selection control
+  - [x] `data-testid="reassign-cliente-dialog"` on the dialog container
 
-- [ ] Task 3 — Frontend: update `ContactoDetailPanel` to add "Reasignar" button (AC: 1, 4)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx`
-  - [ ] Import and render `ReassignClienteDialog`
-  - [ ] Add boolean state: `const [isReassignOpen, setIsReassignOpen] = useState(false)`
-  - [ ] Add "Reasignar" button adjacent to the "Cliente" section (added in Story 4.4):
+- [x] Task 3 — Frontend: update `ContactoDetailPanel` to add "Reasignar" button (AC: 1, 4)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx`
+  - [x] Import and render `ReassignClienteDialog`
+  - [x] Add boolean state: `const [isReassignOpen, setIsReassignOpen] = useState(false)`
+  - [x] Add "Reasignar" button adjacent to the "Cliente" section (added in Story 4.4):
     - Label: "Reasignar" (Spanish)
     - Only visible when `data.clienteId` is non-null (contact must have an assigned client to reassign)
     - `data-testid="btn-reasignar"` on the button
     - `aria-label="Reasignar contacto a otro cliente"` for WCAG 2.1 AA
     - On click: `setIsReassignOpen(true)`
     - Style: secondary/outline variant, adjacent to the client name display
-  - [ ] Pass to `ReassignClienteDialog`: `isOpen={isReassignOpen}`, `onClose={() => setIsReassignOpen(false)}`, `contactoId={contactoId}`, `currentClienteId={data.clienteId}`, `contactoNombre={data.nombre}`
+  - [x] Pass to `ReassignClienteDialog`: `isOpen={isReassignOpen}`, `onClose={() => setIsReassignOpen(false)}`, `contactoId={contactoId}`, `currentClienteId={data.clienteId}`, `contactoNombre={data.nombre}`
 
-- [ ] Task 4 — Frontend: update `ContactosPage` POM with reassignment locators (AC: 1, 2, 4)
-  - [ ] Update `e2e/pages/contactos.page.ts`:
+- [x] Task 4 — Frontend: update `ContactosPage` POM with reassignment locators (AC: 1, 2, 4)
+  - [x] Update `e2e/pages/contactos.page.ts`:
     - `btnReasignar`: `page.getByTestId('btn-reasignar')`
     - `reassignClienteDialog`: `page.getByTestId('reassign-cliente-dialog')`
     - `clienteOptions`: `page.getByTestId('cliente-option')`
     - `btnConfirmarReasignar`: `page.getByTestId('btn-confirmar-reasignar')`
     - `btnCancelarReasignar`: `page.getByTestId('btn-cancelar-reasignar')`
 
-- [ ] Task 5 — Frontend: write unit tests for `useReassignContacto` (AC: 2)
-  - [ ] Create `frontend/src/modules/crm/contactos/__tests__/useReassignContacto.test.ts`
-  - [ ] UNIT-AC-06: `mutationFn` calls `contactoApiRepository.assignCliente(contactoId, newClienteId)` with correct arguments
-  - [ ] UNIT-AC-07: `onSuccess` invalidates `['contactos']`, `['contactos', { clienteId: oldId }]`, and `['contactos', { clienteId: newId }]`
-  - [ ] UNIT-AC-08: `onSuccess` calls `toast.success('Contacto reasignado correctamente')`
-  - [ ] UNIT-AC-09: When `oldClienteId` is null, `['contactos', { clienteId: null }]` key is NOT invalidated (no-op)
+- [x] Task 5 — Frontend: write unit tests for `useReassignContacto` (AC: 2)
+  - [x] Create `frontend/src/modules/crm/contactos/__tests__/useReassignContacto.test.ts`
+  - [x] UNIT-AC-06: `mutationFn` calls `contactoApiRepository.assignCliente(contactoId, newClienteId)` with correct arguments
+  - [x] UNIT-AC-07: `onSuccess` invalidates `['contactos']`, `['contactos', { clienteId: oldId }]`, and `['contactos', { clienteId: newId }]`
+  - [x] UNIT-AC-08: `onSuccess` calls `toast.success('Contacto reasignado correctamente')`
+  - [x] UNIT-AC-09: When `oldClienteId` is null, `['contactos', { clienteId: null }]` key is NOT invalidated (no-op)
 
-- [ ] Task 6 — Write E2E tests (AC: 1, 2, 3, 4)
-  - [ ] Create `e2e/tests/asociacion/asociacion-reasignacion.spec.ts`
-  - [ ] E2E-AC-20: Create 2 clients + 1 contact assigned to client A via `apiHelper`; navigate to `/contactos/:contactoId`; assert `btnReasignar` visible; click it; assert `reassignClienteDialog` visible; assert client B's `nombre` visible in dialog options
-  - [ ] E2E-AC-21: From E2E-AC-20 setup, select client B in dialog; click `btnConfirmarReasignar`; assert `reassignClienteDialog` closed; assert contact detail shows client B's `nombre` in `clienteAsociadoLink`; navigate to `/clientes/:clienteAId`; assert contact NOT in ContactManager; navigate to `/clientes/:clienteBId`; assert contact IS in ContactManager
-  - [ ] E2E-AC-22: Same setup as E2E-AC-21; after confirming reassignment, assert no `page.reload()` used; verify `PUT /api/v1/contactos/:id/cliente` called once via `page.on('request', ...)` listener
-  - [ ] E2E-AC-23: E2E-AC-20 setup; select client B; click `btnConfirmarReasignar`; assert toast with text `/contacto reasignado correctamente/i` is visible
-  - [ ] E2E-AC-24: E2E-AC-20 setup; open dialog; click `btnCancelarReasignar`; assert `reassignClienteDialog` not visible; assert `clienteAsociadoLink` still shows client A's `nombre`; navigate to `/clientes/:clienteAId`; assert contact still in ContactManager
-  - [ ] All tests include `afterEach` cleanup via `apiHelper.deleteContacto` and `apiHelper.deleteCliente` for both clients
-  - [ ] All tests add `page.on('pageerror', ...)` listener
+- [x] Task 6 — Write E2E tests (AC: 1, 2, 3, 4)
+  - [x] Create `e2e/tests/asociacion/asociacion-reasignacion.spec.ts`
+  - [x] E2E-AC-20: Create 2 clients + 1 contact assigned to client A via `apiHelper`; navigate to `/contactos/:contactoId`; assert `btnReasignar` visible; click it; assert `reassignClienteDialog` visible; assert client B's `nombre` visible in dialog options
+  - [x] E2E-AC-21: From E2E-AC-20 setup, select client B in dialog; click `btnConfirmarReasignar`; assert `reassignClienteDialog` closed; assert contact detail shows client B's `nombre` in `clienteAsociadoLink`; navigate to `/clientes/:clienteAId`; assert contact NOT in ContactManager; navigate to `/clientes/:clienteBId`; assert contact IS in ContactManager
+  - [x] E2E-AC-22: Same setup as E2E-AC-21; after confirming reassignment, assert no `page.reload()` used; verify `PUT /api/v1/contactos/:id/cliente` called once via `page.on('request', ...)` listener
+  - [x] E2E-AC-23: E2E-AC-20 setup; select client B; click `btnConfirmarReasignar`; assert toast with text `/contacto reasignado correctamente/i` is visible
+  - [x] E2E-AC-24: E2E-AC-20 setup; open dialog; click `btnCancelarReasignar`; assert `reassignClienteDialog` not visible; assert `clienteAsociadoLink` still shows client A's `nombre`; navigate to `/clientes/:clienteAId`; assert contact still in ContactManager
+  - [x] All tests include `afterEach` cleanup via `apiHelper.deleteContacto` and `apiHelper.deleteCliente` for both clients
+  - [x] All tests add `page.on('pageerror', ...)` listener
 
-- [ ] Task 7 — Write API integration test (AC: 2)
-  - [ ] Add to `e2e/tests/asociacion/asociacion-api.spec.ts` — Story 4.6 scope: API-AC-05
-  - [ ] API-AC-05: Create client A, client B, and contact assigned to client A; `PUT /api/v1/contactos/{id}/cliente` with `{ clienteId: clienteB.id }`; assert response status 200; assert response body `clienteId === clienteB.id`; `GET /api/v1/contactos/{id}`; assert `clienteId === clienteB.id`
+- [x] Task 7 — Write API integration test (AC: 2)
+  - [x] Add to `e2e/tests/asociacion/asociacion-api.spec.ts` — Story 4.6 scope: API-AC-05
+  - [x] API-AC-05: Create client A, client B, and contact assigned to client A; `PUT /api/v1/contactos/{id}/cliente` with `{ clienteId: clienteB.id }`; assert response status 200; assert response body `clienteId === clienteB.id`; `GET /api/v1/contactos/{id}`; assert `clienteId === clienteB.id`
 
 ## Dev Notes
 
@@ -381,22 +381,34 @@ this.btnCancelarReasignar = page.getByTestId('btn-cancelar-reasignar');
 
 ### Agent Model Used
 
-<!-- To be filled by dev agent -->
+Opus 4.7 (1M context) — `claude-opus-4-7[1m]`
 
 ### Debug Log References
 
-<!-- To be filled by dev agent -->
+- Vitest unit suite for `useReassignContacto`: 4/4 tests pass (UNIT-AC-06, UNIT-AC-07, UNIT-AC-08, UNIT-AC-09).
+- `pnpm vitest run` full frontend suite: 447/453 tests pass. The 6 remaining failures are pre-existing (queryClient staleTime configuration and `ClienteContactServiceAdapter.story42.edge` error-propagation) and were tracked back to commits prior to Story 4.6 (`9b61c9e` story 1.2 review, `2364cef` automate-4.2). Out of scope for this story.
+- Fixed a regression introduced in the ATDD commit (`285e123`): `ContactoDetailPanel.cliente.edge.test.tsx` was failing because the panel now imports `ReassignClienteDialog`, which transitively pulls in `clienteApiRepository` → `apiClient` → `axios.create`. The edge test mocks axios with a stub that lacked `create`, so the import chain crashed. Added `vi.mock('../ReassignClienteDialog', () => ({ ReassignClienteDialog: () => null }))` to the edge spec — all 8 edge tests pass again.
+- TypeScript `pnpm tsc --noEmit` for the frontend: clean.
+- Playwright `--list` for `e2e/tests/asociacion/asociacion-reasignacion.spec.ts`: 5 tests recognized (E2E-AC-20 through E2E-AC-24); full run not executed in this environment (requires running backend + frontend servers — wired by CI/CD).
 
 ### Completion Notes List
 
-<!-- To be filled by dev agent -->
+- ATDD commit `285e123` already produced functional implementations of `useReassignContacto`, `ReassignClienteDialog`, `ContactoDetailPanel` integration, POM updates, the E2E spec (`asociacion-reasignacion.spec.ts`), the API integration test `API-AC-05`, and the unit test file. Story 4.6 dev-story step verified each file against the task list, traced behavior to the AC, and exercised the unit-test suite — no production code rewrites were needed.
+- All 7 story tasks have been verified as complete.
+- All four ACs are covered: AC1 by `btn-reasignar` + dialog open behavior (Task 2/3), AC2 by `useReassignContacto` invalidating the three required query keys plus the toast (Task 1, 5), AC3 by E2E-AC-21 + the cross-client ContactManager test (Task 6), AC4 by cancel handler + E2E-AC-24 (Task 2, 6).
+- Spanish text is preserved everywhere user-facing (`Reasignar contacto`, `Confirmar`, `Cancelar`, `Contacto reasignado correctamente`, `No se pudo reasignar el contacto. Intenta de nuevo.`).
+- WCAG 2.1 AA: `aria-label="Seleccionar nuevo cliente"` on the selection control, `aria-label="Reasignar contacto a otro cliente"` on the button, `role="dialog"` + `aria-labelledby`/`aria-describedby` on the Dialog content, `role="listbox"` + `role="option"` + `aria-selected` on the option list.
+- Loading state uses `react-loading-skeleton` (not a spinner) — matches the team standard and Story 4.4 pattern.
+- No backend changes required — `PUT /api/v1/contactos/{id}/cliente` already handles reassignment via the `AssignClienteToContactoCommandHandler` introduced in Story 4.2.
 
 ### File List
 
-- `frontend/src/modules/crm/contactos/application/useReassignContacto.ts` (NEW)
-- `frontend/src/modules/crm/contactos/presentation/ReassignClienteDialog.tsx` (NEW)
-- `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx` (MODIFIED — add "Reasignar" button + ReassignClienteDialog)
-- `frontend/src/modules/crm/contactos/__tests__/useReassignContacto.test.ts` (NEW)
-- `e2e/pages/contactos.page.ts` (MODIFIED — add reassignment locators)
-- `e2e/tests/asociacion/asociacion-reasignacion.spec.ts` (NEW — E2E-AC-20 to E2E-AC-24)
-- `e2e/tests/asociacion/asociacion-api.spec.ts` (MODIFIED — API-AC-05 added)
+- `frontend/src/modules/crm/contactos/application/useReassignContacto.ts` (NEW — verified by Story 4.6)
+- `frontend/src/modules/crm/contactos/presentation/ReassignClienteDialog.tsx` (NEW — verified by Story 4.6)
+- `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx` (MODIFIED — adds "Reasignar" button + `ReassignClienteDialog` integration)
+- `frontend/src/modules/crm/contactos/__tests__/useReassignContacto.test.ts` (NEW — UNIT-AC-06 through UNIT-AC-09, plus onError coverage)
+- `frontend/src/modules/crm/contactos/presentation/__tests__/ContactoDetailPanel.cliente.edge.test.tsx` (MODIFIED — added `vi.mock('../ReassignClienteDialog')` to restore the 8 edge tests broken by the new import chain)
+- `e2e/pages/contactos.page.ts` (MODIFIED — adds `btnReasignar`, `reassignClienteDialog`, `clienteOptions`, `btnConfirmarReasignar`, `btnCancelarReasignar` locators)
+- `e2e/tests/asociacion/asociacion-reasignacion.spec.ts` (NEW — E2E-AC-20 through E2E-AC-24)
+- `e2e/tests/asociacion/asociacion-api.spec.ts` (MODIFIED — `API-AC-05` added)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (MODIFIED — `4-6-reassign-contact-to-different-client` advanced from `pending` to `in-progress` → `review`)

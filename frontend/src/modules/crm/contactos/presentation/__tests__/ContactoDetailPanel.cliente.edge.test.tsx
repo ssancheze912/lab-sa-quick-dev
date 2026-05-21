@@ -64,6 +64,9 @@ vi.mock('../ContactoFormDialog', () => ({
 vi.mock('../DeleteContactoDialog', () => ({
   DeleteContactoDialog: () => null,
 }))
+vi.mock('../ReassignClienteDialog', () => ({
+  ReassignClienteDialog: () => null,
+}))
 
 // Mock shared components
 vi.mock('../../../../../shared/components/ErrorPanel', () => ({
