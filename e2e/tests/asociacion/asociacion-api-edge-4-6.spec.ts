@@ -164,18 +164,32 @@ test.describe('Story 4.6 — API Edge: PUT /api/v1/contactos/{id}/cliente (reass
     const beforeBody = await beforeGet.json();
     const beforeUpdatedAt = new Date(beforeBody.updatedAt).getTime();
 
-    // Wait a tick so that updatedAt has time to differ (1 second granularity)
-    await new Promise((r) => setTimeout(r, 1100));
+    // WHEN — Reassign A → B. The backend may use datetime granularity of up to 1 s,
+    // so we poll the endpoint with the reassignment payload until the server reports a
+    // newer updatedAt (deterministic alternative to a hard sleep — TEA standard).
+    let reassignBody: { id: string; clienteId: string; updatedAt: string } | undefined;
+    await expect
+      .poll(
+        async () => {
+          const resp = await request.put(
+            `${API_BASE_URL}/api/v1/contactos/${contacto.id}/cliente`,
+            { data: { clienteId: clienteB.id } }
+          );
+          expect(resp.status()).toBe(200);
+          reassignBody = await resp.json();
+          return new Date(reassignBody!.updatedAt).getTime();
+        },
+        {
+          message: 'updatedAt should advance after reassignment',
+          timeout: 5_000,
+          intervals: [200, 400, 800, 1200],
+        }
+      )
+      .toBeGreaterThan(beforeUpdatedAt);
 
-    // WHEN — Reassign A → B
-    const reassignResp = await request.put(
-      `${API_BASE_URL}/api/v1/contactos/${contacto.id}/cliente`,
-      { data: { clienteId: clienteB.id } }
-    );
-    expect(reassignResp.status()).toBe(200);
-    const reassignBody = await reassignResp.json();
+    if (!reassignBody) throw new Error('reassignBody was not populated');
 
-    // THEN — updatedAt advanced
+    // THEN — updatedAt advanced (asserted above via expect.poll)
     const afterUpdatedAt = new Date(reassignBody.updatedAt).getTime();
     expect(afterUpdatedAt).toBeGreaterThan(beforeUpdatedAt);
 

@@ -13,7 +13,7 @@ development_status:
   epic-1: done
   epic-2: done
   epic-3: done
-  epic-4: pending
+  epic-4: done
 
   # Epic 1 — Project Foundation & Application Shell
   1-1-project-initialization-repository-structure: done
@@ -41,4 +41,4 @@ development_status:
   4-3-navigate-from-client-detail-to-contact-detail: done
   4-4-view-associated-client-from-contact-detail: done
   4-5-orphan-contacts-filter: done
-  4-6-reassign-contact-to-different-client: review
+  4-6-reassign-contact-to-different-client: done
