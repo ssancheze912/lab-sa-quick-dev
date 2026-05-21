@@ -11,7 +11,7 @@ development_status:
 
   # Epic statuses
   epic-1: done
-  epic-2: in-progress
+  epic-2: done
   epic-3: pending
   epic-4: pending
 
@@ -24,7 +24,7 @@ development_status:
   2-1-client-list-search: done
   2-2-client-detail-view: done
   2-3-create-client: done
-  2-4-edit-client: pending
+  2-4-edit-client: done
   2-5-delete-client: done
   2-6-sort-client-list: done
 
