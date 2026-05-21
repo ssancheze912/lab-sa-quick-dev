@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: review
+Status: done
 
 ## Story
 
