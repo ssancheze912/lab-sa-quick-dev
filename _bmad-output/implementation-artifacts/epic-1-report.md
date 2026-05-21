@@ -1,20 +1,20 @@
 # Pipeline sa-quick-dev — Epic 1: Project Foundation & Application Shell
 
-> Generado: 2026-05-20 | Rama: develop
+> Generado: 2026-05-21 | Rama: develop
 
 ## Resumen
-- Historias procesadas: 3/3
-- Exitosas (full pipeline): 2
-- Con fallos: 1 (Story 1.2 — code-review FAIL, requiere atención manual)
-- Quality Gate (Cobertura): CONCERNS (~88% overall, P0 100%, P1 92%)
+- Historias procesadas: 2/3 (Story 1.3 ya estaba done al inicio del pipeline)
+- Exitosas (full pipeline): 0
+- Con fallos: 2 (Story 1.1: ATDD constraint ambiental; Story 1.2: Code Review FAIL crítico)
+- Quality Gate (Cobertura): CONCERNS — 88% overall (P0: 100%, P1: 92%, P2: 100%)
 
 ## Detalle por Historia
 
 | Historia | Create | ATDD | Dev | ATDD-Run | Automate | Test Review | Code Review | Estado |
 |----------|--------|------|-----|----------|----------|-------------|-------------|--------|
-| 1.1 Project Init | ✅ | ✅ | ✅ | ✅ (1) | ✅ | ✅ | ✅ PASS | Completada |
-| 1.2 Nav Shell | ✅ | ✅ | ✅ | ⚠️ (2) | ✅ | ✅ | ❌ FAIL | Atención manual |
-| 1.3 DB Foundation | ✅ | ✅ | ✅ | ✅ (1) | ✅ | ✅ | ✅ PASS | Completada |
+| 1.1 Project Init | ✅ | ✅ | ✅ | ❌(3/3) | ⏭️ | ⏭️ | ⏭️ | FAIL: backend ECONNREFUSED (constraint ambiental: .NET SDK no disponible) |
+| 1.2 Nav Shell | ✅ | ✅ | ✅ | ✅(2) | ✅ | ✅ | ❌ FAIL | FAIL: AppShell usa `<nav>` custom en lugar de NavigationRail/NavigationBar de siesa-ui-kit |
+| 1.3 DB Foundation | ⏭️ | ⏭️ | ⏭️ | ⏭️ | ⏭️ | ⏭️ | ⏭️ | OMITIDA (ya estaba done desde sesión previa) |
 
 ## Quality Gate
 
@@ -22,9 +22,13 @@
 |------|--------|---------|
 | Coverage P0 | ✅ PASS | 100% cubierto |
 | Coverage P1 | ✅ PASS | 92% (mínimo 90%) |
-| Coverage Overall | ⚠️ CONCERNS | ~88% (mínimo 80% — OK numéricamente) |
-| Technology Constraints | ❌ FAIL | Story 1.2: siesa-ui-kit NavigationRail/Bar/LayoutBase no usados |
+| Coverage Overall | ⚠️ CONCERNS | 88% (mínimo 80% — OK numérico, pero GAP-01 crítico) |
+| Fidelity siesa-ui-kit | ❌ FAIL | Story 1.2 AppShell no usa NavigationRail/NavigationBar de siesa-ui-kit |
 
 ## Historias que requieren atención manual
 
-- **Story 1.2 — Frontend Navigation Shell**: La implementación usa un componente AppShell custom con Tailwind en lugar de los componentes obligatorios `NavigationRail`, `NavigationBar` y `LayoutBase` de siesa-ui-kit. Esto viola los estándares de empresa y la dirección UX del proyecto. La funcionalidad es correcta (13/13 ATDD tests GREEN, 71+ tests en total), pero la tecnología es incorrecta. Requiere refactor para usar los componentes de siesa-ui-kit antes de considerar la story aprobada.
+1. **Story 1.1** — ATDD tests de backend (AC2, AC3, AC5) requieren `.NET SDK` en el entorno para ejecutarse. La implementación es correcta estructuralmente; los tests fallarán en cualquier entorno sin .NET runtime. Verificar en entorno con .NET 10 instalado.
+
+2. **Story 1.2** — CRÍTICO: `frontend/src/shared/components/AppShell.tsx` implementa navegación con elementos `<nav>` HTML custom en lugar de los componentes `NavigationRail` y `NavigationBar` del paquete `siesa-ui-kit` (v1.0.194+). Es un requisito mandatorio de los estándares de la compañía. Reemplazar la implementación custom con los componentes del design system y volver a pasar Code Review.
+   - Adicionalmente: eliminar `frontend/src/routes/not-found.tsx` (código muerto — la vista 404 real está en `notFoundComponent: NotFoundView` en `__root.tsx`).
+   - 18 tests marcados como `test.fixme()` en e2e/tests/navigation/ requieren agregar `data-testid="nav-item-clientes"`, `data-testid="nav-item-contactos"` y atributo `data-active` a los componentes de siesa-ui-kit una vez integrados.
