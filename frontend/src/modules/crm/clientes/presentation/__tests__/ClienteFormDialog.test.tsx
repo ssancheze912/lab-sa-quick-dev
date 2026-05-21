@@ -8,9 +8,16 @@ vi.mock('../../application/useCreateCliente', () => ({
   useCreateCliente: vi.fn(),
 }))
 
+// Mock useUpdateCliente hook
+vi.mock('../../application/useUpdateCliente', () => ({
+  useUpdateCliente: vi.fn(),
+}))
+
 import { useCreateCliente } from '../../application/useCreateCliente'
+import { useUpdateCliente } from '../../application/useUpdateCliente'
 
 const mockUseCreateCliente = useCreateCliente as ReturnType<typeof vi.fn>
+const mockUseUpdateCliente = useUpdateCliente as ReturnType<typeof vi.fn>
 
 /**
  * Component tests for ClienteFormDialog — Story 2.3 edge case expansion.
@@ -34,6 +41,7 @@ describe('ClienteFormDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseCreateCliente.mockReturnValue(defaultMutation)
+    mockUseUpdateCliente.mockReturnValue(defaultMutation)
   })
 
   // ---------------------------------------------------------------------------

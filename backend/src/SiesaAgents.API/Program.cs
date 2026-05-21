@@ -31,6 +31,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Domain / Application services
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<CreateClienteCommandHandler>();
+builder.Services.AddScoped<UpdateClienteCommandHandler>();
 builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 

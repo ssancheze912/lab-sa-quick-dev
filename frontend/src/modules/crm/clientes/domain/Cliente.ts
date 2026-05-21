@@ -14,3 +14,10 @@ export interface CreateClientePayload {
   telefono: string
   ciudad: string
 }
+
+export interface UpdateClientePayload {
+  nombre: string
+  nit: string
+  telefono: string
+  ciudad: string
+}

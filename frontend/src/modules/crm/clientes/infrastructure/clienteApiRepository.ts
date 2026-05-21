@@ -1,5 +1,5 @@
 import { apiClient } from '../../../../shared/lib/apiClient'
-import type { Cliente, CreateClientePayload } from '../domain/Cliente'
+import type { Cliente, CreateClientePayload, UpdateClientePayload } from '../domain/Cliente'
 import type { IClienteRepository } from '../domain/IClienteRepository'
 
 const clienteApiRepository: IClienteRepository = {
@@ -15,6 +15,11 @@ const clienteApiRepository: IClienteRepository = {
 
   async create(data: CreateClientePayload): Promise<Cliente> {
     const response = await apiClient.post<Cliente>('/api/v1/clientes', data)
+    return response.data
+  },
+
+  async update(id: string, data: UpdateClientePayload): Promise<Cliente> {
+    const response = await apiClient.put<Cliente>(`/api/v1/clientes/${id}`, data)
     return response.data
   },
 }

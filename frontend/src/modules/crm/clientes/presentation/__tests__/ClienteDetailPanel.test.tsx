@@ -31,6 +31,15 @@ vi.mock('../../application/useClienteById', () => ({
   useClienteById: vi.fn(),
 }))
 
+// Mock mutation hooks used by ClienteFormDialog (rendered inside ClienteDetailPanel)
+vi.mock('../../application/useCreateCliente', () => ({
+  useCreateCliente: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+}))
+
+vi.mock('../../application/useUpdateCliente', () => ({
+  useUpdateCliente: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+}))
+
 import { useClienteById } from '../../application/useClienteById'
 
 const mockUseClienteById = useClienteById as ReturnType<typeof vi.fn>
