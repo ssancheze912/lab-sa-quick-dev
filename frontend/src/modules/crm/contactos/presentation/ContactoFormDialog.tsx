@@ -40,6 +40,7 @@ export function ContactoFormDialog({ open, onOpenChange }: Props) {
         <Dialog.Overlay className="fixed inset-0 bg-black/40" />
         <Dialog.Content
           data-testid="contacto-form-dialog"
+          aria-describedby={undefined}
           className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-lg p-6 w-full max-w-md"
         >
           <Dialog.Title className="text-lg font-bold mb-4">Nuevo contacto</Dialog.Title>
