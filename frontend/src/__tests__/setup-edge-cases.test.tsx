@@ -111,12 +111,11 @@ describe('UNIT-EDGE: queryClient edge cases (AC1)', () => {
   })
 
   /**
-   * UNIT-EDGE-05 (P1 — AC1)
-   * Boundary: queryClient staleTime must be exactly 60,000ms (1 minute per story spec).
-   * A value of 0 causes infinite refetching; too large prevents fresh data.
-   * The exact value is a business requirement from Story 1.1 Dev Notes.
+   * UNIT-EDGE-05 (P1 — AC1 / Updated by Story 1.2)
+   * Boundary: queryClient staleTime must be exactly 300,000ms (5 minutes per Story 1.2 spec).
+   * Story 1.2 updated queryClient.ts from 1 minute to 5 minutes and added retry: 1.
    */
-  it('UNIT-EDGE-05 — queryClient staleTime es exactamente 60000ms (1 minuto exacto)', async () => {
+  it('UNIT-EDGE-05 — queryClient staleTime es exactamente 300000ms (5 minutos — Story 1.2)', async () => {
     // GIVEN: The queryClient singleton
     const { queryClient } = await import('../shared/lib/queryClient')
 
@@ -124,8 +123,8 @@ describe('UNIT-EDGE: queryClient edge cases (AC1)', () => {
     const queryDefaults = queryClient.getDefaultOptions()
     const staleTime = queryDefaults.queries?.staleTime
 
-    // THEN: staleTime must be exactly 60000 (1000 * 60)
-    expect(staleTime).toBe(60_000)
+    // THEN: staleTime must be exactly 300000 (1000 * 60 * 5)
+    expect(staleTime).toBe(300_000)
   })
 })
 

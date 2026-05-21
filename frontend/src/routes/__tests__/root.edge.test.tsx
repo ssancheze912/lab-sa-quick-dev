@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, afterEach } from 'vitest'
+import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 /**
@@ -20,6 +20,8 @@ import userEvent from '@testing-library/user-event'
  *   EC8  — Both nav items render in both navigation components
  *   EC9  — Main content area renders Outlet correctly
  */
+
+afterEach(cleanup)
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -1,6 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import '@testing-library/jest-dom'
+import { describe, it, expect, afterEach } from 'vitest'
+import { render, screen, cleanup } from '@testing-library/react'
 import {
   createRouter,
   RouterProvider,
@@ -25,6 +24,8 @@ import { NotFoundView } from '../NotFoundView'
  *
  * Test IDs: UNIT-NF-01 through UNIT-NF-07
  */
+
+afterEach(cleanup)
 
 /**
  * Helper to render NotFoundView wrapped in a minimal TanStack Router.

@@ -1,6 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import '@testing-library/jest-dom'
+import { describe, it, expect, afterEach } from 'vitest'
+import { render, screen, cleanup } from '@testing-library/react'
 import {
   createRouter,
   RouterProvider,
@@ -29,6 +28,8 @@ import { AppShell } from '../AppShell'
  *
  * Test IDs: UNIT-ASE-01 through UNIT-ASE-09
  */
+
+afterEach(cleanup)
 
 interface RenderOptions {
   path?: string
