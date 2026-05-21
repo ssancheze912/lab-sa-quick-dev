@@ -184,13 +184,13 @@ describe('filterContactos — edge cases', () => {
     const large: Contacto[] = Array.from({ length: 1000 }, (_, i) =>
       makeContacto({
         id: String(i),
-        nombre: i % 2 === 0 ? `Empresa Par ${i}` : `Empresa Impar ${i}`,
+        nombre: i % 2 === 0 ? `Empresa Alfa ${i}` : `Empresa Beta ${i}`,
         email: `user${i}@${i % 3 === 0 ? 'target.co' : 'other.co'}`,
       })
     )
 
-    expect(() => filterContactos(large, 'Par')).not.toThrow()
-    const result = filterContactos(large, 'Par')
+    expect(() => filterContactos(large, 'Alfa')).not.toThrow()
+    const result = filterContactos(large, 'Alfa')
     expect(result.length).toBeGreaterThan(0)
     expect(result.length).toBeLessThan(1000)
   })

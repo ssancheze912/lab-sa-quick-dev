@@ -1,6 +1,6 @@
 # Story 3.1: Contact List & Search
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,95 +22,95 @@ so that I can quickly find any contact regardless of their client association.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Define `ContactoEntity` domain model and `IContactoRepository` contract (AC: 1)
-  - [ ] Create `frontend/src/modules/crm/contactos/domain/Contacto.ts` — TypeScript interface with fields: `id` (string UUID), `nombre`, `cargo`, `telefono`, `email`, `clienteId` (string | null), `createdAt` (string ISO 8601), `updatedAt` (string ISO 8601)
-  - [ ] Create `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` — interface with `getAll(): Promise<Contacto[]>`
+- [x] Task 1 — Define `ContactoEntity` domain model and `IContactoRepository` contract (AC: 1)
+  - [x] Create `frontend/src/modules/crm/contactos/domain/Contacto.ts` — TypeScript interface with fields: `id` (string UUID), `nombre`, `cargo`, `telefono`, `email`, `clienteId` (string | null), `createdAt` (string ISO 8601), `updatedAt` (string ISO 8601)
+  - [x] Create `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` — interface with `getAll(): Promise<Contacto[]>`
 
-- [ ] Task 2 — Implement `contactoApiRepository` in the infrastructure layer (AC: 1, 4)
-  - [ ] Create `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts`
-  - [ ] Use the Axios `apiClient` singleton (`frontend/src/shared/lib/apiClient.ts`)
-  - [ ] Implement `getAll()` → `GET /api/v1/contactos` (no `?search=` param — filtering is client-side)
-  - [ ] Implement `IContactoRepository`
+- [x] Task 2 — Implement `contactoApiRepository` in the infrastructure layer (AC: 1, 4)
+  - [x] Create `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts`
+  - [x] Use the Axios `apiClient` singleton (`frontend/src/shared/lib/apiClient.ts`)
+  - [x] Implement `getAll()` → `GET /api/v1/contactos` (no `?search=` param — filtering is client-side)
+  - [x] Implement `IContactoRepository`
 
-- [ ] Task 3 — Implement `useContactos` TanStack Query hook (AC: 1, 4)
-  - [ ] Create `frontend/src/modules/crm/contactos/application/useContactos.ts`
-  - [ ] Use `useQuery` with `queryKey: ['contactos']`
-  - [ ] Call `contactoApiRepository.getAll()`
-  - [ ] Return `{ data, isLoading, isError, refetch }` — expose `refetch` for the ErrorPanel retry action
-  - [ ] `staleTime`: 5 minutes (aligned with `queryClient.ts` default)
+- [x] Task 3 — Implement `useContactos` TanStack Query hook (AC: 1, 4)
+  - [x] Create `frontend/src/modules/crm/contactos/application/useContactos.ts`
+  - [x] Use `useQuery` with `queryKey: ['contactos']`
+  - [x] Call `contactoApiRepository.getAll()`
+  - [x] Return `{ data, isLoading, isError, refetch }` — expose `refetch` for the ErrorPanel retry action
+  - [x] `staleTime`: 5 minutes (aligned with `queryClient.ts` default)
 
-- [ ] Task 4 — Implement `filterContactos` utility function (AC: 2)
-  - [ ] Create `frontend/src/modules/crm/contactos/application/filterContactos.ts`
-  - [ ] Signature: `filterContactos(contacts: Contacto[], query: string): Contacto[]`
-  - [ ] Match case-insensitively against `nombre` or `email` fields
-  - [ ] Return full array when query is empty or whitespace-only
+- [x] Task 4 — Implement `filterContactos` utility function (AC: 2)
+  - [x] Create `frontend/src/modules/crm/contactos/application/filterContactos.ts`
+  - [x] Signature: `filterContactos(contacts: Contacto[], query: string): Contacto[]`
+  - [x] Match case-insensitively against `nombre` or `email` fields
+  - [x] Return full array when query is empty or whitespace-only
 
-- [ ] Task 5 — Implement `ContactoListView` presentation component (AC: 1, 2, 3, 4)
-  - [ ] Create `frontend/src/modules/crm/contactos/presentation/ContactoListView.tsx`
-  - [ ] Search input at top: `placeholder="Buscar contacto por nombre o email"`, `aria-label="Buscar contactos"`
-  - [ ] Filter logic: `useMemo` calling `filterContactos(data, searchQuery)` — match `nombre` or `email` (case-insensitive) against `searchQuery` local state
-  - [ ] Render list of `ContactoListItem` components (one per filtered result)
-  - [ ] Apply `data-testid="contacto-row"` to each list item element
-  - [ ] Show `EmptyState` when `data` is loaded and empty (no contacts exist)
-  - [ ] Show `ErrorPanel` with `onRetry={refetch}` when `isError === true`
-  - [ ] Show react-loading-skeleton placeholders when `isLoading === true` (3 skeleton rows)
+- [x] Task 5 — Implement `ContactoListView` presentation component (AC: 1, 2, 3, 4)
+  - [x] Create `frontend/src/modules/crm/contactos/presentation/ContactoListView.tsx`
+  - [x] Search input at top: `placeholder="Buscar contacto por nombre o email"`, `aria-label="Buscar contactos"`
+  - [x] Filter logic: `useMemo` calling `filterContactos(data, searchQuery)` — match `nombre` or `email` (case-insensitive) against `searchQuery` local state
+  - [x] Render list of `ContactoListItem` components (one per filtered result)
+  - [x] Apply `data-testid="contacto-row"` to each list item element
+  - [x] Show `EmptyState` when `data` is loaded and empty (no contacts exist)
+  - [x] Show `ErrorPanel` with `onRetry={refetch}` when `isError === true`
+  - [x] Show react-loading-skeleton placeholders when `isLoading === true` (3 skeleton rows)
 
-- [ ] Task 6 — Create `ContactoListItem` component (AC: 1)
-  - [ ] Create `frontend/src/modules/crm/contactos/presentation/ContactoListItem.tsx`
-  - [ ] Props: `nombre: string`, `cargo: string`, `email: string`, `isActive?: boolean`
-  - [ ] Display `nombre` (primary text), `cargo` (secondary text, smaller, muted), `email` (tertiary text, smaller, muted)
-  - [ ] Apply active/hover state styling using Tailwind + Siesa Blue `#0e79fd`
-  - [ ] ARIA: `role="row"`, `aria-current={isActive ? 'true' : undefined}`
+- [x] Task 6 — Create `ContactoListItem` component (AC: 1)
+  - [x] Create `frontend/src/modules/crm/contactos/presentation/ContactoListItem.tsx`
+  - [x] Props: `nombre: string`, `cargo: string`, `email: string`, `isActive?: boolean`
+  - [x] Display `nombre` (primary text), `cargo` (secondary text, smaller, muted), `email` (tertiary text, smaller, muted)
+  - [x] Apply active/hover state styling using Tailwind + Siesa Blue `#0e79fd`
+  - [x] ARIA: `role="row"`, `aria-current={isActive ? 'true' : undefined}`
 
-- [ ] Task 7 — Reuse or verify `EmptyState` shared component (AC: 3)
-  - [ ] Reuse `frontend/src/shared/components/EmptyState.tsx` (created in Story 2.1)
-  - [ ] Use props: `title="No hay contactos registrados"`, `description="Crea el primer contacto para comenzar."`
+- [x] Task 7 — Reuse or verify `EmptyState` shared component (AC: 3)
+  - [x] Reuse `frontend/src/shared/components/EmptyState.tsx` (created in Story 2.1)
+  - [x] Use props: `title="No hay contactos registrados"`, `description="Crea el primer contacto para comenzar."`
 
-- [ ] Task 8 — Reuse or verify `ErrorPanel` shared component (AC: 4)
-  - [ ] Reuse `frontend/src/shared/components/ErrorPanel.tsx` (created in Story 2.1)
-  - [ ] Pass `onRetry={refetch}` from `useContactos`
+- [x] Task 8 — Reuse or verify `ErrorPanel` shared component (AC: 4)
+  - [x] Reuse `frontend/src/shared/components/ErrorPanel.tsx` (created in Story 2.1)
+  - [x] Pass `onRetry={refetch}` from `useContactos`
 
-- [ ] Task 9 — Wire `ContactoListView` into the `/contactos` route (AC: 1)
-  - [ ] Update `frontend/src/routes/_app/contactos.tsx` — replace placeholder with `ContactoListView`
-  - [ ] Route renders `ContactoListView` as the main view with `<Outlet />` for upcoming Story 3.2 detail panel
+- [x] Task 9 — Wire `ContactoListView` into the `/contactos` route (AC: 1)
+  - [x] Update `frontend/src/routes/_app/contactos.tsx` — replace placeholder with `ContactoListView`
+  - [x] Route renders `ContactoListView` as the main view with `<Outlet />` for upcoming Story 3.2 detail panel
 
-- [ ] Task 10 — Backend: define `ContactoEntity` and EF Core configuration (AC: 1, 4)
-  - [ ] Create `backend/src/SiesaAgents.Domain/Contactos/Entities/ContactoEntity.cs`
+- [x] Task 10 — Backend: define `ContactoEntity` and EF Core configuration (AC: 1, 4)
+  - [x] Create `backend/src/SiesaAgents.Domain/Contactos/Entities/ContactoEntity.cs`
     - Fields: `Id` (Guid, UUID), `Nombre` (string), `Cargo` (string), `Telefono` (string), `Email` (string), `ClienteId` (Guid? nullable), `CreatedAt` (DateTimeOffset), `UpdatedAt` (DateTimeOffset)
     - Private constructor + static `Create(string nombre, string cargo, string telefono, string email)` factory — `ClienteId` defaults to `null`
     - `Update(string nombre, string cargo, string telefono, string email)` method sets `UpdatedAt = DateTimeOffset.UtcNow`
-  - [ ] Create `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs` — `Task<IEnumerable<ContactoEntity>> GetAllAsync(CancellationToken ct);`
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ContactoConfiguration.cs` — `IEntityTypeConfiguration<ContactoEntity>`, FK to `clientes.id` with `ON DELETE SET NULL`, index on `email` (`ix_contactos_email`), index on `cliente_id` (`ix_contactos_cliente_id`)
-  - [ ] Add `DbSet<ContactoEntity> Contactos` to `AppDbContext`
-  - [ ] Run EF Core migration: `dotnet ef migrations add AddContactoEntity --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API`
+  - [x] Create `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs` — `Task<IEnumerable<ContactoEntity>> GetAllAsync(CancellationToken ct);`
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ContactoConfiguration.cs` — `IEntityTypeConfiguration<ContactoEntity>`, FK to `clientes.id` with `ON DELETE SET NULL`, index on `email` (`ix_contactos_email`), index on `cliente_id` (`ix_contactos_cliente_id`)
+  - [x] Add `DbSet<ContactoEntity> Contactos` to `AppDbContext`
+  - [x] Run EF Core migration: `dotnet ef migrations add AddContactoEntity --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API`
 
-- [ ] Task 11 — Backend: implement CQRS query and handler (AC: 1)
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/Queries/GetContactosQuery.cs` — record with no parameters
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/Queries/GetContactosQueryHandler.cs` — calls `IContactoRepository.GetAllAsync()`, maps to `ContactoDto`
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/DTOs/ContactoDto.cs` — `{ Guid Id, string Nombre, string Cargo, string Telefono, string Email, Guid? ClienteId, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt }`
-  - [ ] Register `IContactoRepository` → `ContactoRepository` in DI (Program.cs)
+- [x] Task 11 — Backend: implement CQRS query and handler (AC: 1)
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/Queries/GetContactosQuery.cs` — record with no parameters
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/Queries/GetContactosQueryHandler.cs` — calls `IContactoRepository.GetAllAsync()`, maps to `ContactoDto`
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/DTOs/ContactoDto.cs` — `{ Guid Id, string Nombre, string Cargo, string Telefono, string Email, Guid? ClienteId, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt }`
+  - [x] Register `IContactoRepository` → `ContactoRepository` in DI (Program.cs)
 
-- [ ] Task 12 — Backend: implement `ContactoRepository` (AC: 1, 4)
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs`
-  - [ ] Implement `IContactoRepository`; use `AppDbContext`
-  - [ ] `GetAllAsync`: `return await _context.Contactos.AsNoTracking().OrderByDescending(c => c.CreatedAt).ToListAsync(ct);`
+- [x] Task 12 — Backend: implement `ContactoRepository` (AC: 1, 4)
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs`
+  - [x] Implement `IContactoRepository`; use `AppDbContext`
+  - [x] `GetAllAsync`: `return await _context.Contactos.AsNoTracking().OrderByDescending(c => c.CreatedAt).ToListAsync(ct);`
 
-- [ ] Task 13 — Backend: expose `GET /api/v1/contactos` endpoint (AC: 1, 4)
-  - [ ] Create `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs`
-  - [ ] `MapGet("/api/v1/contactos", ...)` → dispatches `GetContactosQuery`, returns `200 OK` with `ContactoDto[]`
-  - [ ] Register in `Program.cs`: `app.MapContactoEndpoints()`
-  - [ ] Response format: direct JSON array (no wrapper object) — per architecture contract
+- [x] Task 13 — Backend: expose `GET /api/v1/contactos` endpoint (AC: 1, 4)
+  - [x] Create `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs`
+  - [x] `MapGet("/api/v1/contactos", ...)` → dispatches `GetContactosQuery`, returns `200 OK` with `ContactoDto[]`
+  - [x] Register in `Program.cs`: `app.MapContactoEndpoints()`
+  - [x] Response format: direct JSON array (no wrapper object) — per architecture contract
 
-- [ ] Task 14 — Write frontend unit tests (AC: 2)
-  - [ ] Create `frontend/src/modules/crm/contactos/application/__tests__/useContactos.test.ts`
+- [x] Task 14 — Write frontend unit tests (AC: 2)
+  - [x] Create `frontend/src/modules/crm/contactos/application/__tests__/useContactos.test.ts`
     - UNIT-CT-FE-01: `useContactos` returns data from `contactoApiRepository.getAll()` on success
     - UNIT-CT-FE-02: `useContactos` exposes `isError = true` when repository throws
-  - [ ] Create `frontend/src/modules/crm/contactos/__tests__/filterContactos.test.ts`
+  - [x] Create `frontend/src/modules/crm/contactos/__tests__/filterContactos.test.ts`
     - UNIT-CT-05: `filterContactos(contacts, 'Juan')` returns only contacts whose `nombre` contains 'Juan' (case-insensitive)
     - UNIT-CT-06: `filterContactos(contacts, 'test@')` returns only contacts whose `email` contains 'test@' (case-insensitive)
 
-- [ ] Task 15 — Write backend unit tests (AC: 1, 4)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Handlers/GetContactosQueryHandlerTests.cs`
+- [x] Task 15 — Write backend unit tests (AC: 1, 4)
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Handlers/GetContactosQueryHandlerTests.cs`
     - UNIT-B-CT-GET-01: Handler returns all contacts as `ContactoDto[]` when repository returns data
     - UNIT-B-CT-GET-02: Handler returns empty array when repository returns no records
 
@@ -466,19 +466,28 @@ if (isLoading) {
 
 ### Agent Model Used
 
-(to be filled by dev agent)
+claude-sonnet-4-6
 
 ### Debug Log References
 
-(to be filled by dev agent)
+- All tasks verified as already implemented by a prior session (commit range ending at 22d77c6).
+- Fixed pre-existing test bug: `filterContactos.edge.test.ts` UNIT-CT-FILTER-EDGE-11 used "Par"/"Impar" names where "Impar" contains "par", causing all 1000 items to match. Fixed to use "Alfa"/"Beta" so the filter produces a genuine subset.
+- Fixed `GetContactosQueryHandlerTests.cs` FakeContactoRepository missing `GetByIdAsync` method required by `IContactoRepository` interface.
+- Created EF Core migration `20260521074856_AddContactoEntity` manually (dotnet CLI not available in environment); includes both `clientes` and `contactos` tables since `InitialCreate` migration was empty.
+- Updated `AppDbContextModelSnapshot.cs` to reflect current model state.
 
 ### Completion Notes List
 
-(to be filled by dev agent)
+- All 15 tasks (Tasks 1-15) verified complete — frontend and backend implementations existed from prior session.
+- Frontend: Contacto domain, repository, TanStack Query hook, filter utility, ContactoListView, ContactoListItem, route wiring all present.
+- Backend: ContactoEntity (DateTimeOffset, Guid PK, private constructor, factory), IContactoRepository, ContactoRepository, CQRS query/handler, DTO, EF config, Minimal API endpoint, DI registration all present.
+- EF Core migration created manually with clientes + contactos tables per snake_case naming convention.
+- All contacto-related frontend tests pass (UNIT-CT-FE-01, UNIT-CT-FE-02, UNIT-CT-05, UNIT-CT-06 and edge cases).
+- Pre-existing failures in other stories (queryClient staleTime mismatch, ClienteListPanel useParams) are not in story 3.1 scope.
 
 ### File List
 
-**To create (frontend):**
+**Created (frontend):**
 - `frontend/src/modules/crm/contactos/domain/Contacto.ts`
 - `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts`
 - `frontend/src/modules/crm/contactos/application/useContactos.ts`
@@ -489,7 +498,7 @@ if (isLoading) {
 - `frontend/src/modules/crm/contactos/application/__tests__/useContactos.test.ts`
 - `frontend/src/modules/crm/contactos/__tests__/filterContactos.test.ts`
 
-**To create (backend):**
+**Created (backend):**
 - `backend/src/SiesaAgents.Domain/Contactos/Entities/ContactoEntity.cs`
 - `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`
 - `backend/src/SiesaAgents.Application/Contactos/Queries/GetContactosQuery.cs`
@@ -499,9 +508,13 @@ if (isLoading) {
 - `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs`
 - `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs`
 - `backend/tests/SiesaAgents.UnitTests/Handlers/GetContactosQueryHandlerTests.cs`
-- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/` (auto-generated by EF Core)
+- `backend/src/SiesaAgents.Infrastructure/Migrations/20260521074856_AddContactoEntity.cs` (manual — dotnet CLI unavailable)
+- `backend/src/SiesaAgents.Infrastructure/Migrations/20260521074856_AddContactoEntity.Designer.cs` (manual)
 
-**To modify:**
-- `frontend/src/routes/_app/contactos.tsx` — replace placeholder with `ContactoListView`
-- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` — add `DbSet<ContactoEntity> Contactos`
-- `backend/src/SiesaAgents.API/Program.cs` — register `IContactoRepository`, `GetContactosQueryHandler`, call `app.MapContactoEndpoints()`
+**Modified:**
+- `frontend/src/routes/_app/contactos.tsx` — wired with ContactoListView + Outlet
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` — DbSet<ContactoEntity> Contactos
+- `backend/src/SiesaAgents.API/Program.cs` — IContactoRepository, GetContactosQueryHandler, MapContactoEndpoints
+- `backend/src/SiesaAgents.Infrastructure/Migrations/AppDbContextModelSnapshot.cs` — updated to reflect clientes + contactos model
+- `frontend/src/modules/crm/contactos/__tests__/filterContactos.edge.test.ts` — fixed UNIT-CT-FILTER-EDGE-11 test data bug
+- `backend/tests/SiesaAgents.UnitTests/Handlers/GetContactosQueryHandlerTests.cs` — added GetByIdAsync to FakeContactoRepository
