@@ -21,4 +21,7 @@ public class ContactoRepository : IContactoRepository
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(ct);
     }
+
+    public async Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+        => await _context.Contactos.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, ct);
 }

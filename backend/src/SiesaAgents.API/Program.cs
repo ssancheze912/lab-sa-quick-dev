@@ -41,6 +41,7 @@ builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 // Contactos
 builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
 builder.Services.AddScoped<GetContactosQueryHandler>();
+builder.Services.AddScoped<GetContactoByIdQueryHandler>();
 
 var app = builder.Build();
 

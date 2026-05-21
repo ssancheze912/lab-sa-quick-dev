@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppContactosRouteImport } from './routes/_app/contactos'
 import { Route as AppClientesRouteImport } from './routes/_app/clientes'
+import { Route as AppContactosContactoIdRouteImport } from './routes/_app/contactos.$contactoId'
 import { Route as AppClientesClienteIdRouteImport } from './routes/_app/clientes.$clienteId'
 
 const NotFoundRoute = NotFoundRouteImport.update({
@@ -40,6 +41,11 @@ const AppClientesRoute = AppClientesRouteImport.update({
   path: '/clientes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppContactosContactoIdRoute = AppContactosContactoIdRouteImport.update({
+  id: '/$contactoId',
+  path: '/$contactoId',
+  getParentRoute: () => AppContactosRoute,
+} as any)
 const AppClientesClienteIdRoute = AppClientesClienteIdRouteImport.update({
   id: '/$clienteId',
   path: '/$clienteId',
@@ -50,15 +56,17 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/not-found': typeof NotFoundRoute
   '/clientes': typeof AppClientesRouteWithChildren
-  '/contactos': typeof AppContactosRoute
+  '/contactos': typeof AppContactosRouteWithChildren
   '/clientes/$clienteId': typeof AppClientesClienteIdRoute
+  '/contactos/$contactoId': typeof AppContactosContactoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/not-found': typeof NotFoundRoute
   '/clientes': typeof AppClientesRouteWithChildren
-  '/contactos': typeof AppContactosRoute
+  '/contactos': typeof AppContactosRouteWithChildren
   '/clientes/$clienteId': typeof AppClientesClienteIdRoute
+  '/contactos/$contactoId': typeof AppContactosContactoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -66,8 +74,9 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/not-found': typeof NotFoundRoute
   '/_app/clientes': typeof AppClientesRouteWithChildren
-  '/_app/contactos': typeof AppContactosRoute
+  '/_app/contactos': typeof AppContactosRouteWithChildren
   '/_app/clientes/$clienteId': typeof AppClientesClienteIdRoute
+  '/_app/contactos/$contactoId': typeof AppContactosContactoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -77,8 +86,15 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/contactos'
     | '/clientes/$clienteId'
+    | '/contactos/$contactoId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/not-found' | '/clientes' | '/contactos' | '/clientes/$clienteId'
+  to:
+    | '/'
+    | '/not-found'
+    | '/clientes'
+    | '/contactos'
+    | '/clientes/$clienteId'
+    | '/contactos/$contactoId'
   id:
     | '__root__'
     | '/'
@@ -87,6 +103,7 @@ export interface FileRouteTypes {
     | '/_app/clientes'
     | '/_app/contactos'
     | '/_app/clientes/$clienteId'
+    | '/_app/contactos/$contactoId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +149,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClientesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/contactos/$contactoId': {
+      id: '/_app/contactos/$contactoId'
+      path: '/$contactoId'
+      fullPath: '/contactos/$contactoId'
+      preLoaderRoute: typeof AppContactosContactoIdRouteImport
+      parentRoute: typeof AppContactosRoute
+    }
     '/_app/clientes/$clienteId': {
       id: '/_app/clientes/$clienteId'
       path: '/$clienteId'
@@ -154,14 +178,26 @@ const AppClientesRouteWithChildren = AppClientesRoute._addFileChildren(
   AppClientesRouteChildren,
 )
 
+interface AppContactosRouteChildren {
+  AppContactosContactoIdRoute: typeof AppContactosContactoIdRoute
+}
+
+const AppContactosRouteChildren: AppContactosRouteChildren = {
+  AppContactosContactoIdRoute: AppContactosContactoIdRoute,
+}
+
+const AppContactosRouteWithChildren = AppContactosRoute._addFileChildren(
+  AppContactosRouteChildren,
+)
+
 interface AppRouteChildren {
   AppClientesRoute: typeof AppClientesRouteWithChildren
-  AppContactosRoute: typeof AppContactosRoute
+  AppContactosRoute: typeof AppContactosRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppClientesRoute: AppClientesRouteWithChildren,
-  AppContactosRoute: AppContactosRoute,
+  AppContactosRoute: AppContactosRouteWithChildren,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

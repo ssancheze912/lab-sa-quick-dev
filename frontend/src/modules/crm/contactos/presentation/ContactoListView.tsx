@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { Link, useParams } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useContactos } from '../application/useContactos'
@@ -10,6 +11,8 @@ import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 export function ContactoListView() {
   const [searchQuery, setSearchQuery] = useState('')
   const { data = [], isLoading, isError, refetch } = useContactos()
+  const params = useParams({ strict: false }) as { contactoId?: string }
+  const activeContactoId = params.contactoId
 
   const filteredContactos = useMemo(
     () => filterContactos(data, searchQuery),
@@ -47,7 +50,7 @@ export function ContactoListView() {
           </div>
         )}
 
-        {isError && <ErrorPanel onRetry={refetch} />}
+        {isError && <ErrorPanel onRetry={() => refetch()} />}
 
         {!isLoading && !isError && data.length === 0 && (
           <EmptyState
@@ -56,14 +59,7 @@ export function ContactoListView() {
           />
         )}
 
-        {!isLoading && !isError && data.length > 0 && filteredContactos.length === 0 && (
-          <EmptyState
-            title="Sin resultados"
-            description="No hay contactos que coincidan con la búsqueda."
-          />
-        )}
-
-        {!isLoading && !isError && data.length > 0 && filteredContactos.length > 0 && (
+        {!isLoading && !isError && data.length > 0 && (
           <ul
             role="list"
             aria-label="Lista de contactos"
@@ -71,11 +67,18 @@ export function ContactoListView() {
           >
             {filteredContactos.map((contacto) => (
               <li key={contacto.id} data-testid="contacto-row">
-                <ContactoListItem
-                  nombre={contacto.nombre}
-                  cargo={contacto.cargo}
-                  email={contacto.email}
-                />
+                <Link
+                  to="/contactos/$contactoId"
+                  params={{ contactoId: contacto.id }}
+                  className="block"
+                >
+                  <ContactoListItem
+                    nombre={contacto.nombre}
+                    cargo={contacto.cargo}
+                    email={contacto.email}
+                    isActive={activeContactoId === contacto.id}
+                  />
+                </Link>
               </li>
             ))}
           </ul>

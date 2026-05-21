@@ -7,6 +7,11 @@ const contactoApiRepository: IContactoRepository = {
     const response = await apiClient.get<Contacto[]>('/api/v1/contactos')
     return response.data
   },
+
+  async getById(id: string): Promise<Contacto> {
+    const response = await apiClient.get<Contacto>(`/api/v1/contactos/${id}`)
+    return response.data
+  },
 }
 
 export { contactoApiRepository }
