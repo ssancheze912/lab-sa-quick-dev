@@ -1,5 +1,7 @@
 using System.Text.Json;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using SiesaAgents.Domain.Exceptions;
 
 namespace SiesaAgents.API.Middleware;
 
@@ -23,9 +25,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
     {
         var (statusCode, title) = exception switch
         {
+            ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
+            ValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
             ArgumentException => (StatusCodes.Status400BadRequest, "Bad request"),
-            InvalidOperationException => (StatusCodes.Status409Conflict, "Conflict"),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
         };
 
