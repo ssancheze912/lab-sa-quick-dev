@@ -576,13 +576,18 @@ test.describe('Story 3.2 — API: GET /api/v1/contactos/:id', () => {
   //   AND the response is a direct object — NOT a wrapper { data: {...} }
   // ---------------------------------------------------------------------------
   test('API-CT-08 — GET /api/v1/contactos/:id con ID válido devuelve 200 + ContactoDto completo con clienteId: null', async ({ request }) => {
-    // GIVEN — a contact is created via the API
+    // GIVEN — a contact is created via the API using the factory
+    const data = buildContacto({
+      nombre: 'María García API-CT-08',
+      cargo: 'Gerente Comercial',
+      telefono: '+57 1 234 5679',
+    });
     const createResponse = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
       data: {
-        nombre: 'María García',
-        cargo: 'Gerente Comercial',
-        telefono: '+57 1 234 5679',
-        email: 'm.garcia.api08@empresa.com',
+        nombre: data.nombre,
+        cargo: data.cargo,
+        telefono: data.telefono,
+        email: data.email,
       },
     });
     expect(createResponse.status()).toBe(201);
@@ -608,16 +613,16 @@ test.describe('Story 3.2 — API: GET /api/v1/contactos/:id', () => {
     );
 
     // AND — nombre is the correct value
-    expect(body.nombre).toBe('María García');
+    expect(body.nombre).toBe(data.nombre);
 
     // AND — cargo is the correct value
-    expect(body.cargo).toBe('Gerente Comercial');
+    expect(body.cargo).toBe(data.cargo);
 
     // AND — telefono is the correct value
-    expect(body.telefono).toBe('+57 1 234 5679');
+    expect(body.telefono).toBe(data.telefono);
 
     // AND — email is the correct value
-    expect(body.email).toBe('m.garcia.api08@empresa.com');
+    expect(body.email).toBe(data.email);
 
     // AND — clienteId is null (Epic 3 scope: standalone contact, no client association)
     expect(body.clienteId).toBeNull();
