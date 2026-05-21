@@ -1,4 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query'
+import type { NavigateFn } from '@tanstack/react-router'
 import { toast } from '../../../../shared/lib/toastStore'
 import { apiClient } from '../../../../shared/lib/apiClient'
 import type { IContactServiceAdapter, LookupConfig, Contact } from 'siesa-ui-kit'
@@ -10,6 +11,7 @@ import type { Contacto } from '../../contactos/domain/Contacto'
  *
  * Story 4.1 scope: read-only (getByRecordId).
  * Story 4.2 scope: adds assignContacto() and removeContacto() write operations.
+ * Story 4.3 scope: adds onContactClick() for navigation to contact detail.
  */
 export class ClienteContactServiceAdapter implements IContactServiceAdapter {
   lookupConfig: LookupConfig
@@ -17,6 +19,7 @@ export class ClienteContactServiceAdapter implements IContactServiceAdapter {
   constructor(
     private readonly clienteId: string,
     private readonly queryClient: QueryClient,
+    private readonly navigate?: NavigateFn,
   ) {
     this.lookupConfig = {
       fetcher: async () => ({ data: [], total: 0 }),
@@ -66,10 +69,15 @@ export class ClienteContactServiceAdapter implements IContactServiceAdapter {
    * Called by ContactManager when user adds an existing contact.
    */
   async assignContacto(contactoId: string): Promise<void> {
-    await apiClient.put(`/api/v1/contactos/${contactoId}/cliente`, { clienteId: this.clienteId })
-    this.queryClient.invalidateQueries({ queryKey: ['contactos'] })
-    this.queryClient.invalidateQueries({ queryKey: ['contactos', { clienteId: this.clienteId }] })
-    toast.success('Contacto asociado correctamente')
+    try {
+      await apiClient.put(`/api/v1/contactos/${contactoId}/cliente`, { clienteId: this.clienteId })
+      this.queryClient.invalidateQueries({ queryKey: ['contactos'] })
+      this.queryClient.invalidateQueries({ queryKey: ['contactos', { clienteId: this.clienteId }] })
+      toast.success('Contacto asociado correctamente')
+    } catch {
+      toast.error('No se pudo asociar el contacto. Intenta de nuevo.')
+      throw new Error('No se pudo asociar el contacto.')
+    }
   }
 
   /**
@@ -77,10 +85,15 @@ export class ClienteContactServiceAdapter implements IContactServiceAdapter {
    * The contact record is NOT deleted.
    */
   async removeContacto(contactoId: string): Promise<void> {
-    await apiClient.put(`/api/v1/contactos/${contactoId}/cliente`, { clienteId: null })
-    this.queryClient.invalidateQueries({ queryKey: ['contactos'] })
-    this.queryClient.invalidateQueries({ queryKey: ['contactos', { clienteId: this.clienteId }] })
-    toast.success('Contacto desasociado correctamente')
+    try {
+      await apiClient.put(`/api/v1/contactos/${contactoId}/cliente`, { clienteId: null })
+      this.queryClient.invalidateQueries({ queryKey: ['contactos'] })
+      this.queryClient.invalidateQueries({ queryKey: ['contactos', { clienteId: this.clienteId }] })
+      toast.success('Contacto desasociado correctamente')
+    } catch {
+      toast.error('No se pudo desasociar el contacto. Intenta de nuevo.')
+      throw new Error('No se pudo desasociar el contacto.')
+    }
   }
 
   /**
@@ -89,5 +102,13 @@ export class ClienteContactServiceAdapter implements IContactServiceAdapter {
    */
   async save(_recordId: string, _contacts: Contact[]): Promise<void> {
     // Association and disassociation are handled by assignContacto/removeContacto.
+  }
+
+  /**
+   * Navigates to the contact detail view.
+   * Story 4.3 scope: called when user clicks a contact row in ContactManager.
+   */
+  onContactClick(contactoId: string): void {
+    this.navigate?.({ to: '/contactos/$contactoId', params: { contactoId } })
   }
 }

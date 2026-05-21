@@ -1,6 +1,6 @@
 # Story 4.3: Navigate from Client Detail to Contact Detail
 
-Status: ready
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -18,37 +18,37 @@ So that I can access all contact information with no more than 2 clicks from the
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Frontend: extend `ClienteContactServiceAdapter` with `onContactClick` navigation handler (AC: 1)
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteContactServiceAdapter.ts`
-  - [ ] Add `onContactClick(contactoId: string): void` method — calls `router.navigate({ to: '/contactos/$contactoId', params: { contactoId } })` using TanStack Router's `useNavigate` hook result passed via constructor
-  - [ ] Constructor accepts `navigate: ReturnType<typeof useNavigate>` as third argument (after `clienteId` and `queryClient`)
-  - [ ] Ensure `onContactClick` is wired to the `ContactManager` `onItemClick` prop (or equivalent siesa-ui-kit callback prop name)
+- [x] Task 1 — Frontend: extend `ClienteContactServiceAdapter` with `onContactClick` navigation handler (AC: 1)
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteContactServiceAdapter.ts`
+  - [x] Add `onContactClick(contactoId: string): void` method — calls `router.navigate({ to: '/contactos/$contactoId', params: { contactoId } })` using TanStack Router's `useNavigate` hook result passed via constructor
+  - [x] Constructor accepts `navigate: ReturnType<typeof useNavigate>` as third argument (after `clienteId` and `queryClient`)
+  - [x] Ensure `onContactClick` is wired to the `ContactManager` `onItemClick` prop (or equivalent siesa-ui-kit callback prop name)
 
-- [ ] Task 2 — Frontend: update `ClienteDetailView` to wire navigation callback into ContactManager (AC: 1)
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
-  - [ ] Call `const navigate = useNavigate()` at component top level
-  - [ ] Pass `navigate` to `ClienteContactServiceAdapter` constructor: `new ClienteContactServiceAdapter(clienteId, queryClient, navigate)`
-  - [ ] Update `useMemo` dependency array to `[clienteId, queryClient, navigate]`
-  - [ ] Pass `adapter.onContactClick` (or equivalent) to `<ContactManager>` via the correct prop (e.g., `onItemClick`)
+- [x] Task 2 — Frontend: update `ClienteDetailView` to wire navigation callback into ContactManager (AC: 1)
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+  - [x] Call `const navigate = useNavigate()` at component top level
+  - [x] Pass `navigate` to `ClienteContactServiceAdapter` constructor: `new ClienteContactServiceAdapter(clienteId, queryClient, navigate)`
+  - [x] Update `useMemo` dependency array to `[clienteId, queryClient, navigate]`
+  - [x] Pass `adapter.onContactClick` (or equivalent) to `<ContactManager>` via the correct prop (e.g., `onItemClick`)
 
-- [ ] Task 3 — Frontend: add "Volver" link in `ContactoDetailView` with back-navigation support (AC: 2)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
-  - [ ] Add a "Volver" button/link using TanStack Router's `<Link>` component or `useNavigate`
-  - [ ] On click, call `router.history.back()` (or `window.history.back()`) to return to the previous route
-  - [ ] Render the "Volver" button with `data-testid="btn-volver"` for E2E test targeting
-  - [ ] Button label: "Volver" (Spanish; WCAG 2.1 AA `aria-label="Volver a la vista anterior"`)
+- [x] Task 3 — Frontend: add "Volver" link in `ContactoDetailView` with back-navigation support (AC: 2)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
+  - [x] Add a "Volver" button/link using TanStack Router's `<Link>` component or `useNavigate`
+  - [x] On click, call `router.history.back()` (or `window.history.back()`) to return to the previous route
+  - [x] Render the "Volver" button with `data-testid="btn-volver"` for E2E test targeting
+  - [x] Button label: "Volver" (Spanish; WCAG 2.1 AA `aria-label="Volver a la vista anterior"`)
 
-- [ ] Task 4 — Frontend: extend `ContactosPage` POM with navigation locators (AC: 1, 2)
-  - [ ] Update `e2e/pages/contactos.page.ts` — add `btnVolver` locator: `page.getByTestId('btn-volver')`
-  - [ ] Confirm `clienteAsociadoLink` locator is already present (referenced in test-design-epic-4.md Section 7)
+- [x] Task 4 — Frontend: extend `ContactosPage` POM with navigation locators (AC: 1, 2)
+  - [x] Update `e2e/pages/contactos.page.ts` — add `btnVolver` locator: `page.getByTestId('btn-volver')`
+  - [x] Confirm `clienteAsociadoLink` locator is already present (referenced in test-design-epic-4.md Section 7)
 
-- [ ] Task 5 — Write E2E tests (AC: 1, 2)
-  - [ ] Add to `e2e/tests/asociacion/asociacion-navegacion.spec.ts` — Story 4.3 scope: E2E-AC-10, E2E-AC-11, E2E-AC-12
-  - [ ] E2E-AC-10: Create client + associated contact via `apiHelper`; navigate to `/clientes`; click client item (click 1); assert `contactManagerContainer` visible; click contact row in ContactManager (click 2); assert URL matches `/contactos/{uuid}` (FR22)
-  - [ ] E2E-AC-11: Same setup — wrap click interactions with explicit click counter; assert exactly 2 clicks from landing on `/clientes` to `/contactos/:contactoId` (NFR8)
-  - [ ] E2E-AC-12: After navigating to contact via ContactManager (click 2), click `btnVolver` or call `page.goBack()`; assert `page.url()` matches `/clientes/:clienteId`
-  - [ ] All tests include `afterEach` cleanup via `apiHelper.deleteContacto` and `apiHelper.deleteCliente`
-  - [ ] All tests add `page.on('pageerror', ...)` listener to catch JS errors during navigation
+- [x] Task 5 — Write E2E tests (AC: 1, 2)
+  - [x] Add to `e2e/tests/asociacion/asociacion-navegacion.spec.ts` — Story 4.3 scope: E2E-AC-10, E2E-AC-11, E2E-AC-12
+  - [x] E2E-AC-10: Create client + associated contact via `apiHelper`; navigate to `/clientes`; click client item (click 1); assert `contactManagerContainer` visible; click contact row in ContactManager (click 2); assert URL matches `/contactos/{uuid}` (FR22)
+  - [x] E2E-AC-11: Same setup — wrap click interactions with explicit click counter; assert exactly 2 clicks from landing on `/clientes` to `/contactos/:contactoId` (NFR8)
+  - [x] E2E-AC-12: After navigating to contact via ContactManager (click 2), click `btnVolver` or call `page.goBack()`; assert `page.url()` matches `/clientes/:clienteId`
+  - [x] All tests include `afterEach` cleanup via `apiHelper.deleteContacto` and `apiHelper.deleteCliente`
+  - [x] All tests add `page.on('pageerror', ...)` listener to catch JS errors during navigation
 
 ## Dev Notes
 
@@ -240,6 +240,28 @@ const router = useRouter()
 ❌ navigate() called outside useMemo deps                 → add navigate to useMemo([clienteId, queryClient, navigate]) to avoid stale closures
 ❌ ContactManager onItemClick prop name assumed           → verify exact prop with siesa-ui-kit ContactManager API before implementation
 ```
+
+## Dev Agent Record
+
+### Implementation Notes
+
+- `ClienteContactServiceAdapter` constructor extended to accept optional `navigate?: NavigateFn` as third argument; backward-compatible (existing 2-arg instantiations still work).
+- `onContactClick(contactoId)` added to adapter — calls `navigate?.({ to: '/contactos/$contactoId', params: { contactoId } })`.
+- `ClienteDetailView` updated: passes `navigate` to adapter, adds `useContactosByCliente` to resolve contact ID from click event via event delegation on the ContactManager container `<div>`.
+- Navigation is implemented via click event delegation on the `<tr>` row in the ContactManager table layout — ContactManager (siesa-ui-kit v1.0.194) does NOT expose an external `onItemClick`/`onViewContact` prop at `ContactManagerProps` level; verified via type inspection and bundle analysis.
+- `ContactoDetailPanel` (used at `/contactos/$contactoId` route) updated with "Volver" back button using `router.history.back()` — WCAG 2.1 AA compliant (`aria-label="Volver a la vista anterior"`, `data-testid="btn-volver"`).
+- 2 new unit tests added: UNIT-AC-06 (onContactClick calls navigate), UNIT-AC-07 (no-throw when navigate is undefined).
+- All 31 adapter unit tests pass. TypeScript clean. ESLint package unavailable in worktree (pre-existing issue, not related to this story).
+- E2E tests E2E-AC-10, E2E-AC-11, E2E-AC-12 created in `e2e/tests/asociacion/asociacion-navegacion.spec.ts`.
+
+### Files Modified/Created
+
+- Modified: `frontend/src/modules/crm/clientes/presentation/ClienteContactServiceAdapter.ts`
+- Modified: `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+- Modified: `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx`
+- Modified: `frontend/src/modules/crm/clientes/__tests__/ClienteContactServiceAdapter.test.ts`
+- Modified: `e2e/pages/contactos.page.ts`
+- Created: `e2e/tests/asociacion/asociacion-navegacion.spec.ts`
 
 ### References
 

@@ -197,4 +197,87 @@ describe('ClienteContactServiceAdapter', () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contactos'] })
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contactos', { clienteId: CLIENT_ID }] })
   })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-AC-04 (error path · AC1)
+  // Given assignContacto is called and the API rejects
+  // Then toast.error is shown and the error is re-thrown
+  // ---------------------------------------------------------------------------
+  it('UNIT-AC-04 — assignContacto() muestra toast.error y re-lanza cuando el API falla', async () => {
+    // GIVEN
+    const { toast } = await import('../../../../shared/lib/toastStore')
+    const mockToastError = toast.error as ReturnType<typeof vi.fn>
+    mockPut.mockRejectedValueOnce(new Error('Network Error'))
+    const queryClient = makeMockQueryClient()
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, queryClient)
+
+    // WHEN / THEN — error is re-thrown
+    await expect(adapter.assignContacto('any-id')).rejects.toThrow()
+
+    // AND — toast.error was shown
+    expect(mockToastError).toHaveBeenCalledWith('No se pudo asociar el contacto. Intenta de nuevo.')
+
+    // AND — no invalidation happened
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-AC-06 (Story 4.3 · AC1)
+  // Given a ClienteContactServiceAdapter constructed with a navigate function
+  // When onContactClick(contactoId) is called
+  // Then navigate is called with the correct route and params
+  // ---------------------------------------------------------------------------
+  it('UNIT-AC-06 — onContactClick() llama a navigate con la ruta /contactos/$contactoId correcta', () => {
+    // GIVEN — navigate mock
+    const mockNavigate = vi.fn()
+    const contactoId = '550e8400-e29b-41d4-a716-446655440099'
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, makeMockQueryClient(), mockNavigate)
+
+    // WHEN
+    adapter.onContactClick(contactoId)
+
+    // THEN — navigate called with correct route and params
+    expect(mockNavigate).toHaveBeenCalledTimes(1)
+    expect(mockNavigate).toHaveBeenCalledWith({
+      to: '/contactos/$contactoId',
+      params: { contactoId },
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-AC-07 (Story 4.3 · AC1 — optional navigate)
+  // Given a ClienteContactServiceAdapter constructed WITHOUT a navigate function
+  // When onContactClick(contactoId) is called
+  // Then it does NOT throw (navigate is optional — backward compat)
+  // ---------------------------------------------------------------------------
+  it('UNIT-AC-07 — onContactClick() no lanza cuando navigate es undefined (retrocompatibilidad)', () => {
+    // GIVEN — adapter without navigate (2-arg constructor, backward compat)
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, makeMockQueryClient())
+
+    // WHEN / THEN — should NOT throw
+    expect(() => adapter.onContactClick('any-id')).not.toThrow()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-AC-05 (error path · AC3)
+  // Given removeContacto is called and the API rejects
+  // Then toast.error is shown and the error is re-thrown
+  // ---------------------------------------------------------------------------
+  it('UNIT-AC-05 — removeContacto() muestra toast.error y re-lanza cuando el API falla', async () => {
+    // GIVEN
+    const { toast } = await import('../../../../shared/lib/toastStore')
+    const mockToastError = toast.error as ReturnType<typeof vi.fn>
+    mockPut.mockRejectedValueOnce(new Error('Network Error'))
+    const queryClient = makeMockQueryClient()
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, queryClient)
+
+    // WHEN / THEN — error is re-thrown
+    await expect(adapter.removeContacto('any-id')).rejects.toThrow()
+
+    // AND — toast.error was shown
+    expect(mockToastError).toHaveBeenCalledWith('No se pudo desasociar el contacto. Intenta de nuevo.')
+
+    // AND — no invalidation happened
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+  })
 })

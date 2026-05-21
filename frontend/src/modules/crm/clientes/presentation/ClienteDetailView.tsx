@@ -1,11 +1,12 @@
 import { isAxiosError } from 'axios'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { ContactManager, ContactServiceProvider } from 'siesa-ui-kit'
 import { useClienteById } from '../application/useClienteById'
+import { useContactosByCliente } from '../../contactos/application/useContactosByCliente'
 import { ClienteContactServiceAdapter } from './ClienteContactServiceAdapter'
 import { ClienteFormDialog } from './ClienteFormDialog'
 import { DeleteClienteDialog } from './DeleteClienteDialog'
@@ -20,10 +21,58 @@ export function ClienteDetailView({ clienteId }: Props) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { data: contactos } = useContactosByCliente(clienteId)
+  const contactManagerRef = useRef<HTMLDivElement>(null)
 
   const adapter = useMemo(
-    () => new ClienteContactServiceAdapter(clienteId, queryClient),
-    [clienteId, queryClient],
+    () => new ClienteContactServiceAdapter(clienteId, queryClient, navigate),
+    [clienteId, queryClient, navigate],
+  )
+
+  /**
+   * Event delegation: intercept clicks on ContactManager rows to navigate to contact detail.
+   * We detect clicks on <tr> rows (table layout) or contact cards (mobile layout)
+   * by finding the nearest ancestor containing a contact name that maps to a loaded contact ID.
+   */
+  const handleContactManagerClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!contactos?.length) return
+      const target = event.target as HTMLElement
+
+      // Find the closest <tr> row (desktop table layout)
+      const trRow = target.closest('tr')
+      if (trRow) {
+        // Get the contact name from the name cell (first meaningful text cell)
+        const nameCells = trRow.querySelectorAll('td')
+        let contactName: string | undefined
+        for (const cell of nameCells) {
+          const text = cell.textContent?.trim()
+          if (text && text.length > 0) {
+            contactName = text
+            break
+          }
+        }
+        if (contactName) {
+          const matched = contactos.find((c) => c.nombre === contactName)
+          if (matched) {
+            event.stopPropagation()
+            adapter.onContactClick(matched.id)
+            return
+          }
+        }
+      }
+
+      // Find contact card (mobile/card layout) — look for the card container
+      const card = target.closest('[data-contact-card]') as HTMLElement | null
+      if (card) {
+        const contactoId = card.dataset.contactId
+        if (contactoId) {
+          event.stopPropagation()
+          adapter.onContactClick(contactoId)
+        }
+      }
+    },
+    [contactos, adapter],
   )
 
   const is404 = isError && isAxiosError(error) && error.response?.status === 404
@@ -163,7 +212,11 @@ export function ClienteDetailView({ clienteId }: Props) {
           </div>
         </div>
 
-        <div data-testid="contact-manager">
+        <div
+          ref={contactManagerRef}
+          data-testid="contact-manager"
+          onClick={handleContactManagerClick}
+        >
           <ContactServiceProvider adapter={adapter}>
             <ContactManager recordId={clienteId} />
           </ContactServiceProvider>

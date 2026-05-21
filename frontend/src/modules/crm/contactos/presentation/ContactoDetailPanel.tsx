@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { isAxiosError } from 'axios'
+import { useRouter } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useContactoById } from '../application/useContactoById'
@@ -15,6 +16,7 @@ export function ContactoDetailPanel({ contactoId }: Props) {
   const { data, isLoading, isError, error } = useContactoById(contactoId)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const router = useRouter()
 
   const is404 = isError && isAxiosError(error) && error.response?.status === 404
 
@@ -51,6 +53,29 @@ export function ContactoDetailPanel({ contactoId }: Props) {
       aria-label="Detalle del contacto"
       className="p-6 flex flex-col gap-5"
     >
+      <button
+        type="button"
+        data-testid="btn-volver"
+        aria-label="Volver a la vista anterior"
+        onClick={() => router.history.back()}
+        className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 mb-0 self-start"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className="w-4 h-4"
+          aria-hidden="true"
+        >
+          <path
+            fillRule="evenodd"
+            d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
+            clipRule="evenodd"
+          />
+        </svg>
+        Volver
+      </button>
+
       <div className="flex items-center justify-between mb-2">
         <span className="text-base font-semibold text-slate-800">Detalle</span>
         <div className="flex gap-2">
