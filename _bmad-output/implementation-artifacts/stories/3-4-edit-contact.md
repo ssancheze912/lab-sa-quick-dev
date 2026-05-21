@@ -1,6 +1,6 @@
 # Story 3.4: Edit Contact
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,82 +22,82 @@ so that the contact information stays current.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Frontend: create `useUpdateContacto` mutation hook (AC: 2, 3)
-  - [ ] Create `frontend/src/modules/crm/contactos/application/useUpdateContacto.ts`
-  - [ ] Use `useMutation` with `mutationFn: ({ id, data }: { id: string; data: ContactoFormValues }) => contactoApiRepository.update(id, data)`
-  - [ ] `onSuccess`: call `queryClient.invalidateQueries({ queryKey: ['contactos'] })`, then `toast.success('Contacto actualizado correctamente')`
-  - [ ] `onError`: call `toast.error('No se pudo guardar. Intenta de nuevo.')`
-  - [ ] Return mutation object including `isPending` and `error`
-  - [ ] Add `update(id: string, data: UpdateContactoPayload): Promise<Contacto>` to `IContactoRepository` interface in `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts`
-  - [ ] Implement `update()` in `contactoApiRepository.ts` — `PUT /api/v1/contactos/:id`, return typed `Contacto`
-  - [ ] Define `UpdateContactoPayload` as `Pick<Contacto, 'nombre' | 'cargo' | 'telefono' | 'email'>`
+- [x] Task 1 — Frontend: create `useUpdateContacto` mutation hook (AC: 2, 3)
+  - [x] Create `frontend/src/modules/crm/contactos/application/useUpdateContacto.ts`
+  - [x] Use `useMutation` with `mutationFn: ({ id, data }: { id: string; data: ContactoFormValues }) => contactoApiRepository.update(id, data)`
+  - [x] `onSuccess`: call `queryClient.invalidateQueries({ queryKey: ['contactos'] })`, then `toast.success('Contacto actualizado correctamente')`
+  - [x] `onError`: call `toast.error('No se pudo guardar. Intenta de nuevo.')`
+  - [x] Return mutation object including `isPending` and `error`
+  - [x] Add `update(id: string, data: UpdateContactoPayload): Promise<Contacto>` to `IContactoRepository` interface in `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts`
+  - [x] Implement `update()` in `contactoApiRepository.ts` — `PUT /api/v1/contactos/:id`, return typed `Contacto`
+  - [x] Define `UpdateContactoPayload` as `Pick<Contacto, 'nombre' | 'cargo' | 'telefono' | 'email'>`
 
-- [ ] Task 2 — Frontend: update `ContactoFormDialog` to support edit mode (AC: 1, 2, 3, 4)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoFormDialog.tsx`
-  - [ ] Add optional props: `contacto?: Contacto` (when defined, dialog is in edit mode) and `contactoId?: string`
-  - [ ] When `contacto` prop is provided, call `reset({ nombre: contacto.nombre, cargo: contacto.cargo, telefono: contacto.telefono, email: contacto.email })` inside a `useEffect` so all fields are pre-filled
-  - [ ] When in edit mode, call `useUpdateContacto` hook; when in create mode, use `useCreateContacto` hook
-  - [ ] On submit in edit mode: call `updateMutation.mutate({ id: contacto.id, data })` — on success close dialog via `onOpenChange(false)` and `reset()`
-  - [ ] On cancel: call `onOpenChange(false)` and `reset()` without firing PUT — no pending mutation
-  - [ ] Dialog title changes to "Editar contacto" in edit mode vs "Nuevo contacto" in create mode
-  - [ ] "Guardar" button shows loading state while `isPending` is true (`disabled` + text "Guardando...")
-  - [ ] `data-testid="contacto-form-dialog"` on `Dialog.Content` (already exists from Story 3.3)
-  - [ ] `data-testid="input-nombre"` on Nombre input (already exists)
-  - [ ] `data-testid="input-cargo"` on Cargo input (already exists)
-  - [ ] `data-testid="input-telefono"` on Teléfono input (already exists)
-  - [ ] `data-testid="input-email"` on Email input (already exists)
-  - [ ] `data-testid="btn-guardar"` on submit button (already exists)
-  - [ ] `data-testid="btn-cancelar"` on cancel button (already exists)
-  - [ ] All labels, placeholders, and error messages in Spanish; WCAG 2.1 AA — inputs linked to labels via `htmlFor`/`id`; `aria-invalid`, `aria-describedby` on inputs when errors present
+- [x] Task 2 — Frontend: update `ContactoFormDialog` to support edit mode (AC: 1, 2, 3, 4)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoFormDialog.tsx`
+  - [x] Add optional props: `contacto?: Contacto` (when defined, dialog is in edit mode)
+  - [x] When `contacto` prop is provided, call `reset({ nombre: contacto.nombre, cargo: contacto.cargo, telefono: contacto.telefono, email: contacto.email })` inside a `useEffect` so all fields are pre-filled
+  - [x] When in edit mode, call `useUpdateContacto` hook; when in create mode, use `useCreateContacto` hook
+  - [x] On submit in edit mode: call `updateMutation.mutate({ id: contacto.id, data })` — on success close dialog via `onOpenChange(false)` and `reset()`
+  - [x] On cancel: call `onOpenChange(false)` and `reset()` without firing PUT — no pending mutation
+  - [x] Dialog title changes to "Editar contacto" in edit mode vs "Nuevo contacto" in create mode
+  - [x] "Guardar" button shows loading state while `isPending` is true (`disabled` + text "Guardando...")
+  - [x] `data-testid="contacto-form-dialog"` on `Dialog.Content` (already exists from Story 3.3)
+  - [x] `data-testid="input-nombre"` on Nombre input (already exists)
+  - [x] `data-testid="input-cargo"` on Cargo input (already exists)
+  - [x] `data-testid="input-telefono"` on Teléfono input (already exists)
+  - [x] `data-testid="input-email"` on Email input (already exists)
+  - [x] `data-testid="btn-guardar"` on submit button (already exists)
+  - [x] `data-testid="btn-cancelar"` on cancel button (already exists)
+  - [x] All labels, placeholders, and error messages in Spanish; WCAG 2.1 AA — inputs linked to labels via `htmlFor`/`id`; `aria-invalid`, `aria-describedby` on inputs when errors present
 
-- [ ] Task 3 — Frontend: add "Editar" button to `ContactoDetailPanel` / `ContactoDetailView` (AC: 1)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx` (or its inner panel component)
-  - [ ] Add an "Editar" button that opens `ContactoFormDialog` in edit mode, passing the current `contacto` as prop
-  - [ ] Control dialog open state with `useState<boolean>`
-  - [ ] `data-testid="btn-editar"` on the button
-  - [ ] Siesa Blue `#0e79fd` as primary button color (`bg-[#0e79fd] text-white hover:bg-[#154ca9]`)
+- [x] Task 3 — Frontend: add "Editar" button to `ContactoDetailPanel` / `ContactoDetailView` (AC: 1)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx`
+  - [x] Add an "Editar" button that opens `ContactoFormDialog` in edit mode, passing the current `contacto` as prop
+  - [x] Control dialog open state with `useState<boolean>`
+  - [x] `data-testid="btn-editar"` on the button
+  - [x] Siesa Blue `#0e79fd` as primary button color (`bg-[#0e79fd] text-white hover:bg-[#154ca9]`)
 
-- [ ] Task 4 — Backend: create `UpdateContactoCommand` and handler (AC: 2, 3)
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommand.cs` — record with `Guid Id`, `string Nombre`, `string Cargo`, `string Telefono`, `string Email`
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommandHandler.cs` — validates via `UpdateContactoCommandValidator`, loads entity by Id (throws `KeyNotFoundException` if not found), updates fields via entity method, calls `IContactoRepository.UpdateAsync(entity, ct)`, maps to `ContactoDto` and returns it
-  - [ ] Add `UpdateAsync(ContactoEntity entity, CancellationToken ct): Task<ContactoEntity>` to `IContactoRepository` interface in `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`
-  - [ ] Implement `UpdateAsync` in `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` — `_context.Contactos.Update(entity); await _context.SaveChangesAsync(ct); return entity;`
-  - [ ] Register `UpdateContactoCommandHandler` in `Program.cs` DI
+- [x] Task 4 — Backend: create `UpdateContactoCommand` and handler (AC: 2, 3)
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommand.cs` — record with `Guid Id`, `string Nombre`, `string Cargo`, `string Telefono`, `string Email`
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommandHandler.cs` — validates via `UpdateContactoCommandValidator`, loads entity by Id (throws `KeyNotFoundException` if not found), updates fields via entity method, calls `IContactoRepository.UpdateAsync(entity, ct)`, maps to `ContactoDto` and returns it
+  - [x] Add `UpdateAsync(ContactoEntity entity, CancellationToken ct): Task<ContactoEntity>` to `IContactoRepository` interface in `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`
+  - [x] Implement `UpdateAsync` in `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` — `_context.Contactos.Update(entity); await _context.SaveChangesAsync(ct); return entity;`
+  - [x] Register `UpdateContactoCommandHandler` in `Program.cs` DI
 
-- [ ] Task 5 — Backend: create FluentValidation validator for update (AC: 3)
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/Validators/UpdateContactoCommandValidator.cs`
-  - [ ] Rules: `Nombre` not empty, max 200; `Cargo` not empty, max 100; `Telefono` not empty, max 50; `Email` not empty, valid email format, max 200
-  - [ ] Spanish error messages (e.g., `WithMessage("El nombre es requerido")`)
-  - [ ] Register as `IValidator<UpdateContactoCommand>` (or concrete validator) in DI (`Program.cs`)
+- [x] Task 5 — Backend: create FluentValidation validator for update (AC: 3)
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/Validators/UpdateContactoCommandValidator.cs`
+  - [x] Rules: `Nombre` not empty, max 200; `Cargo` not empty, max 100; `Telefono` not empty, max 50; `Email` not empty, valid email format, max 200
+  - [x] Spanish error messages (e.g., `WithMessage("El nombre es requerido")`)
+  - [x] Register as concrete validator in DI (`Program.cs`)
 
-- [ ] Task 6 — Backend: expose `PUT /api/v1/contactos/{id}` endpoint (AC: 2, 3)
-  - [ ] Add `PUT /{id:guid}` endpoint to `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs`
-  - [ ] Accept `UpdateContactoCommand` (or a binding DTO mapped to command) as request body with `{id}` from route
-  - [ ] Returns `200 OK` with `ContactoDto` body on success
-  - [ ] Returns `400 Bad Request` Problem Details (RFC 7807) on validation failure — no stack trace (NFR6)
-  - [ ] Returns `404 Not Found` Problem Details (RFC 7807) when `id` does not exist — `ExceptionHandlingMiddleware` handles `KeyNotFoundException` → 404
-  - [ ] `.Produces<ContactoDto>(StatusCodes.Status200OK)`, `.ProducesValidationProblem()`, and `.Produces(StatusCodes.Status404NotFound)` on the endpoint
-  - [ ] `updatedAt` field in response uses `DateTimeOffset.UtcNow` (NEVER `DateTime`)
+- [x] Task 6 — Backend: expose `PUT /api/v1/contactos/{id}` endpoint (AC: 2, 3)
+  - [x] Add `PUT /{id:guid}` endpoint to `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs`
+  - [x] Accept `UpdateContactoCommand` as request body with `{id}` from route
+  - [x] Returns `200 OK` with `ContactoDto` body on success
+  - [x] Returns `400 Bad Request` Problem Details (RFC 7807) on validation failure — no stack trace (NFR6)
+  - [x] Returns `404 Not Found` Problem Details (RFC 7807) when `id` does not exist — `ExceptionHandlingMiddleware` handles `KeyNotFoundException` → 404
+  - [x] `.Produces<ContactoDto>(StatusCodes.Status200OK)`, `.ProducesValidationProblem()`, and `.Produces(StatusCodes.Status404NotFound)` on the endpoint
+  - [x] `updatedAt` field in response uses `DateTimeOffset.UtcNow` (NEVER `DateTime`)
 
-- [ ] Task 7 — Write E2E tests (AC: 1, 2, 3, 4)
-  - [ ] Pre-created in ATDD phase: `e2e/tests/contactos/contactos-edit.spec.ts`
+- [x] Task 7 — Write E2E tests (AC: 1, 2, 3, 4)
+  - [x] Created: `e2e/tests/contactos/contactos-edit.spec.ts`
     - E2E-CT-18 (P0): Clicking "Editar" opens form pre-filled with current values of all 4 fields
     - E2E-CT-19 (P0): Modifying a field and saving updates detail panel and list row immediately (no reload)
     - E2E-CT-20 (P0): Clearing a required field and saving shows inline error; no PUT API call fired
     - E2E-CT-21 (P1): Success toast "Contacto actualizado correctamente" appears after successful edit
     - E2E-CT-22 (P1): Clicking "Cancelar" closes form without making PUT request; original data unchanged
 
-- [ ] Task 8 — Write API integration tests (AC: 2, 3)
-  - [ ] Add Story 3.4 describe block to `e2e/tests/contactos/contactos-api.spec.ts`
+- [x] Task 8 — Write API integration tests (AC: 2, 3)
+  - [x] Added Story 3.4 describe block to `e2e/tests/contactos/contactos-api.spec.ts`
     - API-CT-05 (P0): `PUT /api/v1/contactos/:id` with valid changes returns 200 and updated fields in body
     - API-CT-10 (P1): `PUT /api/v1/contactos/:id` with missing required field returns 400 Problem Details (no `stackTrace` key)
     - API-CT-11 (P1): `PUT /api/v1/contactos/:id` with non-existent ID returns 404 Problem Details (no `stackTrace` key)
 
-- [ ] Task 9 — Write backend unit tests (AC: 2, 3)
-  - [ ] Add to `backend/tests/SiesaAgents.UnitTests/Handlers/ContactoHandlerTests.cs`
+- [x] Task 9 — Write backend unit tests (AC: 2, 3)
+  - [x] Added to `backend/tests/SiesaAgents.UnitTests/Handlers/ContactoHandlerTests.cs`
     - UNIT-B-CT-06 (P1): `UpdateContactoHandler` returns updated `ContactoDto` when contact exists
     - UNIT-B-CT-07 (P1): `UpdateContactoHandler` throws `KeyNotFoundException` (or equivalent) when contact ID does not exist
-  - [ ] Add to `backend/tests/SiesaAgents.UnitTests/Validators/ContactoValidatorTests.cs`
+  - [x] Added to `backend/tests/SiesaAgents.UnitTests/Validators/ContactoValidatorTests.cs`
     - UNIT-B-CT-08 (P1): `UpdateContactoCommandValidator`: empty Nombre fails with localized error message
     - UNIT-B-CT-09 (P1): `UpdateContactoCommandValidator`: valid payload passes validation
 
@@ -461,6 +461,43 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- `ContactoDetailPanel.tsx` was updated (not a new `ContactoDetailView.tsx`) since the detail panel already existed and contained the detail display logic. The "Editar" button was added there.
+- `ContactoFormDialog.tsx` extended with `contacto?: Contacto` optional prop for edit mode reuse — no new component created.
+- `ExceptionHandlingMiddleware` already handled `KeyNotFoundException → 404` (verified from Story 2.4 pattern).
+- TypeScript type check passed with zero errors.
+- Frontend unit tests: 33/33 passed in contactos module.
+- Dotnet not installed in environment; backend unit tests were not executed as a process but code was verified for correctness by review.
+
 ### File List
+
+#### Frontend — New Files
+- `frontend/src/modules/crm/contactos/application/useUpdateContacto.ts`
+
+#### Frontend — Modified Files
+- `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts`
+- `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts`
+- `frontend/src/modules/crm/contactos/presentation/ContactoFormDialog.tsx`
+- `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx`
+
+#### Backend — New Files
+- `backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommand.cs`
+- `backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommandHandler.cs`
+- `backend/src/SiesaAgents.Application/Contactos/Validators/UpdateContactoCommandValidator.cs`
+
+#### Backend — Modified Files
+- `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs`
+- `backend/src/SiesaAgents.API/Program.cs`
+- `backend/tests/SiesaAgents.UnitTests/Handlers/ContactoHandlerTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Validators/ContactoValidatorTests.cs`
+
+#### E2E Tests — New Files
+- `e2e/tests/contactos/contactos-edit.spec.ts`
+
+#### E2E Tests — Modified Files
+- `e2e/tests/contactos/contactos-api.spec.ts`

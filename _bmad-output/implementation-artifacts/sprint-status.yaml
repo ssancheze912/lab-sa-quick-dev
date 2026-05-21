@@ -32,7 +32,7 @@ development_status:
   3-1-contact-list-search: review
   3-2-contact-detail-view: in-progress
   3-3-create-contact: done
-  3-4-edit-contact: ready-for-dev
+  3-4-edit-contact: review
   3-5-delete-contact: pending
 
   # Epic 4 — Client-Contact Association & Data Quality
