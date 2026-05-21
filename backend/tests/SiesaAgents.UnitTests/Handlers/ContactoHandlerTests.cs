@@ -6,17 +6,19 @@ using SiesaAgents.Domain.Contactos.Interfaces;
 namespace SiesaAgents.UnitTests.Handlers;
 
 /// <summary>
-/// Unit tests for CreateContactoCommandHandler and UpdateContactoCommandHandler.
+/// Unit tests for CreateContactoCommandHandler, UpdateContactoCommandHandler,
+/// and DeleteContactoCommandHandler.
 ///
 /// Story 3.3 tests (UNIT-B-CT-04): CreateContactoCommandHandler
 /// Story 3.4 tests (UNIT-B-CT-06, UNIT-B-CT-07): UpdateContactoCommandHandler
+/// Story 3.5 tests (UNIT-B-CT-05, UNIT-B-CT-10): DeleteContactoCommandHandler — RED phase
 ///
-/// Story 3.4 tests are in RED phase — UpdateContactoCommandHandler does not exist yet.
+/// Story 3.5 tests are in RED phase — DeleteContactoCommandHandler does not exist yet.
 /// Make these tests GREEN by implementing:
-///   backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommand.cs
-///   backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommandHandler.cs
-///   backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs (add UpdateAsync)
-///   backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs (implement UpdateAsync)
+///   backend/src/SiesaAgents.Application/Contactos/Commands/DeleteContactoCommand.cs
+///   backend/src/SiesaAgents.Application/Contactos/Commands/DeleteContactoCommandHandler.cs
+///   backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs (add DeleteAsync)
+///   backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs (implement DeleteAsync)
 /// </summary>
 public class ContactoHandlerTests
 {
@@ -181,6 +183,57 @@ public class ContactoHandlerTests
     }
 
     // ---------------------------------------------------------------------------
+    // UNIT-B-CT-05 (P1 · AC2 — Story 3.5)
+    // Given a DeleteContactoCommand with a contactoId that exists in the system
+    // When DeleteContactoCommandHandler.HandleAsync is called
+    // Then it completes without throwing any exception
+    //   AND the repository's DeleteAsync is invoked exactly once
+    // ---------------------------------------------------------------------------
+    [Fact]
+    public async Task DeleteHandleAsync_ExistingContact_CompletesWithoutThrow()
+    {
+        // GIVEN — an existing contact in the repository
+        var existing = ContactoEntity.Create(
+            nombre: "Contacto Para Eliminar",
+            cargo: "Analista",
+            telefono: "+57 1 234 5679",
+            email: "contacto.eliminar@empresa.com"
+        );
+        var repository = new DeletableContactoRepository(existing);
+        var handler = new DeleteContactoCommandHandler(repository);
+        var command = new DeleteContactoCommand(existing.Id);
+
+        // WHEN — handler processes the delete command
+        // THEN — no exception is thrown (handler completes successfully)
+        var exception = await Record.ExceptionAsync(
+            () => handler.HandleAsync(command, CancellationToken.None));
+
+        Assert.Null(exception);
+
+        // AND — repository.DeleteAsync was called exactly once
+        Assert.Equal(1, repository.DeleteCallCount);
+    }
+
+    // ---------------------------------------------------------------------------
+    // UNIT-B-CT-10 (P1 · AC2 — Story 3.5)
+    // Given a DeleteContactoCommand with a contactoId that does NOT exist
+    // When DeleteContactoCommandHandler.HandleAsync is called
+    // Then it throws KeyNotFoundException
+    // ---------------------------------------------------------------------------
+    [Fact]
+    public async Task DeleteHandleAsync_NotExistingContact_ThrowsKeyNotFoundException()
+    {
+        // GIVEN — repository returns null for any id (contact does not exist)
+        var repository = new CapturingContactoRepository(); // GetByIdAsync returns null
+        var handler = new DeleteContactoCommandHandler(repository);
+        var command = new DeleteContactoCommand(Guid.NewGuid());
+
+        // WHEN / THEN — handler throws KeyNotFoundException
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => handler.HandleAsync(command, CancellationToken.None));
+    }
+
+    // ---------------------------------------------------------------------------
     // Fakes
     // ---------------------------------------------------------------------------
 
@@ -209,6 +262,9 @@ public class ContactoHandlerTests
 
         public Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
             => Task.FromResult(entity);
+
+        public Task DeleteAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.CompletedTask;
     }
 
     /// <summary>
@@ -235,5 +291,41 @@ public class ContactoHandlerTests
 
         public Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
             => Task.FromResult(entity);
+
+        public Task DeleteAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Fake IContactoRepository that holds an existing entity and tracks DeleteAsync calls.
+    /// Used by Story 3.5 tests (UNIT-B-CT-05).
+    /// </summary>
+    private sealed class DeletableContactoRepository : IContactoRepository
+    {
+        private readonly ContactoEntity _entity;
+        public int DeleteCallCount { get; private set; }
+
+        public DeletableContactoRepository(ContactoEntity entity)
+        {
+            _entity = entity;
+        }
+
+        public Task<IEnumerable<ContactoEntity>> GetAllAsync(CancellationToken ct)
+            => Task.FromResult<IEnumerable<ContactoEntity>>(new[] { _entity });
+
+        public Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+            => Task.FromResult<ContactoEntity?>(_entity.Id == id ? _entity : null);
+
+        public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.FromResult(entity);
+
+        public Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.FromResult(entity);
+
+        public Task DeleteAsync(ContactoEntity entity, CancellationToken ct)
+        {
+            DeleteCallCount++;
+            return Task.CompletedTask;
+        }
     }
 }
