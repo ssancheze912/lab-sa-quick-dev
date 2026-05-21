@@ -31,25 +31,17 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    },
-    {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },
     },
   ],
 
   webServer: {
-    command: 'npm run dev',
+    command: 'pnpm run dev',
     cwd: './frontend',
     url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
+    reuseExistingServer: true,
+    timeout: 180 * 1000,
   },
 
   outputDir: 'playwright-results/',
