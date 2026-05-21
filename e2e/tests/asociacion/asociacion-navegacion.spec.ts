@@ -23,6 +23,9 @@ import { buildCliente, buildContacto } from '../../helpers/data.helper';
  *   E2E-AC-15  P1  AC3 — Contact detail shows "Sin cliente asignado" when contact has
  *                         no associated client (FR23)
  */
+// Story 4.4 RED-phase note:
+// E2E-AC-13, E2E-AC-14, E2E-AC-15 will fail until ContactoDetailPanel is updated to include
+// the "Cliente" section with data-testid="clienteAsociadoLink" and data-testid="sin-cliente-asignado".
 
 test.describe('Stories 4.3 & 4.4 — Navigation: Client ↔ Contact', () => {
   let apiHelper: ApiHelper;
@@ -194,5 +197,142 @@ test.describe('Stories 4.3 & 4.4 — Navigation: Client ↔ Contact', () => {
     // THEN — User returns to the client detail view at /clientes/:clienteId
     await page.waitForURL(`**/clientes/${cliente.id}`);
     expect(page.url()).toContain(`/clientes/${cliente.id}`);
+  });
+
+  // ---------------------------------------------------------------------------
+  // E2E-AC-13 (P0 · Story 4.4 · AC1 · FR23 · NFR9)
+  // Given a contact is associated with a client
+  // When the user views the contact detail at /contactos/:contactoId
+  // Then the associated client's name is displayed in the contact detail (FR23)
+  // AND no additional search or navigation is required to see this information (NFR9)
+  // ---------------------------------------------------------------------------
+  test('E2E-AC-13 — Contact detail shows associated client name when contact has a client [RED]', async ({ page }) => {
+    // Catch JS errors during navigation
+    page.on('pageerror', (err) => {
+      throw new Error(`Page JS error during navigation: ${err.message}`);
+    });
+
+    // GIVEN — Create a client and a contact associated with that client via API
+    const cliente = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(cliente.id);
+
+    const contacto = await apiHelper.createContacto(buildContacto({ clienteId: cliente.id }));
+    createdContactoIds.push(contacto.id);
+
+    // CRITICAL: Intercept network BEFORE navigation (network-first pattern)
+    await page.route(`**/api/v1/contactos/${contacto.id}`, async (route) => {
+      await route.continue();
+    });
+    await page.route(`**/api/v1/clientes/${cliente.id}`, async (route) => {
+      await route.continue();
+    });
+
+    // WHEN — User navigates directly to /contactos/:contactoId
+    await page.goto(`/contactos/${contacto.id}`);
+    await page.waitForURL(`**/contactos/${contacto.id}`);
+
+    // THEN — Contact detail panel is visible (data-testid="contacto-detail-panel")
+    await expect(page.getByTestId('contacto-detail-panel')).toBeVisible();
+
+    // AND — The associated client name link is visible (data-testid="clienteAsociadoLink")
+    // RED: fails until ContactoDetailPanel renders the "Cliente" section with useClienteById
+    const clienteLink = page.getByTestId('clienteAsociadoLink');
+    await expect(clienteLink).toBeVisible();
+
+    // AND — The link text contains the client's nombre (NFR9: displayed inline, no extra nav needed)
+    await expect(clienteLink).toContainText(cliente.nombre);
+
+    // AND — The "Sin cliente asignado" message is NOT present (contact has a client)
+    await expect(page.getByTestId('sin-cliente-asignado')).not.toBeAttached();
+  });
+
+  // ---------------------------------------------------------------------------
+  // E2E-AC-14 (P0 · Story 4.4 · AC2 · FR24)
+  // Given the associated client name is displayed in the contact detail
+  // When the user clicks on the client name link
+  // Then the user is navigated to /clientes/:clienteId showing the full client detail in 1 click
+  // ---------------------------------------------------------------------------
+  test('E2E-AC-14 — Clicking client name link in contact detail navigates to /clientes/:clienteId in 1 click [RED]', async ({ page }) => {
+    // Catch JS errors during navigation
+    page.on('pageerror', (err) => {
+      throw new Error(`Page JS error during navigation: ${err.message}`);
+    });
+
+    // GIVEN — Create a client and an associated contact via API
+    const cliente = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(cliente.id);
+
+    const contacto = await apiHelper.createContacto(buildContacto({ clienteId: cliente.id }));
+    createdContactoIds.push(contacto.id);
+
+    // CRITICAL: Intercept network BEFORE navigation (network-first pattern)
+    await page.route(`**/api/v1/contactos/${contacto.id}`, async (route) => {
+      await route.continue();
+    });
+    await page.route(`**/api/v1/clientes/${cliente.id}`, async (route) => {
+      await route.continue();
+    });
+
+    // GIVEN — User is on the contact detail page
+    await page.goto(`/contactos/${contacto.id}`);
+    await page.waitForURL(`**/contactos/${contacto.id}`);
+
+    // AND — The client name link is visible
+    // RED: fails until ContactoDetailPanel renders the "Cliente" section with clienteAsociadoLink
+    const clienteLink = page.getByTestId('clienteAsociadoLink');
+    await expect(clienteLink).toBeVisible();
+
+    // AND — The link has correct aria-label for WCAG 2.1 AA
+    await expect(clienteLink).toHaveAttribute('aria-label', 'Ir al cliente asociado');
+
+    // WHEN — User clicks the client name link (exactly 1 click — FR24)
+    await clienteLink.click();
+
+    // THEN — URL changes to /clientes/:clienteId (SPA navigation, no page reload)
+    await page.waitForURL(`**/clientes/${cliente.id}`);
+    expect(page.url()).toContain(`/clientes/${cliente.id}`);
+
+    // AND — The client detail panel is visible
+    // Uses data-testid="cliente-detail-panel" as established in ClienteDetailView (Story 2.2 + 4.1)
+    await expect(page.getByTestId('cliente-detail-panel')).toBeVisible();
+  });
+
+  // ---------------------------------------------------------------------------
+  // E2E-AC-15 (P1 · Story 4.4 · AC3 · FR23)
+  // Given a contact has no associated client
+  // When the user views the contact detail
+  // Then a message "Sin cliente asignado" is displayed in place of the client name (FR23)
+  // AND no client name link is shown
+  // ---------------------------------------------------------------------------
+  test('E2E-AC-15 — Contact detail shows "Sin cliente asignado" when contact has no associated client [RED]', async ({ page }) => {
+    // Catch JS errors during navigation
+    page.on('pageerror', (err) => {
+      throw new Error(`Page JS error during navigation: ${err.message}`);
+    });
+
+    // GIVEN — Create an orphan contact (no clienteId) via API
+    const contacto = await apiHelper.createContacto(buildContacto({ clienteId: null }));
+    createdContactoIds.push(contacto.id);
+
+    // CRITICAL: Intercept network BEFORE navigation (network-first pattern)
+    await page.route(`**/api/v1/contactos/${contacto.id}`, async (route) => {
+      await route.continue();
+    });
+
+    // WHEN — User navigates directly to /contactos/:contactoId
+    await page.goto(`/contactos/${contacto.id}`);
+    await page.waitForURL(`**/contactos/${contacto.id}`);
+
+    // THEN — Contact detail panel is visible
+    await expect(page.getByTestId('contacto-detail-panel')).toBeVisible();
+
+    // AND — "Sin cliente asignado" message is displayed (data-testid="sin-cliente-asignado")
+    // RED: fails until ContactoDetailPanel renders the "Cliente" section with the null-clienteId fallback
+    const sinCliente = page.getByTestId('sin-cliente-asignado');
+    await expect(sinCliente).toBeVisible();
+    await expect(sinCliente).toContainText(/sin cliente asignado/i);
+
+    // AND — The client name link is NOT present in the DOM (no link for orphan contact)
+    await expect(page.getByTestId('clienteAsociadoLink')).not.toBeAttached();
   });
 });
