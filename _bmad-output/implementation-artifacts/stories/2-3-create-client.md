@@ -1,6 +1,6 @@
 # Story 2.3: Create Client
 
-Status: review
+Status: done
 
 ## Story
 

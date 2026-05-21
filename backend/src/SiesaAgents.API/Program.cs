@@ -1,7 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Commands;
+using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,11 +28,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString)
            .UseSnakeCaseNamingConvention());
 
+// Domain / Application services
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<CreateClienteCommandHandler>();
+builder.Services.AddScoped<GetClientesQueryHandler>();
+builder.Services.AddScoped<GetClienteByIdQueryHandler>();
+
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("DevCors");
 app.MapOpenApi();
 app.MapScalarApiReference();
+
+app.MapClienteEndpoints();
 
 app.Run();
