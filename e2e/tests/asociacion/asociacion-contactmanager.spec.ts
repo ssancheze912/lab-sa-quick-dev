@@ -14,6 +14,24 @@ import { buildCliente, buildContacto } from '../../helpers/data.helper';
  *                    associated contacts (AC2)
  *   E2E-AC-03  P1  — ContactManager stays mounted when GET /api/v1/contactos?clienteId=*
  *                    returns 500 (AC3 — siesa-ui-kit handles 500 silently, no crash)
+ *
+ * ATDD — Story 4.2: Associate & Disassociate Contacts from Client
+ *
+ * RED Phase — Tests intentionally fail until implementation is complete.
+ *
+ * Coverage:
+ *   E2E-AC-04  P0  — Associating an existing contact via ContactManager adds it to
+ *                    the ContactManager list immediately (no page reload) (AC1, FR17, FR19, FR27)
+ *   E2E-AC-05  P0  — Disassociating a contact via ContactManager removes it from the
+ *                    list immediately; contact still exists in /contactos (AC3, FR20, FR27)
+ *   E2E-AC-06  P0  — After association/disassociation, ContactManager list updates
+ *                    without page refresh (AC1, AC3, FR27)
+ *   E2E-AC-07  P1  — Creating a new contact from within ContactManager auto-associates
+ *                    it with the current client and appears immediately (AC2, FR18)
+ *   E2E-AC-08  P1  — Success toast "Contacto asociado correctamente" shown after
+ *                    successful association (AC1)
+ *   E2E-AC-09  P1  — Success toast "Contacto desasociado correctamente" shown after
+ *                    successful disassociation (AC3)
  */
 
 const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
