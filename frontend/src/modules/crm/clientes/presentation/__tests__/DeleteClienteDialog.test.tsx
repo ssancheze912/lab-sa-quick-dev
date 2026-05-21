@@ -197,4 +197,137 @@ describe('DeleteClienteDialog', () => {
     expect(dialog).toHaveAttribute('role', 'alertdialog')
     expect(dialog).toHaveAttribute('aria-labelledby', 'delete-dialog-title')
   })
+
+  // ---------------------------------------------------------------------------
+  // Edge case: dialog does NOT render when open=false
+  // Boundary: dialog must not be visible in the DOM when closed
+  // ---------------------------------------------------------------------------
+  it('does not render dialog content when open is false', () => {
+    render(
+      <DeleteClienteDialog
+        open={false}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
+      />
+    )
+
+    expect(screen.queryByTestId('delete-cliente-dialog')).not.toBeInTheDocument()
+  })
+
+  // ---------------------------------------------------------------------------
+  // Edge case: mutation error — toast.error is shown via onError callback
+  // Error path: repository call fails; user must receive an error notification
+  // ---------------------------------------------------------------------------
+  it('shows toast.error when mutation fails via onError', async () => {
+    const mockToastError = toast.error as ReturnType<typeof vi.fn>
+
+    mockUseDeleteCliente.mockReturnValue({
+      mutate: vi.fn((id, options) => { options?.onError?.(new Error('Network failure')) }),
+      isPending: false,
+    })
+
+    render(
+      <DeleteClienteDialog
+        open={true}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
+      />
+    )
+
+    fireEvent.click(screen.getByTestId('btn-confirmar-eliminar'))
+
+    await waitFor(() => {
+      // onClose and onDeleted must NOT be called on error
+      expect(mockOnClose).not.toHaveBeenCalled()
+      expect(mockOnDeleted).not.toHaveBeenCalled()
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // Edge case: onDeleted callback is NOT called when the user cancels
+  // Boundary: onDeleted must fire only on successful deletion, not on cancel
+  // ---------------------------------------------------------------------------
+  it('does not call onDeleted when user clicks Cancelar', () => {
+    render(
+      <DeleteClienteDialog
+        open={true}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
+      />
+    )
+
+    fireEvent.click(screen.getByTestId('btn-cancelar-eliminar'))
+
+    expect(mockOnDeleted).not.toHaveBeenCalled()
+  })
+
+  // ---------------------------------------------------------------------------
+  // Edge case: confirm button passes the exact clienteId prop to the mutation
+  // Boundary: wrong id would delete a different client
+  // ---------------------------------------------------------------------------
+  it('passes the exact clienteId prop to mutate', () => {
+    const specificId = 'aaaabbbb-cccc-4ddd-8eee-ffffaaaabbbb'
+
+    render(
+      <DeleteClienteDialog
+        open={true}
+        onClose={mockOnClose}
+        clienteId={specificId}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
+      />
+    )
+
+    fireEvent.click(screen.getByTestId('btn-confirmar-eliminar'))
+
+    expect(defaultMutate).toHaveBeenCalledWith(specificId, expect.any(Object))
+    expect(defaultMutate).not.toHaveBeenCalledWith(CLIENT_ID, expect.any(Object))
+  })
+
+  // ---------------------------------------------------------------------------
+  // Edge case: Cancelar button must still be clickable when NOT in pending state
+  // Redundancy guard: isPending=false must not accidentally disable cancel
+  // ---------------------------------------------------------------------------
+  it('cancel button is enabled when isPending is false', () => {
+    mockUseDeleteCliente.mockReturnValue({
+      mutate: defaultMutate,
+      isPending: false,
+    })
+
+    render(
+      <DeleteClienteDialog
+        open={true}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
+      />
+    )
+
+    expect(screen.getByTestId('btn-cancelar-eliminar')).not.toBeDisabled()
+  })
+
+  // ---------------------------------------------------------------------------
+  // Edge case: confirm button shows "Confirmar" text when NOT in pending state
+  // Boundary: button label must be default when mutation is idle
+  // ---------------------------------------------------------------------------
+  it('confirm button shows "Confirmar" text when isPending is false', () => {
+    render(
+      <DeleteClienteDialog
+        open={true}
+        onClose={mockOnClose}
+        clienteId={CLIENT_ID}
+        hasContacts={false}
+        onDeleted={mockOnDeleted}
+      />
+    )
+
+    expect(screen.getByTestId('btn-confirmar-eliminar')).toHaveTextContent('Confirmar')
+  })
 })

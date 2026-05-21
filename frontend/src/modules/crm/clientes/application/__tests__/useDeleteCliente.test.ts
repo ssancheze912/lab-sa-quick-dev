@@ -84,4 +84,82 @@ describe('useDeleteCliente', () => {
     expect(result.current.isPending).toBe(false)
     expect(mockToastError).toHaveBeenCalledWith('No se pudo eliminar. Intenta de nuevo.')
   })
+
+  // ---------------------------------------------------------------------------
+  // Edge case: toast.error message is exactly the expected Spanish string
+  // Boundary: exact string match, not partial — user-visible contract
+  // ---------------------------------------------------------------------------
+  it('toast.error is called with the exact Spanish error message', async () => {
+    mockDelete.mockRejectedValueOnce(new Error('500 Internal'))
+
+    const { result } = renderHook(() => useDeleteCliente(), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      result.current.mutate(clienteId)
+    })
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(mockToastError).toHaveBeenCalledTimes(1)
+    expect(mockToastError).toHaveBeenCalledWith('No se pudo eliminar. Intenta de nuevo.')
+  })
+
+  // ---------------------------------------------------------------------------
+  // Edge case: mutate is called with the exact id passed in (no transformation)
+  // Boundary: hook must forward the id as-is to the repository
+  // ---------------------------------------------------------------------------
+  it('passes the exact clienteId to clienteApiRepository.delete', async () => {
+    const specificId = 'ffffffff-1111-4000-8000-aaaaaaaaaaaa'
+    mockDelete.mockResolvedValueOnce(undefined)
+
+    const { result } = renderHook(() => useDeleteCliente(), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      result.current.mutate(specificId)
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockDelete).toHaveBeenCalledWith(specificId)
+  })
+
+  // ---------------------------------------------------------------------------
+  // Edge case: success does NOT call toast.error
+  // Mutual exclusion: error toast must not fire on a successful deletion
+  // ---------------------------------------------------------------------------
+  it('does not call toast.error on successful deletion', async () => {
+    mockDelete.mockResolvedValueOnce(undefined)
+
+    const { result } = renderHook(() => useDeleteCliente(), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      result.current.mutate(clienteId)
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockToastError).not.toHaveBeenCalled()
+  })
+
+  // ---------------------------------------------------------------------------
+  // Edge case: error does NOT transition to isSuccess
+  // Mutual exclusion: failed mutation must not appear successful
+  // ---------------------------------------------------------------------------
+  it('isSuccess remains false after a failed mutation', async () => {
+    mockDelete.mockRejectedValueOnce(new Error('Timeout'))
+
+    const { result } = renderHook(() => useDeleteCliente(), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      result.current.mutate(clienteId)
+    })
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.isSuccess).toBe(false)
+  })
 })

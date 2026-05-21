@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import axios from 'axios'
 import { ClienteDetailPanel } from '../ClienteDetailPanel'
@@ -298,5 +298,100 @@ describe('ClienteDetailPanel', () => {
     expect(screen.queryByTestId('cliente-not-found')).not.toBeInTheDocument()
     // In success state there are no react-loading-skeleton elements
     expect(document.querySelector('.react-loading-skeleton')).toBeNull()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CDP-13: Success state renders "btn-eliminar" button
+  // Edge case: delete button must be present when client data is loaded
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CDP-13 — success state renders btn-eliminar button', () => {
+    mockUseClienteById.mockReturnValue({
+      data: mockCliente,
+      isLoading: false,
+      isError: false,
+      error: null,
+    })
+
+    render(<ClienteDetailPanel clienteId={mockCliente.id} />)
+
+    expect(screen.getByTestId('btn-eliminar')).toBeInTheDocument()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CDP-14: btn-eliminar is absent in loading state
+  // Boundary: delete action must not be available while data is loading
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CDP-14 — loading state does not render btn-eliminar', () => {
+    mockUseClienteById.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+    })
+
+    render(<ClienteDetailPanel clienteId="some-id" />)
+
+    expect(screen.queryByTestId('btn-eliminar')).not.toBeInTheDocument()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CDP-15: btn-eliminar is absent in 404 error state
+  // Error path: cannot delete a non-found client
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CDP-15 — 404 error state does not render btn-eliminar', () => {
+    const notFoundError = buildAxiosError(404)
+
+    mockUseClienteById.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: notFoundError,
+    })
+
+    render(<ClienteDetailPanel clienteId="00000000-0000-4000-8000-000000000000" />)
+
+    expect(screen.queryByTestId('btn-eliminar')).not.toBeInTheDocument()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CDP-16: Clicking btn-eliminar opens the delete confirmation dialog
+  // Edge case: verifies dialog state transitions from closed to open on click
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CDP-16 — clicking btn-eliminar renders the delete-cliente-dialog', () => {
+    mockUseClienteById.mockReturnValue({
+      data: mockCliente,
+      isLoading: false,
+      isError: false,
+      error: null,
+    })
+
+    render(<ClienteDetailPanel clienteId={mockCliente.id} />)
+
+    // Dialog should not be visible before clicking
+    expect(screen.queryByTestId('delete-cliente-dialog')).not.toBeInTheDocument()
+
+    // Click the delete button
+    fireEvent.click(screen.getByTestId('btn-eliminar'))
+
+    // Dialog should now be visible
+    expect(screen.getByTestId('delete-cliente-dialog')).toBeInTheDocument()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CDP-17: Success state renders btn-editar alongside btn-eliminar
+  // Boundary: both action buttons must co-exist in the detail panel header
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CDP-17 — success state renders both btn-editar and btn-eliminar', () => {
+    mockUseClienteById.mockReturnValue({
+      data: mockCliente,
+      isLoading: false,
+      isError: false,
+      error: null,
+    })
+
+    render(<ClienteDetailPanel clienteId={mockCliente.id} />)
+
+    expect(screen.getByTestId('btn-editar')).toBeInTheDocument()
+    expect(screen.getByTestId('btn-eliminar')).toBeInTheDocument()
   })
 })

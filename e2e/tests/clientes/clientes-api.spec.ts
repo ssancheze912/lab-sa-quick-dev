@@ -288,6 +288,132 @@ test.describe('Story 2.5 — API: DELETE /api/v1/clientes/:id', () => {
     // const body = await getContacto.json();
     // expect(body.clienteId).toBeNull();
   });
+
+  // -------------------------------------------------------------------------
+  // API-C-05b (P1 · Edge Case)
+  // Given a client has already been deleted
+  // When DELETE /api/v1/clientes/:id is called again (double delete)
+  // Then the response is 404 Problem Details (not 204 again and not 500)
+  // -------------------------------------------------------------------------
+  test('API-C-05b — DELETE /api/v1/clientes/:id on already-deleted client returns 404 Problem Details', async ({ request }) => {
+    // GIVEN — a client is created and then deleted
+    const payload = {
+      nombre: `Empresa API-C-05b ${Date.now()}`,
+      nit: `906${Date.now().toString().slice(-9)}`,
+      telefono: '+57 1 234 5678',
+      ciudad: 'Cali',
+    };
+    const createResponse = await request.post(`${API_BASE_URL}/api/v1/clientes`, { data: payload });
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+
+    // First delete — must succeed
+    const firstDelete = await request.delete(`${API_BASE_URL}/api/v1/clientes/${created.id}`);
+    expect(firstDelete.status()).toBe(204);
+
+    // WHEN — second DELETE on the same (now non-existent) id
+    const secondDelete = await request.delete(`${API_BASE_URL}/api/v1/clientes/${created.id}`);
+
+    // THEN — 404 Problem Details (client no longer exists)
+    expect(secondDelete.status()).toBe(404);
+
+    const body = await secondDelete.json();
+    expect(body.status).toBe(404);
+    expect(typeof body.title).toBe('string');
+    // No internal details leaked (NFR6)
+    expect(body.stackTrace).toBeUndefined();
+    expect(body.StackTrace).toBeUndefined();
+    const bodyText = JSON.stringify(body);
+    expect(bodyText).not.toMatch(/at SiesaAgents/i);
+  });
+
+  // -------------------------------------------------------------------------
+  // API-C-05c (P1 · Edge Case)
+  // Given an ID that is not a valid GUID
+  // When DELETE /api/v1/clientes/:not-a-guid is called
+  // Then the response is 400 or 404 (routing/binding level rejection), NOT 500
+  //   AND no internal stack trace is exposed (NFR6)
+  // -------------------------------------------------------------------------
+  test('API-C-05c — DELETE /api/v1/clientes/:id with non-UUID id returns 4xx (not 500) without stack trace', async ({ request }) => {
+    // WHEN — DELETE with a non-UUID segment
+    const response = await request.delete(`${API_BASE_URL}/api/v1/clientes/not-a-valid-guid`);
+
+    // THEN — response must be a 4xx client error, NOT a 500 server error
+    expect(response.status()).toBeGreaterThanOrEqual(400);
+    expect(response.status()).toBeLessThan(500);
+
+    // AND — body must not expose internal stack traces (NFR6)
+    const contentType = response.headers()['content-type'] ?? '';
+    if (contentType.includes('json')) {
+      const body = await response.json();
+      expect(body.stackTrace).toBeUndefined();
+      expect(body.StackTrace).toBeUndefined();
+      const bodyText = JSON.stringify(body);
+      expect(bodyText).not.toMatch(/at SiesaAgents/i);
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // API-C-05d (P1 · Edge Case)
+  // Given a well-formed but non-existent UUID
+  // When DELETE /api/v1/clientes/:id is called
+  // Then the response is 404 Problem Details (RFC 7807), not 204 or 500
+  // -------------------------------------------------------------------------
+  test('API-C-05d — DELETE /api/v1/clientes/:id with non-existent UUID returns 404 Problem Details', async ({ request }) => {
+    // GIVEN — a UUID that was never created
+    const nonExistentId = '00000000-0000-4000-8000-000000000099';
+
+    // WHEN — DELETE /api/v1/clientes/:id
+    const response = await request.delete(`${API_BASE_URL}/api/v1/clientes/${nonExistentId}`);
+
+    // THEN — 404 Problem Details
+    expect(response.status()).toBe(404);
+
+    const body = await response.json();
+    expect(body.status).toBe(404);
+    expect(typeof body.title).toBe('string');
+    expect(body.title.length).toBeGreaterThan(0);
+
+    // AND — no stack trace exposed (NFR6)
+    expect(body.stackTrace).toBeUndefined();
+    expect(body.exception).toBeUndefined();
+    const bodyText = JSON.stringify(body);
+    expect(bodyText).not.toMatch(/at SiesaAgents/i);
+  });
+
+  // -------------------------------------------------------------------------
+  // API-C-05e (P1 · Edge Case — Boundary)
+  // Given a successful DELETE returns 204 No Content
+  // When the response body and headers are inspected
+  // Then the response body is empty (204 must not contain a body per HTTP spec)
+  //   AND Content-Length is absent or zero
+  // -------------------------------------------------------------------------
+  test('API-C-05e — DELETE 204 response has empty body (no Content-Length with body data)', async ({ request }) => {
+    // GIVEN — a client is created
+    const payload = {
+      nombre: `Empresa API-C-05e ${Date.now()}`,
+      nit: `907${Date.now().toString().slice(-9)}`,
+      telefono: '+57 300 000 0001',
+      ciudad: 'Barranquilla',
+    };
+    const createResponse = await request.post(`${API_BASE_URL}/api/v1/clientes`, { data: payload });
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+
+    // WHEN — DELETE /api/v1/clientes/:id
+    const deleteResponse = await request.delete(`${API_BASE_URL}/api/v1/clientes/${created.id}`);
+
+    // THEN — 204 No Content
+    expect(deleteResponse.status()).toBe(204);
+
+    // AND — body text is empty (HTTP 204 must have no body)
+    const bodyText = await deleteResponse.text();
+    expect(bodyText).toBe('');
+
+    // AND — Content-Type should not be application/json (no body to type)
+    const contentType = deleteResponse.headers()['content-type'] ?? '';
+    expect(contentType).not.toContain('application/json');
+  });
 });
 
 test.describe('Story 2.2 — API: GET /api/v1/clientes/:id', () => {

@@ -224,7 +224,8 @@ test.describe('Story 2.5 — Eliminar cliente (E2E)', () => {
   // Then the client is removed from the list
   //   AND the toast displays "Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado."
   // -------------------------------------------------------------------------
-  test('E2E-C-27 — eliminar cliente con contactos muestra toast de desasignación de contactos', async ({ page }) => {
+  // TODO (TEA Review): E2E-C-27 requires Contacto entity (Epic 3) — skipped per story 2.5 dev notes
+  test.skip('E2E-C-27 — eliminar cliente con contactos muestra toast de desasignación de contactos', async ({ page }) => {
     // GIVEN — a client exists with at least one associated contact
     const clienteData = buildCliente({ nombre: 'Empresa Con Contactos E2E-C-27' });
     const createdCliente = await apiHelper.createCliente(clienteData);
