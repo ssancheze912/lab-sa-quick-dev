@@ -18,7 +18,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import { SortControl } from '../SortControl'
-import type { SortOption } from '../../../modules/crm/clientes/application/sortClientes'
+import type { SortOption } from '../SortControl'
 
 // ---------------------------------------------------------------------------
 // UNIT-C-01 (P1 · AC1, AC2, AC3, AC4)

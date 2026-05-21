@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import type { SortOption } from '../../modules/crm/clientes/application/sortClientes'
+
+// Locally-defined type keeps the shared component free from module-specific imports.
+// ClienteListPanel imports SortOption from sortClientes.ts; TypeScript structural
+// typing ensures compatibility without a direct import dependency.
+export type SortOption = 'nombre-asc' | 'nombre-desc' | 'fecha-desc' | 'fecha-asc'
 
 interface SortControlProps {
   value: SortOption

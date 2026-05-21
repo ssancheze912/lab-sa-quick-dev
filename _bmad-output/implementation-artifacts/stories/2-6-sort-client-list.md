@@ -280,3 +280,10 @@ None.
 - `frontend/src/modules/crm/clientes/application/sortClientes.ts` — NEW
 - `frontend/src/shared/components/SortControl.tsx` — NEW
 - `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.tsx` — MODIFIED
+- `frontend/src/modules/crm/clientes/__tests__/sortClientes.test.ts` — NEW
+- `frontend/src/modules/crm/clientes/__tests__/sortClientes.edge.test.ts` — NEW
+- `frontend/src/shared/components/__tests__/SortControl.test.tsx` — NEW
+- `frontend/src/shared/components/__tests__/SortControl.edge.test.tsx` — NEW
+- `e2e/tests/clientes/clientes-sort.spec.ts` — NEW
+- `e2e/tests/clientes/clientes-sort-edge.spec.ts` — NEW
+- `e2e/pages/clientes.page.ts` — MODIFIED
