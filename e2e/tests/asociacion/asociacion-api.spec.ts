@@ -448,8 +448,12 @@ test.describe('Story 4.2 — API: PUT /api/v1/contactos/{id}/cliente', () => {
       { data: { clienteId: null } }
     );
 
-    // THEN — 400 Bad Request
+    // THEN — 400 Bad Request with Problem Details (no stack trace — NFR6)
     expect(response.status()).toBe(400);
+    const body = await response.json();
+    expect(body.stackTrace).toBeUndefined();
+    expect(body.StackTrace).toBeUndefined();
+    expect(body.exception).toBeUndefined();
   });
 
   // ---------------------------------------------------------------------------

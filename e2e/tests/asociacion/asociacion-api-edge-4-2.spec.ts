@@ -306,4 +306,34 @@ test.describe('Story 4.2 — API Edge Cases: PUT /api/v1/contactos/{id}/cliente'
     const listBody = await list.json();
     expect(listBody).toHaveLength(0);
   });
+
+  // ---------------------------------------------------------------------------
+  // API-42-EDGE-08 [P2]
+  // Given a valid contactoId
+  // When PUT /api/v1/contactos/{id}/cliente is called with a body that omits the clienteId field entirely
+  // Then the response is 200 OK with clienteId: null
+  // (null is the default for the missing optional Guid? field in AssignClienteToContactoRequest)
+  // ---------------------------------------------------------------------------
+  test('[P2] API-42-EDGE-08 — PUT omitiendo el campo clienteId del body devuelve 200 con clienteId null', async ({ request }) => {
+    // GIVEN — Contact associated with a client
+    const cliente = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(cliente.id);
+    const contacto = await apiHelper.createContacto(buildContacto({ clienteId: cliente.id }));
+    createdContactoIds.push(contacto.id);
+
+    // WHEN — PUT body omits clienteId field entirely (no key present)
+    const response = await request.put(
+      `${API_BASE_URL}/api/v1/contactos/${contacto.id}/cliente`,
+      { data: {} }
+    );
+
+    // THEN — 200 OK with clienteId = null (optional field defaults to null)
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.clienteId).toBeNull();
+
+    // AND — No stack trace (NFR6)
+    expect(body.stackTrace).toBeUndefined();
+    expect(body.StackTrace).toBeUndefined();
+  });
 });
