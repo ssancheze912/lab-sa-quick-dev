@@ -9,6 +9,7 @@ import { useClienteById } from '../../clientes/application/useClienteById'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 import { ContactoFormDialog } from './ContactoFormDialog'
 import { DeleteContactoDialog } from './DeleteContactoDialog'
+import { ReassignClienteDialog } from './ReassignClienteDialog'
 
 interface Props {
   contactoId: string
@@ -18,6 +19,7 @@ export function ContactoDetailPanel({ contactoId }: Props) {
   const { data, isLoading, isError, error } = useContactoById(contactoId)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isReassignOpen, setIsReassignOpen] = useState(false)
   const router = useRouter()
 
   const { data: cliente, isLoading: isClienteLoading } = useClienteById(
@@ -166,15 +168,26 @@ export function ContactoDetailPanel({ contactoId }: Props) {
         ) : isClienteLoading ? (
           <Skeleton width="50%" height={16} />
         ) : (
-          <Link
-            to="/clientes/$clienteId"
-            params={{ clienteId: data.clienteId }}
-            data-testid="clienteAsociadoLink"
-            aria-label="Ir al cliente asociado"
-            className="text-sm font-medium text-[#0e79fd] hover:underline"
-          >
-            {cliente?.nombre ?? data.clienteId}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/clientes/$clienteId"
+              params={{ clienteId: data.clienteId }}
+              data-testid="clienteAsociadoLink"
+              aria-label="Ir al cliente asociado"
+              className="text-sm font-medium text-[#0e79fd] hover:underline"
+            >
+              {cliente?.nombre ?? data.clienteId}
+            </Link>
+            <button
+              type="button"
+              data-testid="btn-reasignar"
+              aria-label="Reasignar contacto a otro cliente"
+              onClick={() => setIsReassignOpen(true)}
+              className="text-xs text-slate-500 hover:text-[#0e79fd] underline ml-2"
+            >
+              Reasignar
+            </button>
+          </div>
         )}
       </div>
 
@@ -188,6 +201,14 @@ export function ContactoDetailPanel({ contactoId }: Props) {
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         contactoId={data.id}
+      />
+
+      <ReassignClienteDialog
+        isOpen={isReassignOpen}
+        onClose={() => setIsReassignOpen(false)}
+        contactoId={contactoId}
+        currentClienteId={data.clienteId ?? null}
+        contactoNombre={data.nombre}
       />
     </div>
   )

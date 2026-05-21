@@ -34,6 +34,13 @@ export class ContactosPage {
   readonly sinClienteAsignado: Locator;
   readonly btnVolver: Locator;
 
+  // Reassignment (Story 4.6)
+  readonly btnReasignar: Locator;
+  readonly reassignClienteDialog: Locator;
+  readonly clienteOptions: Locator;
+  readonly btnConfirmarReasignar: Locator;
+  readonly btnCancelarReasignar: Locator;
+
   constructor(page: Page) {
     this.page = page;
 
@@ -59,6 +66,13 @@ export class ContactosPage {
     this.clienteAsociadoLink = page.getByTestId('clienteAsociadoLink');
     this.sinClienteAsignado = page.getByTestId('sin-cliente-asignado');
     this.btnVolver = page.getByTestId('btn-volver');
+
+    // Reassignment locators (Story 4.6)
+    this.btnReasignar = page.getByTestId('btn-reasignar');
+    this.reassignClienteDialog = page.getByTestId('reassign-cliente-dialog');
+    this.clienteOptions = page.getByTestId('cliente-option');
+    this.btnConfirmarReasignar = page.getByTestId('btn-confirmar-reasignar');
+    this.btnCancelarReasignar = page.getByTestId('btn-cancelar-reasignar');
   }
 
   async goto() {

@@ -591,3 +591,74 @@ test.describe('Story 4.5 — API: GET /api/v1/contactos?sinCliente=true', () => 
     expect((body as Record<string, unknown>).data).toBeUndefined();
   });
 });
+
+// =============================================================================
+// Story 4.6 — Reassign Contact to Different Client: API Integration Tests
+// =============================================================================
+
+test.describe('Story 4.6 — API: PUT /api/v1/contactos/{id}/cliente (reassignment)', () => {
+  let apiHelper: ApiHelper;
+  const createdClienteIds: string[] = [];
+  const createdContactoIds: string[] = [];
+
+  test.beforeEach(async ({ request }) => {
+    apiHelper = new ApiHelper(request);
+  });
+
+  test.afterEach(async () => {
+    for (const id of createdContactoIds) {
+      await apiHelper.deleteContacto(id).catch(() => null);
+    }
+    for (const id of createdClienteIds) {
+      await apiHelper.deleteCliente(id).catch(() => null);
+    }
+    createdContactoIds.length = 0;
+    createdClienteIds.length = 0;
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-AC-05 (P0 · AC2 · FR26)
+  // Given a contacto associated with client A and a separate client B
+  // When PUT /api/v1/contactos/{id}/cliente is called with { clienteId: clienteB.id }
+  // Then response is 200 OK
+  //   AND the response body has clienteId === clienteB.id
+  //   AND a subsequent GET /api/v1/contactos/{id} returns clienteId === clienteB.id
+  // ---------------------------------------------------------------------------
+  test('API-AC-05 — PUT /cliente reasigna el contacto a un cliente distinto y persiste el cambio', async ({ request }) => {
+    // GIVEN — Two clients
+    const clienteA = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(clienteA.id);
+
+    const clienteB = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(clienteB.id);
+
+    // AND — Contact associated with client A
+    const contacto = await apiHelper.createContacto(
+      buildContacto({ clienteId: clienteA.id })
+    );
+    createdContactoIds.push(contacto.id);
+
+    // WHEN — Reassign contact to client B
+    const response = await request.put(
+      `${API_BASE_URL}/api/v1/contactos/${contacto.id}/cliente`,
+      { data: { clienteId: clienteB.id } }
+    );
+
+    // THEN — Response is 200 OK
+    expect(response.status()).toBe(200);
+
+    // AND — Response body has the new clienteId
+    const body = await response.json();
+    expect(body.id).toBe(contacto.id);
+    expect(body.clienteId).toBe(clienteB.id);
+    expect(typeof body.updatedAt).toBe('string');
+
+    // AND — Subsequent GET confirms persistence
+    const getResponse = await request.get(
+      `${API_BASE_URL}/api/v1/contactos/${contacto.id}`
+    );
+    expect(getResponse.status()).toBe(200);
+    const getBody = await getResponse.json();
+    expect(getBody.clienteId).toBe(clienteB.id);
+  });
+});
