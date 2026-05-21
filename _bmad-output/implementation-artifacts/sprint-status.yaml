@@ -37,7 +37,7 @@ development_status:
 
   # Epic 4 — Client-Contact Association & Data Quality
   4-1-view-associated-contacts-in-client-detail: done
-  4-2-associate-disassociate-contacts-from-client: pending
+  4-2-associate-disassociate-contacts-from-client: ready
   4-3-navigate-from-client-detail-to-contact-detail: pending
   4-4-view-associated-client-from-contact-detail: pending
   4-5-orphan-contacts-filter: pending
