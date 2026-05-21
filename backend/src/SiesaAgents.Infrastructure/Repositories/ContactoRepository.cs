@@ -41,7 +41,11 @@ public class ContactoRepository : IContactoRepository
 
     public async Task DeleteAsync(ContactoEntity entity, CancellationToken ct)
     {
-        _context.Contactos.Remove(entity);
-        await _context.SaveChangesAsync(ct);
+        var tracked = await _context.Contactos.FindAsync([entity.Id], ct);
+        if (tracked is not null)
+        {
+            _context.Contactos.Remove(tracked);
+            await _context.SaveChangesAsync(ct);
+        }
     }
 }

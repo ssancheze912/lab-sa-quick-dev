@@ -64,6 +64,6 @@ public static class ContactoEndpoints
         })
         .WithName("DeleteContacto")
         .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound);
+        .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }
