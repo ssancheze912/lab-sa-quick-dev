@@ -2,15 +2,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SiesaAgents.Infrastructure.Data;
 
-/// <summary>
-/// Main EF Core DbContext. Uses automatic snake_case naming via ApplySnakeCaseNaming().
-/// </summary>
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public class AppDbContext : DbContext
 {
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-        modelBuilder.ApplySnakeCaseNaming();
+
+        // Apply IEntityTypeConfiguration<T> files here in future stories:
+        // modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // snake_case naming convention is applied via UseSnakeCaseNamingConvention()
+        // registered in DbContextOptions (see Program.cs) — no manual [Column]/[Table] attributes needed
     }
 }

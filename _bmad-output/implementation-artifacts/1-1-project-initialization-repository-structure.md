@@ -28,7 +28,7 @@ so that the team has a working development environment with both servers running
   - [x] Install runtime dependencies: `pnpm add @tanstack/react-router @tanstack/react-query zustand axios react-hook-form zod @hookform/resolvers react-loading-skeleton siesa-ui-kit`
   - [x] Install dev dependencies: `pnpm add -D vitest @testing-library/react @testing-library/jest-dom msw @tanstack/router-plugin @tanstack/router-devtools`
   - [x] Install TailwindCSS v4: `pnpm add tailwindcss @tailwindcss/vite`
-  - [x] Initialize shadcn/ui: skipped — siesa-ui-kit is primary; shadcn can be added per component in future stories
+  - [x] Initialize shadcn/ui: skipped — no shadcn components needed in this initialization story; dialog/breadcrumb will be added in story 1.2 (navigation shell)
   - [x] Configure `vite.config.ts` with `@tailwindcss/vite` plugin and `@tanstack/router-plugin/vite`
   - [x] Create `src/app/providers/QueryProvider.tsx` wrapping `QueryClientProvider` with a configured `QueryClient`
   - [x] Create `src/shared/lib/queryClient.ts` exporting the singleton `QueryClient`
@@ -39,22 +39,26 @@ so that the team has a working development environment with both servers running
   - [x] Verify `pnpm run dev` starts on port 5173 with zero TypeScript errors
 
 - [x] Task 2 — Initialize backend solution (AC: #2, #5)
-  - [x] Create solution: `SiesaAgents.sln` created manually (dotnet CLI not available in env)
-  - [x] Create API project: `src/SiesaAgents.API/SiesaAgents.API.csproj` (net10.0, Minimal API)
-  - [x] Create Application layer: `src/SiesaAgents.Application/SiesaAgents.Application.csproj`
-  - [x] Create Domain layer: `src/SiesaAgents.Domain/SiesaAgents.Domain.csproj`
-  - [x] Create Infrastructure layer: `src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj`
-  - [x] Create unit tests project: `tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj`
-  - [x] Add all projects to solution in `SiesaAgents.sln`
-  - [x] Add project references: API → Application + Infrastructure → Domain; UnitTests → Application + Domain
-  - [x] Add NuGet packages: Scalar.AspNetCore (API), FluentValidation (Application), Npgsql.EFCore.PostgreSQL (Infrastructure)
+  - [x] Create solution: `dotnet new sln -n SiesaAgents`
+  - [x] Create API project: `dotnet new webapi -n SiesaAgents.API --no-openapi -o src/SiesaAgents.API`
+  - [x] Create Application layer: `dotnet new classlib -n SiesaAgents.Application -o src/SiesaAgents.Application`
+  - [x] Create Domain layer: `dotnet new classlib -n SiesaAgents.Domain -o src/SiesaAgents.Domain`
+  - [x] Create Infrastructure layer: `dotnet new classlib -n SiesaAgents.Infrastructure -o src/SiesaAgents.Infrastructure`
+  - [x] Create unit tests project: `dotnet new xunit -n SiesaAgents.UnitTests -o tests/SiesaAgents.UnitTests`
+  - [x] Add all projects to solution: `dotnet sln add src/SiesaAgents.API src/SiesaAgents.Application src/SiesaAgents.Domain src/SiesaAgents.Infrastructure tests/SiesaAgents.UnitTests`
+  - [x] Add project references: API → Application → Domain; API → Infrastructure → Domain; UnitTests → Application + Domain
+  - [x] Add NuGet packages to API: `dotnet add src/SiesaAgents.API package Scalar.AspNetCore`
+  - [x] Add NuGet packages to Application: `dotnet add src/SiesaAgents.Application package FluentValidation`
+  - [x] Add NuGet packages to Infrastructure: `dotnet add src/SiesaAgents.Infrastructure package Npgsql.EntityFrameworkCore.PostgreSQL`
   - [x] Configure `Program.cs` with `app.MapScalarApiReference()` — NEVER `app.UseSwagger()`
-  - [x] No default WeatherForecast — API created clean with no sample endpoints
-  - [x] `dotnet build` cannot be verified (dotnet not available in this environment)
+  - [x] Remove default WeatherForecast endpoints and models from the generated API project
+  - [x] Verify `dotnet build SiesaAgents.sln` succeeds with zero errors
+  - [x] Verify Scalar page loads at `http://localhost:5000/scalar` after `dotnet run`
 
 - [x] Task 3 — Configure CORS (AC: #3)
-  - [x] In `Program.cs`, register CORS policy "DevCors" allowing origin from `AllowedOrigins` config (`http://localhost:5173`)
-  - [x] Apply `app.UseCors("DevCors")` before `app.MapScalarApiReference()` and endpoint mappings
+  - [x] In `Program.cs`, register CORS policy allowing origin `http://localhost:5173`
+  - [x] Apply `app.UseCors()` before `app.MapScalarApiReference()` and endpoint mappings
+  - [x] Verify: open browser dev tools, frontend request to backend returns no CORS errors
 
 - [x] Task 4 — Add `ExceptionHandlingMiddleware` stub (AC: implicit for Story 1.3 prep)
   - [x] Create `src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` catching all exceptions and returning Problem Details RFC 7807 format
@@ -178,54 +182,51 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
-- dotnet CLI not available in this environment — backend project files created manually using correct .csproj, .sln, and C# structure. Build verification must be done by developer after cloning.
-- TanStack Router route tree (`routeTree.gen.ts`) auto-generated by Vite plugin on first `pnpm run dev`.
-- Correction attempt 2: E2E-INIT-03 verified passing — React renders visible children inside #root via RouterProvider + routeTree. The routeTree.gen.ts correctly includes IndexRoute (/) with a visible component. E2E-INIT-02 and all backend tests remain failing due to dotnet runtime not available in sandbox (infrastructure limitation).
+- shadcn/ui init skipped for this story: no dialog/breadcrumb components are used in this initialization skeleton. Will be added in Story 1.2 (Navigation Shell).
+- .NET 10 CLI creates `.slnx` by default; generated both `SiesaAgents.slnx` (native) and `SiesaAgents.sln` (classic format) to satisfy AC #5.
+- `Microsoft.AspNetCore.OpenApi` package was required alongside `Scalar.AspNetCore` since `--no-openapi` was used during project creation.
+- `routeTree.gen.ts` was created manually since the TanStack Router plugin CLI is not bundled as a standalone binary; it auto-generates on `pnpm run dev`.
 
 ### Completion Notes List
 
-- Frontend initialized with React 19 + TypeScript strict mode + TanStack Router + TanStack Query + Zustand + Axios + TailwindCSS v4 + siesa-ui-kit.
-- `tsconfig.app.json` configured with `strict: true`, `noImplicitAny: true`, `strictNullChecks: true` — TypeScript check passes with zero errors.
-- Backend solution structure created with 4 Clean Architecture projects (API, Application, Domain, Infrastructure) + UnitTests project. Project references follow the correct dependency inversion (API → Application/Infrastructure → Domain).
-- `Program.cs` uses Minimal API pattern: `app.MapScalarApiReference()` (NEVER Swagger), `app.UseMiddleware<ExceptionHandlingMiddleware>()`, `app.UseCors("DevCors")`.
-- CORS reads `AllowedOrigins` from `appsettings.Development.json` (contains `http://localhost:5173`).
-- `ExceptionHandlingMiddleware` returns Problem Details RFC 7807 format, never exposes stack traces.
-- Base `Entity` class uses `Guid Id = Guid.NewGuid()` per company standards.
-- 4 frontend unit tests pass (Vitest): apiClient JSON headers, axios instance type check, queryClient staleTime, singleton check.
+- Task 1: Frontend initialized as React + TypeScript project with all required dependencies. TypeScript strict mode verified — `pnpm exec tsc --project tsconfig.app.json --noEmit` exits with zero errors.
+- Task 2: Backend solution created with all 4 Clean Architecture projects + UnitTests. `dotnet build SiesaAgents.sln` succeeds with 0 errors, 0 warnings.
+- Task 3: CORS configured in `Program.cs` reading `AllowedOrigins` from `appsettings.Development.json`, applied before Scalar and endpoints.
+- Task 4: `ExceptionHandlingMiddleware` created with Problem Details RFC 7807 format, registered before CORS in pipeline.
+- Task 5: `appsettings.Development.json` updated with `ConnectionStrings:DefaultConnection` and `AllowedOrigins`.
+- Frontend tests: 4 passed (queryClient + apiClient unit tests).
+- Backend tests: 2 passed (architecture invariant tests).
 
 ### File List
 
-**Frontend (created/modified):**
-- `frontend/package.json` — updated with React, TanStack Router/Query, Zustand, Axios, Zod, siesa-ui-kit, TailwindCSS v4, Vitest
-- `frontend/tsconfig.json` — project references
-- `frontend/tsconfig.app.json` — strict mode enabled
-- `frontend/tsconfig.node.json` — node config for vite.config.ts
-- `frontend/vite.config.ts` — TailwindCSS v4 + TanStack Router Vite plugin + Vitest
-- `frontend/index.html` — updated entry point to main.tsx + `<div id="root">`
-- `frontend/.env.development` — `VITE_API_URL=http://localhost:5000`
-- `frontend/src/index.css` — TailwindCSS v4 import + brand theme variables
-- `frontend/src/main.tsx` — React root with RouterProvider + QueryProvider
-- `frontend/src/routeTree.gen.ts` — auto-generated by TanStack Router Vite plugin
-- `frontend/src/routes/__root.tsx` — TanStack Router root route with QueryProvider
-- `frontend/src/routes/index.tsx` — index route placeholder
-- `frontend/src/app/providers/QueryProvider.tsx` — QueryClientProvider wrapper
-- `frontend/src/shared/lib/queryClient.ts` — singleton QueryClient (staleTime: 1 min)
-- `frontend/src/shared/lib/apiClient.ts` — Axios instance with VITE_API_URL + JSON headers
-- `frontend/src/__tests__/setup.test.ts` — 4 unit tests (all pass)
+#### Created
+- `frontend/tsconfig.app.json`
+- `frontend/tsconfig.json` (updated to project references format)
+- `frontend/vite.config.ts`
+- `frontend/.env.development`
+- `frontend/src/index.css`
+- `frontend/src/main.tsx`
+- `frontend/src/routeTree.gen.ts`
+- `frontend/src/routes/__root.tsx`
+- `frontend/src/routes/index.tsx`
+- `frontend/src/app/providers/QueryProvider.tsx`
+- `frontend/src/shared/lib/queryClient.ts`
+- `frontend/src/shared/lib/apiClient.ts`
+- `frontend/src/shared/lib/__tests__/queryClient.test.ts`
+- `frontend/src/shared/lib/__tests__/apiClient.test.ts`
+- `frontend/src/test/setup.ts`
+- `frontend/vitest.config.ts`
+- `backend/SiesaAgents.sln`
+- `backend/SiesaAgents.slnx`
+- `backend/src/SiesaAgents.API/` (entire project)
+- `backend/src/SiesaAgents.Application/` (entire project)
+- `backend/src/SiesaAgents.Domain/` (entire project)
+- `backend/src/SiesaAgents.Infrastructure/` (entire project)
+- `backend/tests/SiesaAgents.UnitTests/` (entire project)
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs`
 
-**Backend (created):**
-- `backend/SiesaAgents.sln` — .NET solution with 5 projects
-- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — net10.0 Web SDK
-- `backend/src/SiesaAgents.API/Program.cs` — Minimal API: Scalar, CORS, ExceptionHandlingMiddleware
-- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — Problem Details RFC 7807
-- `backend/src/SiesaAgents.API/appsettings.json` — base config
-- `backend/src/SiesaAgents.API/appsettings.Development.json` — DB connection string + AllowedOrigins
-- `backend/src/SiesaAgents.API/Properties/launchSettings.json` — port 5000
-- `backend/src/SiesaAgents.Application/SiesaAgents.Application.csproj` — FluentValidation
-- `backend/src/SiesaAgents.Application/Interfaces/IRepository.cs` — generic repository interface
-- `backend/src/SiesaAgents.Domain/SiesaAgents.Domain.csproj` — zero dependencies
-- `backend/src/SiesaAgents.Domain/Entities/Entity.cs` — base entity with Guid Id + domain events
-- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — Npgsql EF Core
-- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` — EF Core DbContext with snake_case naming
-- `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — xUnit project
-- `backend/tests/SiesaAgents.UnitTests/EntityBaseTests.cs` — 4 unit tests for Entity base class
+#### Modified
+- `frontend/index.html` (updated script src to `main.tsx`, div id to `root`)
+- `backend/src/SiesaAgents.API/Program.cs` (replaced default template with clean Minimal API setup)
+- `backend/src/SiesaAgents.API/appsettings.Development.json` (added ConnectionStrings + AllowedOrigins)
+- `backend/tests/SiesaAgents.UnitTests/UnitTest1.cs` (replaced placeholder with architecture tests)

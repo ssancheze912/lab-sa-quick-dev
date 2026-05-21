@@ -1,28 +1,33 @@
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+    ?? ["http://localhost:5173"];
+
 builder.Services.AddCors(options =>
     options.AddPolicy("DevCors", policy =>
-        policy.WithOrigins(
-                builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
-                ?? ["http://localhost:5173"])
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()));
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString)
+           .UseSnakeCaseNamingConvention());
 
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-
 app.UseCors("DevCors");
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.Run();

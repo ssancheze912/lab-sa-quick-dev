@@ -1,7 +1,1 @@
 @import "tailwindcss";
-
-@theme {
-  --color-primary: #0e79fd;
-  --color-primary-dark: #154ca9;
-  --font-sans: Inter, system-ui, sans-serif;
-}

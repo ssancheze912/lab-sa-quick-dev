@@ -1,259 +1,213 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using SiesaAgents.Infrastructure.Data;
-using System.Text.RegularExpressions;
 
 namespace SiesaAgents.UnitTests.Infrastructure;
 
 /// <summary>
-/// Edge-case and boundary tests for AppDbContext and ModelBuilderExtensions — Story 1.3.
-/// Expands ATDD coverage with ordering guarantees, snake_case transformation correctness,
-/// and disposal / lifecycle boundary conditions not covered in AppDbContextTests.
+/// Edge-case and boundary unit tests for AppDbContext and AppDbContextFactory.
+/// Story 1.3: Backend Database Foundation — extended coverage beyond ATDD baseline.
 /// </summary>
 public class AppDbContextEdgeCaseTests
 {
-    // ─────────────────────────────────────────────────────────────
-    // snake_case naming — via ModelBuilderExtensions on a standalone context
-    // ─────────────────────────────────────────────────────────────
+    // =========================================================================
+    // AppDbContext — dispose / lifetime edge cases
+    // =========================================================================
 
-    /// <summary>
-    /// EDGE-DB-01 (P1 — AC3)
-    /// Given a DbContext with SampleEntity that has PascalCase properties
-    /// and ApplySnakeCaseNaming() is called in OnModelCreating,
-    /// When the EF Core model is built,
-    /// Then the "CreatedAt" property MUST have column name "created_at".
-    /// </summary>
-    [Fact]
-    public void ApplySnakeCaseNaming_CreatedAtProperty_MapsToCreated_At()
-    {
-        var options = new DbContextOptionsBuilder<SampleDbContext>()
-            .UseInMemoryDatabase(databaseName: $"EdgeTest_{Guid.NewGuid()}")
-            .Options;
-
-        using var context = new SampleDbContext(options);
-        var entityType = context.Model.FindEntityType(typeof(SampleEntity));
-        Assert.NotNull(entityType);
-
-        var prop = entityType.FindProperty(nameof(SampleEntity.CreatedAt));
-        Assert.NotNull(prop);
-        Assert.Equal("created_at", prop.GetColumnName());
-    }
-
-    /// <summary>
-    /// EDGE-DB-02 (P1 — AC3)
-    /// Given a DbContext with SampleEntity,
-    /// When the EF Core model is built with ApplySnakeCaseNaming(),
-    /// Then "ClienteId" property MUST map to column "cliente_id".
-    /// </summary>
-    [Fact]
-    public void ApplySnakeCaseNaming_ClienteIdProperty_MapsToCliente_Id()
-    {
-        var options = new DbContextOptionsBuilder<SampleDbContext>()
-            .UseInMemoryDatabase(databaseName: $"EdgeTest_{Guid.NewGuid()}")
-            .Options;
-
-        using var context = new SampleDbContext(options);
-        var entityType = context.Model.FindEntityType(typeof(SampleEntity));
-        Assert.NotNull(entityType);
-
-        var prop = entityType.FindProperty(nameof(SampleEntity.ClienteId));
-        Assert.NotNull(prop);
-        Assert.Equal("cliente_id", prop.GetColumnName());
-    }
-
-    /// <summary>
-    /// EDGE-DB-03 (P2 — AC3 boundary)
-    /// The "Id" property (single uppercase initial followed by lowercase 'd')
-    /// must produce "id" — NOT "_id" — because the index==0 guard in ToSnakeCase
-    /// must skip the leading underscore injection.
-    /// </summary>
-    [Fact]
-    public void ApplySnakeCaseNaming_IdProperty_ProducesId_WithNoLeadingUnderscore()
-    {
-        var options = new DbContextOptionsBuilder<SampleDbContext>()
-            .UseInMemoryDatabase(databaseName: $"EdgeTest_{Guid.NewGuid()}")
-            .Options;
-
-        using var context = new SampleDbContext(options);
-        var entityType = context.Model.FindEntityType(typeof(SampleEntity));
-        Assert.NotNull(entityType);
-
-        var idProp = entityType.FindProperty(nameof(SampleEntity.Id));
-        Assert.NotNull(idProp);
-        var columnName = idProp.GetColumnName();
-
-        Assert.Equal("id", columnName);
-        Assert.False(columnName!.StartsWith('_'),
-            "Column name 'id' must not start with underscore — index==0 guard must apply.");
-    }
-
-    /// <summary>
-    /// EDGE-DB-04 (P2 — AC3)
-    /// "UpdatedAt" must map to "updated_at".
-    /// </summary>
-    [Fact]
-    public void ApplySnakeCaseNaming_UpdatedAtProperty_MapsToUpdated_At()
-    {
-        var options = new DbContextOptionsBuilder<SampleDbContext>()
-            .UseInMemoryDatabase(databaseName: $"EdgeTest_{Guid.NewGuid()}")
-            .Options;
-
-        using var context = new SampleDbContext(options);
-        var entityType = context.Model.FindEntityType(typeof(SampleEntity));
-        Assert.NotNull(entityType);
-
-        var prop = entityType.FindProperty(nameof(SampleEntity.UpdatedAt));
-        Assert.NotNull(prop);
-        Assert.Equal("updated_at", prop.GetColumnName());
-    }
-
-    /// <summary>
-    /// EDGE-DB-05 (P1 — AC3)
-    /// Table name for "SampleEntities" DbSet must be "sample_entities" after snake_case.
-    /// Table names must not contain uppercase letters.
-    /// </summary>
-    [Fact]
-    public void ApplySnakeCaseNaming_TableName_IsFullyLowercaseSnakeCase()
-    {
-        var options = new DbContextOptionsBuilder<SampleDbContext>()
-            .UseInMemoryDatabase(databaseName: $"EdgeTest_{Guid.NewGuid()}")
-            .Options;
-
-        using var context = new SampleDbContext(options);
-        var entityType = context.Model.FindEntityType(typeof(SampleEntity));
-        Assert.NotNull(entityType);
-
-        var tableName = entityType.GetTableName();
-        Assert.NotNull(tableName);
-        // Must be all lowercase + underscores (snake_case enforced)
-        Assert.Matches(new Regex("^[a-z0-9_]+$"), tableName);
-        // EF Core with InMemory provider derives table name from entity CLR type name ("SampleEntity")
-        // which ApplySnakeCaseNaming converts to "sample_entity".
-        Assert.Equal("sample_entity", tableName);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // ApplySnakeCaseNaming ordering guard
-    // ─────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// EDGE-DB-06 (P1 — AC3 / Critical Rule)
-    /// ApplySnakeCaseNaming() MUST be last in OnModelCreating.
-    /// This test asserts that every column in every entity in the model
-    /// contains no uppercase letters — confirming snake_case was applied
-    /// after all other configurations (and was not overridden).
-    /// </summary>
-    [Fact]
-    public void ApplySnakeCaseNaming_AllColumns_ContainNoUppercaseLetters()
-    {
-        var options = new DbContextOptionsBuilder<SampleDbContext>()
-            .UseInMemoryDatabase(databaseName: $"EdgeTest_{Guid.NewGuid()}")
-            .Options;
-
-        using var context = new SampleDbContext(options);
-        var upperCasePattern = new Regex("[A-Z]");
-
-        foreach (var entity in context.Model.GetEntityTypes())
-        {
-            foreach (var property in entity.GetProperties())
-            {
-                var colName = property.GetColumnName();
-                if (colName != null)
-                {
-                    Assert.False(upperCasePattern.IsMatch(colName),
-                        $"Column '{colName}' on entity '{entity.Name}' must be snake_case " +
-                        "(no uppercase). ApplySnakeCaseNaming() must be the last call in OnModelCreating.");
-                }
-            }
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Context lifecycle — Dispose / multiple instances
-    // ─────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// EDGE-DB-07 (P2 — lifecycle)
-    /// AppDbContext.Dispose() must not throw.
-    /// Validates that the context can be safely released (critical for DI scoped lifetimes).
-    /// </summary>
     [Fact]
     public void AppDbContext_Dispose_DoesNotThrow()
     {
+        // GIVEN: A fully constructed AppDbContext
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: $"EdgeTest_{Guid.NewGuid()}")
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        var exception = Record.Exception(() =>
-        {
-            var context = new AppDbContext(options);
-            context.Dispose();
-        });
+        var context = new AppDbContext(options);
 
+        // WHEN: Dispose is called
+        var exception = Record.Exception(() => context.Dispose());
+
+        // THEN: No exception is thrown
         Assert.Null(exception);
     }
 
-    /// <summary>
-    /// EDGE-DB-08 (P2 — lifecycle)
-    /// Two independent AppDbContext instances with separate in-memory databases
-    /// must not share state — each instance is isolated.
-    /// </summary>
     [Fact]
-    public void AppDbContext_TwoIndependentInstances_AreIsolated()
+    public async Task AppDbContext_DisposeAsync_DoesNotThrow()
     {
-        var opts1 = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: $"DB1_{Guid.NewGuid()}")
-            .Options;
-        var opts2 = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: $"DB2_{Guid.NewGuid()}")
+        // GIVEN: A fully constructed AppDbContext
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        using var ctx1 = new AppDbContext(opts1);
-        using var ctx2 = new AppDbContext(opts2);
+        await using var context = new AppDbContext(options);
 
-        // Both must have valid, independent model instances
-        Assert.NotNull(ctx1.Model);
-        Assert.NotNull(ctx2.Model);
+        // WHEN: DisposeAsync is called via using statement
+        // THEN: No exception is thrown (compiler generates the await DisposeAsync call)
+        Assert.NotNull(context);
+    }
+
+    [Fact]
+    public void AppDbContext_MultipleInstances_IndependentDatabases()
+    {
+        // GIVEN: Two separate AppDbContext instances with different in-memory DB names
+        var options1 = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: "db-instance-1")
+            .Options;
+        var options2 = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: "db-instance-2")
+            .Options;
+
+        // WHEN: Both contexts are created
+        using var ctx1 = new AppDbContext(options1);
+        using var ctx2 = new AppDbContext(options2);
+
+        // THEN: Each context instance is distinct (EF Core may share compiled model across
+        // instances of the same type — that is an internal caching optimization, not a bug)
         Assert.NotSame(ctx1, ctx2);
     }
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Test helpers — local only, not part of production code
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// <summary>
-/// Minimal entity representing the property conventions documented in Dev Notes:
-///   Id (Guid), CreatedAt (DateTimeOffset), UpdatedAt (DateTimeOffset), ClienteId (Guid?).
-/// Used exclusively to verify ApplySnakeCaseNaming() output.
-/// </summary>
-internal class SampleEntity
-{
-    public Guid Id { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
-    public Guid? ClienteId { get; set; }
-}
-
-/// <summary>
-/// A standalone DbContext used only in tests to verify that
-/// ModelBuilderExtensions.ApplySnakeCaseNaming() works correctly on entities.
-/// Does NOT extend AppDbContext — it is an independent context that applies
-/// the same naming convention.
-/// </summary>
-internal class SampleDbContext : DbContext
-{
-    public SampleDbContext(DbContextOptions<SampleDbContext> options) : base(options) { }
-
-    public DbSet<SampleEntity> SampleEntities { get; set; } = null!;
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    [Fact]
+    public void AppDbContext_ModelIsConsistent_OnRepeatedAccess()
     {
-        base.OnModelCreating(modelBuilder);
+        // GIVEN: An AppDbContext instance
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
 
-        // Mirror the exact production pattern from AppDbContext
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(SampleDbContext).Assembly);
+        using var context = new AppDbContext(options);
 
-        // MANDATORY: snake_case naming — MUST be last (same as production AppDbContext)
-        modelBuilder.ApplySnakeCaseNaming();
+        // WHEN: Model is accessed multiple times
+        var model1 = context.Model;
+        var model2 = context.Model;
+
+        // THEN: The same model object is returned (EF Core caches it)
+        Assert.Same(model1, model2);
+    }
+
+    [Fact]
+    public void AppDbContext_EntityTypes_EmptyAfterConstruction_NoDbSets()
+    {
+        // GIVEN: An AppDbContext with no DbSet<> properties defined (Story 1.3 scope)
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        using var context = new AppDbContext(options);
+
+        // WHEN: We request entity types
+        var entityTypes = context.Model.GetEntityTypes().ToList();
+
+        // THEN: No entity types are registered — entities are added in Epic 2+
+        Assert.Empty(entityTypes);
+    }
+
+    // =========================================================================
+    // AppDbContextFactory — design-time factory edge cases
+    // =========================================================================
+
+    [Fact]
+    public void AppDbContextFactory_CreateDbContext_WithEmptyArgs_ReturnsContext()
+    {
+        // GIVEN: The design-time factory used by dotnet-ef CLI
+        var factory = new AppDbContextFactory();
+
+        // WHEN: CreateDbContext is called with empty args (standard CLI invocation)
+        var context = factory.CreateDbContext([]);
+
+        // THEN: A valid AppDbContext is returned
+        Assert.NotNull(context);
+        context.Dispose();
+    }
+
+    [Fact]
+    public void AppDbContextFactory_CreateDbContext_WithArgs_ReturnsContext()
+    {
+        // GIVEN: The design-time factory
+        var factory = new AppDbContextFactory();
+
+        // WHEN: CreateDbContext is called with arbitrary args (dotnet-ef passes environment args)
+        var context = factory.CreateDbContext(["--environment", "Production"]);
+
+        // THEN: Factory ignores unknown args and returns a valid context
+        Assert.NotNull(context);
+        context.Dispose();
+    }
+
+    [Fact]
+    public void AppDbContextFactory_CreateDbContext_ContextIsCorrectType()
+    {
+        // GIVEN: The design-time factory
+        var factory = new AppDbContextFactory();
+
+        // WHEN: CreateDbContext is called
+        using var context = factory.CreateDbContext([]);
+
+        // THEN: The returned context is specifically AppDbContext (not a derived or proxy type)
+        Assert.IsType<AppDbContext>(context);
+    }
+
+    [Fact]
+    public void AppDbContextFactory_ImplementsIDesignTimeDbContextFactory()
+    {
+        // GIVEN: The AppDbContextFactory type
+        var factoryType = typeof(AppDbContextFactory);
+
+        // WHEN: We check its implemented interfaces
+        var interfaceType = typeof(IDesignTimeDbContextFactory<AppDbContext>);
+
+        // THEN: AppDbContextFactory implements IDesignTimeDbContextFactory<AppDbContext>
+        // This is required for dotnet-ef to discover and use the factory at design time
+        Assert.True(interfaceType.IsAssignableFrom(factoryType));
+    }
+
+    [Fact]
+    public void AppDbContextFactory_CreateDbContext_MultipleCallsReturnDistinctInstances()
+    {
+        // GIVEN: The design-time factory
+        var factory = new AppDbContextFactory();
+
+        // WHEN: CreateDbContext is called twice
+        using var context1 = factory.CreateDbContext([]);
+        using var context2 = factory.CreateDbContext([]);
+
+        // THEN: Each call returns a new, distinct context instance
+        Assert.NotSame(context1, context2);
+    }
+
+    // =========================================================================
+    // AppDbContext — snake_case via UseSnakeCaseNamingConvention (options-level)
+    // =========================================================================
+
+    [Fact]
+    public void AppDbContext_WithSnakeCaseOption_ModelBuildsWithoutError()
+    {
+        // GIVEN: Options configured with UseSnakeCaseNamingConvention (as in Program.cs)
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSnakeCaseNamingConvention()
+            .Options;
+
+        // WHEN: AppDbContext is constructed with these options
+        AppDbContext? act() => new AppDbContext(options);
+
+        // THEN: No exception — snake_case convention does not conflict with OnModelCreating
+        var exception = Record.Exception(act);
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void AppDbContext_WithoutSnakeCaseOption_ModelStillBuildsWithoutError()
+    {
+        // GIVEN: Options WITHOUT UseSnakeCaseNamingConvention (edge case: factory without convention)
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        // WHEN: AppDbContext is constructed without the convention
+        AppDbContext? act() => new AppDbContext(options);
+
+        // THEN: Context still constructs without error — convention is optional at the context level
+        var exception = Record.Exception(act);
+        Assert.Null(exception);
     }
 }

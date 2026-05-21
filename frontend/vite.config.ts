@@ -6,17 +6,11 @@ import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    TanStackRouterVite(),
+    TanStackRouterVite({ routesDirectory: './src/routes' }),
     react(),
     tailwindcss(),
   ],
   server: {
     port: 5173,
-  },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: [],
-    exclude: ['**/node_modules/**', '**/e2e/**'],
   },
 })

@@ -1,23 +1,11 @@
-# .NET build artifacts
-backend/**/bin/
-backend/**/obj/
-
-# Node / frontend
 node_modules/
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
-
-# Playwright output
-playwright-report/
+package-lock.json
 playwright-results/
+playwright-report/
 test-results/
 
-# Env files
-.env
-.env.local
-.env.*.local
-
-# OS
-.DS_Store
-Thumbs.db
+# Vite template residuals (removed from tracking by code review)
+frontend/src/style.css
+frontend/src/assets/hero.png
+frontend/src/assets/typescript.svg
+frontend/src/assets/vite.svg

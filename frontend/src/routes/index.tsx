@@ -1,13 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Navigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
-  component: Index,
+  component: () => <Navigate to="/clientes" />,
 })
-
-function Index() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <h1 className="text-2xl font-bold text-primary">Siesa Agents</h1>
-    </div>
-  )
-}

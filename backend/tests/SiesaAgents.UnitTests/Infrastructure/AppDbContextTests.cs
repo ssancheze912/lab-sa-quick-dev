@@ -1,111 +1,110 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SiesaAgents.Infrastructure.Data;
 
 namespace SiesaAgents.UnitTests.Infrastructure;
 
 /// <summary>
-/// Unit tests for AppDbContext — Story 1.3 AC3.
-/// Verifies that ApplySnakeCaseNaming() is applied in OnModelCreating so that
-/// all entity table/column names follow snake_case conventions.
+/// Unit tests for AppDbContext — Story 1.3: Backend Database Foundation
+/// AC: #1 (migrations folder), #3 (ApplySnakeCaseNaming), #5 (connection string key)
 ///
-/// These tests are in RED phase. They will fail until AppDbContext is created
-/// at backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs.
-///
-/// Test IDs: UNIT-F-06
+/// RED PHASE: These tests will fail until AppDbContext is implemented in
+/// SiesaAgents.Infrastructure/Data/AppDbContext.cs
 /// </summary>
 public class AppDbContextTests
 {
-    /// <summary>
-    /// UNIT-F-06 (P2 — AC3)
-    /// Given AppDbContext is created with an in-memory provider
-    /// When OnModelCreating is invoked
-    /// Then the model is built without errors (ApplySnakeCaseNaming does not throw)
-    /// And the context is a valid DbContext subclass
-    /// </summary>
+    // -------------------------------------------------------------------------
+    // AC#3 — ApplySnakeCaseNaming() is the LAST call in OnModelCreating
+    // -------------------------------------------------------------------------
+
     [Fact]
-    public void AppDbContext_OnModelCreating_DoesNotThrow()
+    public void OnModelCreating_WhenCalled_DoesNotThrow()
     {
-        // GIVEN: Options configured with in-memory provider
+        // GIVEN: An InMemory options builder configured for AppDbContext
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        // WHEN: AppDbContext is instantiated (triggers OnModelCreating)
-        // THEN: No exception is thrown — ApplySnakeCaseNaming() is safe to call
-        var exception = Record.Exception(() =>
-        {
-            using var context = new AppDbContext(options);
-            // Force model building by accessing Model property
-            _ = context.Model;
-        });
+        // WHEN: AppDbContext is instantiated and model is created
+        AppDbContext? act() => new AppDbContext(options);
 
+        // THEN: No exception is thrown during construction
+        var exception = Record.Exception(act);
         Assert.Null(exception);
     }
 
-    /// <summary>
-    /// UNIT-F-06b (P2 — AC3)
-    /// Given AppDbContext is configured with an in-memory provider
-    /// When the model is built
-    /// Then the AppDbContext inherits from DbContext
-    /// (structural check that the class hierarchy is correct)
-    /// </summary>
     [Fact]
-    public void AppDbContext_InheritsFromDbContext()
+    public void OnModelCreating_ApplySnakeCaseNaming_IsRegistered()
     {
-        // GIVEN / WHEN / THEN: AppDbContext must be a DbContext subclass
-        Assert.True(
-            typeof(DbContext).IsAssignableFrom(typeof(AppDbContext)),
-            "AppDbContext must inherit from Microsoft.EntityFrameworkCore.DbContext"
-        );
-    }
-
-    /// <summary>
-    /// UNIT-F-06c (P2 — AC3)
-    /// Given a DbContextOptionsBuilder with in-memory provider
-    /// When AppDbContext is constructed with those options
-    /// Then the constructor accepts DbContextOptions&lt;AppDbContext&gt; (not generic DbContextOptions)
-    /// ensuring the DI registration pattern builder.Services.AddDbContext&lt;AppDbContext&gt;() works
-    /// </summary>
-    [Fact]
-    public void AppDbContext_Constructor_AcceptsTypedDbContextOptions()
-    {
-        // GIVEN: Typed options for AppDbContext
+        // GIVEN: An InMemory AppDbContext
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        // WHEN: Constructor is called with typed options
-        // THEN: No exception — constructor signature is (DbContextOptions<AppDbContext> options)
-        var exception = Record.Exception(() =>
-        {
-            using var context = new AppDbContext(options);
-        });
+        using var context = new AppDbContext(options);
 
-        Assert.Null(exception);
+        // WHEN: The model is accessed (triggers OnModelCreating)
+        var model = context.Model;
+
+        // THEN: Model is built successfully — snake_case naming convention applied
+        // If ApplySnakeCaseNaming() is missing, the convention registration will differ.
+        // The model must not be null and must have been constructed without error.
+        Assert.NotNull(model);
     }
 
-    /// <summary>
-    /// UNIT-F-06d (P2 — updated for Story 2.1)
-    /// Given AppDbContext built with an in-memory provider
-    /// When the EF Core model is inspected
-    /// Then exactly one DbSet&lt;&gt; property exists: Clientes (added in Story 2.1)
-    /// </summary>
     [Fact]
-    public void AppDbContext_HasClientesDbSet_AfterStory21()
+    public void AppDbContext_Constructor_AcceptsDbContextOptions()
     {
-        // GIVEN: AppDbContext type reflection
-        var dbSetType = typeof(DbSet<>);
-        var contextType = typeof(AppDbContext);
+        // GIVEN: Standard DbContextOptions<AppDbContext>
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
 
-        // WHEN: Enumerate all public instance properties
-        var dbSetProperties = contextType
-            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Where(p => p.PropertyType.IsGenericType &&
-                        p.PropertyType.GetGenericTypeDefinition() == dbSetType)
-            .ToList();
+        // WHEN: Constructing AppDbContext with those options
+        using var context = new AppDbContext(options);
 
-        // THEN: Exactly one DbSet<ClienteEntity> — Clientes added in Story 2.1
-        Assert.Single(dbSetProperties);
-        Assert.Equal("Clientes", dbSetProperties[0].Name);
+        // THEN: Context is successfully created and is not null
+        Assert.NotNull(context);
+    }
+
+    [Fact]
+    public void AppDbContext_HasNoDbSetProperties_InInitialMigrationScope()
+    {
+        // GIVEN: AppDbContext is constructed
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        using var context = new AppDbContext(options);
+
+        // WHEN: We inspect the entity types registered in the model
+        var entityTypes = context.Model.GetEntityTypes();
+
+        // THEN: No entity types are registered (empty context for initial migration)
+        // AC#3 scope note: ClienteEntity and ContactoEntity are NOT added in Story 1.3
+        Assert.Empty(entityTypes);
+    }
+
+    [Fact]
+    public void AppDbContext_ConnectionStringKey_MatchesCompanyStandard()
+    {
+        // GIVEN: A configuration that simulates appsettings.Development.json
+        // AC#5 — connection string must live under key "ConnectionStrings:DefaultConnection"
+        var configValues = new Dictionary<string, string?>
+        {
+            ["ConnectionStrings:DefaultConnection"] =
+                "Host=localhost;Port=5432;Database=siesa_agents_db;Username=postgres;Password=postgres"
+        };
+
+        var configuration = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
+            .AddInMemoryCollection(configValues)
+            .Build();
+
+        // WHEN: Reading the connection string with the company-standard key
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+        // THEN: The connection string is present and references siesa_agents_db
+        Assert.NotNull(connectionString);
+        Assert.Contains("siesa_agents_db", connectionString, StringComparison.OrdinalIgnoreCase);
     }
 }

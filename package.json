@@ -1,16 +1,5 @@
 {
-  "name": "siesa-agents-e2e",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "test:e2e": "playwright test",
-    "test:e2e:foundation": "playwright test e2e/tests/foundation",
-    "test:e2e:p0": "playwright test --grep \"\\[P0\\]|ARCH-EDGE-06|ARCH-EDGE-11|API-F-0|API-S-0|E2E-INIT-0[12]\"",
-    "test:e2e:p1": "playwright test --grep \"\\[P0\\]|\\[P1\\]|ARCH-EDGE|API-EDGE|E2E-EDGE\"",
-    "test:e2e:foundation:chromium": "playwright test e2e/tests/foundation --project=chromium"
-  },
   "devDependencies": {
-    "@playwright/test": "^1.56.1",
-    "typescript": "^5.0.0"
+    "@playwright/test": "^1.52.0"
   }
 }
