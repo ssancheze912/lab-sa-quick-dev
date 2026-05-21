@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { buildContacto } from '../../helpers/data.helper';
 
 const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
 
@@ -14,6 +15,12 @@ const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
  * Story 3.2 Coverage:
  *   API-CT-08  P1  — GET /api/v1/contactos/:id valid ID → 200 + full ContactoDto with clienteId: null
  *   API-CT-09  P1  — GET /api/v1/contactos/:id non-existent ID → 404 Problem Details (no stackTrace key)
+ *
+ * Story 3.3 Coverage:
+ *   API-CT-01  P0  — POST valid payload → 201 + body with UUID id, clienteId: null, ISO 8601 createdAt
+ *   API-CT-02  P0  — POST missing nombre → 400 Problem Details (no stackTrace key)
+ *   API-CT-03  P0  — POST missing email → 400 Problem Details (no stackTrace key)
+ *   API-CT-04  P0  — POST missing cargo → 400 Problem Details (no stackTrace key)
  */
 
 test.describe('Story 3.1 — API: GET /api/v1/contactos', () => {
