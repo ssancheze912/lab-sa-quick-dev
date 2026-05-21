@@ -1,6 +1,6 @@
 # Story 3.1: Contact List & Search
 
-Status: ready
+Status: ready-for-dev
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
