@@ -86,6 +86,134 @@ test.describe('Story 2.1 — API: GET /api/v1/clientes', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Story 2.4 — API Integration Tests for PUT /api/v1/clientes/:id
+// ---------------------------------------------------------------------------
+
+test.describe('Story 2.4 — API: PUT /api/v1/clientes/:id', () => {
+  const createdIds: string[] = [];
+
+  test.afterEach(async ({ request }) => {
+    for (const id of createdIds) {
+      await request.delete(`${API_BASE_URL}/api/v1/clientes/${id}`).catch(() => null);
+    }
+    createdIds.length = 0;
+  });
+
+  // -------------------------------------------------------------------------
+  // API-C-04 (P0 · AC2)
+  // Given a valid clienteId that exists in the system
+  //   AND a valid update payload with all required fields
+  // When PUT /api/v1/clientes/:id is called
+  // Then the response is 200 OK with the complete updated client body,
+  //   containing: id, nombre, nit, telefono, ciudad, createdAt, updatedAt
+  //   (all DateTimeOffset fields are ISO 8601 with timezone)
+  // -------------------------------------------------------------------------
+  test('API-C-04 — PUT /api/v1/clientes/:id con payload válido devuelve 200 y el cuerpo actualizado', async ({ request }) => {
+    // GIVEN — a client is created
+    const original = {
+      nombre: 'Empresa Original API-C-04',
+      nit: `900${Date.now().toString().slice(-9)}`,
+      telefono: '+57 1 234 5678',
+      ciudad: 'Bogotá',
+    };
+    const createResponse = await request.post(`${API_BASE_URL}/api/v1/clientes`, { data: original });
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+    createdIds.push(created.id);
+
+    // WHEN — PUT /api/v1/clientes/:id is called with updated fields
+    const updatePayload = {
+      nombre: 'Empresa Actualizada API-C-04',
+      nit: original.nit,
+      telefono: '+57 310 999 8888',
+      ciudad: 'Medellín',
+    };
+    const response = await request.put(`${API_BASE_URL}/api/v1/clientes/${created.id}`, {
+      data: updatePayload,
+    });
+
+    // THEN — response is 200 OK
+    expect(response.status()).toBe(200);
+
+    // AND — response body contains all required updated fields
+    const body = await response.json();
+
+    // id is unchanged and matches the created client
+    expect(body.id).toBe(created.id);
+
+    // all updated fields are reflected in the response body
+    expect(body.nombre).toBe(updatePayload.nombre);
+    expect(body.nit).toBe(updatePayload.nit);
+    expect(body.telefono).toBe(updatePayload.telefono);
+    expect(body.ciudad).toBe(updatePayload.ciudad);
+
+    // createdAt must be ISO 8601 with timezone (DateTimeOffset)
+    expect(typeof body.createdAt).toBe('string');
+    expect(body.createdAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+    );
+
+    // updatedAt must be ISO 8601 with timezone (DateTimeOffset) and present
+    expect(typeof body.updatedAt).toBe('string');
+    expect(body.updatedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+    );
+
+    // Response must NOT be a wrapper object { data: {...} }
+    expect(body.data).toBeUndefined();
+  });
+
+  // -------------------------------------------------------------------------
+  // API-C-10 (P1 · AC3)
+  // Given a valid clienteId that exists in the system
+  //   AND an update payload with a required field (nombre) missing
+  // When PUT /api/v1/clientes/:id is called
+  // Then the response is 400 Bad Request with a Problem Details body (RFC 7807)
+  //   AND no stack trace is exposed (NFR6)
+  // -------------------------------------------------------------------------
+  test('API-C-10 — PUT /api/v1/clientes/:id con campo requerido vacío devuelve 400 Problem Details', async ({ request }) => {
+    // GIVEN — a client is created
+    const original = {
+      nombre: 'Empresa Validacion API-C-10',
+      nit: `901${Date.now().toString().slice(-9)}`,
+      telefono: '+57 1 234 5678',
+      ciudad: 'Cali',
+    };
+    const createResponse = await request.post(`${API_BASE_URL}/api/v1/clientes`, { data: original });
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+    createdIds.push(created.id);
+
+    // WHEN — PUT /api/v1/clientes/:id is called with nombre missing (empty string)
+    const invalidPayload = {
+      nombre: '',
+      nit: original.nit,
+      telefono: original.telefono,
+      ciudad: original.ciudad,
+    };
+    const response = await request.put(`${API_BASE_URL}/api/v1/clientes/${created.id}`, {
+      data: invalidPayload,
+    });
+
+    // THEN — response is 400 Bad Request
+    expect(response.status()).toBe(400);
+
+    // AND — body is Problem Details (RFC 7807)
+    const body = await response.json();
+    expect(body.status).toBe(400);
+    expect(typeof body.title).toBe('string');
+    expect(body.title.length).toBeGreaterThan(0);
+
+    // AND — no stack trace or internal information is exposed (NFR6)
+    expect(body.stackTrace).toBeUndefined();
+    expect(body.StackTrace).toBeUndefined();
+    expect(body.exception).toBeUndefined();
+    const bodyText = JSON.stringify(body);
+    expect(bodyText).not.toMatch(/at SiesaAgents/i);
+  });
+});
+
 test.describe('Story 2.2 — API: GET /api/v1/clientes/:id', () => {
   const createdIds: string[] = [];
 
