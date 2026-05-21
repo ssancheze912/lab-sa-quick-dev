@@ -36,4 +36,10 @@ public class ContactoEntity
         Email = email;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
+
+    public void AssignClienteId(Guid? clienteId)
+    {
+        ClienteId = clienteId;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }

@@ -10,4 +10,5 @@ export interface IContactoRepository {
   create(data: CreateContactoPayload): Promise<Contacto>
   update(id: string, data: UpdateContactoPayload): Promise<Contacto>
   delete(id: string): Promise<void>
+  assignCliente(contactoId: string, clienteId: string | null): Promise<Contacto>
 }

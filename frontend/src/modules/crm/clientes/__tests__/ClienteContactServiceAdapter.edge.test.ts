@@ -20,12 +20,25 @@ vi.mock('../../../../shared/lib/apiClient', () => ({
   },
 }))
 
+vi.mock('../../../../shared/lib/toastStore', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+  },
+}))
+
 import { apiClient } from '../../../../shared/lib/apiClient'
 import { ClienteContactServiceAdapter } from '../presentation/ClienteContactServiceAdapter'
+import type { QueryClient } from '@tanstack/react-query'
 
 const mockGet = apiClient.get as ReturnType<typeof vi.fn>
 
 const CLIENT_ID = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
+
+function makeMockQueryClient(): QueryClient {
+  return { invalidateQueries: vi.fn() } as unknown as QueryClient
+}
 
 const buildMockContacto = (overrides?: Partial<{
   id: string;
@@ -65,7 +78,7 @@ describe('ClienteContactServiceAdapter — Edge Cases', () => {
     const mockContacto = buildMockContacto()
     mockGet.mockResolvedValueOnce({ data: [mockContacto] })
 
-    const adapter = new ClienteContactServiceAdapter(CLIENT_ID)
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, makeMockQueryClient())
 
     // WHEN
     const result = await adapter.getByRecordId(CLIENT_ID)
@@ -101,7 +114,7 @@ describe('ClienteContactServiceAdapter — Edge Cases', () => {
     const mockContacto = buildMockContacto({ cargo: null })
     mockGet.mockResolvedValueOnce({ data: [mockContacto] })
 
-    const adapter = new ClienteContactServiceAdapter(CLIENT_ID)
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, makeMockQueryClient())
 
     // WHEN
     const result = await adapter.getByRecordId(CLIENT_ID)
@@ -121,7 +134,7 @@ describe('ClienteContactServiceAdapter — Edge Cases', () => {
     const mockContacto = buildMockContacto({ email: null })
     mockGet.mockResolvedValueOnce({ data: [mockContacto] })
 
-    const adapter = new ClienteContactServiceAdapter(CLIENT_ID)
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, makeMockQueryClient())
 
     // WHEN
     const result = await adapter.getByRecordId(CLIENT_ID)
@@ -138,7 +151,7 @@ describe('ClienteContactServiceAdapter — Edge Cases', () => {
   // ---------------------------------------------------------------------------
   it('[P1] UNIT-EDGE-04 — save() es un no-op y no llama a apiClient', async () => {
     // GIVEN
-    const adapter = new ClienteContactServiceAdapter(CLIENT_ID)
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, makeMockQueryClient())
     const mockPut = apiClient.put as ReturnType<typeof vi.fn>
 
     // WHEN — call save() with a recordId and an empty contacts array
@@ -156,7 +169,7 @@ describe('ClienteContactServiceAdapter — Edge Cases', () => {
   // ---------------------------------------------------------------------------
   it('[P2] UNIT-EDGE-05 — lookupConfig está inicializado tras la construcción', () => {
     // GIVEN / WHEN — construct the adapter
-    const adapter = new ClienteContactServiceAdapter(CLIENT_ID)
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, makeMockQueryClient())
 
     // THEN — lookupConfig is defined
     expect(adapter.lookupConfig).toBeDefined()
@@ -175,7 +188,7 @@ describe('ClienteContactServiceAdapter — Edge Cases', () => {
     // GIVEN
     mockGet.mockResolvedValueOnce({ data: [] })
 
-    const adapter = new ClienteContactServiceAdapter(CLIENT_ID)
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, makeMockQueryClient())
 
     // WHEN
     const result = await adapter.getContactos()
@@ -194,7 +207,7 @@ describe('ClienteContactServiceAdapter — Edge Cases', () => {
     // GIVEN
     mockGet.mockResolvedValueOnce({ data: [] })
 
-    const adapter = new ClienteContactServiceAdapter(CLIENT_ID)
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, makeMockQueryClient())
 
     // WHEN
     const result = await adapter.getByRecordId(CLIENT_ID)

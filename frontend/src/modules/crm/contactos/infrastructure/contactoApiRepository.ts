@@ -31,6 +31,11 @@ const contactoApiRepository: IContactoRepository = {
   async delete(id: string): Promise<void> {
     await apiClient.delete(`/api/v1/contactos/${id}`)
   },
+
+  async assignCliente(contactoId: string, clienteId: string | null): Promise<Contacto> {
+    const response = await apiClient.put<Contacto>(`/api/v1/contactos/${contactoId}/cliente`, { clienteId })
+    return response.data
+  },
 }
 
 export { contactoApiRepository }

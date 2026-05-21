@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using SiesaAgents.Application.Contactos.Commands;
 using SiesaAgents.Application.Contactos.DTOs;
@@ -78,5 +79,25 @@ public static class ContactoEndpoints
         .WithName("DeleteContacto")
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPut("/{id:guid}/cliente", async (
+            Guid id,
+            AssignClienteToContactoRequest request,
+            AssignClienteToContactoCommandHandler handler,
+            IValidator<AssignClienteToContactoRequest> validator,
+            CancellationToken ct) =>
+        {
+            var validation = await validator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+                return Results.ValidationProblem(validation.ToDictionary());
+
+            var result = await handler.HandleAsync(
+                new AssignClienteToContactoCommand(id, request.ClienteId), ct);
+            return Results.Ok(result);
+        })
+        .WithName("AssignClienteToContacto")
+        .Produces<ContactoDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesValidationProblem();
     }
 }

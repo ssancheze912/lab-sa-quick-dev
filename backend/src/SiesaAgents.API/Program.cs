@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Endpoints;
@@ -5,6 +6,7 @@ using SiesaAgents.API.Middleware;
 using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Application.Contactos.Commands;
+using SiesaAgents.Application.Contactos.DTOs;
 using SiesaAgents.Application.Contactos.Queries;
 using SiesaAgents.Application.Contactos.Validators;
 using SiesaAgents.Domain.Clientes.Interfaces;
@@ -50,6 +52,8 @@ builder.Services.AddScoped<CreateContactoCommandHandler>();
 builder.Services.AddScoped<UpdateContactoCommandValidator>();
 builder.Services.AddScoped<UpdateContactoCommandHandler>();
 builder.Services.AddScoped<DeleteContactoCommandHandler>();
+builder.Services.AddScoped<AssignClienteToContactoCommandHandler>();
+builder.Services.AddScoped<IValidator<AssignClienteToContactoRequest>, AssignClienteToContactoValidator>();
 
 var app = builder.Build();
 

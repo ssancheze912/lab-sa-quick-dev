@@ -1,6 +1,7 @@
 import { isAxiosError } from 'axios'
 import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { ContactManager, ContactServiceProvider } from 'siesa-ui-kit'
@@ -18,8 +19,12 @@ export function ClienteDetailView({ clienteId }: Props) {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
-  const adapter = useMemo(() => new ClienteContactServiceAdapter(clienteId), [clienteId])
+  const adapter = useMemo(
+    () => new ClienteContactServiceAdapter(clienteId, queryClient),
+    [clienteId, queryClient],
+  )
 
   const is404 = isError && isAxiosError(error) && error.response?.status === 404
 

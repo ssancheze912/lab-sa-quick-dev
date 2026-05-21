@@ -23,10 +23,11 @@ export class ClientesPage {
   // Sort control (Story 2.6)
   readonly sortControl: Locator;
 
-  // ContactManager locators (Story 4.1)
+  // ContactManager locators (Story 4.1 & 4.2)
   readonly contactManagerContainer: Locator;
   readonly contactManagerRows: Locator;
   readonly btnAgregarContacto: Locator;
+  readonly btnDesasociarContacto: Locator;
 
   // Form (dialog/drawer)
   readonly form: Locator;
@@ -59,7 +60,8 @@ export class ClientesPage {
     // Rows: each contact row has an "Editar" button — works for both desktop (table) and mobile (cards)
     this.contactManagerContainer = page.getByTestId('contact-manager')
     this.contactManagerRows = page.getByTestId('contact-manager').getByRole('button', { name: 'Editar' })
-    this.btnAgregarContacto = page.getByRole('button', { name: /agregar contacto|nuevo contacto/i })
+    this.btnAgregarContacto = page.getByRole('button', { name: /agregar contacto|nuevo contacto|asociar contacto/i })
+    this.btnDesasociarContacto = page.getByRole('button', { name: /desasociar|eliminar de cliente|quitar/i })
 
     this.form = page.getByRole('dialog');
     this.inputNombre = page.getByLabel(/nombre/i);

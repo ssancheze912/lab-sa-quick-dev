@@ -1,28 +1,44 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { QueryClient } from '@tanstack/react-query'
 
 /**
- * ATDD — Story 4.1: View Associated Contacts in Client Detail
+ * ATDD — Story 4.1 & Story 4.2
  * Unit Tests — ClienteContactServiceAdapter
  *
- * RED Phase — Tests intentionally fail until implementation is complete.
- *
  * Coverage:
- *   UNIT-AC-01  P1  — ClienteContactServiceAdapter.getContactos() calls
- *                     GET /api/v1/contactos?clienteId={id} with the correct URL
+ *   UNIT-AC-01  P1  — getContactos() calls GET /api/v1/contactos?clienteId={id}
+ *   UNIT-AC-02  P1  — assignContacto(contactoId) calls PUT /api/v1/contactos/{id}/cliente with { clienteId }
+ *   UNIT-AC-03  P1  — removeContacto(contactoId) calls PUT /api/v1/contactos/{id}/cliente with { clienteId: null }
  */
 
 // Mock the apiClient before importing the module under test
 vi.mock('../../../../shared/lib/apiClient', () => ({
   apiClient: {
     get: vi.fn(),
+    put: vi.fn(),
+  },
+}))
+
+// Mock toastStore to avoid side effects in unit tests
+vi.mock('../../../../shared/lib/toastStore', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
   },
 }))
 
 import { apiClient } from '../../../../shared/lib/apiClient'
-// Import will fail until the file is created — RED phase expected
 import { ClienteContactServiceAdapter } from '../presentation/ClienteContactServiceAdapter'
 
 const mockGet = apiClient.get as ReturnType<typeof vi.fn>
+const mockPut = apiClient.put as ReturnType<typeof vi.fn>
+
+function makeMockQueryClient(): QueryClient {
+  return {
+    invalidateQueries: vi.fn(),
+  } as unknown as QueryClient
+}
 
 describe('ClienteContactServiceAdapter', () => {
   const CLIENT_ID = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
@@ -55,8 +71,8 @@ describe('ClienteContactServiceAdapter', () => {
     ]
     mockGet.mockResolvedValueOnce({ data: mockContactos })
 
-    // GIVEN — Instantiate adapter with a specific clienteId
-    const adapter = new ClienteContactServiceAdapter(CLIENT_ID)
+    // GIVEN — Instantiate adapter with a specific clienteId and mock queryClient
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, makeMockQueryClient())
 
     // WHEN — getContactos() is called
     const result = await adapter.getContactos()
@@ -86,8 +102,8 @@ describe('ClienteContactServiceAdapter', () => {
       .mockResolvedValueOnce({ data: [{ id: 'c2', clienteId: clienteId2 }] })
 
     // GIVEN — Two adapter instances with different clienteIds
-    const adapter1 = new ClienteContactServiceAdapter(clienteId1)
-    const adapter2 = new ClienteContactServiceAdapter(clienteId2)
+    const adapter1 = new ClienteContactServiceAdapter(clienteId1, makeMockQueryClient())
+    const adapter2 = new ClienteContactServiceAdapter(clienteId2, makeMockQueryClient())
 
     // WHEN — Each adapter calls getContactos()
     await adapter1.getContactos()
@@ -109,16 +125,76 @@ describe('ClienteContactServiceAdapter', () => {
   // Given the apiClient.get rejects with a network error
   // When getContactos() is called
   // Then the error propagates to the caller (no swallowing)
-  // AND it lets the ContactManager handle the error state (delegated)
   // ---------------------------------------------------------------------------
   it('UNIT-AC-01c — getContactos() propagates errors from apiClient to the caller', async () => {
     // GIVEN — apiClient.get rejects
     const networkError = new Error('Network Error')
     mockGet.mockRejectedValueOnce(networkError)
 
-    const adapter = new ClienteContactServiceAdapter(CLIENT_ID)
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, makeMockQueryClient())
 
     // WHEN / THEN — error is not swallowed
     await expect(adapter.getContactos()).rejects.toThrow('Network Error')
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-AC-02 (P1 · AC1)
+  // Given a ClienteContactServiceAdapter instantiated with a clienteId
+  // When assignContacto(contactoId) is called
+  // Then apiClient.put is called with
+  //   PUT /api/v1/contactos/{contactoId}/cliente with body { clienteId: this.clienteId }
+  // AND queryClient.invalidateQueries is called with ['contactos'] and ['contactos', { clienteId }]
+  // ---------------------------------------------------------------------------
+  it('UNIT-AC-02 — assignContacto(contactoId) calls PUT /api/v1/contactos/{id}/cliente with { clienteId }', async () => {
+    // GIVEN
+    const contactoId = '550e8400-e29b-41d4-a716-446655440002'
+    mockPut.mockResolvedValueOnce({ data: { id: contactoId, clienteId: CLIENT_ID } })
+    const queryClient = makeMockQueryClient()
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, queryClient)
+
+    // WHEN
+    await adapter.assignContacto(contactoId)
+
+    // THEN — PUT called with correct URL and body
+    expect(mockPut).toHaveBeenCalledTimes(1)
+    expect(mockPut).toHaveBeenCalledWith(
+      `/api/v1/contactos/${contactoId}/cliente`,
+      { clienteId: CLIENT_ID }
+    )
+
+    // AND — Both query keys invalidated
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contactos'] })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contactos', { clienteId: CLIENT_ID }] })
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-AC-03 (P1 · AC3)
+  // Given a ClienteContactServiceAdapter instantiated with a clienteId
+  // When removeContacto(contactoId) is called
+  // Then apiClient.put is called with
+  //   PUT /api/v1/contactos/{contactoId}/cliente with body { clienteId: null }
+  // AND queryClient.invalidateQueries is called with ['contactos'] and ['contactos', { clienteId }]
+  // AND the contact is NOT deleted (only clienteId set to null)
+  // ---------------------------------------------------------------------------
+  it('UNIT-AC-03 — removeContacto(contactoId) calls PUT /api/v1/contactos/{id}/cliente with { clienteId: null }', async () => {
+    // GIVEN
+    const contactoId = '550e8400-e29b-41d4-a716-446655440003'
+    mockPut.mockResolvedValueOnce({ data: { id: contactoId, clienteId: null } })
+    const queryClient = makeMockQueryClient()
+    const adapter = new ClienteContactServiceAdapter(CLIENT_ID, queryClient)
+
+    // WHEN
+    await adapter.removeContacto(contactoId)
+
+    // THEN — PUT called with correct URL and null clienteId body
+    expect(mockPut).toHaveBeenCalledTimes(1)
+    expect(mockPut).toHaveBeenCalledWith(
+      `/api/v1/contactos/${contactoId}/cliente`,
+      { clienteId: null }
+    )
+
+    // AND — Both query keys invalidated (dual invalidation — R1)
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contactos'] })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contactos', { clienteId: CLIENT_ID }] })
   })
 })

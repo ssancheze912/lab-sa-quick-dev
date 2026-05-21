@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { ApiHelper } from '../../helpers/api.helper';
+import { buildCliente, buildContacto } from '../../helpers/data.helper';
 
 /**
  * ATDD — Story 4.1: View Associated Contacts in Client Detail
@@ -273,5 +275,211 @@ test.describe('Story 4.1 — API: GET /api/v1/contactos?clienteId={id}', () => {
     // AND — response does NOT include cliente2's contact (filter is applied)
     const returnedIds = body.map((c: { id: string }) => c.id);
     expect(returnedIds).not.toContain(contacto2.id);
+  });
+});
+
+// =============================================================================
+// Story 4.2 — Associate & Disassociate: API Integration Tests
+// =============================================================================
+
+test.describe('Story 4.2 — API: PUT /api/v1/contactos/{id}/cliente', () => {
+  let apiHelper: ApiHelper;
+  const createdClienteIds: string[] = [];
+  const createdContactoIds: string[] = [];
+
+  test.beforeEach(async ({ request }) => {
+    apiHelper = new ApiHelper(request);
+  });
+
+  test.afterEach(async () => {
+    for (const id of createdContactoIds) {
+      await apiHelper.deleteContacto(id).catch(() => null);
+    }
+    for (const id of createdClienteIds) {
+      await apiHelper.deleteCliente(id).catch(() => null);
+    }
+    createdContactoIds.length = 0;
+    createdClienteIds.length = 0;
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-AC-01 (P0)
+  // Given a contacto and a cliente exist
+  // When PUT /api/v1/contactos/{id}/cliente is called with { clienteId: uuid }
+  // Then response is 200 OK with the updated ContactoDto having the new clienteId
+  // ---------------------------------------------------------------------------
+  test('API-AC-01 — PUT /api/v1/contactos/{id}/cliente con clienteId válido devuelve 200 con clienteId actualizado', async ({ request }) => {
+    // GIVEN
+    const cliente = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(cliente.id);
+    const contacto = await apiHelper.createContacto(buildContacto({ clienteId: null }));
+    createdContactoIds.push(contacto.id);
+
+    // WHEN
+    const response = await request.put(
+      `${API_BASE_URL}/api/v1/contactos/${contacto.id}/cliente`,
+      { data: { clienteId: cliente.id } }
+    );
+
+    // THEN
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.id).toBe(contacto.id);
+    expect(body.clienteId).toBe(cliente.id);
+    expect(typeof body.updatedAt).toBe('string');
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-AC-02 (P0)
+  // After PUT /cliente with valid clienteId
+  // When GET /api/v1/contactos/{id} is called
+  // Then the contact has the new clienteId
+  // ---------------------------------------------------------------------------
+  test('API-AC-02 — Después de PUT /cliente, GET /contactos/{id} devuelve el contacto con el nuevo clienteId', async ({ request }) => {
+    // GIVEN
+    const cliente = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(cliente.id);
+    const contacto = await apiHelper.createContacto(buildContacto({ clienteId: null }));
+    createdContactoIds.push(contacto.id);
+
+    // Associate
+    await request.put(
+      `${API_BASE_URL}/api/v1/contactos/${contacto.id}/cliente`,
+      { data: { clienteId: cliente.id } }
+    );
+
+    // WHEN
+    const getResponse = await request.get(`${API_BASE_URL}/api/v1/contactos/${contacto.id}`);
+    expect(getResponse.status()).toBe(200);
+    const body = await getResponse.json();
+
+    // THEN
+    expect(body.clienteId).toBe(cliente.id);
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-AC-03 (P0)
+  // Given a contact associated with a client
+  // When PUT /api/v1/contactos/{id}/cliente is called with { clienteId: null }
+  // Then response is 200 OK with clienteId = null
+  // ---------------------------------------------------------------------------
+  test('API-AC-03 — PUT /api/v1/contactos/{id}/cliente con clienteId null devuelve 200 con clienteId null', async ({ request }) => {
+    // GIVEN — Contact associated with a client
+    const cliente = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(cliente.id);
+    const contacto = await apiHelper.createContacto(buildContacto({ clienteId: cliente.id }));
+    createdContactoIds.push(contacto.id);
+
+    // WHEN — Disassociate
+    const response = await request.put(
+      `${API_BASE_URL}/api/v1/contactos/${contacto.id}/cliente`,
+      { data: { clienteId: null } }
+    );
+
+    // THEN
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.clienteId).toBeNull();
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-AC-04 (P0)
+  // After disassociation, GET /api/v1/contactos/{id} returns the contact with clienteId: null
+  // (record NOT deleted — FR20, R3)
+  // ---------------------------------------------------------------------------
+  test('API-AC-04 — Después de desasociar, GET /contactos/{id} devuelve contacto con clienteId null (no eliminado)', async ({ request }) => {
+    // GIVEN — Associate then disassociate
+    const cliente = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(cliente.id);
+    const contacto = await apiHelper.createContacto(buildContacto({ clienteId: cliente.id }));
+    createdContactoIds.push(contacto.id);
+
+    await request.put(
+      `${API_BASE_URL}/api/v1/contactos/${contacto.id}/cliente`,
+      { data: { clienteId: null } }
+    );
+
+    // WHEN
+    const getResponse = await request.get(`${API_BASE_URL}/api/v1/contactos/${contacto.id}`);
+
+    // THEN — Contact still exists and clienteId is null
+    expect(getResponse.status()).toBe(200);
+    const body = await getResponse.json();
+    expect(body.id).toBe(contacto.id);
+    expect(body.clienteId).toBeNull();
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-AC-08 (P1)
+  // When PUT /api/v1/contactos/{id}/cliente is called with a non-existent contactoId
+  // Then response is 404 with Problem Details (no stack trace)
+  // ---------------------------------------------------------------------------
+  test('API-AC-08 — PUT /api/v1/contactos/{id}/cliente con contactoId no existente devuelve 404 Problem Details', async ({ request }) => {
+    // GIVEN — Use a random UUID that doesn't exist
+    const nonExistentId = '00000000-0000-4000-8000-000000000001';
+    const cliente = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(cliente.id);
+
+    // WHEN
+    const response = await request.put(
+      `${API_BASE_URL}/api/v1/contactos/${nonExistentId}/cliente`,
+      { data: { clienteId: cliente.id } }
+    );
+
+    // THEN — 404 with Problem Details
+    expect(response.status()).toBe(404);
+    const body = await response.json();
+    expect(typeof body.title).toBe('string');
+    expect(body.status).toBe(404);
+    // No stack trace exposed (NFR6)
+    expect(body.stackTrace).toBeUndefined();
+    expect(body.exception).toBeUndefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-AC-09 (P1)
+  // When PUT /api/v1/contactos/{id}/cliente is called with an invalid UUID format
+  // Then response is 400 with Problem Details (no stack trace)
+  // ---------------------------------------------------------------------------
+  test('API-AC-09 — PUT /api/v1/contactos/not-a-uuid/cliente devuelve 400 Problem Details', async ({ request }) => {
+    // WHEN
+    const response = await request.put(
+      `${API_BASE_URL}/api/v1/contactos/not-a-valid-uuid/cliente`,
+      { data: { clienteId: null } }
+    );
+
+    // THEN — 400 Bad Request
+    expect(response.status()).toBe(400);
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-AC-10 (P1)
+  // Given a contact is associated with a client
+  // When the client is deleted
+  // Then GET /api/v1/contactos/{contactoId} returns the contact with clienteId: null
+  // (ON DELETE SET NULL cascade verified)
+  // ---------------------------------------------------------------------------
+  test('API-AC-10 — Eliminar cliente resulta en contacto con clienteId null (ON DELETE SET NULL)', async ({ request }) => {
+    // GIVEN — Create client and associated contact
+    const cliente = await apiHelper.createCliente(buildCliente());
+    // Do NOT add to createdClienteIds since we'll delete it manually
+    const contacto = await apiHelper.createContacto(buildContacto({ clienteId: cliente.id }));
+    createdContactoIds.push(contacto.id);
+
+    // Verify association
+    const beforeDelete = await request.get(`${API_BASE_URL}/api/v1/contactos/${contacto.id}`);
+    const beforeBody = await beforeDelete.json();
+    expect(beforeBody.clienteId).toBe(cliente.id);
+
+    // WHEN — Delete the client
+    const deleteResponse = await request.delete(`${API_BASE_URL}/api/v1/clientes/${cliente.id}`);
+    expect(deleteResponse.status()).toBe(204);
+
+    // THEN — Contacto still exists with clienteId = null
+    const afterDelete = await request.get(`${API_BASE_URL}/api/v1/contactos/${contacto.id}`);
+    expect(afterDelete.status()).toBe(200);
+    const afterBody = await afterDelete.json();
+    expect(afterBody.id).toBe(contacto.id);
+    expect(afterBody.clienteId).toBeNull();
   });
 });
