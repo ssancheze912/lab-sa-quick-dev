@@ -291,3 +291,118 @@ test.describe('Story 2.2 — API: GET /api/v1/clientes/:id', () => {
     expect(body.detail).not.toMatch(/at SiesaAgents/i);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Story 2.5 — API Integration Tests for DELETE /api/v1/clientes/:id
+// ---------------------------------------------------------------------------
+
+test.describe('Story 2.5 — API: DELETE /api/v1/clientes/:id', () => {
+  const createdClienteIds: string[] = [];
+  const createdContactoIds: string[] = [];
+
+  test.afterEach(async ({ request }) => {
+    for (const id of createdContactoIds) {
+      await request.delete(`${API_BASE_URL}/api/v1/contactos/${id}`).catch(() => null);
+    }
+    createdContactoIds.length = 0;
+    for (const id of createdClienteIds) {
+      await request.delete(`${API_BASE_URL}/api/v1/clientes/${id}`).catch(() => null);
+    }
+    createdClienteIds.length = 0;
+  });
+
+  // -------------------------------------------------------------------------
+  // API-C-05 (P0 · AC2)
+  // Given a valid clienteId that exists in the system
+  // When DELETE /api/v1/clientes/:id is called
+  // Then the response is 204 No Content
+  //   AND a subsequent GET /api/v1/clientes/:id returns 404 Problem Details
+  // -------------------------------------------------------------------------
+  test('API-C-05 — DELETE /api/v1/clientes/:id devuelve 204; GET posterior devuelve 404', async ({ request }) => {
+    // GIVEN — a client is created
+    const payload = {
+      nombre: 'Empresa Delete API-C-05',
+      nit: `950${Date.now().toString().slice(-9)}`,
+      telefono: '+57 1 234 5678',
+      ciudad: 'Bogotá',
+    };
+    const createResponse = await request.post(`${API_BASE_URL}/api/v1/clientes`, { data: payload });
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+    // NOTE: No cleanup push — the test itself deletes the client
+
+    // WHEN — DELETE /api/v1/clientes/:id is called
+    const deleteResponse = await request.delete(`${API_BASE_URL}/api/v1/clientes/${created.id}`);
+
+    // THEN — response is 204 No Content
+    expect(deleteResponse.status()).toBe(204);
+
+    // AND — response body is empty (204 has no body)
+    const deleteBody = await deleteResponse.text();
+    expect(deleteBody).toBe('');
+
+    // AND — subsequent GET /api/v1/clientes/:id returns 404
+    const getResponse = await request.get(`${API_BASE_URL}/api/v1/clientes/${created.id}`);
+    expect(getResponse.status()).toBe(404);
+
+    // AND — the 404 body is Problem Details RFC 7807 (no stack trace)
+    const getBody = await getResponse.json();
+    expect(getBody.status).toBe(404);
+    expect(typeof getBody.title).toBe('string');
+    expect(getBody.stackTrace).toBeUndefined();
+    expect(getBody.exception).toBeUndefined();
+  });
+
+  // -------------------------------------------------------------------------
+  // API-C-06 (P0 · AC3)
+  // Given a client with one or more associated contacts exists in the system
+  // When DELETE /api/v1/clientes/:id is called
+  // Then the response is 204 No Content
+  //   AND the associated contacts still exist via GET /api/v1/contactos/:id
+  //   AND each contact's clienteId field is null (ON DELETE SET NULL — FR25)
+  // -------------------------------------------------------------------------
+  test('API-C-06 — DELETE de cliente con contactos: contactos persisten con clienteId = null', async ({ request }) => {
+    // GIVEN — a client is created
+    const clientePayload = {
+      nombre: 'Empresa Con Contactos API-C-06',
+      nit: `951${Date.now().toString().slice(-9)}`,
+      telefono: '+57 310 111 2222',
+      ciudad: 'Medellín',
+    };
+    const clienteResponse = await request.post(`${API_BASE_URL}/api/v1/clientes`, { data: clientePayload });
+    expect(clienteResponse.status()).toBe(201);
+    const cliente = await clienteResponse.json();
+    // NOTE: No cleanup push for client — the test itself deletes it
+
+    // AND — a contact is created and associated to the client
+    const contactoPayload = {
+      nombre: 'Contacto API-C-06',
+      email: `contacto.api.c06.${Date.now()}@ejemplo.co`,
+      cargo: 'Analista',
+      telefono: '311000006',
+      clienteId: cliente.id,
+    };
+    const contactoResponse = await request.post(`${API_BASE_URL}/api/v1/contactos`, { data: contactoPayload });
+    expect(contactoResponse.status()).toBe(201);
+    const contacto = await contactoResponse.json();
+    createdContactoIds.push(contacto.id);
+
+    // WHEN — DELETE /api/v1/clientes/:id is called
+    const deleteResponse = await request.delete(`${API_BASE_URL}/api/v1/clientes/${cliente.id}`);
+
+    // THEN — response is 204 No Content
+    expect(deleteResponse.status()).toBe(204);
+
+    // AND — the associated contact still exists via GET /api/v1/contactos/:id
+    const getContactoResponse = await request.get(`${API_BASE_URL}/api/v1/contactos/${contacto.id}`);
+    expect(getContactoResponse.status()).toBe(200);
+
+    // AND — the contact's clienteId field is now null (SET NULL cascade)
+    const contactoBody = await getContactoResponse.json();
+    expect(contactoBody.clienteId).toBeNull();
+
+    // AND — the contact's other fields are intact
+    expect(contactoBody.nombre).toBe(contactoPayload.nombre);
+    expect(contactoBody.email).toBe(contactoPayload.email);
+  });
+});
