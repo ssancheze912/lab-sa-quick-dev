@@ -30,7 +30,7 @@ test.describe('Story 1.2 — NavigationBar active state (mobile viewport 393px)'
    * When the NavigationBar is visible
    * Then the Clientes link inside the NavigationBar has aria-current="page"
    */
-  test('E2E-MOB-01 — Clientes link em NavigationBar tem aria-current=page em /clientes', async ({
+  test('E2E-MOB-01 — Ítem Clientes en NavigationBar tiene aria-current=page en /clientes', async ({
     page,
   }) => {
     // GIVEN: Mobile viewport
@@ -54,7 +54,7 @@ test.describe('Story 1.2 — NavigationBar active state (mobile viewport 393px)'
    * Then the Contactos link inside the NavigationBar has aria-current="page"
    * AND the Clientes link does NOT have aria-current="page"
    */
-  test('E2E-MOB-02 — Contactos link em NavigationBar tem aria-current=page em /contactos', async ({
+  test('E2E-MOB-02 — Ítem Contactos en NavigationBar tiene aria-current=page en /contactos', async ({
     page,
   }) => {
     // GIVEN: Mobile viewport
@@ -81,7 +81,7 @@ test.describe('Story 1.2 — NavigationBar active state (mobile viewport 393px)'
    * When navigation completes
    * Then the active item in NavigationBar transitions from Clientes to Contactos
    */
-  test('E2E-MOB-03 — O estado ativo no NavigationBar muda após tap de Clientes para Contactos', async ({
+  test('E2E-MOB-03 — El estado activo en NavigationBar cambia al navegar de Clientes a Contactos', async ({
     page,
   }) => {
     // GIVEN: Mobile viewport, starting at /clientes
@@ -117,7 +117,7 @@ test.describe('Story 1.2 — SPA navigation no reload on mobile (AC2 + FR28)', (
    * When the user taps "Contactos" in the NavigationBar
    * Then the URL changes to /contactos WITHOUT a full page reload
    */
-  test('E2E-MOB-04 — Tap em Contactos no mobile navega sem recarga de página', async ({
+  test('E2E-MOB-04 — Tap en Contactos en móvil navega sin recarga de página', async ({
     page,
   }) => {
     // GIVEN: Mobile viewport, app loaded
@@ -152,7 +152,7 @@ test.describe('Story 1.2 — SPA navigation no reload on mobile (AC2 + FR28)', (
    * When the user taps "Clientes" in the NavigationBar
    * Then the URL changes to /clientes WITHOUT a full page reload
    */
-  test('E2E-MOB-05 — Tap em Clientes no mobile navega sem recarga de página', async ({
+  test('E2E-MOB-05 — Tap en Clientes en móvil navega sin recarga de página', async ({
     page,
   }) => {
     // GIVEN: Mobile viewport, app at /contactos
@@ -192,7 +192,7 @@ test.describe('Story 1.2 — Vista 404 back-link data-testid (AC4)', () => {
    * Then the "Ir a Clientes" back-link is accessible via data-testid="not-found-back-link"
    * AND clicking it navigates to /clientes without a full page reload
    */
-  test('E2E-MOB-06 — Vista 404 tem back-link com data-testid "not-found-back-link" funcional', async ({
+  test('E2E-MOB-06 — Vista 404 tiene back-link con data-testid "not-found-back-link" funcional', async ({
     page,
   }) => {
     // GIVEN: Navigate to an unknown route
