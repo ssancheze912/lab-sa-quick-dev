@@ -167,7 +167,7 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
         open={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         clienteId={cliente.id}
-        hasContacts={false}
+        hasContacts={false} // TODO: derive from contacts list length in Epic 4 (AC3)
         onDeleted={() => navigate({ to: '/clientes' })}
       />
     </>

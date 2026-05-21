@@ -38,15 +38,15 @@ export function DeleteClienteDialog({
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen) handleCancel() }}>
+    <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen && !deleteMutation.isPending) handleCancel() }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40 z-50" />
         <Dialog.Content
           data-testid="delete-cliente-dialog"
           role="alertdialog"
           aria-labelledby="delete-dialog-title"
+          aria-describedby="delete-dialog-description"
           className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-xl focus:outline-none"
-          aria-describedby={undefined}
         >
           <Dialog.Title
             id="delete-dialog-title"
@@ -55,7 +55,7 @@ export function DeleteClienteDialog({
             ¿Eliminar este cliente?
           </Dialog.Title>
 
-          <p className="text-sm text-slate-500 mb-6">
+          <p id="delete-dialog-description" className="text-sm text-slate-500 mb-6">
             Esta acción no se puede deshacer.
           </p>
 

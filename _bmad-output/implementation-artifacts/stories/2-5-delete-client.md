@@ -1,6 +1,6 @@
 # Story 2.5: Delete Client
 
-Status: review
+Status: done
 
 ## Story
 
@@ -222,3 +222,23 @@ Backend `DeleteClienteCommandHandler` throws `KeyNotFoundException` → 404 Prob
 Frontend unit tests: 244 passed (all new tests pass). Pre-existing failures (17) unrelated to this story:
 - `ClienteListPanel.test.tsx` — needs router context, pre-existing issue
 - `routing-edge-cases.test.ts > UNIT-RE-03` — expected 5 routes, got 7 (pre-existing, routes added by previous stories)
+
+## Senior Developer Review (AI)
+
+**Date**: 2026-05-21
+**Outcome**: PASS CON OBSERVACIONES
+
+### Findings Summary
+- 0 Critical
+- 2 Warnings (auto-fixed)
+- 1 Warning (documented, architectural decision required)
+- 2 Suggestions (1 auto-fixed, 1 informational)
+
+### Auto-Fixed
+1. **[WARN-1]** `DeleteClienteDialog.tsx` — `onOpenChange` not guarded by `isPending`. ESC/backdrop click during a pending mutation would close the dialog while the mutation ran silently in the background, creating an ambiguous UI state. Fixed: `onOpenChange` now checks `!deleteMutation.isPending` before calling `handleCancel()`.
+2. **[WARN-2]** `DeleteClienteDialog.tsx` — `aria-describedby={undefined}` removed accessible description from `alertdialog`. WCAG 2.1 SC 4.1.2 requires both `aria-labelledby` and `aria-describedby` for `alertdialog`. Fixed: added `id="delete-dialog-description"` to the description paragraph and wired `aria-describedby` on `Dialog.Content`.
+3. **[SUGG-2]** `ClienteDetailPanel.tsx` — added `// TODO: derive from contacts list length in Epic 4 (AC3)` comment on `hasContacts={false}`.
+
+### Pending Manual Action
+- **[WARN-3]** `ClienteRepository.DeleteAsync` performs a second DB fetch (`FindAsync`) despite `DeleteClienteCommandHandler` already calling `GetByIdAsync` for existence check. Pre-existing inconsistency between generic `IRepository<T>.DeleteAsync(T entity)` and `IClienteRepository.DeleteAsync(Guid id)`. Recommend aligning to entity-based delete in a future refactor story.
+- **[SUGG-1]** `DeleteClienteCommandHandler` has no `FluentValidation` validator. Route constraint `{id:guid}` already guards invalid GUID format. Low risk. Recommend adding `DeleteClienteCommandValidator` with `.RuleFor(x => x.Id).NotEmpty()` for consistency with Create/Update handlers.

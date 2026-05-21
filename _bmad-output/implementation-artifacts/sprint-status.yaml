@@ -25,7 +25,7 @@ development_status:
   2-2-client-detail-view: done
   2-3-create-client: done
   2-4-edit-client: pending
-  2-5-delete-client: review
+  2-5-delete-client: done
   2-6-sort-client-list: pending
 
   # Epic 3 — Contact Management
