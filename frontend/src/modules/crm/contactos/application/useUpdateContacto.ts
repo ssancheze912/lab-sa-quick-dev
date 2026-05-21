@@ -19,5 +19,6 @@ export function useUpdateContacto() {
       queryClient.invalidateQueries({ queryKey: ['contactos', id] })
       toast.success('Contacto actualizado correctamente')
     },
+    onError: () => toast.error('No se pudo guardar. Intenta de nuevo.'),
   })
 }

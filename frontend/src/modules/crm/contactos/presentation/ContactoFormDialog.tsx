@@ -27,6 +27,7 @@ export function ContactoFormDialog({ open, onOpenChange, contacto }: Props) {
   })
 
   useEffect(() => {
+    if (!open) return
     if (contacto) {
       reset({
         nombre: contacto.nombre,
@@ -37,7 +38,7 @@ export function ContactoFormDialog({ open, onOpenChange, contacto }: Props) {
     } else {
       reset({ nombre: '', cargo: '', telefono: '', email: '' })
     }
-  }, [contacto, reset])
+  }, [open, contacto, reset])
 
   const isPending = contacto ? updateMutation.isPending : createMutation.isPending
 

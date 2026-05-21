@@ -34,7 +34,7 @@ public class ContactoRepository : IContactoRepository
 
     public async Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
     {
-        _context.Contactos.Update(entity);
+        _context.Entry(entity).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
         await _context.SaveChangesAsync(ct);
         return entity;
     }
