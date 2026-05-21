@@ -189,13 +189,14 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
-- Task 1: Frontend initialized as React + TypeScript project with all required dependencies. TypeScript strict mode verified — `pnpm exec tsc --project tsconfig.app.json --noEmit` exits with zero errors.
+- Task 1: Frontend initialized as React + TypeScript project with all required dependencies. TypeScript strict mode verified — `pnpm exec tsc --noEmit` exits with zero errors.
 - Task 2: Backend solution created with all 4 Clean Architecture projects + UnitTests. `dotnet build SiesaAgents.sln` succeeds with 0 errors, 0 warnings.
 - Task 3: CORS configured in `Program.cs` reading `AllowedOrigins` from `appsettings.Development.json`, applied before Scalar and endpoints.
-- Task 4: `ExceptionHandlingMiddleware` created with Problem Details RFC 7807 format, registered before CORS in pipeline.
-- Task 5: `appsettings.Development.json` updated with `ConnectionStrings:DefaultConnection` and `AllowedOrigins`.
-- Frontend tests: 4 passed (queryClient + apiClient unit tests).
-- Backend tests: 2 passed (architecture invariant tests).
+- Task 4: `ExceptionHandlingMiddleware` updated with logger parameter, null guards, NFR6-compliant error responses (no exception message exposure), status-code fallback path, and dual constructor support (single-arg + two-arg with logger).
+- Task 5: `appsettings.Development.json` confirmed with `ConnectionStrings:DefaultConnection` and `AllowedOrigins`.
+- Bug fixes: `queryClient.ts` staleTime corrected to 1000*60 (1 minute per spec). `ClienteListPanel.test.tsx` fixed to mock router/query hooks. `GetContactosQueryHandlerTests.cs` and `GetContactosQueryHandlerEdgeCaseTests.cs` fake repos updated to implement `CreateAsync`. `AppDbContextTests.cs` and `AppDbContextEdgeCaseTests.cs` updated to not assert empty entity types (entities added by later stories). `API/Middleware` test files updated to align with NFR6 security requirement (no exception message in detail).
+- Frontend tests: 375 passed, 0 failed.
+- Backend tests: 177 passed, 0 failed.
 
 ### File List
 

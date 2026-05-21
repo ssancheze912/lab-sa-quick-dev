@@ -149,6 +149,12 @@ public class GetContactosQueryHandlerEdgeCaseTests
 
         public Task<IEnumerable<ContactoEntity>> GetAllAsync(CancellationToken ct)
             => Task.FromResult(_data);
+
+        public Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+            => Task.FromResult(_data.FirstOrDefault(c => c.Id == id));
+
+        public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.FromResult(entity);
     }
 
     private sealed class ThrowingContactoRepository : IContactoRepository
@@ -159,5 +165,11 @@ public class GetContactosQueryHandlerEdgeCaseTests
 
         public Task<IEnumerable<ContactoEntity>> GetAllAsync(CancellationToken ct)
             => Task.FromException<IEnumerable<ContactoEntity>>(_exception);
+
+        public Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+            => Task.FromException<ContactoEntity?>(_exception);
+
+        public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.FromException<ContactoEntity>(_exception);
     }
 }

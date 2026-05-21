@@ -252,7 +252,7 @@ public class ExceptionHandlingMiddlewareEdgeCaseTests
     // =========================================================================
 
     [Fact]
-    public async Task InvokeAsync_ExceptionWithInnerException_DetailContainsOuterMessageOnly()
+    public async Task InvokeAsync_ExceptionWithInnerException_NeitherMessageLeaks()
     {
         // GIVEN: An exception that has an inner exception with a different message
         const string outerMessage = "Outer exception message";
@@ -266,10 +266,13 @@ public class ExceptionHandlingMiddlewareEdgeCaseTests
         // WHEN: Request is processed
         await middleware.InvokeAsync(context);
 
-        // THEN: Detail contains the outer exception message only (never leaks inner exception)
+        // THEN: Neither outer nor inner exception message leaks to the client (NFR6 security requirement)
+        var body = await ReadBodyAsStringAsync(context.Response);
+        Assert.DoesNotContain(outerMessage, body);
+        Assert.DoesNotContain(innerMessage, body);
         var problem = await ReadProblemDetailsAsync(context.Response);
         Assert.NotNull(problem);
-        Assert.Equal(outerMessage, problem.Detail);
+        Assert.Equal(StatusCodes.Status500InternalServerError, problem.Status);
     }
 
     [Fact]

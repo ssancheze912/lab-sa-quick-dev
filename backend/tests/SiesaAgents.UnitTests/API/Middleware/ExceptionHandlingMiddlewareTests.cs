@@ -117,22 +117,25 @@ public class ExceptionHandlingMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_UnhandledGenericException_DetailContainsExceptionMessage()
+    public async Task InvokeAsync_UnhandledGenericException_DetailDoesNotExposeExceptionMessage()
     {
         // GIVEN: Exception with a specific message
-        const string expectedMessage = "Specific error message for test";
+        const string sensitiveMessage = "Specific error message for test";
         var middleware = new ExceptionHandlingMiddleware(
-            next: _ => throw new Exception(expectedMessage)
+            next: _ => throw new Exception(sensitiveMessage)
         );
         var context = CreateHttpContext();
 
         // WHEN: Request is processed
         await middleware.InvokeAsync(context);
 
-        // THEN: "detail" field contains the exception Message (not StackTrace)
+        // THEN: "detail" field must NOT expose the exception message (NFR6 security requirement)
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        Assert.DoesNotContain(sensitiveMessage, body);
         var problem = await ReadProblemDetailsAsync(context.Response);
         Assert.NotNull(problem);
-        Assert.Equal(expectedMessage, problem.Detail);
+        Assert.Equal(StatusCodes.Status500InternalServerError, problem.Status);
     }
 
     // =========================================================================

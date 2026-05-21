@@ -1,17 +1,49 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { ClienteListPanel } from '../ClienteListPanel'
 import type { Cliente } from '../../domain/Cliente'
+
+// Mock router hooks to avoid requiring a full RouterProvider
+vi.mock('@tanstack/react-router', async () => {
+  const actual = await vi.importActual('@tanstack/react-router')
+  return {
+    ...(actual as object),
+    useParams: vi.fn(() => ({})),
+    Link: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => (
+      <a {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>{children}</a>
+    ),
+  }
+})
 
 // Mock the useClientes hook to control data/loading/error states
 vi.mock('../../application/useClientes', () => ({
   useClientes: vi.fn(),
 }))
 
+vi.mock('../../application/useCreateCliente', () => ({
+  useCreateCliente: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
+}))
+
 import { useClientes } from '../../application/useClientes'
+import React from 'react'
 
 const mockUseClientes = useClientes as ReturnType<typeof vi.fn>
+
+// Wrap components in a QueryClient context for tests
+function renderWithRouter(ui: ReactNode) {
+  const testQueryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={testQueryClient}>
+      {ui}
+    </QueryClientProvider>
+  )
+}
 
 const mockClientes: Cliente[] = [
   {
@@ -64,7 +96,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     expect(screen.getByTestId('clientes-list-panel')).toBeInTheDocument()
   })
@@ -80,7 +112,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     expect(
       screen.getByPlaceholderText(/buscar cliente por nombre o nit/i)
@@ -98,7 +130,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     expect(screen.getByLabelText('Buscar clientes')).toBeInTheDocument()
   })
@@ -114,7 +146,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     expect(screen.getByText('Empresa Alpha SAS')).toBeInTheDocument()
     expect(screen.getByText('Constructora Beta Ltda')).toBeInTheDocument()
@@ -132,7 +164,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     expect(screen.getByTestId('empty-state')).toBeInTheDocument()
   })
@@ -148,7 +180,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     expect(screen.getByTestId('error-panel')).toBeInTheDocument()
   })
@@ -165,7 +197,7 @@ describe('ClienteListPanel', () => {
       refetch: mockRefetch,
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     fireEvent.click(screen.getByRole('button', { name: /reintentar/i }))
 
@@ -183,7 +215,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     expect(screen.queryByTestId('error-panel')).not.toBeInTheDocument()
     expect(screen.queryByTestId('empty-state')).not.toBeInTheDocument()
@@ -201,7 +233,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     const searchInput = screen.getByLabelText('Buscar clientes')
     fireEvent.change(searchInput, { target: { value: 'Alpha' } })
@@ -225,7 +257,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     const searchInput = screen.getByLabelText('Buscar clientes')
     fireEvent.change(searchInput, { target: { value: '800123456' } })
@@ -249,7 +281,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     const searchInput = screen.getByLabelText('Buscar clientes')
     fireEvent.change(searchInput, { target: { value: 'CONSTRUCTORA' } })
@@ -271,7 +303,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     const searchInput = screen.getByLabelText('Buscar clientes')
     fireEvent.change(searchInput, { target: { value: 'Alpha' } })
@@ -301,7 +333,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     const searchInput = screen.getByLabelText('Buscar clientes')
     fireEvent.change(searchInput, { target: { value: '   ' } })
@@ -325,7 +357,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     const searchInput = screen.getByLabelText('Buscar clientes')
     fireEvent.change(searchInput, { target: { value: 'ZZZNOMATCH999' } })
@@ -348,7 +380,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     expect(screen.getByTestId('error-panel')).toBeInTheDocument()
     expect(screen.queryByTestId('empty-state')).not.toBeInTheDocument()
@@ -366,7 +398,7 @@ describe('ClienteListPanel', () => {
       refetch: vi.fn(),
     })
 
-    render(<ClienteListPanel />)
+    renderWithRouter(<ClienteListPanel />)
 
     const list = screen.getByRole('list')
     expect(list).toBeInTheDocument()
