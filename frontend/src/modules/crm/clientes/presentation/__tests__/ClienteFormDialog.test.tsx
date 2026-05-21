@@ -176,4 +176,134 @@ describe('ClienteFormDialog', () => {
     expect(screen.getByLabelText(/teléfono/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/ciudad/i)).toBeInTheDocument()
   })
+
+  // ---------------------------------------------------------------------------
+  // Story 2.4 — Edit mode edge cases
+  // Test IDs: UNIT-C-FE-CFD-13 … UNIT-C-FE-CFD-20
+  // ---------------------------------------------------------------------------
+
+  const mockClienteForEdit = {
+    id: 'abc12345-e29b-41d4-a716-446655440001',
+    nombre: 'Empresa Pre-filled SAS',
+    nit: '900100002-5',
+    telefono: '+57 310 000 0001',
+    ciudad: 'Medellín',
+    createdAt: '2026-05-20T08:00:00Z',
+    updatedAt: '2026-05-20T08:00:00Z',
+  }
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CFD-13: Edit mode — dialog title changes to "Editar cliente"
+  // Boundary: component reads `isEditMode = cliente !== undefined` for title
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CFD-13 — edit mode shows title "Editar cliente" not "Nuevo cliente"', () => {
+    render(<ClienteFormDialog open={true} onClose={mockOnClose} cliente={mockClienteForEdit} />)
+
+    expect(screen.getByText(/editar cliente/i)).toBeInTheDocument()
+    expect(screen.queryByText(/^nuevo cliente$/i)).not.toBeInTheDocument()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CFD-14: Create mode — dialog title is "Nuevo cliente" (no cliente prop)
+  // Boundary: no regression when cliente is undefined
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CFD-14 — create mode shows title "Nuevo cliente" when no cliente prop', () => {
+    render(<ClienteFormDialog open={true} onClose={mockOnClose} />)
+
+    expect(screen.getByText(/nuevo cliente/i)).toBeInTheDocument()
+    expect(screen.queryByText(/editar cliente/i)).not.toBeInTheDocument()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CFD-15: Edit mode — input-nombre is pre-filled with cliente.nombre
+  // Boundary: useEffect + reset() contract
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CFD-15 — edit mode pre-fills input-nombre with cliente.nombre', () => {
+    render(<ClienteFormDialog open={true} onClose={mockOnClose} cliente={mockClienteForEdit} />)
+
+    expect(screen.getByTestId('input-nombre')).toHaveValue(mockClienteForEdit.nombre)
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CFD-16: Edit mode — all four inputs are pre-filled with cliente data
+  // Boundary: full form pre-fill contract (AC1)
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CFD-16 — edit mode pre-fills all four fields with cliente data', () => {
+    render(<ClienteFormDialog open={true} onClose={mockOnClose} cliente={mockClienteForEdit} />)
+
+    expect(screen.getByTestId('input-nombre')).toHaveValue(mockClienteForEdit.nombre)
+    expect(screen.getByTestId('input-nit')).toHaveValue(mockClienteForEdit.nit)
+    expect(screen.getByTestId('input-telefono')).toHaveValue(mockClienteForEdit.telefono)
+    expect(screen.getByTestId('input-ciudad')).toHaveValue(mockClienteForEdit.ciudad)
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CFD-17: Edit mode — submitting valid form calls updateMutation.mutate,
+  //   NOT createMutation.mutate
+  // Boundary: mutation selection logic `const mutation = cliente ? update : create`
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CFD-17 — edit mode submit calls updateMutation.mutate, not createMutation.mutate', async () => {
+    const updateMutateSpy = vi.fn()
+    const createMutateSpy = vi.fn()
+
+    mockUseUpdateCliente.mockReturnValue({ ...defaultMutation, mutate: updateMutateSpy })
+    mockUseCreateCliente.mockReturnValue({ ...defaultMutation, mutate: createMutateSpy })
+
+    render(<ClienteFormDialog open={true} onClose={mockOnClose} cliente={mockClienteForEdit} />)
+
+    fireEvent.click(screen.getByTestId('btn-guardar'))
+
+    await waitFor(() => {
+      expect(updateMutateSpy).toHaveBeenCalledOnce()
+    })
+    expect(createMutateSpy).not.toHaveBeenCalled()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CFD-18: Edit mode — updateMutation.mutate is called with { id, data }
+  //   where id equals cliente.id
+  // Boundary: correct payload shape expected by useUpdateCliente
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CFD-18 — edit mode mutate is called with { id: cliente.id, data: formValues }', async () => {
+    const updateMutateSpy = vi.fn()
+    mockUseUpdateCliente.mockReturnValue({ ...defaultMutation, mutate: updateMutateSpy })
+
+    render(<ClienteFormDialog open={true} onClose={mockOnClose} cliente={mockClienteForEdit} />)
+
+    fireEvent.click(screen.getByTestId('btn-guardar'))
+
+    await waitFor(() => expect(updateMutateSpy).toHaveBeenCalledOnce())
+
+    const [callArg] = updateMutateSpy.mock.calls[0]
+    expect(callArg.id).toBe(mockClienteForEdit.id)
+    expect(callArg.data.nombre).toBe(mockClienteForEdit.nombre)
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CFD-19: Edit mode — isPending uses updateMutation.isPending (not createMutation)
+  // Boundary: loading state source is the correct mutation in edit mode
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CFD-19 — edit mode uses updateMutation.isPending for loading state', () => {
+    mockUseUpdateCliente.mockReturnValue({ ...defaultMutation, isPending: true })
+    mockUseCreateCliente.mockReturnValue({ ...defaultMutation, isPending: false })
+
+    render(<ClienteFormDialog open={true} onClose={mockOnClose} cliente={mockClienteForEdit} />)
+
+    expect(screen.getByTestId('btn-guardar')).toHaveTextContent('Guardando...')
+    expect(screen.getByTestId('btn-guardar')).toBeDisabled()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CFD-20: Edit mode — error messages are not shown on initial render
+  //   (pre-filled form starts clean, no validation errors visible)
+  // Boundary: no premature validation fire on mount
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CFD-20 — edit mode shows no inline errors on initial render with valid pre-filled data', () => {
+    render(<ClienteFormDialog open={true} onClose={mockOnClose} cliente={mockClienteForEdit} />)
+
+    expect(screen.queryByTestId('error-nombre')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('error-nit')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('error-telefono')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('error-ciudad')).not.toBeInTheDocument()
+  })
 })

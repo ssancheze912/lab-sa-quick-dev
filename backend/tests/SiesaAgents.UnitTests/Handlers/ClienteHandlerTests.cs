@@ -79,6 +79,69 @@ public class ClienteHandlerTests
     }
 
     // ---------------------------------------------------------------------------
+    // UNIT-B-11 (edge): UpdateClienteHandler throws ValidationException BEFORE
+    //   attempting repository lookup when command is invalid — no repository call.
+    // ---------------------------------------------------------------------------
+    [Fact]
+    public async Task UpdateHandleAsync_InvalidCommand_ThrowsValidationExceptionBeforeRepositoryCall()
+    {
+        var repository = new TrackingGetByIdRepository();
+        var handler = new UpdateClienteCommandHandler(repository);
+        // Empty Nombre triggers ValidationException from the validator
+        var command = new UpdateClienteCommand(Guid.NewGuid(), string.Empty, "900000011-0", "3001234567", "Bogotá");
+
+        await Assert.ThrowsAsync<FluentValidation.ValidationException>(
+            () => handler.HandleAsync(command, CancellationToken.None));
+
+        // GetByIdAsync must NOT have been called (guard-early pattern)
+        Assert.False(repository.GetByIdWasCalled);
+    }
+
+    // ---------------------------------------------------------------------------
+    // UNIT-B-12 (edge): UpdateClienteHandler returns Dto with all updated field values,
+    //   including the new Ciudad and Telefono, not stale/original ones.
+    // ---------------------------------------------------------------------------
+    [Fact]
+    public async Task UpdateHandleAsync_ExistingClient_ReturnsDtoWithAllUpdatedFields()
+    {
+        var existing = ClienteEntity.Create("Original Nombre", "900000012-0", "3000000000", "Bogotá");
+        var repository = new UpdatableClienteRepository(existing);
+        var handler = new UpdateClienteCommandHandler(repository);
+        var command = new UpdateClienteCommand(
+            existing.Id,
+            "Nuevo Nombre",
+            "900000012-0",
+            "+57 321 999 8888",
+            "Cartagena");
+
+        var dto = await handler.HandleAsync(command, CancellationToken.None);
+
+        Assert.Equal(existing.Id, dto.Id);
+        Assert.Equal("Nuevo Nombre", dto.Nombre);
+        Assert.Equal("+57 321 999 8888", dto.Telefono);
+        Assert.Equal("Cartagena", dto.Ciudad);
+        Assert.Equal("900000012-0", dto.Nit);
+    }
+
+    // ---------------------------------------------------------------------------
+    // UNIT-B-13 (edge): UpdateClienteHandler KeyNotFoundException message includes
+    //   the requested client ID, so callers can log actionable context.
+    // ---------------------------------------------------------------------------
+    [Fact]
+    public async Task UpdateHandleAsync_NotExistingClient_ExceptionMessageContainsId()
+    {
+        var repository = new CapturingClienteRepository();
+        var handler = new UpdateClienteCommandHandler(repository);
+        var targetId = Guid.NewGuid();
+        var command = new UpdateClienteCommand(targetId, "Nombre", "900000013-0", "3001234567", "Cali");
+
+        var ex = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => handler.HandleAsync(command, CancellationToken.None));
+
+        Assert.Contains(targetId.ToString(), ex.Message);
+    }
+
+    // ---------------------------------------------------------------------------
     // Fakes
     // ---------------------------------------------------------------------------
 
@@ -117,6 +180,29 @@ public class ClienteHandlerTests
 
         public Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
             => Task.FromException(_exception);
+
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.CompletedTask;
+
+        public Task DeleteAsync(Guid id, CancellationToken ct)
+            => Task.CompletedTask;
+    }
+
+    private sealed class TrackingGetByIdRepository : IClienteRepository
+    {
+        public bool GetByIdWasCalled { get; private set; }
+
+        public Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken ct)
+            => Task.FromResult<IEnumerable<ClienteEntity>>(Array.Empty<ClienteEntity>());
+
+        public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+        {
+            GetByIdWasCalled = true;
+            return Task.FromResult<ClienteEntity?>(null);
+        }
+
+        public Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.CompletedTask;
 
         public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
             => Task.CompletedTask;

@@ -153,4 +153,119 @@ describe('useUpdateCliente', () => {
     expect(mockToastSuccess).not.toHaveBeenCalled()
     expect(mockToastError).toHaveBeenCalledWith('No se pudo guardar. Intenta de nuevo.')
   })
+
+  // ---------------------------------------------------------------------------
+  // Edge cases — Story 2.4 expansion
+  // Test IDs: UNIT-C-FE-UPD-06 … UNIT-C-FE-UPD-10
+  // ---------------------------------------------------------------------------
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-UPD-06: mutationFn is called with exact id and data from payload
+  // Boundary: repository.update receives (id, data) not (payload object)
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-UPD-06 — mutationFn passes id and data to clienteApiRepository.update', async () => {
+    mockUpdate.mockResolvedValueOnce(mockCliente)
+
+    const { result } = renderHook(() => useUpdateCliente(), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      result.current.mutate(validPayload)
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(mockUpdate).toHaveBeenCalledOnce()
+    expect(mockUpdate).toHaveBeenCalledWith(validPayload.id, validPayload.data)
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-UPD-07: successful mutation does NOT call toast.error
+  // Boundary: success path must not fire error side-effects
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-UPD-07 — successful mutation does not call toast.error', async () => {
+    mockUpdate.mockResolvedValueOnce(mockCliente)
+
+    const { result } = renderHook(() => useUpdateCliente(), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      result.current.mutate(validPayload)
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockToastError).not.toHaveBeenCalled()
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-UPD-08: error state exposes the original error object
+  // Boundary: consumers may inspect mutation.error for specific error types
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-UPD-08 — isError state exposes the error object from the failed mutation', async () => {
+    const originalError = new Error('Axios 404 Not Found')
+    mockUpdate.mockRejectedValueOnce(originalError)
+
+    const { result } = renderHook(() => useUpdateCliente(), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      result.current.mutate(validPayload)
+    })
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error).toBe(originalError)
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-UPD-09: consecutive success + error resets state correctly
+  // Boundary: subsequent mutation calls after first success should be independent
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-UPD-09 — second failed mutation after first success transitions to isError', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { mutations: { retry: false } },
+    })
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children)
+
+    mockUpdate
+      .mockResolvedValueOnce(mockCliente) // first call succeeds
+      .mockRejectedValueOnce(new Error('second call fails')) // second call fails
+
+    const { result } = renderHook(() => useUpdateCliente(), { wrapper })
+
+    // First mutation — success
+    await act(async () => {
+      result.current.mutate(validPayload)
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    // Second mutation — error
+    await act(async () => {
+      result.current.mutate(validPayload)
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.isSuccess).toBe(false)
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-UPD-10: toast.error is called exactly once per failure, not multiple times
+  // Boundary: onError callback must be idempotent per invocation
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-UPD-10 — toast.error is called exactly once per failed mutation', async () => {
+    mockUpdate.mockRejectedValueOnce(new Error('single error'))
+
+    const { result } = renderHook(() => useUpdateCliente(), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      result.current.mutate(validPayload)
+    })
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(mockToastError).toHaveBeenCalledTimes(1)
+  })
 })
