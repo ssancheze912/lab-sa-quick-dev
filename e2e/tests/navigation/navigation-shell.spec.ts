@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { NavigationShellPage } from '../../pages/navigation.page';
 
+// Skip desktop-only viewport tests when running in a mobile project context.
+// mobile-chrome has isMobile: true which causes Tailwind CSS media queries to
+// respond to the device flag rather than the numeric viewport width, making
+// hidden lg:flex / flex lg:hidden behave as if the viewport is mobile even at 1280px.
+const DESKTOP_ONLY_SKIP = (projectName: string) =>
+  projectName === 'mobile-chrome';
+
 /**
  * Story 1.2 — Frontend Navigation Shell
  * Epic 1 — Project Foundation & Application Shell
@@ -32,7 +39,11 @@ test.describe('Story 1.2 — NavigationRail (Desktop ≥ 1024px)', () => {
    */
   test('E2E-F-01 — NavigationRail visible con entradas Clientes y Contactos en desktop', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    test.skip(
+      DESKTOP_ONLY_SKIP(testInfo.project.name),
+      'Desktop-only test: skipped in mobile-chrome project (isMobile: true affects Tailwind media queries)',
+    );
     const nav = new NavigationShellPage(page);
 
     // GIVEN: desktop viewport (≥1024px) — enforced by project "chromium" config
@@ -120,7 +131,11 @@ test.describe('Story 1.2 — NavigationRail (Desktop ≥ 1024px)', () => {
    * When the active route is /clientes
    * Then the NavigationBar is NOT visible (desktop uses NavigationRail instead)
    */
-  test('E2E-F-01b — NavigationBar NO está visible en viewport desktop', async ({ page }) => {
+  test('E2E-F-01b — NavigationBar NO está visible en viewport desktop', async ({ page }, testInfo) => {
+    test.skip(
+      DESKTOP_ONLY_SKIP(testInfo.project.name),
+      'Desktop-only test: skipped in mobile-chrome project (isMobile: true affects Tailwind media queries)',
+    );
     const nav = new NavigationShellPage(page);
 
     // GIVEN: app loaded on desktop viewport
