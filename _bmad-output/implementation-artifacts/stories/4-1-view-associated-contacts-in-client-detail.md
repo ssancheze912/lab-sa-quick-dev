@@ -427,3 +427,8 @@ claude-sonnet-4-6
 - `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` — implement `GetByClienteIdAsync`
 - `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` — add `?clienteId=` optional query param routing
 - `backend/src/SiesaAgents.API/Program.cs` — register `GetContactosByClienteIdQueryHandler`
+
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][MED] `DeleteClienteDialog` in `ClienteDetailView.tsx` receives `hasContacts={false}` hardcoded. In Story 4.1, the actual contact count is available via the ContactManager adapter. This prop should be derived from `useContactosByCliente(clienteId)` so that deleting a client with associated contacts shows the correct warning toast. Address in this story or at the start of Story 4.2.
+- [ ] [AI-Review][MED] `GetContactosByClienteIdQueryHandler` has no backend unit test. Add `backend/tests/SiesaAgents.UnitTests/Handlers/GetContactosByClienteIdQueryHandlerTests.cs` covering: returns only contacts for the given clienteId, returns empty collection when none match, and maps all ContactoDto fields correctly. Required to meet the >80% coverage target for the Application layer.
