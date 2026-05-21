@@ -32,6 +32,13 @@ public class ContactoRepository : IContactoRepository
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(ct);
 
+    public async Task<IEnumerable<ContactoEntity>> GetOrphanAsync(CancellationToken ct)
+        => await _context.Contactos
+            .AsNoTracking()
+            .Where(c => c.ClienteId == null)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync(ct);
+
     public async Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
     {
         _context.Contactos.Add(entity);

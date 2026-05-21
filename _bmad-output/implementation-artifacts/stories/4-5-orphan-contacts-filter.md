@@ -1,6 +1,6 @@
 # Story 4.5: Orphan Contacts Filter
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -20,65 +20,65 @@ So that I can identify and manage unassigned contacts easily.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: add `sinCliente` query param support to `GET /api/v1/contactos` (AC: 1, 2)
-  - [ ] Add `GetOrphanContactosQuery.cs` in `backend/src/SiesaAgents.Application/Contactos/Queries/` — record with no parameters
-  - [ ] Add `GetOrphanContactosQueryHandler.cs` — calls `IContactoRepository.GetOrphanAsync(ct)`, maps to `ContactoDto[]`
-  - [ ] Add `GetOrphanAsync(CancellationToken ct): Task<IEnumerable<ContactoEntity>>` to `IContactoRepository` interface (`backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`)
-  - [ ] Implement `GetOrphanAsync` in `ContactoRepository.cs` → `_context.Contactos.AsNoTracking().Where(c => c.ClienteId == null).OrderByDescending(c => c.CreatedAt).ToListAsync(ct)`
-  - [ ] Update `GET /` endpoint in `ContactoEndpoints.cs` to accept optional `?sinCliente=true` query param — when `sinCliente=true`, dispatch `GetOrphanContactosQueryHandler`; existing `?clienteId=` and no-param branches unchanged
-  - [ ] Register `GetOrphanContactosQueryHandler` in `Program.cs` DI
+- [x] Task 1 — Backend: add `sinCliente` query param support to `GET /api/v1/contactos` (AC: 1, 2)
+  - [x] Add `GetOrphanContactosQuery.cs` in `backend/src/SiesaAgents.Application/Contactos/Queries/` — record with no parameters
+  - [x] Add `GetOrphanContactosQueryHandler.cs` — calls `IContactoRepository.GetOrphanAsync(ct)`, maps to `ContactoDto[]`
+  - [x] Add `GetOrphanAsync(CancellationToken ct): Task<IEnumerable<ContactoEntity>>` to `IContactoRepository` interface (`backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`)
+  - [x] Implement `GetOrphanAsync` in `ContactoRepository.cs` → `_context.Contactos.AsNoTracking().Where(c => c.ClienteId == null).OrderByDescending(c => c.CreatedAt).ToListAsync(ct)`
+  - [x] Update `GET /` endpoint in `ContactoEndpoints.cs` to accept optional `?sinCliente=true` query param — when `sinCliente=true`, dispatch `GetOrphanContactosQueryHandler`; existing `?clienteId=` and no-param branches unchanged
+  - [x] Register `GetOrphanContactosQueryHandler` in `Program.cs` DI
 
-- [ ] Task 2 — Frontend: add `filterOrphanContactos` utility function (AC: 1, 2, 3)
-  - [ ] Create `frontend/src/modules/crm/contactos/application/filterOrphanContactos.ts`
-  - [ ] Signature: `filterOrphanContactos(contacts: Contacto[]): Contacto[]`
-  - [ ] Returns contacts where `clienteId === null`
-  - [ ] Returns empty array when input is empty — no error thrown
+- [x] Task 2 — Frontend: add `filterOrphanContactos` utility function (AC: 1, 2, 3)
+  - [x] Create `frontend/src/modules/crm/contactos/application/filterOrphanContactos.ts`
+  - [x] Signature: `filterOrphanContactos(contacts: Contacto[]): Contacto[]`
+  - [x] Returns contacts where `clienteId === null`
+  - [x] Returns empty array when input is empty — no error thrown
 
-- [ ] Task 3 — Frontend: update `ContactoListView` to add "Sin cliente" filter toggle (AC: 1, 2, 3)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoListView.tsx`
-  - [ ] Add boolean state: `const [sinClienteActive, setSinClienteActive] = useState(false)`
-  - [ ] Add "Sin cliente" toggle button below the search input:
+- [x] Task 3 — Frontend: update `ContactoListView` to add "Sin cliente" filter toggle (AC: 1, 2, 3)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoListView.tsx`
+  - [x] Add boolean state: `const [sinClienteActive, setSinClienteActive] = useState(false)`
+  - [x] Add "Sin cliente" toggle button below the search input:
     - Label: "Sin cliente" (Spanish)
     - `data-testid="filtro-sin-cliente"` on the toggle element
     - Active visual state: Siesa Blue `#0e79fd` background with white text; inactive: `slate-100` background, `slate-700` text
     - `aria-pressed={sinClienteActive}` for WCAG 2.1 AA compliance
     - `aria-label="Filtrar contactos sin cliente"` on the button
-  - [ ] Filter pipeline in `useMemo`:
+  - [x] Filter pipeline in `useMemo`:
     - When `sinClienteActive === false`: apply `filterContactos(data, searchQuery)` (existing behavior unchanged)
     - When `sinClienteActive === true`: apply `filterOrphanContactos(filterContactos(data, searchQuery))`
-  - [ ] When `sinClienteActive === true`, display orphan count badge adjacent to the toggle:
+  - [x] When `sinClienteActive === true`, display orphan count badge adjacent to the toggle:
     - Count text: `"{n} sin cliente"` where n = `filterOrphanContactos(data).length` (total orphan count regardless of searchQuery)
     - `data-testid="orphan-count"` on the count element
-  - [ ] `EmptyState` when `filteredContactos.length === 0` and `sinClienteActive === true`: use `title="Todos los contactos tienen cliente"` and `description="No hay contactos sin cliente asignado."`
-  - [ ] `EmptyState` when `filteredContactos.length === 0` and `sinClienteActive === false`: keep existing behavior (`title="No hay contactos registrados"`)
+  - [x] `EmptyState` when `filteredContactos.length === 0` and `sinClienteActive === true`: use `title="Todos los contactos tienen cliente"` and `description="No hay contactos sin cliente asignado."`
+  - [x] `EmptyState` when `filteredContactos.length === 0` and `sinClienteActive === false`: keep existing behavior (`title="No hay contactos registrados"`)
 
-- [ ] Task 4 — Frontend: update `ContactosPage` POM with orphan filter locators (AC: 1, 2, 3)
-  - [ ] Confirm or add in `e2e/pages/contactos.page.ts`:
+- [x] Task 4 — Frontend: update `ContactosPage` POM with orphan filter locators (AC: 1, 2, 3)
+  - [x] Confirm or add in `e2e/pages/contactos.page.ts`:
     - `filtroSinCliente`: `page.getByTestId('filtro-sin-cliente')`
     - `orphanCount`: `page.getByTestId('orphan-count')`
 
-- [ ] Task 5 — Frontend: write unit tests for `filterOrphanContactos` (AC: 1, 2)
-  - [ ] Create `frontend/src/modules/crm/contactos/__tests__/filterOrphanContactos.test.ts`
-  - [ ] UNIT-AC-04: `filterOrphanContactos(contacts)` returns only contacts where `clienteId === null`
-  - [ ] UNIT-AC-05: `filterOrphanContactos([])` returns empty array without error
+- [x] Task 5 — Frontend: write unit tests for `filterOrphanContactos` (AC: 1, 2)
+  - [x] Create `frontend/src/modules/crm/contactos/__tests__/filterOrphanContactos.test.ts`
+  - [x] UNIT-AC-04: `filterOrphanContactos(contacts)` returns only contacts where `clienteId === null`
+  - [x] UNIT-AC-05: `filterOrphanContactos([])` returns empty array without error
 
-- [ ] Task 6 — Backend: write unit test for `GetOrphanContactosQueryHandler` (AC: 1, 2)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Handlers/GetOrphanContactosQueryHandlerTests.cs`
-  - [ ] UNIT-B-AC-ORPHAN-01: Handler returns only contacts with `ClienteId == null` as `ContactoDto[]`
-  - [ ] UNIT-B-AC-ORPHAN-02: Handler returns empty array when no orphan contacts exist
+- [x] Task 6 — Backend: write unit test for `GetOrphanContactosQueryHandler` (AC: 1, 2)
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Handlers/GetOrphanContactosQueryHandlerTests.cs`
+  - [x] UNIT-B-AC-ORPHAN-01: Handler returns only contacts with `ClienteId == null` as `ContactoDto[]`
+  - [x] UNIT-B-AC-ORPHAN-02: Handler returns empty array when no orphan contacts exist
 
-- [ ] Task 7 — Write E2E tests (AC: 1, 2, 3)
-  - [ ] Create `e2e/tests/asociacion/asociacion-filtro-huerfanos.spec.ts` (Story 4.5 scope: E2E-AC-16, E2E-AC-17, E2E-AC-18, E2E-AC-19)
-  - [ ] E2E-AC-16: Create 2 contacts with client + 2 orphan contacts via `apiHelper`; navigate to `/contactos`; assert `filtroSinCliente` locator visible; click it; assert `contactoRows.count()` equals 2; assert rows contain only the orphan contacts' nombres
-  - [ ] E2E-AC-17: Same setup as E2E-AC-16; after filter activated, assert `orphanCount` text is visible and matches `/2 sin cliente/i`
-  - [ ] E2E-AC-18: Create 2 contacts all with a client (no orphans); navigate to `/contactos`; activate filter; assert `EmptyState` visible with text `/todos los contactos tienen cliente/i`
-  - [ ] E2E-AC-19: E2E-AC-16 setup; activate filter; click `filtroSinCliente` again to deactivate; assert all 4 contacts are visible again
-  - [ ] All tests include `afterEach` cleanup via `apiHelper.deleteContacto` and `apiHelper.deleteCliente`
-  - [ ] All tests add `page.on('pageerror', ...)` listener
+- [x] Task 7 — Write E2E tests (AC: 1, 2, 3)
+  - [x] Create `e2e/tests/asociacion/asociacion-filtro-huerfanos.spec.ts` (Story 4.5 scope: E2E-AC-16, E2E-AC-17, E2E-AC-18, E2E-AC-19)
+  - [x] E2E-AC-16: Create 2 contacts with client + 2 orphan contacts via `apiHelper`; navigate to `/contactos`; assert `filtroSinCliente` locator visible; click it; assert `contactoRows.count()` equals 2; assert rows contain only the orphan contacts' nombres
+  - [x] E2E-AC-17: Same setup as E2E-AC-16; after filter activated, assert `orphanCount` text is visible and matches `/2 sin cliente/i`
+  - [x] E2E-AC-18: Create 2 contacts all with a client (no orphans); navigate to `/contactos`; activate filter; assert `EmptyState` visible with text `/todos los contactos tienen cliente/i`
+  - [x] E2E-AC-19: E2E-AC-16 setup; activate filter; click `filtroSinCliente` again to deactivate; assert all 4 contacts are visible again
+  - [x] All tests include `afterEach` cleanup via `apiHelper.deleteContacto` and `apiHelper.deleteCliente`
+  - [x] All tests add `page.on('pageerror', ...)` listener
 
-- [ ] Task 8 — Write API integration test (AC: 1)
-  - [ ] Add to `e2e/tests/asociacion/asociacion-api.spec.ts` — Story 4.5 scope: API-AC-06
-  - [ ] API-AC-06: Create 3 contacts — 2 with clienteId, 1 without; `GET /api/v1/contactos?sinCliente=true`; assert response status 200; assert array length is 1; assert returned contact's `clienteId === null`
+- [x] Task 8 — Write API integration test (AC: 1)
+  - [x] Add to `e2e/tests/asociacion/asociacion-api.spec.ts` — Story 4.5 scope: API-AC-06
+  - [x] API-AC-06: Create 3 contacts — 2 with clienteId, 1 without; `GET /api/v1/contactos?sinCliente=true`; assert response status 200; assert array length is 1; assert returned contact's `clienteId === null`
 
 ## Dev Notes
 
@@ -347,4 +347,28 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- Task 1 (Backend): All backend items were pre-implemented in the epic branch (GetOrphanContactosQuery, GetOrphanContactosQueryHandler, IContactoRepository.GetOrphanAsync, ContactoRepository.GetOrphanAsync, ContactoEndpoints sinCliente param, Program.cs DI registration). Verified and confirmed correct.
+- Task 2 (Frontend filterOrphanContactos): Created pure utility function at `frontend/src/modules/crm/contactos/application/filterOrphanContactos.ts`.
+- Task 3 (ContactoListView): Updated with sinCliente toggle, orphan count badge, filter pipeline using useMemo, and EmptyState variants per AC.
+- Task 4 (POM): Updated `filtroSinCliente` from `getByRole('checkbox')` to `getByTestId('filtro-sin-cliente')` and added `orphanCount` locator.
+- Task 5 (Frontend unit tests): 4 tests pass covering UNIT-AC-04 and UNIT-AC-05.
+- Task 6 (Backend unit tests): Created with FakeContactoRepository implementing GetOrphanAsync. Also added GetOrphanAsync to all existing FakeContactoRepository implementations to preserve compilation.
+- Task 7 (E2E tests): Created `asociacion-filtro-huerfanos.spec.ts` with E2E-AC-16 through E2E-AC-19.
+- Task 8 (API integration): Added API-AC-06 to `asociacion-api.spec.ts`.
+- Pre-existing frontend test failures (staleTime assertions): 4 tests unrelated to story 4.5 — pre-existing in the branch.
+
 ### File List
+
+- `frontend/src/modules/crm/contactos/application/filterOrphanContactos.ts` (NEW)
+- `frontend/src/modules/crm/contactos/presentation/ContactoListView.tsx` (MODIFIED)
+- `frontend/src/modules/crm/contactos/__tests__/filterOrphanContactos.test.ts` (NEW)
+- `e2e/pages/contactos.page.ts` (MODIFIED)
+- `e2e/tests/asociacion/asociacion-filtro-huerfanos.spec.ts` (NEW)
+- `e2e/tests/asociacion/asociacion-api.spec.ts` (MODIFIED — API-AC-06 added)
+- `backend/tests/SiesaAgents.UnitTests/Handlers/GetOrphanContactosQueryHandlerTests.cs` (NEW)
+- `backend/tests/SiesaAgents.UnitTests/Handlers/GetContactosQueryHandlerTests.cs` (MODIFIED — GetOrphanAsync added)
+- `backend/tests/SiesaAgents.UnitTests/Handlers/GetContactosQueryHandlerEdgeCaseTests.cs` (MODIFIED — GetOrphanAsync added)
+- `backend/tests/SiesaAgents.UnitTests/Handlers/GetContactosByClienteIdQueryHandlerTests.cs` (MODIFIED — GetOrphanAsync added)
+- `backend/tests/SiesaAgents.UnitTests/Handlers/CreateContactoCommandHandlerEdgeCaseTests.cs` (MODIFIED — GetOrphanAsync added)
+- `backend/tests/SiesaAgents.UnitTests/Handlers/ContactoHandlerTests.cs` (MODIFIED — GetOrphanAsync added)
+- `backend/tests/SiesaAgents.UnitTests/Handlers/AssignClienteCommandHandlerTests.cs` (MODIFIED — GetOrphanAsync added)

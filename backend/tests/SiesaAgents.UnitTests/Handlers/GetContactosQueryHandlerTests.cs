@@ -61,6 +61,9 @@ public class GetContactosQueryHandlerTests
         public Task<IEnumerable<ContactoEntity>> GetByClienteIdAsync(Guid clienteId, CancellationToken ct)
             => Task.FromResult(_data.Where(c => c.ClienteId == clienteId));
 
+        public Task<IEnumerable<ContactoEntity>> GetOrphanAsync(CancellationToken ct)
+            => Task.FromResult(_data.Where(c => c.ClienteId == null));
+
         public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
             => Task.FromResult(entity);
 

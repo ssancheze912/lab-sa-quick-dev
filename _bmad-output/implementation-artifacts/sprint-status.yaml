@@ -40,5 +40,5 @@ development_status:
   4-2-associate-disassociate-contacts-from-client: review
   4-3-navigate-from-client-detail-to-contact-detail: done
   4-4-view-associated-client-from-contact-detail: review
-  4-5-orphan-contacts-filter: in-progress
+  4-5-orphan-contacts-filter: review
   4-6-reassign-contact-to-different-client: pending

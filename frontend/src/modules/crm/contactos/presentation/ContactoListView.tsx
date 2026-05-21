@@ -4,6 +4,7 @@ import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useContactos } from '../application/useContactos'
 import { filterContactos } from '../application/filterContactos'
+import { filterOrphanContactos } from '../application/filterOrphanContactos'
 import { ContactoListItem } from './ContactoListItem'
 import { ContactoFormDialog } from './ContactoFormDialog'
 import { EmptyState } from '../../../../shared/components/EmptyState'
@@ -11,15 +12,18 @@ import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 
 export function ContactoListView() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [sinClienteActive, setSinClienteActive] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { data = [], isLoading, isError, refetch } = useContactos()
   const params = useParams({ strict: false }) as { contactoId?: string }
   const activeContactoId = params.contactoId
 
-  const filteredContactos = useMemo(
-    () => filterContactos(data, searchQuery),
-    [data, searchQuery],
-  )
+  const orphanCount = useMemo(() => filterOrphanContactos(data).length, [data])
+
+  const filteredContactos = useMemo(() => {
+    const searched = filterContactos(data, searchQuery)
+    return sinClienteActive ? filterOrphanContactos(searched) : searched
+  }, [data, searchQuery, sinClienteActive])
 
   return (
     <div
@@ -44,6 +48,31 @@ export function ContactoListView() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0e79fd] focus:border-transparent"
         />
+        {/* Sin cliente filter toggle */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            data-testid="filtro-sin-cliente"
+            aria-pressed={sinClienteActive}
+            aria-label="Filtrar contactos sin cliente"
+            onClick={() => setSinClienteActive((prev) => !prev)}
+            className={
+              sinClienteActive
+                ? 'px-3 py-1 rounded text-sm font-medium bg-[#0e79fd] text-white'
+                : 'px-3 py-1 rounded text-sm font-medium bg-slate-100 text-slate-700'
+            }
+          >
+            Sin cliente
+          </button>
+          {sinClienteActive && (
+            <span
+              data-testid="orphan-count"
+              className="text-xs text-slate-500"
+            >
+              {orphanCount} sin cliente
+            </span>
+          )}
+        </div>
       </div>
 
       <ContactoFormDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
@@ -71,7 +100,14 @@ export function ContactoListView() {
           />
         )}
 
-        {!isLoading && !isError && data.length > 0 && filteredContactos.length === 0 && (
+        {!isLoading && !isError && data.length > 0 && filteredContactos.length === 0 && sinClienteActive && (
+          <EmptyState
+            title="Todos los contactos tienen cliente"
+            description="No hay contactos sin cliente asignado."
+          />
+        )}
+
+        {!isLoading && !isError && data.length > 0 && filteredContactos.length === 0 && !sinClienteActive && (
           <EmptyState
             title="Sin resultados"
             description="No hay contactos que coincidan con la búsqueda."

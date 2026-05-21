@@ -253,6 +253,12 @@ public class ContactoHandlerTests
                     ? new[] { _existingEntity }
                     : Array.Empty<ContactoEntity>());
 
+        public Task<IEnumerable<ContactoEntity>> GetOrphanAsync(CancellationToken ct)
+            => Task.FromResult<IEnumerable<ContactoEntity>>(
+                _existingEntity is not null && _existingEntity.ClienteId == null
+                    ? new[] { _existingEntity }
+                    : Array.Empty<ContactoEntity>());
+
         public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
         {
             CreateCallCount++;

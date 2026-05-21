@@ -229,6 +229,9 @@ public class CreateContactoCommandHandlerEdgeCaseTests
         public Task<IEnumerable<ContactoEntity>> GetByClienteIdAsync(Guid clienteId, CancellationToken ct)
             => Task.FromResult<IEnumerable<ContactoEntity>>(Array.Empty<ContactoEntity>());
 
+        public Task<IEnumerable<ContactoEntity>> GetOrphanAsync(CancellationToken ct)
+            => Task.FromResult<IEnumerable<ContactoEntity>>(Array.Empty<ContactoEntity>());
+
         public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
         {
             CreateCallCount++;
@@ -259,6 +262,9 @@ public class CreateContactoCommandHandlerEdgeCaseTests
             => Task.FromResult<ContactoEntity?>(null);
 
         public Task<IEnumerable<ContactoEntity>> GetByClienteIdAsync(Guid clienteId, CancellationToken ct)
+            => Task.FromException<IEnumerable<ContactoEntity>>(_exception);
+
+        public Task<IEnumerable<ContactoEntity>> GetOrphanAsync(CancellationToken ct)
             => Task.FromException<IEnumerable<ContactoEntity>>(_exception);
 
         public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
