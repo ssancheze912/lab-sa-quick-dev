@@ -116,6 +116,9 @@ public class CreateClienteCommandHandlerTests
             return Task.CompletedTask;
         }
 
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.CompletedTask;
+
         public Task DeleteAsync(Guid id, CancellationToken ct)
             => Task.CompletedTask;
     }
@@ -137,6 +140,9 @@ public class CreateClienteCommandHandlerTests
 
         public Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
             => Task.FromException(_exception);
+
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.CompletedTask;
 
         public Task DeleteAsync(Guid id, CancellationToken ct)
             => Task.CompletedTask;

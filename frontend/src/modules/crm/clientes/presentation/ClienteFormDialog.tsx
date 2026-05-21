@@ -1,16 +1,22 @@
 import * as Dialog from '@radix-ui/react-dialog'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import axios from 'axios'
 import { clienteSchema, type ClienteFormValues } from '../application/clienteSchema'
 import { useCreateCliente } from '../application/useCreateCliente'
+import { useUpdateCliente } from '../application/useUpdateCliente'
+import type { Cliente } from '../domain/Cliente'
 
 interface ClienteFormDialogProps {
   open: boolean
   onClose: () => void
+  cliente?: Cliente
 }
 
-export function ClienteFormDialog({ open, onClose }: ClienteFormDialogProps) {
+export function ClienteFormDialog({ open, onClose, cliente }: ClienteFormDialogProps) {
+  const isEditMode = cliente !== undefined
+
   const {
     register,
     handleSubmit,
@@ -21,20 +27,42 @@ export function ClienteFormDialog({ open, onClose }: ClienteFormDialogProps) {
     resolver: zodResolver(clienteSchema),
   })
 
-  const { mutate, isPending } = useCreateCliente()
+  useEffect(() => {
+    if (cliente) {
+      reset({ nombre: cliente.nombre, nit: cliente.nit, telefono: cliente.telefono, ciudad: cliente.ciudad })
+    } else {
+      reset({ nombre: '', nit: '', telefono: '', ciudad: '' })
+    }
+  }, [open, cliente, reset])
+
+  const createMutation = useCreateCliente()
+  const updateMutation = useUpdateCliente()
+  const isPending = isEditMode ? updateMutation.isPending : createMutation.isPending
 
   const onSubmit = (values: ClienteFormValues) => {
-    mutate(values, {
-      onSuccess: () => {
-        reset()
-        onClose()
-      },
-      onError: (err) => {
-        if (axios.isAxiosError(err) && err.response?.status === 409) {
-          setError('nit', { message: 'El NIT/RUC ya está registrado' })
-        }
-      },
-    })
+    if (isEditMode && cliente) {
+      updateMutation.mutate(
+        { id: cliente.id, data: values },
+        {
+          onSuccess: () => {
+            reset()
+            onClose()
+          },
+        },
+      )
+    } else {
+      createMutation.mutate(values, {
+        onSuccess: () => {
+          reset()
+          onClose()
+        },
+        onError: (err) => {
+          if (axios.isAxiosError(err) && err.response?.status === 409) {
+            setError('nit', { message: 'El NIT/RUC ya está registrado' })
+          }
+        },
+      })
+    }
   }
 
   const handleCancel = () => {
@@ -52,7 +80,7 @@ export function ClienteFormDialog({ open, onClose }: ClienteFormDialogProps) {
           aria-describedby={undefined}
         >
           <Dialog.Title className="text-lg font-bold text-slate-900 mb-4">
-            Nuevo cliente
+            {isEditMode ? 'Editar cliente' : 'Nuevo cliente'}
           </Dialog.Title>
 
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">

@@ -12,6 +12,7 @@ public static class ClienteEndpoints
     {
         var group = app.MapGroup("/api/v1/clientes").WithTags("Clientes");
 
+
         group.MapGet("/", async (GetClientesQueryHandler handler, CancellationToken ct) =>
         {
             var result = await handler.HandleAsync(new GetClientesQuery(), ct);
@@ -43,6 +44,17 @@ public static class ClienteEndpoints
         .Produces<ClienteDto>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapPut("/{id:guid}", async (Guid id, UpdateClienteRequest request, UpdateClienteCommandHandler handler, CancellationToken ct) =>
+        {
+            var command = new UpdateClienteCommand(id, request.Nombre, request.Nit, request.Telefono, request.Ciudad);
+            var result = await handler.HandleAsync(command, ct);
+            return Results.Ok(result);
+        })
+        .WithName("UpdateCliente")
+        .Produces<ClienteDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapDelete("/{id:guid}", async (Guid id, IClienteRepository repository, CancellationToken ct) =>
         {

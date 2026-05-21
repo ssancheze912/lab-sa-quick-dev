@@ -129,6 +129,9 @@ public class GetClienteByIdQueryHandlerTests
         public Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
             => Task.CompletedTask;
 
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.CompletedTask;
+
         public Task DeleteAsync(Guid id, CancellationToken ct)
             => Task.CompletedTask;
     }
@@ -152,6 +155,9 @@ public class GetClienteByIdQueryHandlerTests
         public Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
             => Task.CompletedTask;
 
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.CompletedTask;
+
         public Task DeleteAsync(Guid id, CancellationToken ct)
             => Task.CompletedTask;
     }
@@ -169,6 +175,9 @@ public class GetClienteByIdQueryHandlerTests
             => Task.FromException<ClienteEntity?>(_exception);
 
         public Task CreateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.CompletedTask;
+
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
             => Task.CompletedTask;
 
         public Task DeleteAsync(Guid id, CancellationToken ct)
