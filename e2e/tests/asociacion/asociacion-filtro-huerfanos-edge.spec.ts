@@ -303,3 +303,187 @@ test.describe('Story 4.5 — E2E Edge Cases: Orphan Contacts Filter', () => {
     expect(jsErrors).toHaveLength(0);
   });
 });
+
+// =============================================================================
+// API edge cases — GET /api/v1/contactos?sinCliente=true boundary conditions
+// =============================================================================
+
+const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
+
+test.describe('Story 4.5 — API edge cases: GET ?sinCliente=true boundary conditions', () => {
+  let apiHelper: ApiHelper;
+  const createdClienteIds: string[] = [];
+  const createdContactoIds: string[] = [];
+
+  test.beforeEach(async ({ request }) => {
+    apiHelper = new ApiHelper(request);
+  });
+
+  test.afterEach(async () => {
+    for (const id of createdContactoIds) {
+      await apiHelper.deleteContacto(id).catch(() => null);
+    }
+    for (const id of createdClienteIds) {
+      await apiHelper.deleteCliente(id).catch(() => null);
+    }
+    createdContactoIds.length = 0;
+    createdClienteIds.length = 0;
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-ORPHAN-EDGE-01 (P1) — DTO contract completeness
+  // Given an orphan contact exists
+  // When GET /api/v1/contactos?sinCliente=true is called
+  // Then each returned DTO contains all 8 required fields with correct types
+  // ---------------------------------------------------------------------------
+  test('API-ORPHAN-EDGE-01 — GET ?sinCliente=true returns complete ContactoDto with all 8 fields typed correctly', async ({ request }) => {
+    const orphan = await apiHelper.createContacto(
+      buildContacto({ nombre: `DTO Contract Edge ${Date.now()}`, clienteId: null })
+    );
+    createdContactoIds.push(orphan.id);
+
+    const response = await request.get(`${API_BASE_URL}/api/v1/contactos?sinCliente=true`);
+    expect(response.status()).toBe(200);
+
+    const body = await response.json();
+    expect(Array.isArray(body)).toBe(true);
+
+    const returnedOrphan = body.find((c: { id: string }) => c.id === orphan.id);
+    expect(returnedOrphan).toBeDefined();
+
+    // id: UUID v4 string
+    expect(typeof returnedOrphan.id).toBe('string');
+    expect(returnedOrphan.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    );
+    // nombre: non-empty string
+    expect(typeof returnedOrphan.nombre).toBe('string');
+    expect(returnedOrphan.nombre.length).toBeGreaterThan(0);
+    // cargo: field present (may be empty string)
+    expect('cargo' in returnedOrphan).toBe(true);
+    // telefono: field present (may be empty string)
+    expect('telefono' in returnedOrphan).toBe(true);
+    // email: non-empty string with @
+    expect(typeof returnedOrphan.email).toBe('string');
+    expect(returnedOrphan.email).toContain('@');
+    // clienteId: strictly null
+    expect(returnedOrphan.clienteId).toBeNull();
+    // createdAt: ISO 8601 with timezone
+    expect(typeof returnedOrphan.createdAt).toBe('string');
+    expect(returnedOrphan.createdAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+    );
+    // updatedAt: ISO 8601 with timezone
+    expect(typeof returnedOrphan.updatedAt).toBe('string');
+    expect(returnedOrphan.updatedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+    );
+    // Response must NOT be a wrapper object
+    expect((body as Record<string, unknown>).data).toBeUndefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-ORPHAN-EDGE-02 (P1)
+  // GET ?sinCliente=false must fall through to GetContactosQueryHandler
+  // (returns all contacts, not just orphans)
+  // ---------------------------------------------------------------------------
+  test('API-ORPHAN-EDGE-02 — GET ?sinCliente=false returns all contacts (not orphan-only path)', async ({ request }) => {
+    const cliente = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(cliente.id);
+
+    const conCliente = await apiHelper.createContacto(
+      buildContacto({ nombre: `SinClienteFalse Edge A ${Date.now()}`, clienteId: cliente.id })
+    );
+    createdContactoIds.push(conCliente.id);
+
+    const huerfano = await apiHelper.createContacto(
+      buildContacto({ nombre: `SinClienteFalse Edge B ${Date.now()}`, clienteId: null })
+    );
+    createdContactoIds.push(huerfano.id);
+
+    const response = await request.get(`${API_BASE_URL}/api/v1/contactos?sinCliente=false`);
+    expect(response.status()).toBe(200);
+
+    const body = await response.json();
+    expect(Array.isArray(body)).toBe(true);
+
+    const returnedIds = body.map((c: { id: string }) => c.id);
+    // Both the orphan AND the contact with client must be present
+    expect(returnedIds).toContain(conCliente.id);
+    expect(returnedIds).toContain(huerfano.id);
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-ORPHAN-EDGE-03 (P1)
+  // GET ?sinCliente=true returns 200 with empty array (NOT 404)
+  // when all contacts have a clienteId (AC2 at API level)
+  // ---------------------------------------------------------------------------
+  test('API-ORPHAN-EDGE-03 — GET ?sinCliente=true returns 200 empty array when no orphans exist (not 404)', async ({ request }) => {
+    const cliente = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(cliente.id);
+
+    const c1 = await apiHelper.createContacto(
+      buildContacto({ nombre: `All Have Client Edge A ${Date.now()}`, clienteId: cliente.id })
+    );
+    createdContactoIds.push(c1.id);
+
+    const c2 = await apiHelper.createContacto(
+      buildContacto({ nombre: `All Have Client Edge B ${Date.now()}`, clienteId: cliente.id })
+    );
+    createdContactoIds.push(c2.id);
+
+    const response = await request.get(`${API_BASE_URL}/api/v1/contactos?sinCliente=true`);
+
+    // Must be 200, NOT 404
+    expect(response.status()).toBe(200);
+    const contentType = response.headers()['content-type'] ?? '';
+    expect(contentType).toContain('application/json');
+
+    const body = await response.json();
+    expect(Array.isArray(body)).toBe(true);
+
+    // The two contacts we created (with client) must NOT appear
+    const returnedIds = body.map((c: { id: string }) => c.id);
+    expect(returnedIds).not.toContain(c1.id);
+    expect(returnedIds).not.toContain(c2.id);
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-ORPHAN-EDGE-04 (P1)
+  // GET ?sinCliente=true&clienteId={id} — sinCliente branch takes priority
+  // Returns only orphans, ignoring clienteId param (per ContactoEndpoints dispatch order)
+  // ---------------------------------------------------------------------------
+  test('API-ORPHAN-EDGE-04 — GET ?sinCliente=true&clienteId={id} — sinCliente branch has priority over clienteId', async ({ request }) => {
+    const cliente = await apiHelper.createCliente(buildCliente());
+    createdClienteIds.push(cliente.id);
+
+    const conCliente = await apiHelper.createContacto(
+      buildContacto({ nombre: `Priority Test Edge Con Cliente ${Date.now()}`, clienteId: cliente.id })
+    );
+    createdContactoIds.push(conCliente.id);
+
+    const huerfano = await apiHelper.createContacto(
+      buildContacto({ nombre: `Priority Test Edge Huerfano ${Date.now()}`, clienteId: null })
+    );
+    createdContactoIds.push(huerfano.id);
+
+    // Both sinCliente=true AND clienteId= present — sinCliente branch must win
+    const response = await request.get(
+      `${API_BASE_URL}/api/v1/contactos?sinCliente=true&clienteId=${cliente.id}`
+    );
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(Array.isArray(body)).toBe(true);
+
+    const returnedIds = body.map((c: { id: string }) => c.id);
+    // The orphan must be included
+    expect(returnedIds).toContain(huerfano.id);
+    // The contact with client must NOT appear (sinCliente filters by clienteId == null)
+    expect(returnedIds).not.toContain(conCliente.id);
+    // All returned items must have clienteId === null
+    for (const item of body) {
+      expect(item.clienteId).toBeNull();
+    }
+  });
+});
