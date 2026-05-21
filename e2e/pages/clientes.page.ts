@@ -23,6 +23,11 @@ export class ClientesPage {
   // Sort control (Story 2.6)
   readonly sortControl: Locator;
 
+  // ContactManager locators (Story 4.1)
+  readonly contactManagerContainer: Locator;
+  readonly contactManagerRows: Locator;
+  readonly btnAgregarContacto: Locator;
+
   // Form (dialog/drawer)
   readonly form: Locator;
   readonly inputNombre: Locator;
