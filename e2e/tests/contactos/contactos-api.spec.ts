@@ -496,6 +496,65 @@ test.describe('Story 3.4 — API: PUT /api/v1/contactos/:id', () => {
 });
 
 // =============================================================================
+// Story 3.5 — API: DELETE /api/v1/contactos/:id
+// =============================================================================
+
+test.describe('Story 3.5 — API: DELETE /api/v1/contactos/:id', () => {
+  // ---------------------------------------------------------------------------
+  // API-CT-06 (P0 · AC2)
+  // Given a contactoId that exists in the system
+  // When DELETE /api/v1/contactos/:id is called
+  // Then the response is 204 No Content
+  //   AND a subsequent GET /api/v1/contactos/:id returns 404 Problem Details
+  //   AND that 404 body does NOT contain a stackTrace key (NFR6)
+  // ---------------------------------------------------------------------------
+  test('API-CT-06 — DELETE /api/v1/contactos/:id devuelve 204; GET posterior devuelve 404 Problem Details sin stackTrace', async ({ request }) => {
+    // GIVEN — a contact is created via the API
+    const createResponse = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
+      data: {
+        nombre: 'Contacto Para Eliminar API-CT-06',
+        cargo: 'Analista',
+        telefono: '+57 1 234 5670',
+        email: 'api.ct06@empresa.com',
+      },
+    });
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+
+    // WHEN — DELETE /api/v1/contactos/:id is called with the existing id
+    const deleteResponse = await request.delete(
+      `${API_BASE_URL}/api/v1/contactos/${created.id}`
+    );
+
+    // THEN — response is 204 No Content (no response body)
+    expect(deleteResponse.status()).toBe(204);
+
+    // AND — response body is empty (no JSON body on 204)
+    const deleteBody = await deleteResponse.text();
+    expect(deleteBody).toBe('');
+
+    // AND — subsequent GET /api/v1/contactos/:id returns 404 Not Found
+    const getResponse = await request.get(
+      `${API_BASE_URL}/api/v1/contactos/${created.id}`
+    );
+    expect(getResponse.status()).toBe(404);
+
+    // AND — 404 body is Problem Details (RFC 7807)
+    const getBody = await getResponse.json();
+    expect(typeof getBody).toBe('object');
+    expect(Array.isArray(getBody)).toBe(false);
+    expect(getBody.status).toBe(404);
+    expect(typeof getBody.title).toBe('string');
+    expect(getBody.title.length).toBeGreaterThan(0);
+
+    // AND — 404 body does NOT contain stackTrace key (NFR6)
+    expect((getBody as Record<string, unknown>).stackTrace).toBeUndefined();
+    expect((getBody as Record<string, unknown>).StackTrace).toBeUndefined();
+    expect((getBody as Record<string, unknown>).stack_trace).toBeUndefined();
+  });
+});
+
+// =============================================================================
 
 test.describe('Story 3.2 — API: GET /api/v1/contactos/:id', () => {
   const createdIds: string[] = [];
