@@ -1,7 +1,6 @@
 import { apiClient } from '../../../../shared/lib/apiClient'
-import type { Cliente } from '../domain/Cliente'
+import type { Cliente, CreateClientePayload } from '../domain/Cliente'
 import type { IClienteRepository } from '../domain/IClienteRepository'
-import type { ClienteFormValues } from '../application/clienteSchema'
 
 const clienteApiRepository: IClienteRepository = {
   async getAll(): Promise<Cliente[]> {
@@ -14,7 +13,7 @@ const clienteApiRepository: IClienteRepository = {
     return response.data
   },
 
-  async create(data: ClienteFormValues): Promise<Cliente> {
+  async create(data: CreateClientePayload): Promise<Cliente> {
     const response = await apiClient.post<Cliente>('/api/v1/clientes', data)
     return response.data
   },

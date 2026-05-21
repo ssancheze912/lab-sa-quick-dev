@@ -10,6 +10,7 @@ interface ToastState {
   toasts: ToastItem[]
   success: (message: string) => void
   error: (message: string) => void
+  info: (message: string) => void
   dismiss: (id: number) => void
 }
 
@@ -31,6 +32,13 @@ export const useToastStore = create<ToastState>((set) => ({
       set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
     }, 4000)
   },
+  info: (message) => {
+    const id = ++nextId
+    set((state) => ({ toasts: [...state.toasts, { id, message, type: 'info' }] }))
+    setTimeout(() => {
+      set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
+    }, 4000)
+  },
   dismiss: (id) => {
     set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
   },
@@ -39,4 +47,5 @@ export const useToastStore = create<ToastState>((set) => ({
 export const toast = {
   success: (message: string) => useToastStore.getState().success(message),
   error: (message: string) => useToastStore.getState().error(message),
+  info: (message: string) => useToastStore.getState().info(message),
 }

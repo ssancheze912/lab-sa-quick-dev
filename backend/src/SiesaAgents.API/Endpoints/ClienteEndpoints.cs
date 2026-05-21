@@ -40,7 +40,9 @@ public static class ClienteEndpoints
             return Results.Created($"/api/v1/clientes/{result.Id}", result);
         })
         .WithName("CreateCliente")
-        .Produces<ClienteDto>(StatusCodes.Status201Created);
+        .Produces<ClienteDto>(StatusCodes.Status201Created)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapDelete("/{id:guid}", async (Guid id, IClienteRepository repository, CancellationToken ct) =>
         {

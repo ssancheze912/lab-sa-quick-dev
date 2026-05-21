@@ -8,8 +8,8 @@ export function useCreateCliente() {
 
   return useMutation({
     mutationFn: (data: ClienteFormValues) => clienteApiRepository.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clientes'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['clientes'] })
       toast.success('Cliente creado correctamente')
     },
   })
