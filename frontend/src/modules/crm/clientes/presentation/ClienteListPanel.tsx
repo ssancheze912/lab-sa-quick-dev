@@ -3,27 +3,32 @@ import { Link, useParams } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useClientes } from '../application/useClientes'
+import { sortClientes, type SortOption } from '../application/sortClientes'
 import { ClientListItem } from '../../../../shared/components/ClientListItem'
 import { EmptyState } from '../../../../shared/components/EmptyState'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
+import { SortControl } from '../../../../shared/components/SortControl'
 import { ClienteFormDialog } from './ClienteFormDialog'
 
 export function ClienteListPanel() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortOption, setSortOption] = useState<SortOption>('fecha-desc')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { data = [], isLoading, isError, refetch } = useClientes()
   const params = useParams({ strict: false }) as { clienteId?: string }
   const activeClienteId = params.clienteId
 
   const filteredClientes = useMemo(() => {
-    if (!searchQuery.trim()) return data
-    const lower = searchQuery.toLowerCase()
-    return data.filter(
-      (c) =>
-        c.nombre.toLowerCase().includes(lower) ||
-        c.nit.toLowerCase().includes(lower),
-    )
-  }, [data, searchQuery])
+    const lower = searchQuery.toLowerCase().trim()
+    const filtered = lower
+      ? data.filter(
+          (c) =>
+            c.nombre.toLowerCase().includes(lower) ||
+            c.nit.toLowerCase().includes(lower),
+        )
+      : data
+    return sortClientes(filtered, sortOption)
+  }, [data, searchQuery, sortOption])
 
   return (
     <aside
@@ -43,7 +48,7 @@ export function ClienteListPanel() {
       </div>
 
       {/* Search input */}
-      <div className="px-3 py-2 border-b border-slate-100">
+      <div className="px-3 pt-2 pb-1 border-b border-slate-100">
         <input
           type="search"
           placeholder="Buscar cliente por nombre o NIT/RUC"
@@ -52,6 +57,9 @@ export function ClienteListPanel() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0e79fd] focus:border-transparent"
         />
+        <div className="mt-1.5">
+          <SortControl value={sortOption} onChange={setSortOption} />
+        </div>
       </div>
 
       {/* Content area */}
