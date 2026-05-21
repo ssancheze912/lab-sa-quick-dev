@@ -30,7 +30,7 @@ development_status:
 
   # Epic 3 — Contact Management
   3-1-contact-list-search: done
-  3-2-contact-detail-view: review
+  3-2-contact-detail-view: done
   3-3-create-contact: done
   3-4-edit-contact: done
   3-5-delete-contact: done

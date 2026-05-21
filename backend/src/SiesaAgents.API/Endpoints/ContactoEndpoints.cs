@@ -41,7 +41,7 @@ public static class ContactoEndpoints
         })
         .WithName("GetContactoById")
         .Produces<ContactoDto>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound);
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPost("/", async (CreateContactoCommand command, CreateContactoCommandHandler handler, CancellationToken ct) =>
         {
@@ -65,7 +65,7 @@ public static class ContactoEndpoints
         .WithName("UpdateContacto")
         .Produces<ContactoDto>(StatusCodes.Status200OK)
         .ProducesValidationProblem()
-        .Produces(StatusCodes.Status404NotFound);
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapDelete("/{id:guid}", async (
             Guid id,

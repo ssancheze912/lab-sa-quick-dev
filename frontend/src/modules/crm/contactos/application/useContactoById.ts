@@ -6,6 +6,7 @@ export function useContactoById(id: string | undefined) {
     queryKey: ['contactos', id],
     queryFn: () => contactoApiRepository.getById(id!),
     enabled: !!id,
+    staleTime: 1000 * 60 * 5,
     retry: false,
   })
 }
