@@ -311,6 +311,191 @@ test.describe('Story 3.3 — API: POST /api/v1/contactos', () => {
 });
 
 // =============================================================================
+// Story 3.4 — API: PUT /api/v1/contactos/:id
+// =============================================================================
+
+test.describe('Story 3.4 — API: PUT /api/v1/contactos/:id', () => {
+  const createdIds: string[] = [];
+
+  test.afterEach(async ({ request }) => {
+    for (const id of createdIds) {
+      await request.delete(`${API_BASE_URL}/api/v1/contactos/${id}`).catch(() => null);
+    }
+    createdIds.length = 0;
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-CT-05 (P0 · AC2)
+  // Given a contactoId that exists in the system
+  //   AND a valid update payload with all four required fields
+  // When PUT /api/v1/contactos/:id is called
+  // Then the response is 200 OK
+  //   AND the body contains the updated field values
+  //   AND the body contains a non-null updatedAt that is ISO 8601 with timezone
+  //   AND the body does NOT contain a stackTrace key (NFR6)
+  // ---------------------------------------------------------------------------
+  test('API-CT-05 — PUT payload válido → 200 + cuerpo actualizado con todos los campos y updatedAt', async ({ request }) => {
+    // GIVEN — a contact is created via the API
+    const original = buildContacto({ nombre: 'María García API-CT-05' });
+    const createResponse = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
+      data: {
+        nombre: original.nombre,
+        cargo: original.cargo,
+        telefono: original.telefono,
+        email: original.email,
+      },
+    });
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+    createdIds.push(created.id);
+
+    // WHEN — PUT /api/v1/contactos/:id is called with updated fields
+    const updatePayload = {
+      nombre: 'María García Actualizada API-CT-05',
+      cargo: 'Directora Comercial',
+      telefono: '+57 1 234 5680',
+      email: 'm.garcia.new@empresa.com',
+    };
+    const response = await request.put(`${API_BASE_URL}/api/v1/contactos/${created.id}`, {
+      data: updatePayload,
+    });
+
+    // THEN — response is 200 OK
+    expect(response.status()).toBe(200);
+
+    // AND — body matches the updated ContactoDto contract
+    const body = await response.json();
+
+    // id is unchanged and matches the created contact
+    expect(body.id).toBe(created.id);
+
+    // all updated fields are reflected in the response body
+    expect(body.nombre).toBe(updatePayload.nombre);
+    expect(body.cargo).toBe(updatePayload.cargo);
+    expect(body.telefono).toBe(updatePayload.telefono);
+    expect(body.email).toBe(updatePayload.email);
+
+    // clienteId must be null (standalone contact — Epic 3 scope)
+    expect(body.clienteId).toBeNull();
+
+    // createdAt must be ISO 8601 with timezone (DateTimeOffset)
+    expect(typeof body.createdAt).toBe('string');
+    expect(body.createdAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+    );
+
+    // updatedAt must be ISO 8601 with timezone and present (DateTimeOffset — NEVER DateTime)
+    expect(typeof body.updatedAt).toBe('string');
+    expect(body.updatedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+    );
+
+    // Response must NOT be a wrapper object { data: {...} }
+    expect((body as Record<string, unknown>).data).toBeUndefined();
+
+    // Response must NOT contain a stackTrace key (NFR6)
+    expect((body as Record<string, unknown>).stackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).StackTrace).toBeUndefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-CT-10 (P1 · AC3)
+  // Given a contactoId that exists in the system
+  //   AND an update payload with a required field (nombre) missing / empty
+  // When PUT /api/v1/contactos/:id is called
+  // Then the response is 400 Bad Request
+  //   AND the body is Problem Details (RFC 7807)
+  //   AND no stack trace is exposed (NFR6)
+  // ---------------------------------------------------------------------------
+  test('API-CT-10 — PUT con campo requerido vacío → 400 Problem Details sin stackTrace', async ({ request }) => {
+    // GIVEN — a contact is created via the API
+    const original = buildContacto({ nombre: 'Contacto Validacion API-CT-10' });
+    const createResponse = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
+      data: {
+        nombre: original.nombre,
+        cargo: original.cargo,
+        telefono: original.telefono,
+        email: original.email,
+      },
+    });
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+    createdIds.push(created.id);
+
+    // WHEN — PUT /api/v1/contactos/:id with nombre as empty string (missing required field)
+    const invalidPayload = {
+      nombre: '',
+      cargo: original.cargo,
+      telefono: original.telefono,
+      email: original.email,
+    };
+    const response = await request.put(`${API_BASE_URL}/api/v1/contactos/${created.id}`, {
+      data: invalidPayload,
+    });
+
+    // THEN — response is 400 Bad Request
+    expect(response.status()).toBe(400);
+
+    // AND — body is Problem Details (RFC 7807)
+    const body = await response.json();
+    expect(typeof body).toBe('object');
+    expect(Array.isArray(body)).toBe(false);
+    expect(body.status).toBe(400);
+    expect(typeof body.title).toBe('string');
+    expect(body.title.length).toBeGreaterThan(0);
+
+    // AND — no stack trace or internal information is exposed (NFR6)
+    expect((body as Record<string, unknown>).stackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).StackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).stack_trace).toBeUndefined();
+    const bodyText = JSON.stringify(body);
+    expect(bodyText).not.toMatch(/at SiesaAgents/i);
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-CT-11 (P1 · AC2)
+  // Given a contactoId that does NOT exist in the system
+  // When PUT /api/v1/contactos/:id is called with a valid payload
+  // Then the response is 404 Not Found
+  //   AND the body is Problem Details (RFC 7807)
+  //   AND no stack trace is exposed (NFR6)
+  // ---------------------------------------------------------------------------
+  test('API-CT-11 — PUT con ID inexistente → 404 Problem Details sin stackTrace', async ({ request }) => {
+    // GIVEN — a UUID that does not correspond to any existing contact
+    const nonExistentId = '00000000-0000-4000-8000-000000000099';
+
+    // WHEN — PUT /api/v1/contactos/:id with a valid payload but non-existent ID
+    const validPayload = {
+      nombre: 'Contacto Inexistente API-CT-11',
+      cargo: 'Analista',
+      telefono: '+57 1 234 5679',
+      email: 'no.existe@empresa.com',
+    };
+    const response = await request.put(`${API_BASE_URL}/api/v1/contactos/${nonExistentId}`, {
+      data: validPayload,
+    });
+
+    // THEN — response is 404 Not Found
+    expect(response.status()).toBe(404);
+
+    // AND — body is Problem Details (RFC 7807)
+    const body = await response.json();
+    expect(typeof body).toBe('object');
+    expect(Array.isArray(body)).toBe(false);
+    expect(body.status).toBe(404);
+    expect(typeof body.title).toBe('string');
+    expect(body.title.length).toBeGreaterThan(0);
+
+    // AND — no stack trace or internal information is exposed (NFR6)
+    expect((body as Record<string, unknown>).stackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).StackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).stack_trace).toBeUndefined();
+    const bodyText = JSON.stringify(body);
+    expect(bodyText).not.toMatch(/at SiesaAgents/i);
+  });
+});
+
+// =============================================================================
 
 test.describe('Story 3.2 — API: GET /api/v1/contactos/:id', () => {
   const createdIds: string[] = [];

@@ -6,15 +6,17 @@ using SiesaAgents.Domain.Contactos.Interfaces;
 namespace SiesaAgents.UnitTests.Handlers;
 
 /// <summary>
-/// Unit tests for CreateContactoCommandHandler.
+/// Unit tests for CreateContactoCommandHandler and UpdateContactoCommandHandler.
 ///
-/// Tests are in RED phase — CreateContactoCommandHandler does not exist yet.
+/// Story 3.3 tests (UNIT-B-CT-04): CreateContactoCommandHandler
+/// Story 3.4 tests (UNIT-B-CT-06, UNIT-B-CT-07): UpdateContactoCommandHandler
+///
+/// Story 3.4 tests are in RED phase — UpdateContactoCommandHandler does not exist yet.
 /// Make these tests GREEN by implementing:
-///   backend/src/SiesaAgents.Application/Contactos/Commands/CreateContactoCommandHandler.cs
-///   backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs (add CreateAsync)
-///   backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs (implement CreateAsync)
-///
-/// Test IDs: UNIT-B-CT-04
+///   backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommand.cs
+///   backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommandHandler.cs
+///   backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs (add UpdateAsync)
+///   backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs (implement UpdateAsync)
 /// </summary>
 public class ContactoHandlerTests
 {
@@ -111,6 +113,74 @@ public class ContactoHandlerTests
     }
 
     // ---------------------------------------------------------------------------
+    // UNIT-B-CT-06 (P1 · AC2 — Story 3.4)
+    // Given an UpdateContactoCommand with a contactoId that exists
+    // When UpdateContactoCommandHandler.HandleAsync is called
+    // Then it returns a ContactoDto
+    //   AND the dto fields match the updated command fields
+    //   AND the dto.Id matches the original contact Id
+    // ---------------------------------------------------------------------------
+    [Fact]
+    public async Task UpdateHandleAsync_ExistingContact_ReturnsUpdatedDto()
+    {
+        // GIVEN — an existing contact in the repository
+        var existing = ContactoEntity.Create(
+            nombre: "María García Original",
+            cargo: "Analista",
+            telefono: "+57 1 234 5679",
+            email: "m.garcia@empresa.com"
+        );
+        var repository = new UpdatableContactoRepository(existing);
+        var validator = new UpdateContactoCommandValidator();
+        var handler = new UpdateContactoCommandHandler(repository, validator);
+        var command = new UpdateContactoCommand(
+            Id: existing.Id,
+            Nombre: "María García Actualizada",
+            Cargo: "Directora Comercial",
+            Telefono: "+57 1 234 5680",
+            Email: "m.garcia.new@empresa.com"
+        );
+
+        // WHEN — handler processes the update command
+        var dto = await handler.HandleAsync(command, CancellationToken.None);
+
+        // THEN — dto.Id matches the original contact id
+        Assert.Equal(existing.Id, dto.Id);
+
+        // AND — dto fields reflect the updated values from the command
+        Assert.Equal("María García Actualizada", dto.Nombre);
+        Assert.Equal("Directora Comercial", dto.Cargo);
+        Assert.Equal("+57 1 234 5680", dto.Telefono);
+        Assert.Equal("m.garcia.new@empresa.com", dto.Email);
+    }
+
+    // ---------------------------------------------------------------------------
+    // UNIT-B-CT-07 (P1 · AC2 — Story 3.4)
+    // Given an UpdateContactoCommand with a contactoId that does NOT exist
+    // When UpdateContactoCommandHandler.HandleAsync is called
+    // Then it throws KeyNotFoundException
+    // ---------------------------------------------------------------------------
+    [Fact]
+    public async Task UpdateHandleAsync_NotExistingContact_ThrowsKeyNotFoundException()
+    {
+        // GIVEN — repository returns null for any id (contact does not exist)
+        var repository = new CapturingContactoRepository(); // GetByIdAsync returns null
+        var validator = new UpdateContactoCommandValidator();
+        var handler = new UpdateContactoCommandHandler(repository, validator);
+        var command = new UpdateContactoCommand(
+            Id: Guid.NewGuid(),
+            Nombre: "Nombre",
+            Cargo: "Cargo",
+            Telefono: "+57 1 234 5679",
+            Email: "test@empresa.com"
+        );
+
+        // WHEN / THEN — handler throws KeyNotFoundException
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => handler.HandleAsync(command, CancellationToken.None));
+    }
+
+    // ---------------------------------------------------------------------------
     // Fakes
     // ---------------------------------------------------------------------------
 
@@ -136,5 +206,34 @@ public class ContactoHandlerTests
             LastCreated = entity;
             return Task.FromResult(entity);
         }
+
+        public Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.FromResult(entity);
+    }
+
+    /// <summary>
+    /// Fake IContactoRepository that returns a specific existing contact from GetByIdAsync
+    /// and captures the entity passed to UpdateAsync. Used by Story 3.4 tests.
+    /// </summary>
+    private sealed class UpdatableContactoRepository : IContactoRepository
+    {
+        private readonly ContactoEntity _entity;
+
+        public UpdatableContactoRepository(ContactoEntity entity)
+        {
+            _entity = entity;
+        }
+
+        public Task<IEnumerable<ContactoEntity>> GetAllAsync(CancellationToken ct)
+            => Task.FromResult<IEnumerable<ContactoEntity>>(new[] { _entity });
+
+        public Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+            => Task.FromResult<ContactoEntity?>(_entity.Id == id ? _entity : null);
+
+        public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.FromResult(entity);
+
+        public Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
+            => Task.FromResult(entity);
     }
 }
