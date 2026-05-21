@@ -10,7 +10,7 @@ vi.mock('../../infrastructure/clienteApiRepository', () => ({
   },
 }))
 
-vi.mock('../../../../shared/lib/toastStore', () => ({
+vi.mock('../../../../../shared/lib/toastStore', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock('../../../../shared/lib/toastStore', () => ({
 }))
 
 import { clienteApiRepository } from '../../infrastructure/clienteApiRepository'
-import { toast } from '../../../../shared/lib/toastStore'
+import { toast } from '../../../../../shared/lib/toastStore'
 import { useCreateCliente } from '../useCreateCliente'
 
 const mockCreate = clienteApiRepository.create as ReturnType<typeof vi.fn>
