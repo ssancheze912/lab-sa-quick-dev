@@ -3,20 +3,28 @@ import { ApiHelper } from '../../helpers/api.helper';
 import { buildCliente, buildContacto } from '../../helpers/data.helper';
 
 /**
- * ATDD — Story 4.3: Navigate from Client Detail to Contact Detail
+ * ATDD — Stories 4.3 & 4.4: Navigation — Contact ↔ Client
  *
  * RED Phase — Tests intentionally fail until implementation is complete.
  *
- * Coverage:
+ * Story 4.3 Coverage:
  *   E2E-AC-10  P0  AC1 — Clicking a contact row in ContactManager navigates to
  *                         /contactos/:contactoId (FR22, NFR8 ≤ 2 clicks from client list)
  *   E2E-AC-11  P0  AC1 — Navigation from client list to contact detail requires
  *                         exactly 2 clicks: (1) select client, (2) click contact in ContactManager
  *   E2E-AC-12  P1  AC2 — Back navigation from contact detail (reached via ContactManager)
  *                         returns to client detail view at /clientes/:clienteId
+ *
+ * Story 4.4 Coverage:
+ *   E2E-AC-13  P0  AC1 — Contact detail shows associated client name when contact has a client
+ *                         (FR23, NFR9: no additional navigation required)
+ *   E2E-AC-14  P0  AC2 — Clicking client name link in contact detail navigates to
+ *                         /clientes/:clienteId in exactly 1 click (FR24)
+ *   E2E-AC-15  P1  AC3 — Contact detail shows "Sin cliente asignado" when contact has
+ *                         no associated client (FR23)
  */
 
-test.describe('Story 4.3 — Navigate from Client Detail to Contact Detail', () => {
+test.describe('Stories 4.3 & 4.4 — Navigation: Client ↔ Contact', () => {
   let apiHelper: ApiHelper;
   const createdClienteIds: string[] = [];
   const createdContactoIds: string[] = [];
