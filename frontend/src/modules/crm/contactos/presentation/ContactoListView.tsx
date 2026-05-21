@@ -71,7 +71,14 @@ export function ContactoListView() {
           />
         )}
 
-        {!isLoading && !isError && data.length > 0 && (
+        {!isLoading && !isError && data.length > 0 && filteredContactos.length === 0 && (
+          <EmptyState
+            title="Sin resultados"
+            description="No hay contactos que coincidan con la búsqueda."
+          />
+        )}
+
+        {!isLoading && !isError && data.length > 0 && filteredContactos.length > 0 && (
           <ul
             role="list"
             aria-label="Lista de contactos"
