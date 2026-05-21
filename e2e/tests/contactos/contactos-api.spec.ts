@@ -509,13 +509,14 @@ test.describe('Story 3.5 — API: DELETE /api/v1/contactos/:id', () => {
   //   AND that 404 body does NOT contain a stackTrace key (NFR6)
   // ---------------------------------------------------------------------------
   test('API-CT-06 — DELETE /api/v1/contactos/:id devuelve 204; GET posterior devuelve 404 Problem Details sin stackTrace', async ({ request }) => {
-    // GIVEN — a contact is created via the API
+    // GIVEN — a contact is created via the API using the factory (avoids hardcoded data)
+    const contactoData = buildContacto({ nombre: 'Contacto Para Eliminar API-CT-06' });
     const createResponse = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
       data: {
-        nombre: 'Contacto Para Eliminar API-CT-06',
-        cargo: 'Analista',
-        telefono: '+57 1 234 5670',
-        email: 'api.ct06@empresa.com',
+        nombre: contactoData.nombre,
+        cargo: contactoData.cargo,
+        telefono: contactoData.telefono,
+        email: contactoData.email,
       },
     });
     expect(createResponse.status()).toBe(201);

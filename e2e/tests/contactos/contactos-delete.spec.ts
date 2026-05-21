@@ -105,7 +105,8 @@ test.describe('Story 3.5 — Eliminar contacto (E2E)', () => {
     // GIVEN — a contact exists in the system
     const contactoData = buildContacto({ nombre: 'Contacto Confirmar E2E-CT-24' });
     const created = await apiHelper.createContacto(contactoData);
-    // NOTE: No cleanup push — the test itself deletes the contact
+    // Safety net: push id so afterEach cleans up if the test fails before deletion
+    createdContactoIds.push(created.id);
 
     // GIVEN — intercept network BEFORE navigation; track DELETE calls (network-first)
     let deleteCallCount = 0;
@@ -153,7 +154,8 @@ test.describe('Story 3.5 — Eliminar contacto (E2E)', () => {
     // GIVEN — a contact exists in the system
     const contactoData = buildContacto({ nombre: 'Contacto Toast E2E-CT-25' });
     const created = await apiHelper.createContacto(contactoData);
-    // NOTE: No cleanup push — the test itself deletes the contact
+    // Safety net: push id so afterEach cleans up if the test fails before deletion
+    createdContactoIds.push(created.id);
 
     // GIVEN — intercept network BEFORE navigation (network-first pattern)
     await page.route('**/api/v1/contactos**', (route) => route.continue());
