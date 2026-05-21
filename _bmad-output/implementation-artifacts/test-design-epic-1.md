@@ -530,6 +530,65 @@ Phase 5 — Unit Test Suites (P3)
 
 ---
 
+## 8b. Resource Estimates
+
+### Test Development Effort
+
+| Priority | Count | Hours/Test | Total Hours | Notes |
+|----------|-------|------------|-------------|-------|
+| P0 | 5 | 2.0 | 10.0 | CORS, middleware, strict build — complex setup |
+| P1 | 6 | 1.0 | 6.0 | Standard coverage — routing, DB migration, build |
+| P2 | 4 | 0.5 | 2.0 | Component viewport, snake_case validation |
+| P3 | 2 | 0.25 | 0.5 | Unit test suites (already scaffolded by impl) |
+| **Total** | **17** | — | **18.5 hours** | **~2.3 days** |
+
+### Prerequisites
+
+**Test Data:**
+- No domain entity factories needed for Epic 1 (no domain tables yet)
+- `WebApplicationFactory<Program>` test host for backend integration tests
+- Optional: `TestContainers` Postgres container for DB isolation
+
+**Tooling:**
+- Vitest 2+ with `@testing-library/react` and `jsdom` — frontend unit/component tests
+- Playwright 1.40+ — E2E deep-link verification
+- xUnit 2+ with `WebApplicationFactory<Program>` — backend integration tests
+- TestContainers (Postgres) — isolated database for migration tests
+
+**Environment:**
+- Node.js 20+, npm — frontend build/test
+- .NET 10 SDK — backend build/test
+- PostgreSQL 18+ on port 5432 with CREATE DATABASE privilege
+- All dependencies restored (`npm install`, `dotnet restore`)
+
+---
+
+## 8c. Quality Gate Criteria
+
+### Pass/Fail Thresholds
+
+- **P0 pass rate**: 100% (no exceptions — 5 tests must all pass)
+- **P1 pass rate**: 100% for this epic (foundation layer; no partial pass acceptable)
+- **P2/P3 pass rate**: ≥90% (informational — may be deferred with justification)
+- **High-risk mitigations** (R1, R2, R3): 100% complete before Epic 1 closure
+
+### Coverage Targets
+
+- **Critical paths** (CORS, middleware, TypeScript build): 100%
+- **Security scenarios** (NFR6 — no stack trace exposure): 100%
+- **Navigation shell**: ≥80% of AC covered by automated tests
+- **Database wiring**: 100% of AC covered
+
+### Non-Negotiable Requirements
+
+- [ ] All P0 tests pass (TC-E1-P0-01 through TC-E1-P0-05)
+- [ ] No high-risk items (R1, R2, R3) unmitigated
+- [ ] Problem Details format verified — no stack trace leakage (R3)
+- [ ] CORS preflight + actual request verified (R1)
+- [ ] TypeScript strict build exits 0 (R2)
+
+---
+
 ## 9. Definition of Done for Epic 1
 
 The epic is considered test-complete when:
