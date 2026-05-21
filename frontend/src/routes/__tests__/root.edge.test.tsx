@@ -37,9 +37,14 @@ async function createTestRouter(initialPath: string = '/') {
 
 async function renderWithRouter(initialPath: string = '/') {
   const { RouterProvider } = await import('@tanstack/react-router')
+  const { QueryProvider } = await import('../../app/providers/QueryProvider')
   const router = await createTestRouter(initialPath)
   await router.load()
-  return render(<RouterProvider router={router} />)
+  return render(
+    <QueryProvider>
+      <RouterProvider router={router} />
+    </QueryProvider>
+  )
 }
 
 function setViewportWidth(width: number) {

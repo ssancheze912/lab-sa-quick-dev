@@ -46,13 +46,19 @@ async function createTestRouter(initialPath: string = '/') {
 
 /**
  * Renders the RouterProvider with the given router.
+ * Wraps with QueryProvider to support TanStack Query hooks used in route components.
  * Returns RTL utilities.
  */
 async function renderWithRouter(initialPath: string = '/') {
   const { RouterProvider } = await import('@tanstack/react-router')
+  const { QueryProvider } = await import('../../app/providers/QueryProvider')
   const router = await createTestRouter(initialPath)
   await router.load()
-  return render(<RouterProvider router={router} />)
+  return render(
+    <QueryProvider>
+      <RouterProvider router={router} />
+    </QueryProvider>
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -213,9 +219,14 @@ describe('AC3 — Deep linking: /clientes and /contactos render directly', () =>
     // GIVEN: The user types /contactos directly in the URL bar
     // WHEN: Router initializes at /contactos
     const { RouterProvider } = await import('@tanstack/react-router')
+    const { QueryProvider } = await import('../../app/providers/QueryProvider')
     const router = await createTestRouter('/contactos')
     await router.load()
-    render(<RouterProvider router={router} />)
+    render(
+      <QueryProvider>
+        <RouterProvider router={router} />
+      </QueryProvider>
+    )
 
     // THEN: The URL remains /contactos (no redirect)
     expect(router.state.location.pathname).toBe('/contactos')

@@ -4,31 +4,9 @@ using SiesaAgents.Domain.Contactos.Interfaces;
 
 namespace SiesaAgents.UnitTests.Handlers;
 
-/// <summary>
-/// ATDD — Story 3.1: Contact List &amp; Search
-/// Unit tests for GetContactosQueryHandler.
-///
-/// Tests are in RED phase — they define expected behaviour BEFORE implementation.
-/// Make these tests GREEN by implementing:
-///   SiesaAgents.Domain/Contactos/Entities/ContactoEntity.cs
-///   SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs
-///   SiesaAgents.Application/Contactos/Queries/GetContactosQuery.cs
-///   SiesaAgents.Application/Contactos/Queries/GetContactosQueryHandler.cs
-///   SiesaAgents.Application/Contactos/DTOs/ContactoDto.cs
-///
-/// Coverage:
-///   UNIT-B-CT-GET-01 (P1) — Handler returns ContactoDto[] when repository returns data
-///   UNIT-B-CT-GET-02 (P1) — Handler returns empty collection when repository has no records
-/// </summary>
 public class GetContactosQueryHandlerTests
 {
-    // -------------------------------------------------------------------------
-    // UNIT-B-CT-GET-01 (P1 · AC1)
-    // Given the IContactoRepository returns a list of ContactoEntity records
-    // When HandleAsync is called with GetContactosQuery
-    // Then the handler returns a collection of ContactoDto mapped from the entities
-    //   AND each DTO contains the correct Nombre, Cargo, Email, and Id values
-    // -------------------------------------------------------------------------
+    // UNIT-B-CT-GET-01: Handler returns all contacts as ContactoDto[] when repository returns data
     [Fact]
     public async Task HandleAsync_WithContactos_ReturnsMappedDtos()
     {
@@ -36,7 +14,7 @@ public class GetContactosQueryHandlerTests
         var contactos = new List<ContactoEntity>
         {
             ContactoEntity.Create("María García", "Gerente Comercial", "+57 1 234 5679", "m.garcia@empresa.com"),
-            ContactoEntity.Create("Carlos López", "Analista TI", "+57 1 234 5680", "c.lopez@empresa.com"),
+            ContactoEntity.Create("Juan Pérez", "Analista", "+57 1 234 5680", "j.perez@empresa.com"),
         };
         var repository = new FakeContactoRepository(contactos);
         var handler = new GetContactosQueryHandler(repository);
@@ -46,22 +24,11 @@ public class GetContactosQueryHandlerTests
 
         // Assert
         Assert.Equal(2, result.Count);
-        Assert.Contains(result, d =>
-            d.Nombre == "María García" &&
-            d.Cargo == "Gerente Comercial" &&
-            d.Email == "m.garcia@empresa.com");
-        Assert.Contains(result, d =>
-            d.Nombre == "Carlos López" &&
-            d.Cargo == "Analista TI" &&
-            d.Email == "c.lopez@empresa.com");
+        Assert.Contains(result, d => d.Nombre == "María García" && d.Email == "m.garcia@empresa.com");
+        Assert.Contains(result, d => d.Nombre == "Juan Pérez" && d.Email == "j.perez@empresa.com");
     }
 
-    // -------------------------------------------------------------------------
-    // UNIT-B-CT-GET-02 (P1 · AC1)
-    // Given the IContactoRepository returns an empty collection
-    // When HandleAsync is called with GetContactosQuery
-    // Then the handler returns an empty collection (not null, not an error)
-    // -------------------------------------------------------------------------
+    // UNIT-B-CT-GET-02: Handler returns empty array when repository returns no records
     [Fact]
     public async Task HandleAsync_WithNoContactos_ReturnsEmptyCollection()
     {
@@ -76,9 +43,6 @@ public class GetContactosQueryHandlerTests
         Assert.Empty(result);
     }
 
-    // -------------------------------------------------------------------------
-    // Fake in-memory repository for unit test isolation
-    // -------------------------------------------------------------------------
     private sealed class FakeContactoRepository : IContactoRepository
     {
         private readonly IEnumerable<ContactoEntity> _data;

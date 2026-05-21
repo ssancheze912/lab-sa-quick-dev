@@ -1,9 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { ContactoListView } from '../../modules/crm/contactos/presentation/ContactoListView'
 
 function ContactosPage() {
   return (
-    <div className="p-6" data-testid="contactos-view">
-      Contactos
+    <div className="flex h-full" data-testid="contactos-view">
+      <ContactoListView />
+      <Outlet />
     </div>
   )
 }

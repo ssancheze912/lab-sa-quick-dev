@@ -4,7 +4,9 @@ using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
 using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Application.Contactos.Queries;
 using SiesaAgents.Domain.Clientes.Interfaces;
+using SiesaAgents.Domain.Contactos.Interfaces;
 using SiesaAgents.Infrastructure.Data;
 using SiesaAgents.Infrastructure.Repositories;
 
@@ -36,6 +38,10 @@ builder.Services.AddScoped<DeleteClienteCommandHandler>();
 builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 
+// Contactos
+builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
+builder.Services.AddScoped<GetContactosQueryHandler>();
+
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -44,5 +50,6 @@ app.MapOpenApi();
 app.MapScalarApiReference();
 
 app.MapClienteEndpoints();
+app.MapContactoEndpoints();
 
 app.Run();
