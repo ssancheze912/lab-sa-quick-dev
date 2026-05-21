@@ -1,24 +1,16 @@
 using Microsoft.EntityFrameworkCore;
-using SiesaAgents.Domain.Clientes.Entities;
 
 namespace SiesaAgents.Infrastructure.Data;
 
-public class AppDbContext : DbContext
+/// <summary>
+/// Main EF Core DbContext. Uses automatic snake_case naming via ApplySnakeCaseNaming().
+/// </summary>
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-    {
-    }
-
-    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        // Apply entity configurations (IEntityTypeConfiguration<>) when they exist
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-
-        // MANDATORY: snake_case naming for all tables and columns — MUST be last
         modelBuilder.ApplySnakeCaseNaming();
     }
 }
