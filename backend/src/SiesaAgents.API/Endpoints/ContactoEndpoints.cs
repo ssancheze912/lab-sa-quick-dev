@@ -1,3 +1,4 @@
+using SiesaAgents.Application.Contactos.Commands;
 using SiesaAgents.Application.Contactos.DTOs;
 using SiesaAgents.Application.Contactos.Queries;
 
@@ -27,5 +28,14 @@ public static class ContactoEndpoints
         .WithName("GetContactoById")
         .Produces<ContactoDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status404NotFound);
+
+        group.MapPost("/", async (CreateContactoCommand command, CreateContactoCommandHandler handler, CancellationToken ct) =>
+        {
+            var result = await handler.HandleAsync(command, ct);
+            return Results.Created($"/api/v1/contactos/{result.Id}", result);
+        })
+        .WithName("CreateContacto")
+        .Produces<ContactoDto>(StatusCodes.Status201Created)
+        .ProducesValidationProblem();
     }
 }

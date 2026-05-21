@@ -4,7 +4,9 @@ using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
 using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Application.Contactos.Commands;
 using SiesaAgents.Application.Contactos.Queries;
+using SiesaAgents.Application.Contactos.Validators;
 using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Domain.Contactos.Interfaces;
 using SiesaAgents.Infrastructure.Data;
@@ -42,6 +44,8 @@ builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
 builder.Services.AddScoped<GetContactosQueryHandler>();
 builder.Services.AddScoped<GetContactoByIdQueryHandler>();
+builder.Services.AddScoped<CreateContactoCommandValidator>();
+builder.Services.AddScoped<CreateContactoCommandHandler>();
 
 var app = builder.Build();
 

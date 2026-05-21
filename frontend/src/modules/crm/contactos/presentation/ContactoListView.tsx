@@ -5,11 +5,13 @@ import 'react-loading-skeleton/dist/skeleton.css'
 import { useContactos } from '../application/useContactos'
 import { filterContactos } from '../application/filterContactos'
 import { ContactoListItem } from './ContactoListItem'
+import { ContactoFormDialog } from './ContactoFormDialog'
 import { EmptyState } from '../../../../shared/components/EmptyState'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 
 export function ContactoListView() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { data = [], isLoading, isError, refetch } = useContactos()
   const params = useParams({ strict: false }) as { contactoId?: string }
   const activeContactoId = params.contactoId
@@ -24,8 +26,16 @@ export function ContactoListView() {
       data-testid="contactos-list-view"
       className="flex flex-col h-full bg-white"
     >
-      {/* Search input */}
-      <div className="px-3 pt-3 pb-2 border-b border-slate-100">
+      {/* Search input + Nuevo contacto button */}
+      <div className="px-3 pt-3 pb-2 border-b border-slate-100 flex flex-col gap-2">
+        <button
+          type="button"
+          data-testid="btn-nuevo-contacto"
+          onClick={() => setIsDialogOpen(true)}
+          className="w-full px-4 py-2 text-sm rounded-md bg-[#0e79fd] text-white hover:bg-[#154ca9] font-medium"
+        >
+          Nuevo contacto
+        </button>
         <input
           type="search"
           placeholder="Buscar contacto por nombre o email"
@@ -35,6 +45,8 @@ export function ContactoListView() {
           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0e79fd] focus:border-transparent"
         />
       </div>
+
+      <ContactoFormDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
 
       {/* Content area */}
       <div className="flex-1 overflow-y-auto">
