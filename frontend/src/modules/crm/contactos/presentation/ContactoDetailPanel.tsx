@@ -58,7 +58,7 @@ export function ContactoDetailPanel({ contactoId }: Props) {
         data-testid="btn-volver"
         aria-label="Volver a la vista anterior"
         onClick={() => router.history.back()}
-        className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 mb-0 self-start"
+        className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 mb-0 self-start focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd] rounded"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -91,7 +91,7 @@ export function ContactoDetailPanel({ contactoId }: Props) {
             type="button"
             data-testid="btn-eliminar"
             onClick={() => setDeleteDialogOpen(true)}
-            className="px-4 py-2 text-sm rounded-md bg-[#0e79fd] text-white hover:bg-[#154ca9]"
+            className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600"
           >
             Eliminar
           </button>

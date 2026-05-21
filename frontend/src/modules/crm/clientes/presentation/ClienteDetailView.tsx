@@ -1,5 +1,5 @@
 import { isAxiosError } from 'axios'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import Skeleton from 'react-loading-skeleton'
@@ -22,8 +22,6 @@ export function ClienteDetailView({ clienteId }: Props) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: contactos } = useContactosByCliente(clienteId)
-  const contactManagerRef = useRef<HTMLDivElement>(null)
-
   const adapter = useMemo(
     () => new ClienteContactServiceAdapter(clienteId, queryClient, navigate),
     [clienteId, queryClient, navigate],
@@ -213,7 +211,6 @@ export function ClienteDetailView({ clienteId }: Props) {
         </div>
 
         <div
-          ref={contactManagerRef}
           data-testid="contact-manager"
           onClick={handleContactManagerClick}
         >

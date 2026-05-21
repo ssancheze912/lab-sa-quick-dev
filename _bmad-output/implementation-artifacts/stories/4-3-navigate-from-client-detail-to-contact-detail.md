@@ -1,6 +1,6 @@
 # Story 4.3: Navigate from Client Detail to Contact Detail
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -251,7 +251,7 @@ const router = useRouter()
 - Navigation is implemented via click event delegation on the `<tr>` row in the ContactManager table layout — ContactManager (siesa-ui-kit v1.0.194) does NOT expose an external `onItemClick`/`onViewContact` prop at `ContactManagerProps` level; verified via type inspection and bundle analysis.
 - `ContactoDetailPanel` (used at `/contactos/$contactoId` route) updated with "Volver" back button using `router.history.back()` — WCAG 2.1 AA compliant (`aria-label="Volver a la vista anterior"`, `data-testid="btn-volver"`).
 - 2 new unit tests added: UNIT-AC-06 (onContactClick calls navigate), UNIT-AC-07 (no-throw when navigate is undefined).
-- All 31 adapter unit tests pass. TypeScript clean. ESLint package unavailable in worktree (pre-existing issue, not related to this story).
+- All 35 adapter unit tests pass across 4 test files. TypeScript clean. ESLint package unavailable in worktree (pre-existing issue, not related to this story).
 - E2E tests E2E-AC-10, E2E-AC-11, E2E-AC-12 created in `e2e/tests/asociacion/asociacion-navegacion.spec.ts`.
 
 ### Files Modified/Created
