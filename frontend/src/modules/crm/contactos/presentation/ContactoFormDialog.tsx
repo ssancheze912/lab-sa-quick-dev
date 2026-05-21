@@ -53,11 +53,15 @@ export function ContactoFormDialog({ open, onOpenChange }: Props) {
                 id="nombre"
                 data-testid="input-nombre"
                 {...register('nombre')}
+                required
+                aria-required="true"
+                aria-invalid={errors.nombre ? 'true' : 'false'}
+                aria-describedby={errors.nombre ? 'error-nombre' : undefined}
                 className="border rounded-md px-3 py-2 text-sm"
                 placeholder="Nombre completo"
               />
               {errors.nombre && (
-                <p role="alert" data-testid="error-nombre" className="text-xs text-red-500">
+                <p role="alert" id="error-nombre" data-testid="error-nombre" className="text-xs text-red-500">
                   {errors.nombre.message}
                 </p>
               )}
@@ -71,11 +75,15 @@ export function ContactoFormDialog({ open, onOpenChange }: Props) {
                 id="cargo"
                 data-testid="input-cargo"
                 {...register('cargo')}
+                required
+                aria-required="true"
+                aria-invalid={errors.cargo ? 'true' : 'false'}
+                aria-describedby={errors.cargo ? 'error-cargo' : undefined}
                 className="border rounded-md px-3 py-2 text-sm"
                 placeholder="Cargo en la empresa"
               />
               {errors.cargo && (
-                <p role="alert" data-testid="error-cargo" className="text-xs text-red-500">
+                <p role="alert" id="error-cargo" data-testid="error-cargo" className="text-xs text-red-500">
                   {errors.cargo.message}
                 </p>
               )}
@@ -89,11 +97,15 @@ export function ContactoFormDialog({ open, onOpenChange }: Props) {
                 id="telefono"
                 data-testid="input-telefono"
                 {...register('telefono')}
+                required
+                aria-required="true"
+                aria-invalid={errors.telefono ? 'true' : 'false'}
+                aria-describedby={errors.telefono ? 'error-telefono' : undefined}
                 className="border rounded-md px-3 py-2 text-sm"
                 placeholder="+57 1 234 5678"
               />
               {errors.telefono && (
-                <p role="alert" data-testid="error-telefono" className="text-xs text-red-500">
+                <p role="alert" id="error-telefono" data-testid="error-telefono" className="text-xs text-red-500">
                   {errors.telefono.message}
                 </p>
               )}
@@ -108,11 +120,15 @@ export function ContactoFormDialog({ open, onOpenChange }: Props) {
                 data-testid="input-email"
                 type="email"
                 {...register('email')}
+                required
+                aria-required="true"
+                aria-invalid={errors.email ? 'true' : 'false'}
+                aria-describedby={errors.email ? 'error-email' : undefined}
                 className="border rounded-md px-3 py-2 text-sm"
                 placeholder="correo@empresa.com"
               />
               {errors.email && (
-                <p role="alert" data-testid="error-email" className="text-xs text-red-500">
+                <p role="alert" id="error-email" data-testid="error-email" className="text-xs text-red-500">
                   {errors.email.message}
                 </p>
               )}
