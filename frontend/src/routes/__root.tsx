@@ -51,6 +51,7 @@ function RootLayout() {
       {isDesktop ? (
         /* Desktop nav — left side */
         <nav aria-label="Navegación principal" className="flex flex-col" data-testid="nav-rail">
+          <span className="text-xs font-bold text-[#0e79fd] text-center px-2 py-2 shrink-0">Siesa Agents</span>
           <div className="flex flex-col">
             {NAV_ITEMS.map((item) => (
               <div
@@ -120,6 +121,11 @@ function RootLayout() {
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
+        {!isDesktop && (
+          <header className="flex items-center h-12 px-4 border-b border-slate-200 bg-white">
+            <span className="text-sm font-bold text-[#0e79fd]">Siesa Agents</span>
+          </header>
+        )}
         <Outlet />
       </main>
     </div>

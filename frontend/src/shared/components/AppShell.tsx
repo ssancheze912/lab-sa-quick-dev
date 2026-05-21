@@ -30,6 +30,9 @@ export function AppShell({ children }: AppShellProps) {
         aria-label="Navegación principal"
         className="hidden lg:flex flex-col w-[72px] bg-white border-r border-slate-200 shrink-0"
       >
+        <div className="flex items-center justify-center h-12 shrink-0">
+          <span className="text-xs font-bold text-[#0e79fd] text-center leading-tight px-1">Siesa Agents</span>
+        </div>
         <ul className="flex flex-col items-center gap-1 pt-4">
           {navItems.map(({ id, to, label, Icon }) => {
             const isActive = currentPath === to || currentPath.startsWith(to + '/')
