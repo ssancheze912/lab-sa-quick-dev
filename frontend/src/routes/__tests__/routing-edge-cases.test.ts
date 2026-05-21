@@ -35,14 +35,15 @@ describe('Route tree — structure and registration edge cases', () => {
 
   /**
    * UNIT-RE-03 (P1)
-   * The route tree contains exactly 7 routes:
-   * __root__, /, /not-found, /_app, /_app/clientes, /_app/clientes/$clienteId, /_app/contactos
-   * (Updated from 5 after Story 2.2 added /$clienteId and Story 1.3 added /not-found)
+   * The route tree contains exactly 8 routes:
+   * __root__, /, /not-found, /_app, /_app/clientes, /_app/clientes/$clienteId,
+   * /_app/contactos, /_app/contactos/$contactoId
+   * (Updated from 7 after Story 3.2 added /_app/contactos/$contactoId)
    */
-  it('UNIT-RE-03 — Route tree has exactly 7 registered routes', () => {
+  it('UNIT-RE-03 — Route tree has exactly 8 registered routes', () => {
     const router = createRouter({ routeTree })
     const routeIds = Object.keys(router.routesById)
-    expect(routeIds).toHaveLength(7)
+    expect(routeIds).toHaveLength(8)
   })
 
   /**
