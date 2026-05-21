@@ -26,7 +26,7 @@ public class ContactoConfiguration : IEntityTypeConfiguration<ContactoEntity>
         // Index for client filtering (Epic 4)
         builder.HasIndex(c => c.ClienteId).HasDatabaseName("ix_contactos_cliente_id");
 
-        // Index for email lookups
-        builder.HasIndex(c => c.Email).HasDatabaseName("ix_contactos_email");
+        // Unique index for email lookups — prevents duplicate contact emails
+        builder.HasIndex(c => c.Email).IsUnique().HasDatabaseName("uk_contactos_email");
     }
 }
