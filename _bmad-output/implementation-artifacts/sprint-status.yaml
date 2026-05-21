@@ -10,23 +10,23 @@ development_status:
   epic-4-source: _bmad-output/planning-artifacts/epics/epic-04-asociacion-cliente-contacto.md
 
   # Epic statuses
-  epic-1: done
-  epic-2: done
+  epic-1: in-progress
+  epic-2: pending
   epic-3: pending
   epic-4: pending
 
   # Epic 1 — Project Foundation & Application Shell
-  1-1-project-initialization-repository-structure: done
-  1-2-frontend-navigation-shell: done
-  1-3-backend-database-foundation: done
+  1-1-project-initialization-repository-structure: in-progress
+  1-2-frontend-navigation-shell: pending
+  1-3-backend-database-foundation: pending
 
   # Epic 2 — Client Management
-  2-1-client-list-search: done
-  2-2-client-detail-view: done
-  2-3-create-client: done
-  2-4-edit-client: done
-  2-5-delete-client: done
-  2-6-sort-client-list: done
+  2-1-client-list-search: pending
+  2-2-client-detail-view: pending
+  2-3-create-client: pending
+  2-4-edit-client: pending
+  2-5-delete-client: pending
+  2-6-sort-client-list: pending
 
   # Epic 3 — Contact Management
   3-1-contact-list-search: pending
