@@ -46,6 +46,9 @@ builder.Services.AddScoped<GetContactosQueryHandler>();
 builder.Services.AddScoped<GetContactoByIdQueryHandler>();
 builder.Services.AddScoped<CreateContactoCommandValidator>();
 builder.Services.AddScoped<CreateContactoCommandHandler>();
+builder.Services.AddScoped<UpdateContactoCommandValidator>();
+builder.Services.AddScoped<UpdateContactoCommandHandler>();
+builder.Services.AddScoped<DeleteContactoCommandHandler>();
 
 var app = builder.Build();
 

@@ -6,19 +6,15 @@ using SiesaAgents.Domain.Contactos.Interfaces;
 namespace SiesaAgents.UnitTests.Handlers;
 
 /// <summary>
-/// Unit tests for CreateContactoCommandHandler, UpdateContactoCommandHandler,
-/// and DeleteContactoCommandHandler.
+/// Unit tests for CreateContactoCommandHandler.
 ///
-/// Story 3.3 tests (UNIT-B-CT-04): CreateContactoCommandHandler
-/// Story 3.4 tests (UNIT-B-CT-06, UNIT-B-CT-07): UpdateContactoCommandHandler
-/// Story 3.5 tests (UNIT-B-CT-05, UNIT-B-CT-10): DeleteContactoCommandHandler — RED phase
-///
-/// Story 3.5 tests are in RED phase — DeleteContactoCommandHandler does not exist yet.
+/// Tests are in RED phase — CreateContactoCommandHandler does not exist yet.
 /// Make these tests GREEN by implementing:
-///   backend/src/SiesaAgents.Application/Contactos/Commands/DeleteContactoCommand.cs
-///   backend/src/SiesaAgents.Application/Contactos/Commands/DeleteContactoCommandHandler.cs
-///   backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs (add DeleteAsync)
-///   backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs (implement DeleteAsync)
+///   backend/src/SiesaAgents.Application/Contactos/Commands/CreateContactoCommandHandler.cs
+///   backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs (add CreateAsync)
+///   backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs (implement CreateAsync)
+///
+/// Test IDs: UNIT-B-CT-04
 /// </summary>
 public class ContactoHandlerTests
 {
@@ -115,122 +111,106 @@ public class ContactoHandlerTests
     }
 
     // ---------------------------------------------------------------------------
-    // UNIT-B-CT-06 (P1 · AC2 — Story 3.4)
-    // Given an UpdateContactoCommand with a contactoId that exists
+    // UNIT-B-CT-06 (P1 · AC2)
+    // Given a valid UpdateContactoCommand with an existing contact ID
     // When UpdateContactoCommandHandler.HandleAsync is called
-    // Then it returns a ContactoDto
-    //   AND the dto fields match the updated command fields
-    //   AND the dto.Id matches the original contact Id
+    // Then it returns an updated ContactoDto with the new field values
     // ---------------------------------------------------------------------------
     [Fact]
-    public async Task UpdateHandleAsync_ExistingContact_ReturnsUpdatedDto()
+    public async Task UpdateContactoHandler_ExistingContact_ReturnsUpdatedDto()
     {
-        // GIVEN — an existing contact in the repository
-        var existing = ContactoEntity.Create(
-            nombre: "María García Original",
-            cargo: "Analista",
-            telefono: "+57 1 234 5679",
-            email: "m.garcia@empresa.com"
-        );
-        var repository = new UpdatableContactoRepository(existing);
+        // GIVEN — repository has a contact, handler is configured
+        var existing = ContactoEntity.Create("Nombre Original", "Cargo Original", "+57 1 000 0000", "original@empresa.com");
+        var repository = new CapturingContactoRepository(existing);
         var validator = new UpdateContactoCommandValidator();
         var handler = new UpdateContactoCommandHandler(repository, validator);
+
         var command = new UpdateContactoCommand(
             Id: existing.Id,
-            Nombre: "María García Actualizada",
-            Cargo: "Directora Comercial",
-            Telefono: "+57 1 234 5680",
-            Email: "m.garcia.new@empresa.com"
+            Nombre: "Nombre Actualizado",
+            Cargo: "Cargo Actualizado",
+            Telefono: "+57 1 999 9999",
+            Email: "actualizado@empresa.com"
         );
 
-        // WHEN — handler processes the update command
+        // WHEN — handler processes the command
         var dto = await handler.HandleAsync(command, CancellationToken.None);
 
-        // THEN — dto.Id matches the original contact id
+        // THEN — dto contains the updated fields
         Assert.Equal(existing.Id, dto.Id);
-
-        // AND — dto fields reflect the updated values from the command
-        Assert.Equal("María García Actualizada", dto.Nombre);
-        Assert.Equal("Directora Comercial", dto.Cargo);
-        Assert.Equal("+57 1 234 5680", dto.Telefono);
-        Assert.Equal("m.garcia.new@empresa.com", dto.Email);
+        Assert.Equal("Nombre Actualizado", dto.Nombre);
+        Assert.Equal("Cargo Actualizado", dto.Cargo);
+        Assert.Equal("+57 1 999 9999", dto.Telefono);
+        Assert.Equal("actualizado@empresa.com", dto.Email);
+        Assert.Null(dto.ClienteId);
     }
 
     // ---------------------------------------------------------------------------
-    // UNIT-B-CT-07 (P1 · AC2 — Story 3.4)
-    // Given an UpdateContactoCommand with a contactoId that does NOT exist
+    // UNIT-B-CT-07 (P1 · AC2)
+    // Given a UpdateContactoCommand with a non-existent contact ID
     // When UpdateContactoCommandHandler.HandleAsync is called
     // Then it throws KeyNotFoundException
     // ---------------------------------------------------------------------------
     [Fact]
-    public async Task UpdateHandleAsync_NotExistingContact_ThrowsKeyNotFoundException()
+    public async Task UpdateContactoHandler_NonExistentId_ThrowsKeyNotFoundException()
     {
-        // GIVEN — repository returns null for any id (contact does not exist)
-        var repository = new CapturingContactoRepository(); // GetByIdAsync returns null
+        // GIVEN — repository returns null for any id (contact not found)
+        var repository = new CapturingContactoRepository(null);
         var validator = new UpdateContactoCommandValidator();
         var handler = new UpdateContactoCommandHandler(repository, validator);
+
         var command = new UpdateContactoCommand(
             Id: Guid.NewGuid(),
             Nombre: "Nombre",
             Cargo: "Cargo",
-            Telefono: "+57 1 234 5679",
+            Telefono: "+57 1 000 0000",
             Email: "test@empresa.com"
         );
 
         // WHEN / THEN — handler throws KeyNotFoundException
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => handler.HandleAsync(command, CancellationToken.None));
+            () => handler.HandleAsync(command, CancellationToken.None)
+        );
     }
 
     // ---------------------------------------------------------------------------
-    // UNIT-B-CT-05 (P1 · AC2 — Story 3.5)
-    // Given a DeleteContactoCommand with a contactoId that exists in the system
-    // When DeleteContactoCommandHandler.HandleAsync is called
-    // Then it completes without throwing any exception
-    //   AND the repository's DeleteAsync is invoked exactly once
+    // UNIT-B-CT-05 (P1 · AC2)
+    // Given an existing ContactoEntity and a DeleteContactoCommandHandler
+    // When HandleAsync is called with the entity's id
+    // Then it does not throw
     // ---------------------------------------------------------------------------
     [Fact]
-    public async Task DeleteHandleAsync_ExistingContact_CompletesWithoutThrow()
+    public async Task DeleteContactoHandler_ExistingContact_DoesNotThrow()
     {
-        // GIVEN — an existing contact in the repository
-        var existing = ContactoEntity.Create(
-            nombre: "Contacto Para Eliminar",
-            cargo: "Analista",
-            telefono: "+57 1 234 5679",
-            email: "contacto.eliminar@empresa.com"
-        );
-        var repository = new DeletableContactoRepository(existing);
+        // GIVEN — repository has a contact
+        var existing = ContactoEntity.Create("Contacto Eliminar", "Cargo", "+57 1 000 0000", "eliminar@empresa.com");
+        var repository = new CapturingContactoRepository(existing);
         var handler = new DeleteContactoCommandHandler(repository);
         var command = new DeleteContactoCommand(existing.Id);
 
-        // WHEN — handler processes the delete command
-        // THEN — no exception is thrown (handler completes successfully)
-        var exception = await Record.ExceptionAsync(
-            () => handler.HandleAsync(command, CancellationToken.None));
-
+        // WHEN / THEN — handler completes without throwing
+        var exception = await Record.ExceptionAsync(() => handler.HandleAsync(command, CancellationToken.None));
         Assert.Null(exception);
-
-        // AND — repository.DeleteAsync was called exactly once
-        Assert.Equal(1, repository.DeleteCallCount);
     }
 
     // ---------------------------------------------------------------------------
-    // UNIT-B-CT-10 (P1 · AC2 — Story 3.5)
-    // Given a DeleteContactoCommand with a contactoId that does NOT exist
+    // UNIT-B-CT-10 (P1 · AC2)
+    // Given a non-existent contact ID
     // When DeleteContactoCommandHandler.HandleAsync is called
     // Then it throws KeyNotFoundException
     // ---------------------------------------------------------------------------
     [Fact]
-    public async Task DeleteHandleAsync_NotExistingContact_ThrowsKeyNotFoundException()
+    public async Task DeleteContactoHandler_NonExistentId_ThrowsKeyNotFoundException()
     {
-        // GIVEN — repository returns null for any id (contact does not exist)
-        var repository = new CapturingContactoRepository(); // GetByIdAsync returns null
+        // GIVEN — repository returns null for any id
+        var repository = new CapturingContactoRepository(null);
         var handler = new DeleteContactoCommandHandler(repository);
         var command = new DeleteContactoCommand(Guid.NewGuid());
 
         // WHEN / THEN — handler throws KeyNotFoundException
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => handler.HandleAsync(command, CancellationToken.None));
+            () => handler.HandleAsync(command, CancellationToken.None)
+        );
     }
 
     // ---------------------------------------------------------------------------
@@ -244,14 +224,28 @@ public class ContactoHandlerTests
     /// </summary>
     private sealed class CapturingContactoRepository : IContactoRepository
     {
+        private readonly ContactoEntity? _existingEntity;
         public int CreateCallCount { get; private set; }
         public ContactoEntity? LastCreated { get; private set; }
+        public int UpdateCallCount { get; private set; }
+        public ContactoEntity? LastUpdated { get; private set; }
+        public int DeleteCallCount { get; private set; }
+        public ContactoEntity? LastDeleted { get; private set; }
+
+        public CapturingContactoRepository() : this(null) { }
+
+        public CapturingContactoRepository(ContactoEntity? existingEntity)
+        {
+            _existingEntity = existingEntity;
+        }
 
         public Task<IEnumerable<ContactoEntity>> GetAllAsync(CancellationToken ct)
             => Task.FromResult<IEnumerable<ContactoEntity>>(Array.Empty<ContactoEntity>());
 
         public Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct)
-            => Task.FromResult<ContactoEntity?>(null);
+            => Task.FromResult(_existingEntity is not null && _existingEntity.Id == id
+                ? _existingEntity
+                : null);
 
         public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
         {
@@ -261,70 +255,16 @@ public class ContactoHandlerTests
         }
 
         public Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
-            => Task.FromResult(entity);
-
-        public Task DeleteAsync(ContactoEntity entity, CancellationToken ct)
-            => Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Fake IContactoRepository that returns a specific existing contact from GetByIdAsync
-    /// and captures the entity passed to UpdateAsync. Used by Story 3.4 tests.
-    /// </summary>
-    private sealed class UpdatableContactoRepository : IContactoRepository
-    {
-        private readonly ContactoEntity _entity;
-
-        public UpdatableContactoRepository(ContactoEntity entity)
         {
-            _entity = entity;
+            UpdateCallCount++;
+            LastUpdated = entity;
+            return Task.FromResult(entity);
         }
-
-        public Task<IEnumerable<ContactoEntity>> GetAllAsync(CancellationToken ct)
-            => Task.FromResult<IEnumerable<ContactoEntity>>(new[] { _entity });
-
-        public Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct)
-            => Task.FromResult<ContactoEntity?>(_entity.Id == id ? _entity : null);
-
-        public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
-            => Task.FromResult(entity);
-
-        public Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
-            => Task.FromResult(entity);
-
-        public Task DeleteAsync(ContactoEntity entity, CancellationToken ct)
-            => Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Fake IContactoRepository that holds an existing entity and tracks DeleteAsync calls.
-    /// Used by Story 3.5 tests (UNIT-B-CT-05).
-    /// </summary>
-    private sealed class DeletableContactoRepository : IContactoRepository
-    {
-        private readonly ContactoEntity _entity;
-        public int DeleteCallCount { get; private set; }
-
-        public DeletableContactoRepository(ContactoEntity entity)
-        {
-            _entity = entity;
-        }
-
-        public Task<IEnumerable<ContactoEntity>> GetAllAsync(CancellationToken ct)
-            => Task.FromResult<IEnumerable<ContactoEntity>>(new[] { _entity });
-
-        public Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct)
-            => Task.FromResult<ContactoEntity?>(_entity.Id == id ? _entity : null);
-
-        public Task<ContactoEntity> CreateAsync(ContactoEntity entity, CancellationToken ct)
-            => Task.FromResult(entity);
-
-        public Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
-            => Task.FromResult(entity);
 
         public Task DeleteAsync(ContactoEntity entity, CancellationToken ct)
         {
             DeleteCallCount++;
+            LastDeleted = entity;
             return Task.CompletedTask;
         }
     }

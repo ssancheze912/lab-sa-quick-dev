@@ -31,4 +31,17 @@ public class ContactoRepository : IContactoRepository
         await _context.SaveChangesAsync(ct);
         return entity;
     }
+
+    public async Task<ContactoEntity> UpdateAsync(ContactoEntity entity, CancellationToken ct)
+    {
+        _context.Contactos.Update(entity);
+        await _context.SaveChangesAsync(ct);
+        return entity;
+    }
+
+    public async Task DeleteAsync(ContactoEntity entity, CancellationToken ct)
+    {
+        _context.Contactos.Remove(entity);
+        await _context.SaveChangesAsync(ct);
+    }
 }

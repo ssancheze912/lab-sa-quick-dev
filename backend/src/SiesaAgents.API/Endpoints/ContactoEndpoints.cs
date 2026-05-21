@@ -1,6 +1,7 @@
 using SiesaAgents.Application.Contactos.Commands;
 using SiesaAgents.Application.Contactos.DTOs;
 using SiesaAgents.Application.Contactos.Queries;
+using SiesaAgents.Application.Contactos.Validators;
 
 namespace SiesaAgents.API.Endpoints;
 
@@ -37,5 +38,32 @@ public static class ContactoEndpoints
         .WithName("CreateContacto")
         .Produces<ContactoDto>(StatusCodes.Status201Created)
         .ProducesValidationProblem();
+
+        group.MapPut("/{id:guid}", async (
+            Guid id,
+            UpdateContactoCommand body,
+            UpdateContactoCommandHandler handler,
+            CancellationToken ct) =>
+        {
+            var command = body with { Id = id };
+            var result = await handler.HandleAsync(command, ct);
+            return Results.Ok(result);
+        })
+        .WithName("UpdateContacto")
+        .Produces<ContactoDto>(StatusCodes.Status200OK)
+        .ProducesValidationProblem()
+        .Produces(StatusCodes.Status404NotFound);
+
+        group.MapDelete("/{id:guid}", async (
+            Guid id,
+            DeleteContactoCommandHandler handler,
+            CancellationToken ct) =>
+        {
+            await handler.HandleAsync(new DeleteContactoCommand(id), ct);
+            return Results.NoContent();
+        })
+        .WithName("DeleteContacto")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces(StatusCodes.Status404NotFound);
     }
 }

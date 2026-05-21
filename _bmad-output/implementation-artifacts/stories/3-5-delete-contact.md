@@ -1,6 +1,6 @@
 # Story 3.5: Delete Contact
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -20,69 +20,69 @@ so that the contact list only contains relevant records.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Frontend: create `useDeleteContacto` mutation hook (AC: 2)
-  - [ ] Create `frontend/src/modules/crm/contactos/application/useDeleteContacto.ts`
-  - [ ] Use `useMutation` with `mutationFn: (id: string) => contactoApiRepository.delete(id)`
-  - [ ] `onSuccess`: call `queryClient.invalidateQueries({ queryKey: ['contactos'] })`, then `toast.success('Contacto eliminado correctamente')`
-  - [ ] `onError`: call `toast.error('No se pudo eliminar. Intenta de nuevo.')`
-  - [ ] Return mutation object including `isPending`
-  - [ ] Add `delete(id: string): Promise<void>` to `IContactoRepository` interface in `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts`
-  - [ ] Implement `delete()` in `contactoApiRepository.ts` — `DELETE /api/v1/contactos/:id`, expects 204 No Content, returns `Promise<void>`
+- [x] Task 1 — Frontend: create `useDeleteContacto` mutation hook (AC: 2)
+  - [x] Create `frontend/src/modules/crm/contactos/application/useDeleteContacto.ts`
+  - [x] Use `useMutation` with `mutationFn: (id: string) => contactoApiRepository.delete(id)`
+  - [x] `onSuccess`: call `queryClient.invalidateQueries({ queryKey: ['contactos'] })`, then `toast.success('Contacto eliminado correctamente')`
+  - [x] `onError`: call `toast.error('No se pudo eliminar. Intenta de nuevo.')`
+  - [x] Return mutation object including `isPending`
+  - [x] Add `delete(id: string): Promise<void>` to `IContactoRepository` interface in `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts`
+  - [x] Implement `delete()` in `contactoApiRepository.ts` — `DELETE /api/v1/contactos/:id`, expects 204 No Content, returns `Promise<void>`
 
-- [ ] Task 2 — Frontend: create `DeleteContactoDialog` confirmation component (AC: 1, 2, 3)
-  - [ ] Create `frontend/src/modules/crm/contactos/presentation/DeleteContactoDialog.tsx`
-  - [ ] Use Radix UI `Dialog` (Dialog.Root/Content/Portal/Overlay) — same pattern as `DeleteClienteDialog.tsx` from Story 2.5
-  - [ ] Dialog title/message: "¿Eliminar este contacto?"
-  - [ ] Footer buttons: "Cancelar" (closes dialog without DELETE) and "Confirmar" (calls `useDeleteContacto` mutation)
-  - [ ] "Confirmar" button shows loading state while `isPending` is true (`disabled` + "Eliminando..." text)
-  - [ ] On successful deletion: close dialog via `onClose()`, navigate to `/contactos` using TanStack Router `useNavigate`
-  - [ ] On cancel: call `onClose()` without firing DELETE — no mutation invoked
-  - [ ] Guard `onOpenChange` against closing during `isPending` (prevent accidental close on ESC/backdrop while mutation is running)
-  - [ ] Props: `open: boolean`, `onClose: () => void`, `contactoId: string`
-  - [ ] `data-testid="delete-contacto-dialog"` on `Dialog.Content`
-  - [ ] `data-testid="btn-confirmar-eliminar"` on the confirm button
-  - [ ] `data-testid="btn-cancelar-eliminar"` on the cancel button
-  - [ ] `role="alertdialog"` with `aria-labelledby` pointing to the dialog title id and `aria-describedby` pointing to the description paragraph id (WCAG 2.1 AA)
-  - [ ] All labels and dialog text in Spanish
+- [x] Task 2 — Frontend: create `DeleteContactoDialog` confirmation component (AC: 1, 2, 3)
+  - [x] Create `frontend/src/modules/crm/contactos/presentation/DeleteContactoDialog.tsx`
+  - [x] Use Radix UI `Dialog` (Dialog.Root/Content/Portal/Overlay) — same pattern as `DeleteClienteDialog.tsx` from Story 2.5
+  - [x] Dialog title/message: "¿Eliminar este contacto?"
+  - [x] Footer buttons: "Cancelar" (closes dialog without DELETE) and "Confirmar" (calls `useDeleteContacto` mutation)
+  - [x] "Confirmar" button shows loading state while `isPending` is true (`disabled` + "Eliminando..." text)
+  - [x] On successful deletion: close dialog via `onClose()`, navigate to `/contactos` using TanStack Router `useNavigate`
+  - [x] On cancel: call `onClose()` without firing DELETE — no mutation invoked
+  - [x] Guard `onOpenChange` against closing during `isPending` (prevent accidental close on ESC/backdrop while mutation is running)
+  - [x] Props: `open: boolean`, `onClose: () => void`, `contactoId: string`
+  - [x] `data-testid="delete-contacto-dialog"` on `Dialog.Content`
+  - [x] `data-testid="btn-confirmar-eliminar"` on the confirm button
+  - [x] `data-testid="btn-cancelar-eliminar"` on the cancel button
+  - [x] `role="alertdialog"` with `aria-labelledby` pointing to the dialog title id and `aria-describedby` pointing to the description paragraph id (WCAG 2.1 AA)
+  - [x] All labels and dialog text in Spanish
 
-- [ ] Task 3 — Frontend: add "Eliminar" button to `ContactoDetailPanel` (AC: 1)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx`
-  - [ ] Add "Eliminar" button alongside existing "Editar" button (added in Story 3.4)
-  - [ ] Button click sets `deleteDialogOpen = true` via `useState<boolean>`
-  - [ ] Render `<DeleteContactoDialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} contactoId={contacto.id} />`
-  - [ ] `data-testid="btn-eliminar"` on the button
-  - [ ] Check siesa-ui-kit catalog first for a destructive/danger button variant; use Siesa Blue `#0e79fd` (`bg-[#0e79fd] text-white hover:bg-[#154ca9]`) if no destructive variant exists in kit
+- [x] Task 3 — Frontend: add "Eliminar" button to `ContactoDetailPanel` (AC: 1)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx`
+  - [x] Add "Eliminar" button alongside existing "Editar" button (added in Story 3.4)
+  - [x] Button click sets `deleteDialogOpen = true` via `useState<boolean>`
+  - [x] Render `<DeleteContactoDialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} contactoId={data.id} />`
+  - [x] `data-testid="btn-eliminar"` on the button
+  - [x] siesa-ui-kit has no destructive variant; using Siesa Blue `#0e79fd` (`bg-[#0e79fd] text-white hover:bg-[#154ca9]`) consistent with all other buttons
 
-- [ ] Task 4 — Backend: create `DeleteContactoCommand` and handler (AC: 2)
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/Commands/DeleteContactoCommand.cs` — record with `Guid Id`
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/Commands/DeleteContactoCommandHandler.cs`
-    - [ ] Fetch `ContactoEntity` by ID via `IContactoRepository.GetByIdAsync(command.Id, ct)` — throw `KeyNotFoundException` if not found → 404 Problem Details via `ExceptionHandlingMiddleware`
-    - [ ] Call `IContactoRepository.DeleteAsync(entity, ct)` to remove the entity
-  - [ ] Add `DeleteAsync(ContactoEntity entity, CancellationToken ct): Task` to `IContactoRepository` interface in `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`
-  - [ ] Implement `DeleteAsync` in `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` — `_context.Contactos.Remove(entity); await _context.SaveChangesAsync(ct);`
-  - [ ] Register `DeleteContactoCommandHandler` in `Program.cs` DI
+- [x] Task 4 — Backend: create `DeleteContactoCommand` and handler (AC: 2)
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/Commands/DeleteContactoCommand.cs` — record with `Guid Id`
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/Commands/DeleteContactoCommandHandler.cs`
+    - [x] Fetch `ContactoEntity` by ID via `IContactoRepository.GetByIdAsync(command.Id, ct)` — throw `KeyNotFoundException` if not found → 404 Problem Details via `ExceptionHandlingMiddleware`
+    - [x] Call `IContactoRepository.DeleteAsync(entity, ct)` to remove the entity
+  - [x] Add `DeleteAsync(ContactoEntity entity, CancellationToken ct): Task` to `IContactoRepository` interface in `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`
+  - [x] Implement `DeleteAsync` in `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` — `_context.Contactos.Remove(entity); await _context.SaveChangesAsync(ct);`
+  - [x] Register `DeleteContactoCommandHandler` in `Program.cs` DI
 
-- [ ] Task 5 — Backend: expose `DELETE /api/v1/contactos/{id}` endpoint (AC: 2)
-  - [ ] Add `DELETE /{id:guid}` endpoint to `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs`
-  - [ ] Accept `id` from route, construct `DeleteContactoCommand(id)`, call `handler.HandleAsync(command, ct)`
-  - [ ] Returns `204 No Content` on success
-  - [ ] Returns `404 Not Found` Problem Details (RFC 7807) when `id` does not exist — handled by `ExceptionHandlingMiddleware` on `KeyNotFoundException`
-  - [ ] `.Produces(StatusCodes.Status204NoContent)` and `.Produces(StatusCodes.Status404NotFound)` on the endpoint
-  - [ ] Register the handler in `Program.cs` DI
+- [x] Task 5 — Backend: expose `DELETE /api/v1/contactos/{id}` endpoint (AC: 2)
+  - [x] Add `DELETE /{id:guid}` endpoint to `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs`
+  - [x] Accept `id` from route, construct `DeleteContactoCommand(id)`, call `handler.HandleAsync(command, ct)`
+  - [x] Returns `204 No Content` on success
+  - [x] Returns `404 Not Found` Problem Details (RFC 7807) when `id` does not exist — handled by `ExceptionHandlingMiddleware` on `KeyNotFoundException`
+  - [x] `.Produces(StatusCodes.Status204NoContent)` and `.Produces(StatusCodes.Status404NotFound)` on the endpoint
+  - [x] Register the handler in `Program.cs` DI
 
-- [ ] Task 6 — Write E2E tests (AC: 1, 2, 3)
-  - [ ] Create `e2e/tests/contactos/contactos-delete.spec.ts`
+- [x] Task 6 — Write E2E tests (AC: 1, 2, 3)
+  - [x] Create `e2e/tests/contactos/contactos-delete.spec.ts`
     - E2E-CT-23 (P0): Clicking "Eliminar" on contact detail shows confirmation dialog with "Confirmar" and "Cancelar" buttons — assert no DELETE fired yet
     - E2E-CT-24 (P0): Confirming deletion removes contact from `contactoRows` table immediately (no `page.reload()`), URL changes to `/contactos`
     - E2E-CT-25 (P1): Success toast "Contacto eliminado correctamente" visible after confirmation
     - E2E-CT-26 (P1): Clicking "Cancelar" in dialog: assert no DELETE call fired; contact row still present in table
 
-- [ ] Task 7 — Write API integration tests (AC: 2)
-  - [ ] Add Story 3.5 describe block to `e2e/tests/contactos/contactos-api.spec.ts`
+- [x] Task 7 — Write API integration tests (AC: 2)
+  - [x] Add Story 3.5 describe block to `e2e/tests/contactos/contactos-api.spec.ts`
     - API-CT-06 (P0): `DELETE /api/v1/contactos/:id` returns 204; subsequent `GET /api/v1/contactos/:id` returns 404 Problem Details (no `stackTrace` key)
 
-- [ ] Task 8 — Write backend unit tests (AC: 2)
-  - [ ] Add to `backend/tests/SiesaAgents.UnitTests/Handlers/ContactoHandlerTests.cs`
+- [x] Task 8 — Write backend unit tests (AC: 2)
+  - [x] Add to `backend/tests/SiesaAgents.UnitTests/Handlers/ContactoHandlerTests.cs`
     - UNIT-B-CT-05 (P1): `DeleteContactoHandler` does not throw when deleting an existing contact (no client association)
     - UNIT-B-CT-10 (P1): `DeleteContactoHandler` throws `KeyNotFoundException` when contact ID does not exist
 
@@ -415,4 +415,27 @@ None.
 
 ### Completion Notes List
 
+- All 8 tasks implemented. Frontend already had useDeleteContacto, IContactoRepository.delete, and contactoApiRepository.delete from earlier development; confirmed they match spec exactly.
+- siesa-ui-kit has no destructive/danger button variant; used Siesa Blue `#0e79fd` per company standards and story guidance.
+- DeleteContactoDialog mirrors DeleteClienteDialog pattern (Radix UI Dialog, isPending guard, WCAG aria-labelledby/aria-describedby, data-testid attributes).
+- ContactoDetailPanel updated: "Eliminar" button added alongside "Editar" with same useState pattern; DeleteContactoDialog rendered at bottom of component.
+- Backend: DeleteContactoCommand, DeleteContactoCommandHandler, DeleteAsync in IContactoRepository and ContactoRepository, DELETE endpoint in ContactoEndpoints, DI registration in Program.cs — all implemented.
+- Backend unit tests (UNIT-B-CT-05, UNIT-B-CT-10) added to ContactoHandlerTests.cs; CapturingContactoRepository extended with DeleteAsync.
+- Frontend TypeScript check: 0 errors. Frontend unit tests (contactos module): 33/33 passed. Pre-existing ClienteListPanel failures (21 tests) are unrelated to this story.
+
 ### File List
+
+**NEW:**
+- `frontend/src/modules/crm/contactos/presentation/DeleteContactoDialog.tsx`
+- `backend/src/SiesaAgents.Application/Contactos/Commands/DeleteContactoCommand.cs`
+- `backend/src/SiesaAgents.Application/Contactos/Commands/DeleteContactoCommandHandler.cs`
+- `e2e/tests/contactos/contactos-delete.spec.ts`
+
+**MODIFIED:**
+- `frontend/src/modules/crm/contactos/presentation/ContactoDetailPanel.tsx`
+- `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs`
+- `backend/src/SiesaAgents.API/Program.cs`
+- `e2e/tests/contactos/contactos-api.spec.ts`
+- `backend/tests/SiesaAgents.UnitTests/Handlers/ContactoHandlerTests.cs`

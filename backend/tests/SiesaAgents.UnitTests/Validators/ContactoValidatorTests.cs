@@ -1,23 +1,22 @@
 using SiesaAgents.Application.Contactos.Commands;
 using SiesaAgents.Application.Contactos.Validators;
+using FluentValidation;
 
 namespace SiesaAgents.UnitTests.Validators;
 
 /// <summary>
-/// Unit tests for CreateContactoCommandValidator and UpdateContactoCommandValidator.
+/// Unit tests for CreateContactoCommandValidator.
 ///
-/// Story 3.3 tests (UNIT-B-CT-01, UNIT-B-CT-02, UNIT-B-CT-03): CreateContactoCommandValidator
-/// Story 3.4 tests (UNIT-B-CT-08, UNIT-B-CT-09): UpdateContactoCommandValidator
-///
-/// Story 3.4 tests are in RED phase — UpdateContactoCommandValidator does not exist yet.
+/// Tests are in RED phase — CreateContactoCommandValidator does not exist yet.
 /// Make these tests GREEN by implementing:
-///   backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommand.cs
-///   backend/src/SiesaAgents.Application/Contactos/Validators/UpdateContactoCommandValidator.cs
+///   backend/src/SiesaAgents.Application/Contactos/Commands/CreateContactoCommand.cs
+///   backend/src/SiesaAgents.Application/Contactos/Validators/CreateContactoCommandValidator.cs
+///
+/// Test IDs: UNIT-B-CT-01, UNIT-B-CT-02, UNIT-B-CT-03
 /// </summary>
 public class ContactoValidatorTests
 {
     private readonly CreateContactoCommandValidator _validator = new();
-    private readonly UpdateContactoCommandValidator _updateValidator = new();
 
     // ---------------------------------------------------------------------------
     // UNIT-B-CT-01 (P1 · AC3)
@@ -166,73 +165,74 @@ public class ContactoValidatorTests
         Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateContactoCommand.Telefono));
         Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateContactoCommand.Email));
     }
+}
 
-    // ===========================================================================
-    // Story 3.4 — UpdateContactoCommandValidator Tests
-    // Test IDs: UNIT-B-CT-08, UNIT-B-CT-09
-    //
-    // Tests are in RED phase — UpdateContactoCommandValidator does not exist yet.
-    // Make these tests GREEN by implementing:
-    //   backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommand.cs
-    //   backend/src/SiesaAgents.Application/Contactos/Validators/UpdateContactoCommandValidator.cs
-    // ===========================================================================
+/// <summary>
+/// Unit tests for UpdateContactoCommandValidator.
+///
+/// Test IDs: UNIT-B-CT-08, UNIT-B-CT-09
+/// </summary>
+public class UpdateContactoValidatorTests
+{
+    private readonly UpdateContactoCommandValidator _validator = new();
 
     // ---------------------------------------------------------------------------
-    // UNIT-B-CT-08 (P1 · AC3 — Story 3.4)
+    // UNIT-B-CT-08 (P1 · AC3)
     // Given an UpdateContactoCommand with an empty Nombre
-    // When the UpdateContactoCommandValidator runs
+    // When the validator runs
     // Then validation fails
     //   AND the error is on the Nombre property
-    //   AND the error message is in Spanish (localized, e.g., "El nombre es requerido")
+    //   AND the error message is in Spanish (localized)
     // ---------------------------------------------------------------------------
     [Fact]
-    public async Task UpdateValidator_EmptyNombre_ReturnsInvalidResultWithLocalizedMessage()
+    public async Task Validate_EmptyNombre_ReturnsInvalidResultWithLocalizedMessage()
     {
-        // GIVEN — command with empty Nombre (required field cleared — AC3)
+        // GIVEN — command with empty Nombre
         var command = new UpdateContactoCommand(
             Id: Guid.NewGuid(),
             Nombre: string.Empty,
-            Cargo: "Directora Comercial",
+            Cargo: "Gerente Comercial",
+            Telefono: "+57 1 234 5679",
+            Email: "test@empresa.com"
+        );
+
+        // WHEN — validator runs
+        var result = await _validator.ValidateAsync(command);
+
+        // THEN — validation fails
+        Assert.False(result.IsValid);
+
+        // AND — error is on Nombre property
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateContactoCommand.Nombre));
+
+        // AND — error message is in Spanish ("El nombre es requerido")
+        var nombreError = result.Errors.First(e => e.PropertyName == nameof(UpdateContactoCommand.Nombre));
+        Assert.False(string.IsNullOrWhiteSpace(nombreError.ErrorMessage));
+        Assert.Equal("El nombre es requerido", nombreError.ErrorMessage);
+    }
+
+    // ---------------------------------------------------------------------------
+    // UNIT-B-CT-09 (P1 · AC2)
+    // Given an UpdateContactoCommand with all valid fields
+    // When the validator runs
+    // Then validation passes with no errors
+    // ---------------------------------------------------------------------------
+    [Fact]
+    public async Task Validate_ValidPayload_ReturnsValidResult()
+    {
+        // GIVEN — command with all required fields valid
+        var command = new UpdateContactoCommand(
+            Id: Guid.NewGuid(),
+            Nombre: "María García",
+            Cargo: "Gerente Comercial",
             Telefono: "+57 1 234 5679",
             Email: "m.garcia@empresa.com"
         );
 
         // WHEN — validator runs
-        var result = await _updateValidator.ValidateAsync(command);
+        var result = await _validator.ValidateAsync(command);
 
-        // THEN — validation fails
-        Assert.False(result.IsValid);
-
-        // AND — error is on the Nombre property
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateContactoCommand.Nombre));
-
-        // AND — error message is non-empty (Spanish localization: "El nombre es requerido")
-        var nombreError = result.Errors.First(e => e.PropertyName == nameof(UpdateContactoCommand.Nombre));
-        Assert.False(string.IsNullOrWhiteSpace(nombreError.ErrorMessage));
-    }
-
-    // ---------------------------------------------------------------------------
-    // UNIT-B-CT-09 (P1 · AC2 — Story 3.4)
-    // Given an UpdateContactoCommand with valid Nombre, Cargo, Telefono, and Email
-    // When the UpdateContactoCommandValidator runs
-    // Then validation passes with no errors
-    // ---------------------------------------------------------------------------
-    [Fact]
-    public async Task UpdateValidator_ValidPayload_ReturnsValidResult()
-    {
-        // GIVEN — command with all required fields valid
-        var command = new UpdateContactoCommand(
-            Id: Guid.NewGuid(),
-            Nombre: "María García Actualizada",
-            Cargo: "Directora Comercial",
-            Telefono: "+57 1 234 5680",
-            Email: "m.garcia.new@empresa.com"
-        );
-
-        // WHEN — validator runs
-        var result = await _updateValidator.ValidateAsync(command);
-
-        // THEN — validation passes with no errors
+        // THEN — validation passes
         Assert.True(result.IsValid);
         Assert.Empty(result.Errors);
     }
