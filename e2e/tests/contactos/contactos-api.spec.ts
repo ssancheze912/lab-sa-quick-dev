@@ -3,14 +3,17 @@ import { test, expect } from '@playwright/test';
 const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
 
 /**
- * ATDD — Story 3.1: Contact API Integration Tests
+ * ATDD — Contact API Integration Tests
  *
  * Tests are in RED phase — they define the expected behaviour BEFORE implementation.
- * Make these tests GREEN by implementing GET /api/v1/contactos as specified in Story 3.1.
  *
- * Coverage:
+ * Story 3.1 Coverage:
  *   API-CT-07  P1  — GET /api/v1/contactos returns array; each item has id, nombre, email, cargo
  *   API-CT-07b P1  — GET /api/v1/contactos returns Content-Type application/json (not problem+json)
+ *
+ * Story 3.2 Coverage:
+ *   API-CT-08  P1  — GET /api/v1/contactos/:id valid ID → 200 + full ContactoDto with clienteId: null
+ *   API-CT-09  P1  — GET /api/v1/contactos/:id non-existent ID → 404 Problem Details (no stackTrace key)
  */
 
 test.describe('Story 3.1 — API: GET /api/v1/contactos', () => {
@@ -106,5 +109,129 @@ test.describe('Story 3.1 — API: GET /api/v1/contactos', () => {
     expect(Array.isArray(body)).toBe(true);
     expect((body as Record<string, unknown>).title).toBeUndefined();
     expect((body as Record<string, unknown>).status).toBeUndefined();
+  });
+});
+
+// =============================================================================
+// Story 3.2 — API: GET /api/v1/contactos/:id
+// =============================================================================
+
+test.describe('Story 3.2 — API: GET /api/v1/contactos/:id', () => {
+  const createdIds: string[] = [];
+
+  test.afterAll(async ({ request }) => {
+    for (const id of createdIds) {
+      await request.delete(`${API_BASE_URL}/api/v1/contactos/${id}`).catch(() => null);
+    }
+    createdIds.length = 0;
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-CT-08 (P1 · AC2)
+  // Given a valid contactoId exists in the system
+  // When GET /api/v1/contactos/:id is called
+  // Then the response is 200 OK with a full ContactoDto
+  //   AND the response includes all required fields
+  //   AND clienteId is null (no client association in Epic 3 scope)
+  //   AND the response is a direct object — NOT a wrapper { data: {...} }
+  // ---------------------------------------------------------------------------
+  test('API-CT-08 — GET /api/v1/contactos/:id con ID válido devuelve 200 + ContactoDto completo con clienteId: null', async ({ request }) => {
+    // GIVEN — a contact is created via the API
+    const createResponse = await request.post(`${API_BASE_URL}/api/v1/contactos`, {
+      data: {
+        nombre: 'María García',
+        cargo: 'Gerente Comercial',
+        telefono: '+57 1 234 5679',
+        email: 'm.garcia.api08@empresa.com',
+      },
+    });
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+    createdIds.push(created.id);
+
+    // WHEN — GET by the returned id
+    const response = await request.get(`${API_BASE_URL}/api/v1/contactos/${created.id}`);
+
+    // THEN — status is 200 OK
+    expect(response.status()).toBe(200);
+
+    // AND — body is a direct object (not an array, not a wrapper)
+    const body = await response.json();
+    expect(typeof body).toBe('object');
+    expect(Array.isArray(body)).toBe(false);
+    expect((body as Record<string, unknown>).data).toBeUndefined();
+
+    // AND — id matches and is a valid UUID
+    expect(body.id).toBe(created.id);
+    expect(body.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    );
+
+    // AND — nombre is the correct value
+    expect(body.nombre).toBe('María García');
+
+    // AND — cargo is the correct value
+    expect(body.cargo).toBe('Gerente Comercial');
+
+    // AND — telefono is the correct value
+    expect(body.telefono).toBe('+57 1 234 5679');
+
+    // AND — email is the correct value
+    expect(body.email).toBe('m.garcia.api08@empresa.com');
+
+    // AND — clienteId is null (Epic 3 scope: standalone contact, no client association)
+    expect(body.clienteId).toBeNull();
+
+    // AND — createdAt serialises as ISO 8601 with timezone (DateTimeOffset)
+    expect(typeof body.createdAt).toBe('string');
+    expect(body.createdAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+    );
+
+    // AND — updatedAt serialises as ISO 8601 with timezone
+    expect(typeof body.updatedAt).toBe('string');
+    expect(body.updatedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+    );
+  });
+
+  // ---------------------------------------------------------------------------
+  // API-CT-09 (P1 · AC3 · NFR6)
+  // Given a contactoId that does not exist in the system
+  // When GET /api/v1/contactos/:id is called with that ID
+  // Then the response is 404 Not Found
+  //   AND the body is a Problem Details object (RFC 7807)
+  //   AND the body does NOT contain a stackTrace key (NFR6 compliance)
+  // ---------------------------------------------------------------------------
+  test('API-CT-09 — GET /api/v1/contactos/:id con ID inexistente devuelve 404 Problem Details sin stackTrace', async ({ request }) => {
+    // GIVEN — a UUID that does not correspond to any existing contact
+    const nonExistentId = '00000000-0000-4000-8000-000000000000';
+
+    // WHEN — GET with the non-existent id
+    const response = await request.get(`${API_BASE_URL}/api/v1/contactos/${nonExistentId}`);
+
+    // THEN — status is 404 Not Found
+    expect(response.status()).toBe(404);
+
+    // AND — Content-Type is application/problem+json (Problem Details RFC 7807)
+    const contentType = response.headers()['content-type'] ?? '';
+    expect(contentType).toContain('problem+json');
+
+    // AND — body is a valid Problem Details object
+    const body = await response.json();
+    expect(typeof body).toBe('object');
+    expect(Array.isArray(body)).toBe(false);
+
+    // AND — body contains status 404
+    expect(body.status).toBe(404);
+
+    // AND — body contains a title
+    expect(typeof body.title).toBe('string');
+    expect(body.title.length).toBeGreaterThan(0);
+
+    // AND — body does NOT expose a stackTrace key (NFR6: no internal error details)
+    expect((body as Record<string, unknown>).stackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).StackTrace).toBeUndefined();
+    expect((body as Record<string, unknown>).stack_trace).toBeUndefined();
   });
 });
