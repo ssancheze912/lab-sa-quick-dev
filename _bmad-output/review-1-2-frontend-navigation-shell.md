@@ -8,7 +8,7 @@ story_key: 1-2-frontend-navigation-shell
 
 - **Date**: 2026-05-23
 - **Reviewer**: SiesaTeam (AI Agent)
-- **Status**: In Progress
+- **Status**: FAIL — Returned to in-progress
 
 ## Initial Discovery
 
@@ -115,6 +115,22 @@ File: `frontend/src/routes/__root.tsx` line 31
 
 ---
 
+---
+
+## Review Verdict
+
+**FAIL — Story returns to `in-progress`**
+
+CRITICAL-1 (siesa-ui-kit not used) requires developer attention before this story can be accepted. The implementation ignores the mandatory "check siesa-ui-kit first" rule and the explicit task requirement to import `LayoutBase`, `NavigationRail`, and `NavigationBar` from the kit.
+
+HIGH-1 (breakpoint 768px vs 1024px) was auto-corrected.
+
+---
+
 ## Auto-Corrections Applied
+
+### AC: Breakpoint aligned to 1024px (Tailwind `lg:`)
+- `frontend/src/routes/__root.tsx` — `useIsMobile` default changed from `768` to `1024`.
+- `frontend/src/routes/__tests__/root.test.tsx` — restore values updated from `1024` to `1280` (unambiguous desktop), mobile viewport comments updated to `< 1024px`.
 
 ### Fix LOW-2 and LOW-3: Translate inline Spanish comments to English

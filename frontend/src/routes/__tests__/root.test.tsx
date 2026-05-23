@@ -6,7 +6,7 @@
  *
  * Acceptance Criteria covered:
  *   AC1 — NavigationRail visible on lg breakpoint (desktop ≥ 1024px)
- *   AC2 — NavigationBar visible on mobile (< 1024px), NavigationRail hidden
+ *   AC2 — NavigationBar visible on mobile (viewport < 1024px), NavigationRail hidden
  *   AC3 — Active nav state reflects current route
  *   AC5 — Spanish aria-labels on nav items
  *
@@ -95,19 +95,19 @@ describe('AC1 — Desktop NavigationRail (viewport ≥ 1024px)', () => {
 
 describe('AC2 — Mobile NavigationBar exists in the shell', () => {
   beforeEach(() => {
-    // Simulate mobile viewport (< 768px) for jsdom
+    // Simulate mobile viewport (< 1024px) for jsdom
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 390 })
     window.dispatchEvent(new Event('resize'))
   })
 
   afterEach(() => {
-    // Restore default jsdom width
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 })
+    // Restore desktop jsdom width (>= 1024px)
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1280 })
     window.dispatchEvent(new Event('resize'))
   })
 
   it('should render an element with data-testid="navigation-bar" in the shell', async () => {
-    // GIVEN: The root layout is rendered on mobile viewport (< 768px)
+    // GIVEN: The root layout is rendered on mobile viewport (< 1024px)
     // WHEN: The app mounts with mobile viewport
     await renderAppAt('/clientes')
 
@@ -272,7 +272,7 @@ describe('Edge — Conditional rendering: only one nav component per viewport', 
   })
 
   it('should NOT have NavigationRail in DOM on mobile (conditional, not CSS-hidden)', async () => {
-    // GIVEN: Simulated mobile viewport (< 768px)
+    // GIVEN: Simulated mobile viewport (< 1024px)
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 390 })
     window.dispatchEvent(new Event('resize'))
 
@@ -283,7 +283,7 @@ describe('Edge — Conditional rendering: only one nav component per viewport', 
     expect(screen.queryByTestId('navigation-rail')).toBeNull()
 
     // Restore
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 })
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1280 })
     window.dispatchEvent(new Event('resize'))
   })
 })
@@ -405,7 +405,7 @@ describe('Edge — Nav shell aria-label on container', () => {
     expect(bar.getAttribute('aria-label')).not.toBe('')
 
     // Restore
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 })
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1280 })
     window.dispatchEvent(new Event('resize'))
   })
 })

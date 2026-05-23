@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -241,3 +241,4 @@ claude-sonnet-4-6
 - `frontend/src/routeTree.gen.ts` — updated: added `/clientes` and `/contactos` typed routes
 - `frontend/src/routes/__tests__/root.test.tsx` — updated: navigation shell + accessibility tests
 - `frontend/src/routes/__tests__/notFound.test.tsx` — new: 404 view tests
+- `frontend/src/test-setup.ts` — updated: added RTL cleanup afterEach hook
