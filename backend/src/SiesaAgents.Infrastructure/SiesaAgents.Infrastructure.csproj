@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.*" />
-    <PackageReference Include="EFCore.NamingConventions" Version="9.*" />
+    <PackageReference Include="EFCore.NamingConventions" Version="*" />
   </ItemGroup>
 
   <ItemGroup>
