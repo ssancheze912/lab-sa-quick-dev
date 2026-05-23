@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: review
+Status: done
 
 ## Story
 
@@ -232,5 +232,21 @@ None.
 - `frontend/src/routes/__root.tsx` — updated: RootLayout now wraps `<Outlet />` in `<div data-testid="app-root">` for E2E test requirement
 - `frontend/tsconfig.app.json` — created: strict TypeScript config (mirrors tsconfig.json; required by AC1 and E2E test)
 
+**Code Review Auto-Corrections (code-review agent):**
+- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — fixed: removed duplicate `<Nullable>enable</Nullable>` property
+- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — fixed: added `EFCore.NamingConventions` package reference
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` — fixed: added `modelBuilder.UseSnakeCaseNamingConvention()` call in OnModelCreating (required by company standards)
+- `frontend/index.html` — fixed: changed `lang="en"` to `lang="es"` and title from "frontend" to "Siesa Agents" (all user-facing content must be in Spanish)
+- `frontend/src/style.css` — fixed: removed 280+ lines of Vite template boilerplate CSS; retained only `@import "tailwindcss"` and minimal Inter font reset
+
 **Story:**
-- `_bmad-output/implementation-artifacts/1-1-project-initialization-repository-structure.md` — updated: status=review, file list updated with correction changes
+- `_bmad-output/implementation-artifacts/1-1-project-initialization-repository-structure.md` — updated: status=done, code-review corrections applied
+
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][WARNING] `backend/tests/SiesaAgents.UnitTests/PlaceholderTest.cs`: `Assert.True(true)` is a no-op assertion that gives false confidence. Replace with a meaningful structural test (e.g., verify Entity.Id is a non-empty Guid) when Story 1.3 adds real domain entities.
+- [ ] [AI-Review][WARNING] `frontend/src/assets/`: template assets `hero.png`, `typescript.svg`, `vite.svg` are unreferenced dead files. Remove them in a cleanup commit before Story 1.2.
+- [ ] [AI-Review][WARNING] `backend/src/SiesaAgents.Domain/Entities/Entity.cs`: Base `Entity` class lacks the `protected constructor` + static `Create()` factory method and domain events collection mandated by company standards (`AddDomainEvent`). Implement before first domain entity in Story 2.1.
+- [ ] [AI-Review][INFO] `e2e/tests/foundation/project-initialization.edge.spec.ts` and `e2e/tests/api/backend-initialization.edge.spec.ts` are not listed in the story File List — add them to the record for traceability.
+- [ ] [AI-Review][INFO] `siesa-ui-kit` is listed as installed in Task 1 (`[x]`) but was NOT installed (private registry unavailable). The task checkbox should be marked `[ ]` with a note, or a separate task should track registry access setup.
+- [ ] [AI-Review][INFO] `backend/src/SiesaAgents.API/Program.cs`: `AppDbContext` is not registered in the DI container (`AddDbContext`/`UseNpgsql`). This is deferred to Story 1.3 but should be noted as a prerequisite.
