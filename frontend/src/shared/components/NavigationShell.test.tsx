@@ -12,9 +12,8 @@
  *   AC4 — NavigationBar visible on mobile (< 1024px), NavigationRail hidden
  */
 
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 
 // NavigationShell does not exist yet — tests will fail (RED phase)
