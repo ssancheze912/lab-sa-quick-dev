@@ -14,7 +14,6 @@
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
 
 // NavigationShell does not exist yet — tests will fail (RED phase)
 import { NavigationShell } from './NavigationShell';

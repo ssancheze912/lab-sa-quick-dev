@@ -218,7 +218,9 @@ claude-sonnet-4-6
 - `frontend/src/routes/index.tsx`
 - `frontend/src/routes/$.tsx`
 - `frontend/src/shared/components/NavigationShell.tsx`
+- `frontend/src/shared/components/NavigationShell.edge-cases.test.tsx`
 - `frontend/src/test-setup.ts`
+- `e2e/tests/navigation/navigation-shell.edge-cases.spec.ts`
 
 **Modified:**
 - `frontend/vite.config.ts` — added vitest test config with jsdom environment
