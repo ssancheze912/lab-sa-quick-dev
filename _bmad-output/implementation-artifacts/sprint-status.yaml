@@ -1,0 +1,44 @@
+# Sprint Status — sa-quick-dev pipeline
+# Source of truth for epic/story development state
+# Generated: 2026-05-20
+
+development_status:
+  # Epic sources
+  epic-1-source: _bmad-output/planning-artifacts/epics/epic-01-foundation.md
+  epic-2-source: _bmad-output/planning-artifacts/epics/epic-02-gestion-de-clientes.md
+  epic-3-source: _bmad-output/planning-artifacts/epics/epic-03-gestion-de-contactos.md
+  epic-4-source: _bmad-output/planning-artifacts/epics/epic-04-asociacion-cliente-contacto.md
+
+  # Epic statuses
+  epic-1: in-progress
+  epic-2: pending
+  epic-3: pending
+  epic-4: pending
+
+  # Epic 1 — Project Foundation & Application Shell
+  1-1-project-initialization-repository-structure: in-progress
+  1-2-frontend-navigation-shell: pending
+  1-3-backend-database-foundation: pending
+
+  # Epic 2 — Client Management
+  2-1-client-list-search: pending
+  2-2-client-detail-view: pending
+  2-3-create-client: pending
+  2-4-edit-client: pending
+  2-5-delete-client: pending
+  2-6-sort-client-list: pending
+
+  # Epic 3 — Contact Management
+  3-1-contact-list-search: pending
+  3-2-contact-detail-view: pending
+  3-3-create-contact: pending
+  3-4-edit-contact: pending
+  3-5-delete-contact: pending
+
+  # Epic 4 — Client-Contact Association & Data Quality
+  4-1-view-associated-contacts-in-client-detail: pending
+  4-2-associate-disassociate-contacts-from-client: pending
+  4-3-navigate-from-client-detail-to-contact-detail: pending
+  4-4-view-associated-client-from-contact-detail: pending
+  4-5-orphan-contacts-filter: pending
+  4-6-reassign-contact-to-different-client: pending
