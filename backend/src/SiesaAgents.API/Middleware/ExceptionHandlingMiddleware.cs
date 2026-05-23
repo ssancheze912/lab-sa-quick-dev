@@ -14,16 +14,14 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         catch (Exception)
         {
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "application/problem+json";
-
             var problem = new ProblemDetails
             {
                 Status = StatusCodes.Status500InternalServerError,
                 Title = "An unexpected error occurred.",
                 Detail = null // NEVER expose ex.Message or stack traces (NFR6)
             };
-
             var json = JsonSerializer.Serialize(problem);
+            context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsync(json);
         }
     }
