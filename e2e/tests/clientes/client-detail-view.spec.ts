@@ -83,11 +83,12 @@ test.describe('Story 2.2 — Client Detail View (E2E)', () => {
     await page.getByTestId('cliente-list-item').filter({ hasText: 'Empresa E2E SA' }).click();
 
     // THEN: The detail panel is visible with all four fields
-    await expect(page.getByTestId('cliente-detail-panel')).toBeVisible();
-    await expect(page.getByText('Empresa E2E SA')).toBeVisible();
-    await expect(page.getByText('901020304')).toBeVisible();
-    await expect(page.getByText('3151234567')).toBeVisible();
-    await expect(page.getByText('Medellín')).toBeVisible();
+    const detailPanel = page.getByTestId('cliente-detail-panel');
+    await expect(detailPanel).toBeVisible();
+    await expect(detailPanel.getByText('Empresa E2E SA')).toBeVisible();
+    await expect(detailPanel.getByText('901020304')).toBeVisible();
+    await expect(detailPanel.getByText('3151234567')).toBeVisible();
+    await expect(detailPanel.getByText('Medellín')).toBeVisible();
   });
 
   test('AC1 — URL should update to /clientes/:clienteId after clicking a client (FR30 deep linking)', async ({ page }) => {
@@ -255,7 +256,7 @@ test.describe('Story 2.2 — Client Detail View (E2E)', () => {
 
     // WHEN: Direct URL navigation
     await page.goto(`/clientes/${clienteId}`);
-    await expect(page.getByText('Shell Layout Test SA')).toBeVisible();
+    await expect(page.getByTestId('cliente-detail-panel').getByText('Shell Layout Test SA')).toBeVisible();
 
     // THEN: The navigation shell is still visible (not crashing the shell layout — AC3 spec)
     // The left panel list should be visible alongside the detail panel
