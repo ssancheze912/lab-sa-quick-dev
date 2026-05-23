@@ -6,7 +6,7 @@ export const Route = createFileRoute('/_app/contactos')({
 
 function ContactosPlaceholderView() {
   return (
-    <div className="p-8">
+    <div data-testid="contactos-placeholder-view" className="p-8">
       <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
         Sección Contactos — próximamente
       </h1>
