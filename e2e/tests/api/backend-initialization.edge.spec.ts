@@ -315,6 +315,9 @@ test.describe('ExceptionHandlingMiddleware security invariants', () => {
 
 test.describe('IRepository interface completeness', () => {
   test('should have GetByIdAsync method', () => {
+    // GIVEN: IRepository must expose a method to fetch a single entity by id
+    // WHEN: IRepository.cs is read
+    // THEN: GetByIdAsync is declared
     const repoPath = path.join(
       BACKEND_ROOT,
       'src/SiesaAgents.Application/Interfaces/IRepository.cs'
@@ -324,6 +327,9 @@ test.describe('IRepository interface completeness', () => {
   });
 
   test('should have GetAllAsync method', () => {
+    // GIVEN: IRepository must expose a method to fetch all entities
+    // WHEN: IRepository.cs is read
+    // THEN: GetAllAsync is declared
     const repoPath = path.join(
       BACKEND_ROOT,
       'src/SiesaAgents.Application/Interfaces/IRepository.cs'
@@ -333,6 +339,9 @@ test.describe('IRepository interface completeness', () => {
   });
 
   test('should have AddAsync method', () => {
+    // GIVEN: IRepository must expose a method to persist new entities
+    // WHEN: IRepository.cs is read
+    // THEN: AddAsync is declared
     const repoPath = path.join(
       BACKEND_ROOT,
       'src/SiesaAgents.Application/Interfaces/IRepository.cs'
@@ -342,6 +351,9 @@ test.describe('IRepository interface completeness', () => {
   });
 
   test('should have UpdateAsync method', () => {
+    // GIVEN: IRepository must expose a method to update existing entities
+    // WHEN: IRepository.cs is read
+    // THEN: UpdateAsync is declared
     const repoPath = path.join(
       BACKEND_ROOT,
       'src/SiesaAgents.Application/Interfaces/IRepository.cs'
@@ -351,6 +363,9 @@ test.describe('IRepository interface completeness', () => {
   });
 
   test('should have DeleteAsync method', () => {
+    // GIVEN: IRepository must expose a method to remove entities
+    // WHEN: IRepository.cs is read
+    // THEN: DeleteAsync is declared
     const repoPath = path.join(
       BACKEND_ROOT,
       'src/SiesaAgents.Application/Interfaces/IRepository.cs'
@@ -513,12 +528,18 @@ test.describe('Program.cs middleware ordering edge cases', () => {
 
 test.describe('csproj compiler settings', () => {
   test('API csproj should have Nullable enabled', () => {
+    // GIVEN: All .NET 10 projects must have nullable reference types enabled
+    // WHEN: The API .csproj file is read
+    // THEN: <Nullable>enable</Nullable> is present
     const csprojPath = path.join(BACKEND_ROOT, 'src/SiesaAgents.API/SiesaAgents.API.csproj');
     const content = fs.readFileSync(csprojPath, 'utf-8');
     expect(content).toContain('<Nullable>enable</Nullable>');
   });
 
   test('Domain csproj should have Nullable enabled', () => {
+    // GIVEN: All .NET 10 projects must have nullable reference types enabled
+    // WHEN: The Domain .csproj file is read
+    // THEN: <Nullable>enable</Nullable> is present
     const csprojPath = path.join(
       BACKEND_ROOT,
       'src/SiesaAgents.Domain/SiesaAgents.Domain.csproj'
@@ -528,6 +549,9 @@ test.describe('csproj compiler settings', () => {
   });
 
   test('Application csproj should have Nullable enabled', () => {
+    // GIVEN: All .NET 10 projects must have nullable reference types enabled
+    // WHEN: The Application .csproj file is read
+    // THEN: <Nullable>enable</Nullable> is present
     const csprojPath = path.join(
       BACKEND_ROOT,
       'src/SiesaAgents.Application/SiesaAgents.Application.csproj'
@@ -537,6 +561,9 @@ test.describe('csproj compiler settings', () => {
   });
 
   test('Infrastructure csproj should have Nullable enabled', () => {
+    // GIVEN: All .NET 10 projects must have nullable reference types enabled
+    // WHEN: The Infrastructure .csproj file is read
+    // THEN: <Nullable>enable</Nullable> is present
     const csprojPath = path.join(
       BACKEND_ROOT,
       'src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj'

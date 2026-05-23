@@ -60,18 +60,18 @@ test.describe('HTML entry point structure', () => {
     await page.goto('/');
 
     // THEN: A favicon is declared in the head
-    const faviconLink = await page.$('link[rel="icon"]');
-    expect(faviconLink).not.toBeNull();
+    const faviconLink = page.locator('link[rel="icon"]');
+    await expect(faviconLink).toHaveCount(1);
   });
 
   test('should include a viewport meta tag for responsive layout', async ({ page }) => {
     // GIVEN: index.html should have viewport meta for mobile compatibility
     await page.goto('/');
 
-    // THEN: Viewport meta tag exists
-    const viewport = await page.$('meta[name="viewport"]');
-    expect(viewport).not.toBeNull();
-    const content = await viewport?.getAttribute('content');
+    // THEN: Viewport meta tag exists with correct content
+    const viewport = page.locator('meta[name="viewport"]');
+    await expect(viewport).toHaveCount(1);
+    const content = await viewport.getAttribute('content');
     expect(content).toContain('width=device-width');
   });
 
