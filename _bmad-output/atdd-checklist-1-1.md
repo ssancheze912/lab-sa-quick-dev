@@ -1,28 +1,28 @@
 # ATDD Checklist - Epic 1, Story 1.1: Project Initialization & Repository Structure
 
-**Date:** 2026-05-23
+**Date:** 2026-05-21
 **Author:** SiesaTeam
-**Primary Test Level:** E2E + API
+**Primary Test Level:** API + E2E
 
 ---
 
 ## Story Summary
 
-This story initializes the full-stack project skeleton: a Vite react-ts frontend and a .NET 10 Clean Architecture backend. The goal is to have both dev servers running, TypeScript strict mode active on the frontend, and CORS configured so the frontend can reach the backend.
+This story ensures the frontend (Vite react-ts) and backend (.NET 10 Clean Architecture) projects are initialized with all required dependencies so the development team has a working environment with both servers running. It establishes the repository skeleton — directory structure, TypeScript strict configuration, CORS policy, Scalar API docs, and Exception Handling Middleware — that all future stories will build upon. No domain entities or routes beyond `__root.tsx` are created.
 
-**As a** developer,
-**I want** the frontend (Vite react-ts) and backend (.NET 10 Clean Architecture) projects initialized with all required dependencies,
-**So that** the team has a working development environment with both servers running.
+**As a** developer
+**I want** the frontend and backend projects initialized with all required dependencies
+**So that** the team has a working development environment with both servers running
 
 ---
 
 ## Acceptance Criteria
 
-1. **AC1** — Given a clean development machine, When `pnpm run dev` is executed, Then the Vite server starts on port 5173 with no errors and TypeScript strict mode is enabled.
-2. **AC2** — Given the backend project is created, When `dotnet run` is executed in `src/SiesaAgents.API`, Then the backend starts on port 5000 and Scalar API docs load at `/scalar`; four Clean Architecture projects are referenced in `SiesaAgents.sln`.
-3. **AC3** — Given both servers are running, When the frontend makes any HTTP request to `http://localhost:5000`, Then CORS allows requests from `http://localhost:5173` without errors.
-4. **AC4** — Given the frontend project is initialized, When the TypeScript compiler runs, Then it emits zero errors with `strict:true`, `noImplicitAny:true`, and `strictNullChecks:true` active.
-5. **AC5** — Given the backend solution is initialized, When `dotnet build SiesaAgents.sln` is executed, Then all four projects compile successfully with zero errors or warnings.
+1. **AC1** — Given a clean development machine, when `pnpm run dev` is executed in `frontend/`, then the Vite server starts on port 5173 with no errors and `tsconfig.app.json` has `"strict": true`.
+2. **AC2** — Given the backend has been created, when `dotnet run` executes in `src/SiesaAgents.API`, then the server starts on port 5000, `/scalar` returns HTTP 200 with HTML, and all four Clean Architecture projects are referenced in `SiesaAgents.sln`.
+3. **AC3** — Given both servers are running, when the frontend makes any HTTP request to `http://localhost:5000`, then CORS allows requests from `http://localhost:5173` without errors (no CORS-related console errors).
+4. **AC4** — Given the frontend project is initialized, when the TypeScript compiler runs, then it emits zero errors with `"strict": true`, `"noImplicitAny": true`, and `"strictNullChecks": true` active.
+5. **AC5** — Given the backend solution is initialized, when `dotnet build SiesaAgents.sln` is executed, then all four projects compile successfully with zero errors or warnings.
 
 ---
 
@@ -30,120 +30,132 @@ This story initializes the full-stack project skeleton: a Vite react-ts frontend
 
 ### E2E Tests (7 tests)
 
-**File:** `e2e/tests/foundation/project-initialization.spec.ts` (157 lines)
+**File:** `e2e/tests/foundation/project-initialization.spec.ts`
 
 - **Test:** `should serve the frontend app on port 5173 without errors`
-  - **Status:** RED — frontend app not yet implemented; server not running
-  - **Verifies:** AC1 — Vite server responds HTTP 200 at `http://localhost:5173/`
+  - **Status:** RED — server does not exist yet (connection refused on port 5173)
+  - **Verifies:** AC1 — Frontend Vite dev server starts and returns HTTP 200
 
 - **Test:** `should render the root HTML document with a valid React mount point`
-  - **Status:** RED — `data-testid="app-root"` attribute not yet added to React root element
-  - **Verifies:** AC1 — React mount point present after initialization
+  - **Status:** RED — `[data-testid="app-root"]` element missing until implementation
+  - **Verifies:** AC1 — React root element is mounted and visible
 
 - **Test:** `should load without any TypeScript compilation errors visible in the browser console`
-  - **Status:** RED — frontend not yet scaffolded; no TypeScript compilation present
-  - **Verifies:** AC4 — No `[TypeScript]`/`TS` errors in browser console
+  - **Status:** RED — no frontend to load; will fail on navigation timeout
+  - **Verifies:** AC4 — No TypeScript `[TS]` errors emitted to browser console
 
 - **Test:** `should not have any JavaScript runtime errors on initial load`
-  - **Status:** RED — frontend not yet scaffolded; page not loading
-  - **Verifies:** AC1/AC4 — Zero `pageerror` events on initial load
+  - **Status:** RED — no frontend to load; will fail on navigation timeout
+  - **Verifies:** AC4 / AC1 — No uncaught JavaScript exceptions on initial render
 
 - **Test:** `should allow frontend to reach backend health endpoint without CORS errors`
-  - **Status:** RED — CORS not configured; both servers not running
+  - **Status:** RED — both servers absent; will fail on navigation timeout
   - **Verifies:** AC3 — No CORS-related console errors when frontend fetches backend
 
 - **Test:** `should receive a valid HTTP response from the backend health probe without CORS blocking`
-  - **Status:** RED — backend not yet running on port 5000
-  - **Verifies:** AC3 — Backend `/scalar` endpoint returns 200, 301, or 302
+  - **Status:** RED — backend not running; request will be refused
+  - **Verifies:** AC3 — Backend responds with 200/301/302 to cross-origin request
 
 - **Test:** `should load the frontend without Vite TypeScript error overlay`
-  - **Status:** RED — frontend not yet scaffolded
-  - **Verifies:** AC4 — `vite-error-overlay` component is absent (zero count)
+  - **Status:** RED — no frontend to load; navigation timeout
+  - **Verifies:** AC4 — `vite-error-overlay` element is absent (zero TS compile errors)
+
+---
 
 ### API Tests (9 tests)
 
-**File:** `e2e/tests/api/backend-initialization.api.spec.ts` (147 lines)
+**File:** `e2e/tests/api/backend-initialization.api.spec.ts`
 
 - **Test:** `should have the backend API server running on port 5000`
-  - **Status:** RED — backend server not yet running
-  - **Verifies:** AC2 — Backend responds with status < 500 on root path
+  - **Status:** RED — backend not running; connection refused
+  - **Verifies:** AC2 — Backend server starts and responds to any request
 
 - **Test:** `should serve the Scalar API documentation page at /scalar`
-  - **Status:** RED — `app.MapScalarApiReference()` not yet configured
-  - **Verifies:** AC2 — `GET /scalar` returns HTTP 200
+  - **Status:** RED — backend not running; connection refused
+  - **Verifies:** AC2 — `/scalar` endpoint returns HTTP 200
 
 - **Test:** `should return HTML content from the Scalar documentation endpoint`
-  - **Status:** RED — Scalar not yet configured in `Program.cs`
-  - **Verifies:** AC2 — `Content-Type` header contains `text/html`
+  - **Status:** RED — backend not running; connection refused
+  - **Verifies:** AC2 — `/scalar` response `content-type` contains `text/html`
 
 - **Test:** `should NOT expose any Swagger/OpenAPI UI endpoint (Swashbuckle forbidden)`
-  - **Status:** RED — backend not yet running; also validates architectural constraint
-  - **Verifies:** AC2 (architecture constraint) — `GET /swagger` must NOT return 200
+  - **Status:** RED — backend not running; connection refused
+  - **Verifies:** AC2 — `/swagger` does NOT return HTTP 200 (architecture mandate)
 
 - **Test:** `should NOT expose WeatherForecast default endpoint`
-  - **Status:** RED — default template WeatherForecast not yet removed
-  - **Verifies:** AC2 — `GET /weatherforecast` returns 404 or 405
+  - **Status:** RED — backend not running; connection refused
+  - **Verifies:** AC2 — `/weatherforecast` returns 404 or 405 (template cleanup)
 
 - **Test:** `should return CORS header allowing http://localhost:5173 origin`
-  - **Status:** RED — CORS policy not yet registered in `Program.cs`
-  - **Verifies:** AC3 — `access-control-allow-origin` header equals `http://localhost:5173` or `*`
+  - **Status:** RED — backend not running; connection refused
+  - **Verifies:** AC3 — `Access-Control-Allow-Origin` header present for frontend origin
 
 - **Test:** `should respond to OPTIONS preflight from frontend origin without CORS rejection`
-  - **Status:** RED — CORS middleware not yet applied before endpoint mapping
-  - **Verifies:** AC3 — OPTIONS preflight returns 200 or 204
+  - **Status:** RED — backend not running; connection refused
+  - **Verifies:** AC3 — OPTIONS preflight returns 200 or 204, not 403
 
 - **Test:** `should have all four Clean Architecture layers responding (API, Application, Domain, Infrastructure via DI)`
-  - **Status:** RED — solution not yet built; four projects not yet created
-  - **Verifies:** AC2/AC5 — Server running implies build succeeded for all four layers
+  - **Status:** RED — backend not running; connection refused
+  - **Verifies:** AC5 — Server running proves `dotnet build SiesaAgents.sln` succeeded
 
 - **Test:** `should return Problem Details RFC 7807 format for unhandled errors`
-  - **Status:** RED — `ExceptionHandlingMiddleware` not yet registered
-  - **Verifies:** AC5 (implicit) — 404 on unknown endpoint returns JSON (not HTML), status 404 or 400
+  - **Status:** RED — backend not running; connection refused
+  - **Verifies:** AC2/AC5 — Non-existent endpoints return JSON (not HTML), confirming middleware is wired
+
+---
+
+### Component Tests
+
+Not applicable for Story 1.1. This story establishes infrastructure scaffolding with no UI components to test at the component level. The root layout (`__root.tsx`) is a placeholder shell with no interactive elements.
 
 ---
 
 ## Data Factories Created
 
-No domain data factories are needed for Story 1.1. This story tests infrastructure initialization (server startup, CORS headers, HTTP status codes) rather than domain entity CRUD operations.
-
-The existing `e2e/helpers/data.helper.ts` provides `buildCliente()` and `buildContacto()` factories for future stories (Epic 2/3).
+No new data factories are required for Story 1.1. This story has no domain entities or database interactions. Existing factory helpers in `e2e/helpers/data.helper.ts` (`buildCliente`, `buildContacto`) are not used by these tests.
 
 ---
 
 ## Fixtures Created
 
-No custom fixtures beyond `e2e/fixtures/base.fixture.ts` are needed for Story 1.1. Tests use vanilla Playwright `page` and `request` contexts directly, which is appropriate for infrastructure-level checks.
+No new fixtures are required for Story 1.1. Tests use the base Playwright `test` and `request` fixtures directly, as no authenticated sessions or pre-populated data are needed for infrastructure validation.
 
-**Existing fixture file:** `e2e/fixtures/base.fixture.ts`
-- `clientesPage` — navigates to `/clientes` before test (used by Epic 2+ stories)
-- `contactosPage` — navigates to `/contactos` before test (used by Epic 3+ stories)
+The existing `e2e/fixtures/base.fixture.ts` (which provides `clientesPage` and `contactosPage`) is not used by these initialization tests.
 
 ---
 
 ## Mock Requirements
 
-No external service mocking is required for Story 1.1 tests. These tests verify real infrastructure:
+Story 1.1 tests target the **real running servers** — no mocks are used. The tests validate that actual infrastructure is correctly initialized.
 
-- The **frontend Vite dev server** must actually be running at `http://localhost:5173`
-- The **backend .NET server** must actually be running at `http://localhost:5000`
+For local development before implementation:
+- Tests in `project-initialization.spec.ts` will time out on navigation to `http://localhost:5173` (frontend not running).
+- Tests in `backend-initialization.api.spec.ts` will fail with ECONNREFUSED on `http://localhost:5000` (backend not running).
 
-The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm --filter frontend dev`. The backend must be started separately with `dotnet run` in `src/SiesaAgents.API`.
+This is the expected RED phase behavior.
 
 ---
 
 ## Required data-testid Attributes
 
-### Frontend `src/main.tsx` or `index.html`
+### `frontend/index.html` or `frontend/src/main.tsx` / `frontend/src/App.tsx`
 
-- `app-root` — The root React mount point element (div wrapping `<RouterProvider>`)
+- `app-root` — The outermost React mount container element. Required for `should render the root HTML document with a valid React mount point`.
 
-**Implementation example:**
+**Implementation Example:**
 
 ```tsx
-// src/main.tsx or index.html
-<div id="root" data-testid="app-root">
-  {/* RouterProvider and QueryProvider are rendered here */}
-</div>
+// Option A: in index.html
+<div id="root" data-testid="app-root"></div>
+
+// Option B: in App.tsx (wrapping element)
+export function App() {
+  return (
+    <div data-testid="app-root">
+      {/* router outlet */}
+    </div>
+  );
+}
 ```
 
 ---
@@ -157,14 +169,12 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 **Tasks to make this test pass:**
 
 - [ ] Run `pnpm create vite@latest frontend -- --template react-ts` at project root
-- [ ] Install all runtime and dev dependencies as specified in Task 1 of the story
-- [ ] Configure `vite.config.ts` with `@tailwindcss/vite` and `@tanstack/router-plugin/vite` plugins
-- [ ] Create `src/main.tsx` wiring `RouterProvider` inside `QueryProvider`
-- [ ] Verify `pnpm run dev` starts on port 5173 without errors
-- [ ] Run test: `npx playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "5173"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Install dependencies: `cd frontend && pnpm install`
+- [ ] Verify `pnpm run dev` starts Vite on port 5173 (matches `baseURL` in `playwright.config.ts`)
+- [ ] Run test: `pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "port 5173"`
+- [ ] Test passes (green phase)
 
-**Estimated Effort:** 1 hour
+**Estimated Effort:** 0.5 hours
 
 ---
 
@@ -174,9 +184,10 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Add `data-testid="app-root"` to the root mount element in `index.html` or wrap in `src/main.tsx`
-- [ ] Run test: `npx playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "React mount point"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Add `data-testid="app-root"` to the root element in `frontend/index.html` or `frontend/src/App.tsx`
+- [ ] Ensure `src/main.tsx` mounts React into `#root` with `RouterProvider` inside `QueryProvider`
+- [ ] Run test: `pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "React mount point"`
+- [ ] Test passes (green phase)
 
 **Estimated Effort:** 0.25 hours
 
@@ -188,10 +199,10 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Configure `tsconfig.app.json` with `"strict": true`, `"noImplicitAny": true`, `"strictNullChecks": true`
-- [ ] Ensure all source files compile cleanly under strict mode (no `any` types, no implicit nulls)
-- [ ] Run test: `npx playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "TypeScript compilation"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Configure `frontend/tsconfig.app.json` with `"strict": true`, `"noImplicitAny": true`, `"strictNullChecks": true`
+- [ ] Resolve all TypeScript errors surfaced by `pnpm run build` or `pnpm exec tsc --noEmit`
+- [ ] Run test: `pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "TypeScript compilation errors"`
+- [ ] Test passes (green phase)
 
 **Estimated Effort:** 0.5 hours
 
@@ -203,12 +214,11 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Create `src/routes/__root.tsx` as TanStack Router root route
-- [ ] Create `src/app/providers/QueryProvider.tsx` wrapping `QueryClientProvider`
-- [ ] Wire `RouterProvider` inside `QueryProvider` in `src/main.tsx`
-- [ ] Create `.env.development` with `VITE_API_URL=http://localhost:5000`
-- [ ] Run test: `npx playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "runtime errors"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Ensure `src/main.tsx` wires `RouterProvider` inside `QueryProvider` without runtime errors
+- [ ] Ensure `src/routes/__root.tsx` exports a valid root route (TanStack Router)
+- [ ] Ensure `.env.development` contains `VITE_API_URL=http://localhost:5000`
+- [ ] Run test: `pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "runtime errors"`
+- [ ] Test passes (green phase)
 
 **Estimated Effort:** 0.5 hours
 
@@ -220,11 +230,11 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Complete backend initialization (see AC2 tests below)
-- [ ] Register CORS policy `"DevCors"` in `Program.cs` allowing `http://localhost:5173`
-- [ ] Apply `app.UseCors("DevCors")` BEFORE `app.MapScalarApiReference()` and endpoint mappings
-- [ ] Run test: `npx playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "CORS errors"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Implement CORS policy in `backend/src/SiesaAgents.API/Program.cs` allowing origin `http://localhost:5173`
+- [ ] Call `app.UseCors("DevCors")` before `app.MapScalarApiReference()` and other endpoint mappings
+- [ ] Load `AllowedOrigins` from `appsettings.Development.json` (or inline for bootstrap)
+- [ ] Run both servers and test: `pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "CORS errors"`
+- [ ] Test passes (green phase)
 
 **Estimated Effort:** 0.5 hours
 
@@ -236,10 +246,10 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Complete backend initialization (server running on port 5000)
-- [ ] Verify `GET /scalar` returns 200, 301, or 302
-- [ ] Run test: `npx playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "health probe"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Backend must be running on port 5000 (`dotnet run` in `src/SiesaAgents.API`)
+- [ ] `/scalar` endpoint must return HTTP 200, 301, or 302
+- [ ] Run test: `pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "health probe"`
+- [ ] Test passes (green phase)
 
 **Estimated Effort:** 0.25 hours
 
@@ -251,10 +261,10 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Ensure `tsconfig.app.json` strict flags are set correctly
-- [ ] Fix all TypeScript errors in source files so Vite does not render `vite-error-overlay`
-- [ ] Run test: `npx playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "error overlay"`
-- [ ] ✅ Test passes (green phase)
+- [ ] All TypeScript errors must be resolved (AC4 tasks above)
+- [ ] `vite-error-overlay` custom element must not appear in DOM
+- [ ] Run test: `pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts --grep "error overlay"`
+- [ ] Test passes (green phase)
 
 **Estimated Effort:** 0.25 hours
 
@@ -266,14 +276,15 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Create solution: `dotnet new sln -n SiesaAgents`
-- [ ] Create API project: `dotnet new webapi -n SiesaAgents.API --no-openapi -o src/SiesaAgents.API`
-- [ ] Add project to solution and configure `Program.cs` with `builder.Services.AddOpenApi()`
-- [ ] Run `dotnet run` in `src/SiesaAgents.API` and verify server starts on port 5000
-- [ ] Run test: `npx playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "running on port 5000"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Create solution: `dotnet new sln -n SiesaAgents -o backend/`
+- [ ] Create API project: `dotnet new webapi -n SiesaAgents.API --no-openapi -o backend/src/SiesaAgents.API`
+- [ ] Add NuGet: `dotnet add backend/src/SiesaAgents.API package Scalar.AspNetCore`
+- [ ] Configure `Program.cs` with minimal startup (see Dev Notes in story)
+- [ ] Run `dotnet run --project backend/src/SiesaAgents.API` and verify port 5000
+- [ ] Run test: `pnpm exec playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "port 5000"`
+- [ ] Test passes (green phase)
 
-**Estimated Effort:** 0.5 hours
+**Estimated Effort:** 1.0 hour
 
 ---
 
@@ -283,12 +294,26 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Add NuGet package: `dotnet add src/SiesaAgents.API package Scalar.AspNetCore`
-- [ ] Add `app.MapScalarApiReference()` in `Program.cs` (NEVER `app.UseSwagger()`)
-- [ ] Run test: `npx playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "Scalar"`
-- [ ] ✅ Test passes (green phase)
+- [ ] In `Program.cs`: `builder.Services.AddOpenApi()` and `app.MapScalarApiReference()`
+- [ ] NEVER use `app.UseSwagger()` or Swashbuckle
+- [ ] Run test: `pnpm exec playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "Scalar API documentation"`
+- [ ] Test passes (green phase)
 
 **Estimated Effort:** 0.25 hours
+
+---
+
+### Test: `should return HTML content from the Scalar documentation endpoint`
+
+**File:** `e2e/tests/api/backend-initialization.api.spec.ts`
+
+**Tasks to make this test pass:**
+
+- [ ] Scalar.AspNetCore is registered and serving HTML at `/scalar`
+- [ ] Run test: `pnpm exec playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "HTML content"`
+- [ ] Test passes (green phase)
+
+**Estimated Effort:** 0.0 hours (covered by Scalar registration above)
 
 ---
 
@@ -298,12 +323,12 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Ensure Swashbuckle/Swagger packages are NOT installed (use only `Scalar.AspNetCore`)
-- [ ] Do NOT add `app.UseSwagger()` or `app.UseSwaggerUI()` anywhere in `Program.cs`
-- [ ] Run test: `npx playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "Swagger"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Do NOT install or register Swashbuckle or any other Swagger UI library
+- [ ] Ensure `/swagger` returns 404 (no endpoint registered there)
+- [ ] Run test: `pnpm exec playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "Swagger"`
+- [ ] Test passes (green phase)
 
-**Estimated Effort:** 0.1 hours
+**Estimated Effort:** 0.0 hours (pass-by-omission — simply don't add Swagger)
 
 ---
 
@@ -313,12 +338,12 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Remove default WeatherForecast endpoint, record, and related files from the generated API project
-- [ ] Remove any `app.MapGet("/weatherforecast", ...)` lines from `Program.cs`
-- [ ] Run test: `npx playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "WeatherForecast"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Remove `WeatherForecastController.cs` and `WeatherForecast.cs` from generated template
+- [ ] Ensure `Program.cs` does not map WeatherForecast endpoints
+- [ ] Run test: `pnpm exec playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "WeatherForecast"`
+- [ ] Test passes (green phase)
 
-**Estimated Effort:** 0.1 hours
+**Estimated Effort:** 0.25 hours
 
 ---
 
@@ -328,20 +353,12 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Register CORS policy in `Program.cs`:
-  ```csharp
-  builder.Services.AddCors(options =>
-      options.AddPolicy("DevCors", policy =>
-          policy.WithOrigins("http://localhost:5173")
-                .AllowAnyHeader()
-                .AllowAnyMethod()));
-  ```
-- [ ] Apply `app.UseCors("DevCors")` before endpoint mappings
-- [ ] Add required data-testid: none (API-level test)
-- [ ] Run test: `npx playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "CORS header"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Register `DevCors` policy: `.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()`
+- [ ] Apply `app.UseCors("DevCors")` in middleware pipeline
+- [ ] Run test: `pnpm exec playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "CORS header"`
+- [ ] Test passes (green phase)
 
-**Estimated Effort:** 0.25 hours
+**Estimated Effort:** 0.5 hours
 
 ---
 
@@ -351,12 +368,12 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Verify `app.UseCors("DevCors")` is placed BEFORE `app.MapScalarApiReference()`
-- [ ] Verify policy includes `.AllowAnyMethod()` to allow OPTIONS requests
-- [ ] Run test: `npx playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "OPTIONS preflight"`
-- [ ] ✅ Test passes (green phase)
+- [ ] `UseCors` middleware must be placed BEFORE `MapScalarApiReference` and endpoint mappings
+- [ ] Preflight (`OPTIONS`) must return 200 or 204
+- [ ] Run test: `pnpm exec playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "preflight"`
+- [ ] Test passes (green phase)
 
-**Estimated Effort:** 0.25 hours
+**Estimated Effort:** 0.0 hours (covered by CORS registration order)
 
 ---
 
@@ -366,15 +383,16 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Create Application layer: `dotnet new classlib -n SiesaAgents.Application -o src/SiesaAgents.Application`
-- [ ] Create Domain layer: `dotnet new classlib -n SiesaAgents.Domain -o src/SiesaAgents.Domain`
-- [ ] Create Infrastructure layer: `dotnet new classlib -n SiesaAgents.Infrastructure -o src/SiesaAgents.Infrastructure`
-- [ ] Add all projects to solution and configure project references: API → Application → Domain; API → Infrastructure → Domain
-- [ ] Verify `dotnet build SiesaAgents.sln` succeeds with zero errors
-- [ ] Run test: `npx playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "four Clean Architecture"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Create Application layer: `dotnet new classlib -n SiesaAgents.Application -o backend/src/SiesaAgents.Application`
+- [ ] Create Domain layer: `dotnet new classlib -n SiesaAgents.Domain -o backend/src/SiesaAgents.Domain`
+- [ ] Create Infrastructure layer: `dotnet new classlib -n SiesaAgents.Infrastructure -o backend/src/SiesaAgents.Infrastructure`
+- [ ] Add all projects to solution with `dotnet sln add ...`
+- [ ] Wire project references: API → Application → Domain; API → Infrastructure → Domain
+- [ ] Run `dotnet build backend/SiesaAgents.sln` — zero errors
+- [ ] Run test: `pnpm exec playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "Clean Architecture"`
+- [ ] Test passes (green phase)
 
-**Estimated Effort:** 0.5 hours
+**Estimated Effort:** 1.5 hours
 
 ---
 
@@ -384,11 +402,11 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 
 **Tasks to make this test pass:**
 
-- [ ] Create `src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` implementing Problem Details RFC 7807
-- [ ] Register `app.UseMiddleware<ExceptionHandlingMiddleware>()` in `Program.cs` BEFORE routing
-- [ ] Configure `appsettings.Development.json` with `ConnectionStrings:DefaultConnection` placeholder
-- [ ] Run test: `npx playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "Problem Details"`
-- [ ] ✅ Test passes (green phase)
+- [ ] Create `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` (see pattern in story Dev Notes)
+- [ ] Register in `Program.cs`: `app.UseMiddleware<ExceptionHandlingMiddleware>()` before routing
+- [ ] Ensure unknown routes return JSON (not HTML) — 404 with `application/json` or `application/problem+json`
+- [ ] Run test: `pnpm exec playwright test e2e/tests/api/backend-initialization.api.spec.ts --grep "Problem Details"`
+- [ ] Test passes (green phase)
 
 **Estimated Effort:** 0.5 hours
 
@@ -397,96 +415,101 @@ The `playwright.config.ts` `webServer` block auto-starts the frontend via `pnpm 
 ## Running Tests
 
 ```bash
-# Run all Story 1.1 failing tests
-npx playwright test e2e/tests/foundation/project-initialization.spec.ts e2e/tests/api/backend-initialization.api.spec.ts
+# Run all failing tests for Story 1.1
+pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts e2e/tests/api/backend-initialization.api.spec.ts
 
-# Run only E2E (frontend) tests
-npx playwright test e2e/tests/foundation/project-initialization.spec.ts
+# Run only E2E tests (frontend)
+pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts
 
-# Run only API (backend) tests
-npx playwright test e2e/tests/api/backend-initialization.api.spec.ts
+# Run only API tests (backend)
+pnpm exec playwright test e2e/tests/api/backend-initialization.api.spec.ts
 
-# Run tests in headed mode (see browser)
-npx playwright test e2e/tests/foundation/project-initialization.spec.ts --headed
+# Run in headed mode (see browser)
+pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts --headed
 
 # Debug a specific test
-npx playwright test e2e/tests/foundation/project-initialization.spec.ts --debug
+pnpm exec playwright test e2e/tests/api/backend-initialization.api.spec.ts --debug
 
-# Run with Playwright UI
-npx playwright test --ui
+# Run tests with HTML report
+pnpm exec playwright test e2e/tests/foundation/ e2e/tests/api/ --reporter=html
 ```
 
 ---
 
 ## Red-Green-Refactor Workflow
 
-### RED Phase (Complete) ✅
+### RED Phase (Complete)
 
 **TEA Agent Responsibilities:**
 
-- ✅ All 16 tests written and failing (7 E2E + 9 API)
-- ✅ Fixtures confirmed (base.fixture.ts for future stories)
-- ✅ No external service mocks needed (infrastructure tests against real servers)
-- ✅ `data-testid="app-root"` requirement documented
-- ✅ Implementation checklist created with 13 test-mapped task groups
+- All 16 tests written and failing (RED) — no implementation exists
+- No fixtures or factories required for this infrastructure story
+- Mock requirements: none (tests hit real servers)
+- `data-testid="app-root"` requirement documented
+- Implementation checklist created with per-test task breakdowns
 
 **Verification:**
 
-- Tests fail with connection refused errors (servers not running) — correct RED phase failure
-- No test bugs — failures are due to missing implementation, not test logic errors
+- E2E tests fail with `net::ERR_CONNECTION_REFUSED` or navigation timeout (frontend absent)
+- API tests fail with `ECONNREFUSED` (backend absent)
+- Tests fail due to missing implementation, not test bugs
 
 ---
 
-### GREEN Phase (DEV Team - Next Steps)
+### GREEN Phase (DEV Team — Next Steps)
 
 **DEV Agent Responsibilities:**
 
-1. **Start with backend** (Task 2 in story): Create solution, four projects, add references
-2. **Implement CORS** (Task 3): Register `"DevCors"` policy in `Program.cs`
-3. **Add Scalar** (Task 2 continued): Install `Scalar.AspNetCore`, call `app.MapScalarApiReference()`
-4. **Add ExceptionHandlingMiddleware** (Task 4): Create middleware, register before routing
-5. **Initialize frontend** (Task 1): Scaffold Vite react-ts, configure TypeScript strict mode
-6. **Add `data-testid="app-root"`** to root element
-7. **Run tests** to verify green: `npx playwright test e2e/tests/foundation/ e2e/tests/api/`
+1. **Pick one failing test** from implementation checklist (recommend starting with backend API tests — no browser needed)
+2. **Read the test** to understand expected behavior
+3. **Implement minimal code** to make that specific test pass
+4. **Run the test** to verify it now passes (green)
+5. **Check off the task** in implementation checklist
+6. **Move to next test** and repeat
 
-**Key Principles:**
-
-- One test at a time — confirm green before moving to the next
-- Backend tests can be run without the frontend (API-level only)
-- Frontend tests require `pnpm run dev` to be running (auto-started by Playwright webServer config)
+**Recommended order (fastest path to all green):**
+1. Backend init tests (AC2, AC5) → `dotnet new`, add Scalar
+2. CORS tests (AC3) → configure `DevCors` policy
+3. WeatherForecast removal + Swagger-absent tests
+4. ExceptionHandlingMiddleware tests
+5. Frontend init (AC1) → `pnpm create vite`, configure TS strict
+6. React root element test → add `data-testid="app-root"`
+7. TypeScript error overlay test → fix any TS errors
 
 ---
 
-### REFACTOR Phase (DEV Team - After All Tests Pass)
+### REFACTOR Phase (DEV Team — After All Tests Pass)
 
-1. Review `Program.cs` for clean minimal structure per architecture spec
-2. Ensure no default template boilerplate remains (WeatherForecast, etc.)
-3. Confirm `tsconfig.app.json` strict flags match architecture spec exactly
-4. Validate project references are correct (no circular dependencies)
-5. Run full test suite to confirm all still pass after refactor
+**DEV Agent Responsibilities:**
+
+1. Verify all 16 tests pass (green phase complete)
+2. Review `Program.cs` for clean ordering of middleware
+3. Extract CORS origins to `appsettings.Development.json` → `AllowedOrigins` array
+4. Ensure `frontend/tsconfig.app.json` paths and aliases are clean
+5. Verify folder structure matches architecture.md exactly
+6. Run tests again after each refactor to confirm no regression
 
 ---
 
 ## Next Steps
 
-1. **Share this checklist and failing tests** with the dev workflow (manual handoff)
-2. **Run failing tests** to confirm RED phase: `npx playwright test e2e/tests/foundation/ e2e/tests/api/`
-3. **Begin implementation** using implementation checklist above
-4. **Work one test group at a time** (red → green for each)
-5. **When all 16 tests pass**, proceed to refactor phase
-6. **When refactoring complete**, update story status to 'done' in sprint-status.yaml
+1. Share this checklist and failing tests with the dev workflow (manual handoff)
+2. Run failing tests to confirm RED phase: `pnpm exec playwright test e2e/tests/foundation/ e2e/tests/api/`
+3. Begin implementation using implementation checklist as guide (start with backend)
+4. Work one test at a time (red → green for each)
+5. When all 16 tests pass, refactor for quality
+6. When refactoring complete, update story status to `done`
 
 ---
 
 ## Knowledge Base References Applied
 
-- **network-first.md** — Network-first route interception: `waitForResponse` registered before `page.goto()` in AC1 test
-- **test-quality.md** — Atomic tests (one assertion per test), Given-When-Then structure, explicit waits only (no sleeps)
-- **selector-resilience.md** — `data-testid="app-root"` selector for React root; no fragile CSS selectors
-- **fixture-architecture.md** — `base.fixture.ts` pattern with `test.extend()` for future story fixtures
-- **test-levels-framework.md** — E2E for frontend user-facing ACs (AC1, AC3, AC4); API tests for backend ACs (AC2, AC5)
-
-See `tea-index.csv` for complete knowledge fragment mapping.
+- **network-first.md** — Route interception patterns applied: `page.waitForResponse()` registered BEFORE `page.goto()` in AC1 and AC4 tests
+- **test-quality.md** — Given-When-Then format, one primary assertion per test, no hard waits (`waitForLoadState('networkidle')` instead of `sleep`)
+- **selector-resilience.md** — `data-testid="app-root"` selector used instead of CSS class or element tag
+- **test-levels-framework.md** — API tests used for backend contract validation (AC2, AC5); E2E tests used for full browser validation (AC1, AC3, AC4)
+- **fixture-architecture.md** — No fixtures needed; base Playwright `test` and `request` fixtures are sufficient for infrastructure tests
+- **data-factories.md** — No factories needed; Story 1.1 has no domain entities
 
 ---
 
@@ -494,41 +517,53 @@ See `tea-index.csv` for complete knowledge fragment mapping.
 
 ### Initial Test Run (RED Phase Verification)
 
-**Command:** `npx playwright test e2e/tests/foundation/project-initialization.spec.ts e2e/tests/api/backend-initialization.api.spec.ts`
+**Command:** `pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts e2e/tests/api/backend-initialization.api.spec.ts`
 
 **Expected Results:**
 
 ```
+Running 16 tests using 16 workers
+
+  ✘  [chromium] › e2e/tests/foundation/project-initialization.spec.ts:23:3 › AC1 — Frontend Vite server initialization › should serve the frontend app on port 5173 without errors
+  ✘  [chromium] › e2e/tests/foundation/project-initialization.spec.ts:39:3 › AC1 — Frontend Vite server initialization › should render the root HTML document with a valid React mount point
+  ✘  [chromium] › e2e/tests/foundation/project-initialization.spec.ts:49:3 › AC1 — Frontend Vite server initialization › should load without any TypeScript compilation errors visible in the browser console
+  ✘  [chromium] › e2e/tests/foundation/project-initialization.spec.ts:66:3 › AC1 — Frontend Vite server initialization › should not have any JavaScript runtime errors on initial load
+  ✘  [chromium] › e2e/tests/foundation/project-initialization.spec.ts:86:3 › AC3 — CORS configuration between frontend and backend › should allow frontend to reach backend health endpoint without CORS errors
+  ✘  [chromium] › e2e/tests/foundation/project-initialization.spec.ts:122:3 › AC3 — CORS configuration between frontend and backend › should receive a valid HTTP response from the backend health probe without CORS blocking
+  ✘  [chromium] › e2e/tests/foundation/project-initialization.spec.ts:141:3 › AC4 — TypeScript strict mode active on frontend › should load the frontend without Vite TypeScript error overlay
+  ✘  [chromium] › e2e/tests/api/backend-initialization.api.spec.ts:23:3 › AC2 — Backend server initialization and Scalar API documentation › should have the backend API server running on port 5000
+  ✘  [chromium] › e2e/tests/api/backend-initialization.api.spec.ts:34:3 › AC2 — Backend server initialization and Scalar API documentation › should serve the Scalar API documentation page at /scalar
+  ✘  [chromium] › e2e/tests/api/backend-initialization.api.spec.ts:45:3 › AC2 — Backend server initialization and Scalar API documentation › should return HTML content from the Scalar documentation endpoint
+  ✘  [chromium] › e2e/tests/api/backend-initialization.api.spec.ts:55:3 › AC2 — Backend server initialization and Scalar API documentation › should NOT expose any Swagger/OpenAPI UI endpoint (Swashbuckle forbidden)
+  ✘  [chromium] › e2e/tests/api/backend-initialization.api.spec.ts:65:3 › AC2 — Backend server initialization and Scalar API documentation › should NOT expose WeatherForecast default endpoint
+  ✘  [chromium] › e2e/tests/api/backend-initialization.api.spec.ts:75:3 › AC2 — Backend server initialization and Scalar API documentation › should return CORS header allowing http://localhost:5173 origin
+  ✘  [chromium] › e2e/tests/api/backend-initialization.api.spec.ts:93:3 › AC2 — Backend server initialization and Scalar API documentation › should respond to OPTIONS preflight from frontend origin without CORS rejection
+  ✘  [chromium] › e2e/tests/api/backend-initialization.api.spec.ts:117:3 › AC5 — Backend solution builds and runs successfully › should have all four Clean Architecture layers responding
+  ✘  [chromium] › e2e/tests/api/backend-initialization.api.spec.ts:132:3 › AC5 — Backend solution builds and runs successfully › should return Problem Details RFC 7807 format for unhandled errors
+
   16 failed
-
-  [chromium] › e2e/tests/foundation/project-initialization.spec.ts:23:3
-    Error: net::ERR_CONNECTION_REFUSED at http://localhost:5173/
-
-  [chromium] › e2e/tests/api/backend-initialization.api.spec.ts:24:3
-    Error: connect ECONNREFUSED 127.0.0.1:5000
 ```
 
 **Summary:**
 
 - Total tests: 16
-- Passing: 0 (expected — servers not yet implemented)
-- Failing: 16 (expected — RED phase confirmed)
+- Passing: 0 (expected)
+- Failing: 16 (expected)
 - Status: RED phase verified
 
-**Expected Failure Reasons:**
-
-- E2E tests (7): `net::ERR_CONNECTION_REFUSED` — Vite frontend server not running
-- API tests (9): `connect ECONNREFUSED 127.0.0.1:5000` — .NET backend server not running
+**Expected Failure Messages:**
+- E2E tests: `Error: page.goto: net::ERR_CONNECTION_REFUSED` or Playwright timeout (frontend not running)
+- API tests: `Error: connect ECONNREFUSED 127.0.0.1:5000` (backend not running)
 
 ---
 
 ## Notes
 
-- Story 1.1 creates **only the skeleton** — no domain entities, no routes beyond `__root.tsx`, no database migrations. All domain content is deferred to Epics 2 and 3.
-- The `pnpm` package manager is **mandatory** (not npm or yarn) per company standards.
-- Backend uses **Minimal API** pattern (NO MVC controllers) — tests validate this by confirming clean endpoint responses.
-- AC4 (TypeScript strict mode) and AC5 (dotnet build) are verified indirectly at runtime: if the servers start and serve content correctly, compilation was successful.
-- The `ExceptionHandlingMiddleware` test (Story 1.3 prep) is included as it is part of Task 4 and the `Program.cs` minimal structure defined in the story.
+- Story 1.1 is pure infrastructure. Tests do NOT use mocks — they validate that real servers are correctly initialized.
+- AC5 (`dotnet build` with zero errors) is validated indirectly: if the server responds, the build succeeded. A build failure prevents the server from starting.
+- The `data-testid="app-root"` attribute must be added during frontend initialization — this is the only UI-level selector in this story.
+- `playwright.config.ts` already sets `testDir: './e2e'` and `baseURL: 'http://localhost:5173'`, so tests are pre-configured to run correctly once servers exist.
+- `API_BASE_URL` defaults to `http://localhost:5000` in both test files; override via environment variable if needed.
 
 ---
 
@@ -542,4 +577,4 @@ See `tea-index.csv` for complete knowledge fragment mapping.
 
 ---
 
-**Generated by BMad TEA Agent** - 2026-05-23
+**Generated by BMad TEA Agent** — 2026-05-21

@@ -1,0 +1,90 @@
+epic: 1
+title: "Project Foundation & Application Shell"
+scope: epic
+date: 2026-05-21
+gate_decision: CONCERNS
+
+coverage:
+  overall_pct: 88
+  p0_pct: 100
+  p1_pct: 92
+  p2_pct: 100
+
+thresholds:
+  p0_required: 100
+  p1_required: 90
+  overall_required: 80
+
+threshold_results:
+  p0_met: true
+  p1_met: true
+  overall_met: true
+
+stories:
+  - id: "1.1"
+    title: "Project Initialization & Repository Structure"
+    test_count: 36
+    test_status: all_green
+    code_review: PASS
+    story_status: review
+
+  - id: "1.2"
+    title: "Frontend Navigation Shell"
+    test_count: 43
+    test_status: all_green
+    code_review: CONCERNS
+    story_status: review
+    critical_findings:
+      - "siesa-ui-kit NavigationRail/NavigationBar/LayoutBase NOT used — custom nav implementation"
+      - "LayoutBase shell component absent — Navbar bar mandated by design system missing"
+
+  - id: "1.3"
+    title: "Backend Database Foundation"
+    test_count: 53
+    test_status: all_green
+    code_review: PASS
+    story_status: done
+
+gaps:
+  - id: GAP-01
+    severity: HIGH
+    story: "1.2"
+    requirement: "AC-1.2.1, AC-1.2.2, FR29"
+    description: >
+      siesa-ui-kit NavigationRail, NavigationBar, and LayoutBase components NOT used.
+      Custom hand-rolled <nav> bypasses design system. Code-review verdict is CONCERNS.
+      Tests pass functionally but requirements fidelity (technology constraint) is violated.
+    resolution_required: true
+
+  - id: GAP-02
+    severity: MEDIUM
+    story: "1.2"
+    requirement: "UNIT-F-03, AC-1.2.1"
+    description: >
+      UNIT-F-03 only asserts route registration in routesById, not that NavigationRail
+      component actually renders. No RTL render or DOM assertion exists.
+    resolution_required: false
+
+  - id: GAP-03
+    severity: LOW
+    story: "1.1"
+    requirement: "BUILD-F-01, BUILD-F-02"
+    description: >
+      Build smoke checks exist as implicit evidence (servers start = build passed)
+      but no explicit tracked test ID in the E2E suite for BUILD-F-01/BUILD-F-02.
+    resolution_required: false
+
+gate_rationale: >
+  All numeric thresholds met (P0=100%, P1=92%, overall=88%). All P0/P1 tests have
+  GREEN evidence. Gate is CONCERNS (not PASS) due to GAP-01: Story 1.2 violates
+  the mandated siesa-ui-kit technology constraint (NavigationRail/NavigationBar/LayoutBase
+  not used). Story 1.2 code-review is CONCERNS with critical findings unresolved.
+  Story 1.2 status remains 'review'. Resolution requires replacing custom nav with
+  siesa-ui-kit components and re-running code-review to PASS.
+
+resolution_required_for_pass:
+  - Replace AppShell.tsx custom <nav> with siesa-ui-kit NavigationRail, NavigationBar, LayoutBase
+  - Pass Story 1.2 code-review without CRITICAL findings
+  - Optionally upgrade UNIT-F-03 to RTL render assertion for NavigationRail
+
+trace_matrix_path: "_bmad-output/implementation-artifacts/trace-epic-1.md"

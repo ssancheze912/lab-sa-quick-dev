@@ -1,0 +1,11 @@
+node_modules/
+package-lock.json
+playwright-results/
+playwright-report/
+test-results/
+
+# Vite template residuals (removed from tracking by code review)
+frontend/src/style.css
+frontend/src/assets/hero.png
+frontend/src/assets/typescript.svg
+frontend/src/assets/vite.svg
