@@ -1,6 +1,7 @@
 import React from 'react'
 import { createRootRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
+import { LayoutBase } from 'siesa-ui-kit'
 
 // Navigation items definition
 const NAV_ITEMS = [
@@ -52,7 +53,7 @@ function RootLayout() {
   const isMobile = useIsMobile()
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <LayoutBase hideSidebar contentClassName="p-0">
       {isMobile ? (
         /* NavigationBar — mobile only, single nav component in the DOM */
         <>
@@ -79,7 +80,7 @@ function RootLayout() {
                   onKeyDown={handleNavKeyDown}
                   className={[
                     'flex flex-col items-center justify-center flex-1 min-h-[56px] py-2 transition-colors',
-                    isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-900',
+                    isActive ? 'text-primary-600' : 'text-slate-500 hover:text-slate-900',
                   ].join(' ')}
                 >
                   <item.Icon className="w-6 h-6" aria-hidden="true" />
@@ -111,7 +112,7 @@ function RootLayout() {
                   className={[
                     'flex flex-col items-center justify-center w-12 h-12 rounded-lg transition-colors',
                     isActive
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-primary-600 text-white'
                       : 'text-slate-400 hover:bg-slate-700 hover:text-white',
                   ].join(' ')}
                 >
@@ -127,7 +128,7 @@ function RootLayout() {
           </main>
         </div>
       )}
-    </div>
+    </LayoutBase>
   )
 }
 
@@ -147,7 +148,7 @@ function NotFoundPage() {
       <Link
         to="/clientes"
         data-testid="not-found-back-link"
-        className="text-blue-600 hover:underline font-medium"
+        className="text-primary-600 hover:underline font-medium"
       >
         ← Ir a Clientes
       </Link>
