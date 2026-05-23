@@ -28,8 +28,8 @@ function handleNavKeyDown(e: React.KeyboardEvent<HTMLAnchorElement>) {
   }
 }
 
-// Hook para detectar mobile (breakpoint < 768px)
-function useIsMobile(breakpoint = 768) {
+// Hook to detect mobile viewport (breakpoint in px, default matches Tailwind `lg:` = 1024px)
+function useIsMobile(breakpoint = 1024) {
   const [isMobile, setIsMobile] = React.useState(
     typeof window !== 'undefined' ? window.innerWidth < breakpoint : false
   )
@@ -54,7 +54,7 @@ function RootLayout() {
   return (
     <div className="flex flex-col min-h-screen">
       {isMobile ? (
-        /* NavigationBar — solo en mobile, único componente de nav en el DOM */
+        /* NavigationBar — mobile only, single nav component in the DOM */
         <>
           <div className="flex flex-1">
             <main className="flex-1 flex flex-col pb-14">
@@ -90,7 +90,7 @@ function RootLayout() {
           </nav>
         </>
       ) : (
-        /* NavigationRail — solo en desktop, único componente de nav en el DOM */
+        /* NavigationRail — desktop only, single nav component in the DOM */
         <div className="flex flex-1">
           <nav
             data-testid="navigation-rail"
