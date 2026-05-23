@@ -6,7 +6,7 @@ export const Route = createFileRoute('/contactos')({
 
 function ContactosPage() {
   return (
-    <div className="p-6">
+    <div data-testid="contactos-view" className="p-6">
       <h1 className="text-4xl font-bold tracking-tight">Contactos</h1>
     </div>
   )
