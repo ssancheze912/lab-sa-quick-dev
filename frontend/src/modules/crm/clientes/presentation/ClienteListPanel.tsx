@@ -18,8 +18,10 @@ function ClienteListItem({ cliente, isSelected, onClick }: ClienteListItemProps)
       role="listitem"
       data-testid="cliente-list-item"
       aria-current={isSelected ? 'true' : undefined}
+      tabIndex={0}
       onClick={() => onClick(cliente.id)}
-      className={`cursor-pointer px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 ${
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick(cliente.id)}
+      className={`cursor-pointer px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0e79fd] ${
         isSelected ? 'border-l-2 border-[#0e79fd] bg-blue-50 dark:bg-slate-800' : ''
       }`}
     >

@@ -14,18 +14,24 @@ public class ClienteRepository(AppDbContext context) : IClienteRepository
         => await context.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, ct);
 
     public async Task AddAsync(ClienteEntity cliente, CancellationToken ct)
-        => await context.Clientes.AddAsync(cliente, ct);
+    {
+        await context.Clientes.AddAsync(cliente, ct);
+        await context.SaveChangesAsync(ct);
+    }
 
-    public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
+    public async Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
     {
         context.Clientes.Update(cliente);
-        return Task.CompletedTask;
+        await context.SaveChangesAsync(ct);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
         var entity = await context.Clientes.FindAsync([id], ct);
         if (entity is not null)
+        {
             context.Clientes.Remove(entity);
+            await context.SaveChangesAsync(ct);
+        }
     }
 }
