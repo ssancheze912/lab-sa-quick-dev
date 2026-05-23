@@ -17,7 +17,7 @@ function ClienteListItem({ cliente, isSelected, onClick }: ClienteListItemProps)
     <li
       role="listitem"
       data-testid="cliente-list-item"
-      aria-current={isSelected ? 'true' : undefined}
+      aria-current={isSelected ? 'page' : undefined}
       tabIndex={0}
       onClick={() => onClick(cliente.id)}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick(cliente.id)}
@@ -35,10 +35,20 @@ function ClienteListItem({ cliente, isSelected, onClick }: ClienteListItemProps)
   )
 }
 
-export function ClienteListPanel() {
+interface ClienteListPanelProps {
+  onSelectCliente?: (id: string) => void
+  selectedClienteId?: string | null
+}
+
+export function ClienteListPanel({
+  onSelectCliente,
+  selectedClienteId,
+}: ClienteListPanelProps = {}) {
   const { data: clientes = [], isLoading, isError, refetch } = useClientes()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
+
+  const selectedId = selectedClienteId !== undefined ? selectedClienteId : localSelectedId
 
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return clientes
@@ -47,6 +57,13 @@ export function ClienteListPanel() {
       (c) => c.nombre.toLowerCase().includes(q) || c.nit.toLowerCase().includes(q)
     )
   }, [clientes, searchQuery])
+
+  function handleClick(id: string) {
+    setLocalSelectedId(id)
+    if (onSelectCliente) {
+      onSelectCliente(id)
+    }
+  }
 
   return (
     <div
@@ -87,7 +104,7 @@ export function ClienteListPanel() {
                 key={cliente.id}
                 cliente={cliente}
                 isSelected={selectedId === cliente.id}
-                onClick={setSelectedId}
+                onClick={handleClick}
               />
             ))}
           </ul>

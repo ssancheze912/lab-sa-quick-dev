@@ -17,6 +17,15 @@ public static class ClienteEndpoints
             return Results.Ok(dtos);
         });
 
+        group.MapGet("/{id:guid}", async (
+            Guid id,
+            [FromServices] GetClienteByIdQueryHandler handler,
+            CancellationToken ct) =>
+        {
+            var dto = await handler.HandleAsync(new GetClienteByIdQuery(id), ct);
+            return dto is not null ? Results.Ok(dto) : Results.NotFound();
+        });
+
         return app;
     }
 }

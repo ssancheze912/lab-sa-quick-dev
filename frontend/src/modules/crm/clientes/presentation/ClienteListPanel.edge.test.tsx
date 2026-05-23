@@ -283,11 +283,11 @@ describe('TC-E2-P2-10 — AC1: aria-current applied to selected client item', ()
     await user.click(items[0]);
 
     // THEN: First item has aria-current="true"
-    expect(items[0]).toHaveAttribute('aria-current', 'true');
+    expect(items[0]).toHaveAttribute('aria-current', 'page');
 
     // AND: Other items do NOT have aria-current="true"
-    expect(items[1]).not.toHaveAttribute('aria-current', 'true');
-    expect(items[2]).not.toHaveAttribute('aria-current', 'true');
+    expect(items[1]).not.toHaveAttribute('aria-current', 'page');
+    expect(items[2]).not.toHaveAttribute('aria-current', 'page');
   });
 
   test('should move aria-current to newly clicked item (deselect previous)', async () => {
@@ -301,16 +301,16 @@ describe('TC-E2-P2-10 — AC1: aria-current applied to selected client item', ()
 
     const items = screen.getAllByTestId('cliente-list-item');
     await user.click(items[0]);
-    expect(items[0]).toHaveAttribute('aria-current', 'true');
+    expect(items[0]).toHaveAttribute('aria-current', 'page');
 
     // WHEN: User clicks a different item
     await user.click(items[2]);
 
     // THEN: Third item now has aria-current="true"
-    expect(items[2]).toHaveAttribute('aria-current', 'true');
+    expect(items[2]).toHaveAttribute('aria-current', 'page');
 
     // AND: First item no longer has aria-current
-    expect(items[0]).not.toHaveAttribute('aria-current', 'true');
+    expect(items[0]).not.toHaveAttribute('aria-current', 'page');
   });
 
   test('should NOT have aria-current on any item before any click', async () => {
@@ -325,7 +325,7 @@ describe('TC-E2-P2-10 — AC1: aria-current applied to selected client item', ()
     // THEN: No item has aria-current="true"
     const items = screen.getAllByTestId('cliente-list-item');
     items.forEach((item) => {
-      expect(item).not.toHaveAttribute('aria-current', 'true');
+      expect(item).not.toHaveAttribute('aria-current', 'page');
     });
   });
 });
