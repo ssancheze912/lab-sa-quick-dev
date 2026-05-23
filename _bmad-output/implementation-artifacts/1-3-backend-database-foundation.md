@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: ready
+Status: done
 
 ## Story
 
@@ -22,39 +22,39 @@ so that subsequent stories can define entities and run migrations against a work
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Install EF Core and PostgreSQL packages (AC: #1, #2, #4, #5)
-  - [ ] Add `Microsoft.EntityFrameworkCore` to `SiesaAgents.Infrastructure.csproj`
-  - [ ] Add `Npgsql.EntityFrameworkCore.PostgreSQL` to `SiesaAgents.Infrastructure.csproj` (provides `ApplySnakeCaseNaming()`)
-  - [ ] Add `Microsoft.EntityFrameworkCore.Design` to `SiesaAgents.API.csproj` (required by EF CLI tools for migrations)
-  - [ ] Add `Microsoft.EntityFrameworkCore.Tools` to `SiesaAgents.Infrastructure.csproj`
+- [x] Task 1 — Install EF Core and PostgreSQL packages (AC: #1, #2, #4, #5)
+  - [x] Add `Microsoft.EntityFrameworkCore` to `SiesaAgents.Infrastructure.csproj`
+  - [x] Add `Npgsql.EntityFrameworkCore.PostgreSQL` to `SiesaAgents.Infrastructure.csproj` (provides `ApplySnakeCaseNaming()`)
+  - [x] Add `Microsoft.EntityFrameworkCore.Design` to `SiesaAgents.API.csproj` (required by EF CLI tools for migrations)
+  - [x] Add `Microsoft.EntityFrameworkCore.Tools` to `SiesaAgents.Infrastructure.csproj`
 
-- [ ] Task 2 — Implement `AppDbContext` (AC: #4, #5)
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` extending `DbContext`
-  - [ ] Override `OnModelCreating` and call `modelBuilder.ApplySnakeCaseNaming()` as the LAST statement
-  - [ ] Constructor signature: `AppDbContext(DbContextOptions<AppDbContext> options) : base(options)`
-  - [ ] No `DbSet` properties for domain entities in this story — empty context is intentional
+- [x] Task 2 — Implement `AppDbContext` (AC: #4, #5)
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` extending `DbContext`
+  - [x] Override `OnModelCreating` and call `modelBuilder.ApplySnakeCaseNaming()` as the LAST statement
+  - [x] Constructor signature: `AppDbContext(DbContextOptions<AppDbContext> options) : base(options)`
+  - [x] No `DbSet` properties for domain entities in this story — empty context is intentional
 
-- [ ] Task 3 — Register `AppDbContext` in DI (AC: #5)
-  - [ ] In `Program.cs` add `builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")))`
-  - [ ] Verify `appsettings.Development.json` already has `ConnectionStrings:DefaultConnection` = `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres` (set in Story 1.1 — no change needed)
+- [x] Task 3 — Register `AppDbContext` in DI (AC: #5)
+  - [x] In `Program.cs` add `builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")))`
+  - [x] Verify `appsettings.Development.json` already has `ConnectionStrings:DefaultConnection` = `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres` (set in Story 1.1 — no change needed)
 
-- [ ] Task 4 — Create initial empty migration (AC: #1, #2)
-  - [ ] Run `dotnet ef migrations add InitialCreate --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API` from `backend/`
-  - [ ] Verify `Migrations/` folder is created under `SiesaAgents.Infrastructure/` with `InitialCreate` migration files
-  - [ ] Confirm migration `Up()` and `Down()` methods are empty (no table DDL — no domain entities defined yet)
-  - [ ] Run `dotnet ef database update --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API` — database `siesa_agents_db` must be created with only `__EFMigrationsHistory`
+- [x] Task 4 — Create initial empty migration (AC: #1, #2)
+  - [x] Run `dotnet ef migrations add InitialCreate --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API` from `backend/`
+  - [x] Verify `Migrations/` folder is created under `SiesaAgents.Infrastructure/` with `InitialCreate` migration files
+  - [x] Confirm migration `Up()` and `Down()` methods are empty (no table DDL — no domain entities defined yet)
+  - [x] Run `dotnet ef database update --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API` — database `siesa_agents_db` must be created with only `__EFMigrationsHistory`
 
-- [ ] Task 5 — Implement/harden `ExceptionHandlingMiddleware` (AC: #3)
-  - [ ] Confirm `ExceptionHandlingMiddleware.cs` exists at `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` (stub created in Story 1.1)
-  - [ ] Ensure the catch block sets `context.Response.ContentType = "application/problem+json"` and `StatusCode = 500`
-  - [ ] Ensure `ProblemDetails.Detail` is always `null` — never assigns `ex.Message` or any internal detail
-  - [ ] Ensure `ExceptionHandlingMiddleware` is registered FIRST in `Program.cs` pipeline (before `UseCors`)
+- [x] Task 5 — Implement/harden `ExceptionHandlingMiddleware` (AC: #3)
+  - [x] Confirm `ExceptionHandlingMiddleware.cs` exists at `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` (stub created in Story 1.1)
+  - [x] Ensure the catch block sets `context.Response.ContentType = "application/problem+json"` and `StatusCode = 500`
+  - [x] Ensure `ProblemDetails.Detail` is always `null` — never assigns `ex.Message` or any internal detail
+  - [x] Ensure `ExceptionHandlingMiddleware` is registered FIRST in `Program.cs` pipeline (before `UseCors`)
 
-- [ ] Task 6 — Write unit tests for `ExceptionHandlingMiddleware` (AC: #3)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs`
-  - [ ] Test: exception thrown by next delegate → response content-type is `application/problem+json`, status 500, body deserializes to `ProblemDetails` with `status=500`, `title` non-empty, `detail` null
-  - [ ] Test: no exception → middleware calls next delegate without modification (pass-through)
-  - [ ] Tests use `DefaultHttpContext` from `Microsoft.AspNetCore.Http` — no external test web app required
+- [x] Task 6 — Write unit tests for `ExceptionHandlingMiddleware` (AC: #3)
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs`
+  - [x] Test: exception thrown by next delegate → response content-type is `application/problem+json`, status 500, body deserializes to `ProblemDetails` with `status=500`, `title` non-empty, `detail` null
+  - [x] Test: no exception → middleware calls next delegate without modification (pass-through)
+  - [x] Tests use `DefaultHttpContext` from `Microsoft.AspNetCore.Http` — no external test web app required
 
 ## Dev Notes
 
