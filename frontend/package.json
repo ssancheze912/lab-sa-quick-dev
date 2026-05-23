@@ -22,6 +22,7 @@
     "vitest": "^4.1.7"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.4.0",
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/react-query": "^5.100.13",
@@ -31,6 +32,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.76.1",
     "react-loading-skeleton": "^3.5.0",
+    "siesa-ui-kit": "^1.0.203",
     "tailwindcss": "^4.3.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.13"
