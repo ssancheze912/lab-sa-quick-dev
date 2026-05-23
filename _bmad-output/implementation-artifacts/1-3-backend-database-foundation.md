@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: review
+Status: done
 
 ## Story
 
@@ -203,24 +203,31 @@ None.
 ### Completion Notes List
 
 - Tasks 1-3 and Task 5 were already completed in Story 1.1 scaffold; verified and confirmed correct per all ACs.
-- Task 4 (migrations): `dotnet ef` CLI unavailable in sandbox environment; migration files created manually as empty baseline. `siesa_agents_db` database creation via `dotnet ef database update` must be executed by developer once `dotnet` SDK is available.
+- Task 4 (migrations): `dotnet ef` CLI unavailable in sandbox environment; migration files created manually as empty baseline at `SiesaAgents.Infrastructure/Migrations/` (correct per architecture.md). `siesa_agents_db` database creation via `dotnet ef database update` must be executed by developer once `dotnet` SDK is available.
 - Task 6: `PlaceholderTest.cs` replaced with `EntityStructureTests` (5 structured tests). `AppDbContextTests.cs` already existed with 7 tests covering AC2, AC3, AC4, AC5. All tests are static-validated; runtime execution requires dotnet SDK.
 - EFCore.NamingConventions version updated from `9.*` to `*` (latest, for EF Core 10 compatibility).
+- [Code Review] Auto-corrected: duplicate `Data/Migrations/` directory removed; `SiesaAgents.Infrastructure/Migrations/` is the single canonical location per architecture.md and AC1.
+- [Code Review] Auto-corrected: `SiesaAgents.UnitTests.csproj` `Microsoft.AspNetCore.Mvc.Core Version="2.*"` replaced with `<FrameworkReference Include="Microsoft.AspNetCore.App" />` for .NET 10 compatibility.
+- [Code Review] Story File List updated to reflect all files actually modified during ATDD and automate phases.
 
 ### File List
 
 **Created:**
-- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260523000000_InitialCreate.cs`
-- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/AppDbContextModelSnapshot.cs`
+- `backend/src/SiesaAgents.Infrastructure/Migrations/20260523000000_InitialCreate.cs`
+- `backend/src/SiesaAgents.Infrastructure/Migrations/AppDbContextModelSnapshot.cs`
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextEdgeCaseTests.cs` — 23 edge case xUnit tests added in automate phase
+- `e2e/tests/api/backend-database-foundation.api.spec.ts` — 21 Playwright structural tests (ATDD phase)
+- `e2e/tests/api/backend-database-foundation.edge.spec.ts` — 37 Playwright edge tests (automate phase)
 
 **Modified:**
+- `backend/src/SiesaAgents.API/Program.cs` — AddDbContext registration + using directives added (ATDD phase)
+- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — Microsoft.EntityFrameworkCore.Design added (ATDD phase)
 - `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — EFCore.NamingConventions version updated to `*`
 - `backend/tests/SiesaAgents.UnitTests/PlaceholderTest.cs` — replaced placeholder with `EntityStructureTests` (5 meaningful tests)
+- `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — added InMemory and Mvc.Core packages (ATDD phase)
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` — 7 xUnit ATDD tests (ATDD phase)
 
 **Verified (no changes needed):**
-- `backend/src/SiesaAgents.API/Program.cs` — AddDbContext + UseNpgsql + ExceptionHandlingMiddleware already registered
 - `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — RFC 7807 compliant
 - `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` — UseSnakeCaseNamingConvention() last call
-- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — Microsoft.EntityFrameworkCore.Design already present
 - `backend/src/SiesaAgents.API/appsettings.Development.json` — DefaultConnection already configured
-- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` — 7 tests already present
