@@ -1,0 +1,11 @@
+## .NET Core
+*.user
+*.suo
+.vs/
+bin/
+obj/
+*.nupkg
+*.snupkg
+publish/
+.dotnet/
+TestResults/
