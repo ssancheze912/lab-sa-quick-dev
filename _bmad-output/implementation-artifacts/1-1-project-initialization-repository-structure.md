@@ -235,4 +235,17 @@ claude-sonnet-4-6
 - `src/Shared/Shared.Common/Shared.Common.csproj` (new)
 - `src/Shared/Shared.Common/Placeholder.cs` (new)
 - `tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` (new)
-- `tests/SiesaAgents.UnitTests/PlaceholderTest.cs` (new)
+- `tests/SiesaAgents.UnitTests/PlaceholderTest.cs` (updated: removed trivial Assert.True(true))
+- `frontend/.gitignore` (updated: added .env* pattern)
+- `frontend/vite.config.ts` (updated: added vitest test block with jsdom environment)
+- `frontend/src/test-setup.ts` (new: Vitest setup file for jest-dom matchers)
+- `frontend/src/vite-env.d.ts` (updated: VITE_API_URL typed as string | undefined)
+- `frontend/src/index.css` (updated: added --color-secondary brand token)
+
+## Review Follow-ups (AI)
+
+- [x] [AI-Review][MED] `.env*` pattern added to `frontend/.gitignore` — auto-fixed
+- [x] [AI-Review][MED] Vitest `test` block with `environment: 'jsdom'` added to `vite.config.ts` — auto-fixed
+- [x] [AI-Review][MED] `VITE_API_URL` typed as `string | undefined` in `vite-env.d.ts` — auto-fixed
+- [x] [AI-Review][LOW] `--color-secondary: #000000` brand token added to `index.css` — auto-fixed
+- [x] [AI-Review][LOW] Trivial `Assert.True(true)` placeholder test removed from `PlaceholderTest.cs` — auto-fixed

@@ -2,6 +2,7 @@
 
 @theme {
   --color-primary: #0e79fd;
+  --color-secondary: #000000;
   --color-tertiary: #154ca9;
   --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
