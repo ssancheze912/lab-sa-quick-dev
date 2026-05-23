@@ -4,6 +4,7 @@ title: "Project Foundation & Application Shell"
 mode: epic-level
 phase: 4
 createdAt: "2026-05-20"
+updatedAt: "2026-05-23"
 stories:
   - "1.1 — Project Initialization & Repository Structure"
   - "1.2 — Frontend Navigation Shell"
@@ -23,7 +24,7 @@ Epic 1 establishes the complete technical foundation for Siesa Agents: a Vite/Re
 
 | Story | Title | Key Concerns |
 |-------|-------|-------------|
-| 1.1 | Project Initialization & Repository Structure | Dev environment, toolchain, CORS, TypeScript strict, Scalar |
+| 1.1 | Project Initialization & Repository Structure | Dev environment, toolchain (pnpm), CORS, TypeScript strict, Scalar |
 | 1.2 | Frontend Navigation Shell | SPA routing, responsive nav (desktop/mobile), deep linking, 404 |
 | 1.3 | Backend Database Foundation | EF Core / PostgreSQL wiring, migrations, snake_case naming, Problem Details middleware |
 
@@ -42,7 +43,7 @@ Epic 1 establishes the complete technical foundation for Siesa Agents: a Vite/Re
 | # | Risk Area | Probability | Impact | Priority | Mitigation Strategy |
 |---|-----------|-------------|--------|----------|---------------------|
 | R1 | **CORS misconfiguration** between frontend (5173) and backend (5000) silently blocks all API calls | High | Critical | P0 | Explicit integration test: verify OPTIONS preflight + actual request returns 200 from `localhost:5173` |
-| R2 | **TypeScript strict mode** breaks compilation on first run (implicit `any`, missing types in dependencies) | Medium | High | P0 | Unit/build test: `npx tsc --noEmit` exits with code 0 |
+| R2 | **TypeScript strict mode** breaks compilation on first run (implicit `any`, missing types in dependencies) | Medium | High | P0 | Unit/build test: `pnpm exec tsc --noEmit` exits with code 0 |
 | R3 | **ExceptionHandlingMiddleware** missing or mis-ordered exposes raw stack traces to clients | Medium | Critical | P0 | Integration test: trigger unhandled exception, assert Problem Details RFC 7807 format with no `stackTrace` key |
 | R4 | **TanStack Router deep-linking** fails on direct URL access due to missing server-side fallback (SPA 404 issue) | Medium | High | P1 | E2E/Component test: navigate directly to `/clientes` and `/contactos`, assert correct view without redirect |
 | R5 | **EF Core `ApplySnakeCaseNaming()`** not applied or applied before other configurations, breaking future migrations | Low | High | P1 | Integration test: verify `siesa_agents_db` created, assert `__EFMigrationsHistory` table uses snake_case |
@@ -90,18 +91,18 @@ Total                                        19 tests
 
 **Level:** Unit / Build
 **Story:** 1.1
-**Requirement:** AC-1.1 (TypeScript strict mode enabled)
+**Requirement:** AC-1.1 (TypeScript strict mode enabled — `"strict": true`, `"noImplicitAny": true`, `"strictNullChecks": true` in `tsconfig.app.json`)
 **Risk covered:** R2
 
-**Precondition:** Frontend project initialized with `npm create vite@latest -- --template react-ts`, `tsconfig.json` has `"strict": true`.
+**Precondition:** Frontend project initialized with `pnpm create vite@latest frontend -- --template react-ts`, `tsconfig.app.json` has strict flags enabled.
 
 **Test Steps:**
-1. Run `npx tsc --noEmit` from the `frontend/` directory.
-2. Run `npm run build` and observe exit code.
+1. Run `pnpm exec tsc --noEmit` from the `frontend/` directory.
+2. Run `pnpm run build` and observe exit code.
 
 **Expected Result:**
 - `tsc --noEmit` exits with code 0 and zero errors.
-- `npm run build` produces a `dist/` folder with no TypeScript compilation errors.
+- `pnpm run build` produces a `dist/` folder with no TypeScript compilation errors.
 
 **Automation:** Vitest/build script — runs as part of CI pre-check.
 
@@ -111,13 +112,13 @@ Total                                        19 tests
 
 **Level:** Unit / Smoke
 **Story:** 1.1
-**Requirement:** AC-1.1 (`npm run dev` starts on port 5173 with no errors)
+**Requirement:** AC-1.1 (`pnpm run dev` starts on port 5173 with no errors)
 **Risk covered:** R2
 
-**Precondition:** All `npm install` dependencies are installed.
+**Precondition:** All `pnpm install` dependencies are installed.
 
 **Test Steps:**
-1. Run `npm run dev` in `frontend/`.
+1. Run `pnpm run dev` in `frontend/`.
 2. After server is ready, perform GET request to `http://localhost:5173`.
 
 **Expected Result:**
@@ -135,7 +136,7 @@ Total                                        19 tests
 **Requirement:** AC-1.1 (backend starts on port 5000, Scalar loads at `/scalar`)
 **Risk covered:** R8
 
-**Precondition:** `dotnet run` in `SiesaAgents.API/`. PostgreSQL running locally.
+**Precondition:** `dotnet run` in `src/SiesaAgents.API/`. PostgreSQL running locally.
 
 **Test Steps:**
 1. Start backend.
@@ -156,7 +157,7 @@ Total                                        19 tests
 **Requirement:** AC-1.1 (CORS from localhost:5173 without errors)
 **Risk covered:** R1
 
-**Precondition:** Backend running. CORS configured in `Program.cs`.
+**Precondition:** Backend running. CORS configured in `Program.cs` via `policy.WithOrigins("http://localhost:5173")`.
 
 **Test Steps:**
 1. Send OPTIONS preflight to `http://localhost:5000/api/v1/` with headers:
@@ -180,7 +181,7 @@ Total                                        19 tests
 **Requirement:** AC-1.3 (Problem Details on unhandled exception, NFR6)
 **Risk covered:** R3
 
-**Precondition:** Backend running. A test endpoint that intentionally throws `Exception("test error")` exists (or use a minimal endpoint registered only in test configuration).
+**Precondition:** Backend running. `ExceptionHandlingMiddleware` registered before routing in `Program.cs` (`app.UseMiddleware<ExceptionHandlingMiddleware>()` before `app.UseCors()` and endpoint mappings). A test endpoint that intentionally throws exists.
 
 **Test Steps:**
 1. Register a test endpoint `GET /api/v1/test-error` that throws `new Exception("internal test")`.
@@ -188,10 +189,10 @@ Total                                        19 tests
 3. Inspect the response body.
 
 **Expected Result:**
-- HTTP status: 500 (or appropriate mapped status).
+- HTTP status: 500.
 - `Content-Type: application/problem+json`.
-- Response JSON contains `status`, `title`, `detail` fields.
-- Response JSON does NOT contain `stackTrace`, `exception`, or `innerException` keys.
+- Response JSON contains `status`, `title` fields.
+- Response JSON does NOT contain `stackTrace`, `exception`, `innerException`, or `detail` with raw exception message.
 - No raw C# exception message exposed.
 
 **Automation:** xUnit integration test.
@@ -206,7 +207,7 @@ Total                                        19 tests
 **Story:** 1.2
 **Requirement:** AC-E1.2 (navigate between Clientes and Contactos without full page reloads), FR28
 
-**Precondition:** TanStack Router configured with `/clientes` and `/contactos` routes. Root layout with NavigationRail rendered.
+**Precondition:** TanStack Router configured with `/clientes` and `/contactos` routes. Root layout (`__root.tsx`) with NavigationRail rendered.
 
 **Test Steps:**
 1. Render `<RouterProvider>` wrapping the app shell.
@@ -230,7 +231,7 @@ Total                                        19 tests
 **Story:** 1.2
 **Requirement:** AC-E1.3 (deep linking), FR30
 
-**Precondition:** Frontend dev server running.
+**Precondition:** Frontend dev server running on port 5173.
 
 **Test Steps:**
 1. Open browser directly to `http://localhost:5173/clientes` (no prior navigation).
@@ -251,7 +252,7 @@ Total                                        19 tests
 **Story:** 1.2
 **Requirement:** AC-E1.3 (deep linking), FR30
 
-**Precondition:** Frontend dev server running.
+**Precondition:** Frontend dev server running on port 5173.
 
 **Test Steps:**
 1. Open browser directly to `http://localhost:5173/contactos`.
@@ -278,6 +279,7 @@ Total                                        19 tests
 **Expected Result:**
 - A not-found component renders (not a blank screen, not a JS error).
 - Navigation shell is still visible (layout persists).
+- TanStack Router catch-all `*` route is wired to a `NotFound` component.
 
 **Automation:** Vitest + RTL.
 
@@ -290,10 +292,10 @@ Total                                        19 tests
 **Requirement:** AC-1.3 (database created with no errors, migrations folder exists)
 **Risk covered:** R5, R6
 
-**Precondition:** PostgreSQL running locally at connection string in `appsettings.Development.json`. No `siesa_agents_db` database exists.
+**Precondition:** PostgreSQL running locally at connection string in `appsettings.Development.json` (`Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres`). No `siesa_agents_db` database exists.
 
 **Test Steps:**
-1. Run `dotnet ef database update` in `SiesaAgents.Infrastructure`.
+1. Run `dotnet ef database update` in `src/SiesaAgents.Infrastructure`.
 2. Connect to PostgreSQL and query `information_schema.tables` in `siesa_agents_db`.
 
 **Expected Result:**
@@ -316,7 +318,7 @@ Total                                        19 tests
 1. Run `dotnet build SiesaAgents.sln` from the `backend/` directory.
 
 **Expected Result:**
-- All four projects build successfully: `SiesaAgents.API`, `SiesaAgents.Application`, `SiesaAgents.Domain`, `SiesaAgents.Infrastructure`.
+- All five projects build successfully: `SiesaAgents.API`, `SiesaAgents.Application`, `SiesaAgents.Domain`, `SiesaAgents.Infrastructure`, `SiesaAgents.UnitTests`.
 - Zero errors, zero unresolved project references.
 - `dotnet build` exits with code 0.
 
@@ -333,12 +335,12 @@ Total                                        19 tests
 **Requirement:** AC-1.2 (NavigationRail visible on desktop, siesa-ui-kit)
 
 **Test Steps:**
-1. Render the root layout at viewport width 1280px.
+1. Render the root layout (`__root.tsx`) at viewport width 1280px.
 2. Query for the `NavigationRail` component (siesa-ui-kit).
 
 **Expected Result:**
 - NavigationRail component is in the DOM and visible.
-- Contains "Clientes" and "Contactos" navigation entries.
+- Contains "Clientes" and "Contactos" navigation entries (Spanish text — mandatory).
 
 **Automation:** Vitest + RTL with `jsdom` viewport configuration.
 
@@ -353,12 +355,13 @@ Total                                        19 tests
 
 **Test Steps:**
 1. Render the root layout at viewport width 375px.
-2. Query for the `NavigationBar` component (siesa-ui-kit) from siesa-ui-kit.
+2. Query for the `NavigationBar` component from siesa-ui-kit.
 
 **Expected Result:**
 - NavigationBar component is in the DOM and visible.
 - NavigationRail is NOT rendered (or is hidden/display:none).
-- All navigation items are present and tappable (accessible).
+- All navigation items are present and tappable (accessible with correct ARIA labels in Spanish).
+- Responsive breakpoint is `lg: 1024px` — Tailwind responsive classes drive the swap.
 
 **Automation:** Vitest + RTL.
 
@@ -376,6 +379,7 @@ Total                                        19 tests
 **Expected Result:**
 - URL changes to `/clientes`.
 - Clientes view content is rendered (not a blank page at `/`).
+- `index.tsx` route uses TanStack Router's `redirect` or `<Navigate to="/clientes" />`.
 
 **Automation:** Vitest + RTL.
 
@@ -391,7 +395,7 @@ Total                                        19 tests
 **Test Steps:**
 1. After running `dotnet ef database update`, inspect the SQL schema of `__ef_migrations_history`.
 2. Verify the column names are `migration_id`, `product_version` (snake_case).
-3. Alternatively: confirm `AppDbContext.OnModelCreating` contains `modelBuilder.ApplySnakeCaseNaming()` as the last call.
+3. Confirm `AppDbContext.OnModelCreating` contains `modelBuilder.ApplySnakeCaseNaming()` as the LAST call.
 
 **Expected Result:**
 - All EF-managed column names in the database are lowercase snake_case.
@@ -409,7 +413,7 @@ Total                                        19 tests
 **Story:** 1.1
 
 **Test Steps:**
-1. Run `npx vitest run` from `frontend/`.
+1. Run `pnpm exec vitest run` from `frontend/`.
 
 **Expected Result:**
 - All unit tests pass.
@@ -442,10 +446,10 @@ Total                                        19 tests
 | AC-E1.1: App loads with accessible navigation on mobile and desktop | 1.2 | TC-E1-P2-01, TC-E1-P2-02 | Covered |
 | AC-E1.2: Navigate between Clientes/Contactos without full reload | 1.2 | TC-E1-P1-01 | Covered |
 | AC-E1.3: Direct URL to /clientes and /contactos renders correct views | 1.2 | TC-E1-P1-02, TC-E1-P1-03 | Covered |
-| AC-1.1.a: `npm run dev` starts on 5173 with no errors | 1.1 | TC-E1-P0-01, TC-E1-P0-02 | Covered |
-| AC-1.1.b: TypeScript strict mode enabled | 1.1 | TC-E1-P0-01 | Covered |
+| AC-1.1.a: `pnpm run dev` starts on 5173 with no errors | 1.1 | TC-E1-P0-01, TC-E1-P0-02 | Covered |
+| AC-1.1.b: TypeScript strict mode enabled (`"strict": true`, `"noImplicitAny": true`, `"strictNullChecks": true`) | 1.1 | TC-E1-P0-01 | Covered |
 | AC-1.1.c: Backend starts on 5000, Scalar loads at /scalar | 1.1 | TC-E1-P0-03 | Covered |
-| AC-1.1.d: Four CA projects referenced correctly | 1.1 | TC-E1-P1-06 | Covered |
+| AC-1.1.d: Four CA projects + UnitTests referenced correctly | 1.1 | TC-E1-P1-06 | Covered |
 | AC-1.1.e: CORS allows requests from localhost:5173 | 1.1 | TC-E1-P0-04 | Covered |
 | AC-1.2.a: NavigationRail on desktop with Clientes/Contactos entries | 1.2 | TC-E1-P2-01 | Covered |
 | AC-1.2.b: NavigationBar on mobile, items tappable | 1.2 | TC-E1-P2-02 | Covered |
@@ -455,7 +459,7 @@ Total                                        19 tests
 | AC-1.3.a: `siesa_agents_db` created with no errors | 1.3 | TC-E1-P1-05 | Covered |
 | AC-1.3.b: EF Core migrations folder exists | 1.3 | TC-E1-P1-05 | Covered |
 | AC-1.3.c: Problem Details RFC 7807 on unhandled exception (NFR6) | 1.3 | TC-E1-P0-05 | Covered |
-| AC-1.3.d: `ApplySnakeCaseNaming()` applied | 1.3 | TC-E1-P2-04 | Covered |
+| AC-1.3.d: `ApplySnakeCaseNaming()` applied as last call in `OnModelCreating` | 1.3 | TC-E1-P2-04 | Covered |
 
 ---
 
@@ -475,31 +479,31 @@ The following execution order minimizes blocked tests due to environment depende
 
 ```
 Phase 1 — Build Gate (P0, no DB needed)
-  1. TC-E1-P0-01  TypeScript strict build
-  2. TC-E1-P0-02  Frontend dev server on 5173
-  3. TC-E1-P1-06  Solution build (dotnet)
+  1. TC-E1-P0-01  TypeScript strict build (pnpm exec tsc --noEmit)
+  2. TC-E1-P0-02  Frontend dev server on 5173 (pnpm run dev)
+  3. TC-E1-P1-06  Solution build (dotnet build SiesaAgents.sln)
 
 Phase 2 — Backend API Gate (P0, DB needed)
-  4. TC-E1-P0-03  Scalar loads
-  5. TC-E1-P0-04  CORS preflight
-  6. TC-E1-P0-05  Problem Details middleware
+  4. TC-E1-P0-03  Scalar loads at /scalar
+  5. TC-E1-P0-04  CORS preflight + actual request
+  6. TC-E1-P0-05  Problem Details middleware — no stack trace
 
 Phase 3 — Database Gate (P1)
-  7. TC-E1-P1-05  EF Core migration + snake_case
+  7. TC-E1-P1-05  EF Core migration + empty initial migration
   8. TC-E1-P2-04  snake_case column verification
 
 Phase 4 — Frontend Shell Tests (P1-P2)
   9. TC-E1-P1-01  SPA navigation no reload
- 10. TC-E1-P1-02  Deep link /clientes
- 11. TC-E1-P1-03  Deep link /contactos
- 12. TC-E1-P1-04  404 route
- 13. TC-E1-P2-01  NavigationRail desktop
- 14. TC-E1-P2-02  NavigationBar mobile
- 15. TC-E1-P2-03  Index redirect to /clientes
+ 10. TC-E1-P1-02  Deep link /clientes (Playwright)
+ 11. TC-E1-P1-03  Deep link /contactos (Playwright)
+ 12. TC-E1-P1-04  404 route — not-found view
+ 13. TC-E1-P2-01  NavigationRail desktop (1280px)
+ 14. TC-E1-P2-02  NavigationBar mobile (375px)
+ 15. TC-E1-P2-03  Index route redirects to /clientes
 
 Phase 5 — Unit Test Suites (P3)
- 16. TC-E1-P3-01  Vitest unit tests
- 17. TC-E1-P3-02  xUnit unit tests
+ 16. TC-E1-P3-01  Vitest unit tests (pnpm exec vitest run)
+ 17. TC-E1-P3-02  xUnit unit tests (dotnet test)
 ```
 
 ---
@@ -520,12 +524,13 @@ Phase 5 — Unit Test Suites (P3)
 ### Environment Prerequisites
 
 ```
-- Node.js 20+ with npm
+- Node.js 20+ with pnpm (mandatory — NOT npm or yarn)
 - .NET 10 SDK
 - PostgreSQL 18+ running locally on default port 5432
-- Database user with CREATE DATABASE privilege
-- All npm dependencies installed (npm install)
+- Database user: postgres / password: postgres with CREATE DATABASE privilege
+- All pnpm dependencies installed (pnpm install)
 - All NuGet packages restored (dotnet restore)
+- VITE_API_URL=http://localhost:5000 in frontend/.env.development
 ```
 
 ---
@@ -556,10 +561,10 @@ Phase 5 — Unit Test Suites (P3)
 - TestContainers (Postgres) — isolated database for migration tests
 
 **Environment:**
-- Node.js 20+, npm — frontend build/test
+- Node.js 20+, pnpm — frontend build/test (pnpm is mandatory, not npm)
 - .NET 10 SDK — backend build/test
 - PostgreSQL 18+ on port 5432 with CREATE DATABASE privilege
-- All dependencies restored (`npm install`, `dotnet restore`)
+- All dependencies restored (`pnpm install`, `dotnet restore`)
 
 ---
 
@@ -585,7 +590,7 @@ Phase 5 — Unit Test Suites (P3)
 - [ ] No high-risk items (R1, R2, R3) unmitigated
 - [ ] Problem Details format verified — no stack trace leakage (R3)
 - [ ] CORS preflight + actual request verified (R1)
-- [ ] TypeScript strict build exits 0 (R2)
+- [ ] TypeScript strict build exits 0 — zero `any` types (R2)
 
 ---
 
@@ -597,7 +602,7 @@ The epic is considered test-complete when:
 - [ ] All P1 test cases pass (TC-E1-P1-01 through TC-E1-P1-06)
 - [ ] P2 test cases pass or are formally deferred with justification
 - [ ] No P0/P1 test case is skipped without a documented reason
-- [ ] TypeScript build produces zero errors in strict mode
+- [ ] TypeScript build produces zero errors in strict mode (`pnpm exec tsc --noEmit` exits 0)
 - [ ] `dotnet build` and `dotnet test` pass with zero failures
 - [ ] CORS, middleware ordering, and Problem Details format manually verified in development environment
 
@@ -607,10 +612,13 @@ The epic is considered test-complete when:
 
 The following constraints must be enforced during implementation for tests to pass:
 
-1. `ExceptionHandlingMiddleware` must be registered BEFORE endpoint mapping in `Program.cs` middleware pipeline.
+1. `ExceptionHandlingMiddleware` must be registered FIRST in `Program.cs` middleware pipeline — before `app.UseCors()` and before endpoint mappings.
 2. `modelBuilder.ApplySnakeCaseNaming()` must be the LAST call inside `OnModelCreating`.
 3. `app.UseSwagger()` must NOT appear anywhere — use `app.MapScalarApiReference()` only.
-4. CORS policy must explicitly allow `http://localhost:5173` as origin.
-5. TanStack Router must be configured with a catch-all `*` route pointing to a NotFound component.
-6. The index route (`/`) must redirect to `/clientes` via `<Navigate to="/clientes" />` or TanStack Router's `redirect`.
+4. CORS policy must explicitly allow `http://localhost:5173` as origin via `policy.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()`.
+5. TanStack Router must be configured with a catch-all `*` route pointing to a `NotFound` component.
+6. The index route (`/`) must redirect to `/clientes` via TanStack Router's `redirect` (in `index.tsx`).
 7. Frontend viewport breakpoint for nav component swap is `lg: 1024px` — use Tailwind responsive classes, not JS media queries, where possible.
+8. **Package manager is `pnpm`** — all frontend commands use `pnpm` (not `npm` or `yarn`). CI must install pnpm before running frontend tests.
+9. All user-facing text (nav labels, error messages, ARIA labels) must be in Spanish.
+10. `ExceptionHandlingMiddleware.cs` must set `Detail = null` — never `ex.Message` or any stack trace fragment.
