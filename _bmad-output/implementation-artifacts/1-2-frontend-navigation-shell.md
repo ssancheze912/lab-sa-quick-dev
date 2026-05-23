@@ -222,13 +222,16 @@ claude-sonnet-4-6
 - siesa-ui-kit `LayoutBase` does not accept separate `navigationRail`/`navigationBar` props. It uses `navigationItems?: NavigationRailGroupMenuItem[]` passed to an internal `NavigationRailGroup`. Responsive layout (desktop rail vs mobile bar) is handled internally by the component.
 - `NavigationRailGroupMenuItem` requires `id`, `label`, `icon`; supports `active`, `onClick`, `disabled`, `badge`.
 - `notFoundComponent` on `createRootRoute` renders inside the root layout (including the nav shell), so tests for the 404 view see nav links alongside the not-found content.
+- Playwright strict mode violation (2 elements for `nav-item-*`) was caused by both NavigationRail and NavigationBar being in the DOM simultaneously via CSS-only hiding. Fixed with conditional rendering using `useIsMobile` hook — only ONE nav component renders at a time.
+- HTML `<a>` elements do not respond to Space key by default; added `onKeyDown` handler to trigger click on Space for WCAG 2.1 AA compliance.
+- Playwright `framenavigated` event fires for ALL navigation types including `history.pushState` (SPA client-side navigation). Tests asserting `fullReloadDetected=false` via `framenavigated` are inherently incompatible with TanStack Router's history-based navigation — these 4 tests (2 per browser, chromium+mobile-chrome) cannot pass without modifying the test assertions or using hash-based routing.
 
 ### Completion Notes List
 
 - Task 1: `__root.tsx` updated with `LayoutBase` shell using `siesa-ui-kit`. `navigationItems` built from `NAV_ITEMS` array with `active` state derived from `useRouterState()`. An accessible `<nav aria-label="Navegación principal">` with `<Link>` elements and Spanish `aria-label` attributes is rendered (sr-only for screen readers). `NotFoundPage` is configured as `notFoundComponent` on the root route.
 - Task 2: `clientes.tsx` and `contactos.tsx` file-based routes created. `routeTree.gen.ts` updated to include both new routes.
 - Task 3: 404 handling implemented via `notFoundComponent: NotFoundPage` in `createRootRoute`. Renders Spanish "Página no encontrada" heading with "← Ir a Clientes" back-link.
-- Task 4: 11 tests pass (4 test files). `root.test.tsx` covers nav shell, aria-labels, route rendering, keyboard accessibility. `notFound.test.tsx` covers 404 message, back-link, and description text.
+- Task 4: 65 Vitest tests pass (root.test.tsx 12/12, notFound.test.tsx, apiClient tests unrelated to this story). Playwright: 50/54 pass for chromium+mobile-chrome. 4 remaining failures (`fullReloadDetected` via framenavigated) are due to Playwright v1.56 firing `framenavigated` for pushState — unfixable without test modification or hash routing.
 
 ### File List
 

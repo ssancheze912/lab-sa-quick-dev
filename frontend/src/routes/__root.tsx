@@ -20,6 +20,14 @@ const NAV_ITEMS = [
   },
 ]
 
+// Handle Space key on anchor elements (HTML anchors only respond to Enter, not Space)
+function handleNavKeyDown(e: React.KeyboardEvent<HTMLAnchorElement>) {
+  if (e.key === ' ') {
+    e.preventDefault()
+    ;(e.currentTarget as HTMLAnchorElement).click()
+  }
+}
+
 // Hook para detectar mobile (breakpoint < 768px)
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = React.useState(
@@ -68,6 +76,7 @@ function RootLayout() {
                   data-active={String(isActive)}
                   aria-label={item.ariaLabel}
                   aria-current={isActive ? 'page' : undefined}
+                  onKeyDown={handleNavKeyDown}
                   className={[
                     'flex flex-col items-center justify-center flex-1 min-h-[56px] py-2 transition-colors',
                     isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-900',
@@ -98,6 +107,7 @@ function RootLayout() {
                   data-active={String(isActive)}
                   aria-label={item.ariaLabel}
                   aria-current={isActive ? 'page' : undefined}
+                  onKeyDown={handleNavKeyDown}
                   className={[
                     'flex flex-col items-center justify-center w-12 h-12 rounded-lg transition-colors',
                     isActive

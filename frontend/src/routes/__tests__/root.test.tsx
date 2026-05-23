@@ -10,7 +10,7 @@
  *   AC5 — Spanish aria-labels on nav items
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { act } from 'react'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
@@ -84,22 +84,34 @@ describe('AC1 — Desktop NavigationRail (viewport ≥ 1024px)', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('AC2 — Mobile NavigationBar exists in the shell', () => {
+  beforeEach(() => {
+    // Simulate mobile viewport (< 768px) for jsdom
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 390 })
+    window.dispatchEvent(new Event('resize'))
+  })
+
+  afterEach(() => {
+    // Restore default jsdom width
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 })
+    window.dispatchEvent(new Event('resize'))
+  })
+
   it('should render an element with data-testid="navigation-bar" in the shell', async () => {
-    // GIVEN: The root layout is rendered
-    // WHEN: The app mounts (mobile vs desktop is controlled by CSS, not JS)
+    // GIVEN: The root layout is rendered on mobile viewport (< 768px)
+    // WHEN: The app mounts with mobile viewport
     await renderAppAt('/clientes')
 
-    // THEN: NavigationBar element is present in DOM (hidden on desktop via Tailwind CSS)
+    // THEN: NavigationBar element is present in DOM (only mobile nav rendered on mobile viewport)
     const bar = screen.getByTestId('navigation-bar')
     expect(bar).toBeInTheDocument()
   })
 
   it('should have navigation items in NavigationBar (mobile nav)', async () => {
-    // GIVEN: The root layout is rendered
+    // GIVEN: The root layout is rendered on mobile viewport
     // WHEN: The shell mounts
     await renderAppAt('/clientes')
 
-    // THEN: Both nav items exist (shared between rail and bar or duplicated per responsive design)
+    // THEN: Both nav items exist in mobile navigation bar
     const navItems = screen.getAllByTestId(/nav-item-/)
     expect(navItems.length).toBeGreaterThanOrEqual(2)
   })
