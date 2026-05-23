@@ -47,11 +47,23 @@ describe('apiClient — default configuration', () => {
     expect(headers['Content-Type']).toBe('application/json')
   })
 
-  it('is an Axios instance (has the get/post/put/delete methods)', () => {
-    const { apiClient } = require('../apiClient')
+  it('is an Axios instance (has get method)', async () => {
+    const { apiClient } = await import('../apiClient')
     expect(typeof apiClient.get).toBe('function')
+  })
+
+  it('is an Axios instance (has post method)', async () => {
+    const { apiClient } = await import('../apiClient')
     expect(typeof apiClient.post).toBe('function')
+  })
+
+  it('is an Axios instance (has put method)', async () => {
+    const { apiClient } = await import('../apiClient')
     expect(typeof apiClient.put).toBe('function')
+  })
+
+  it('is an Axios instance (has delete method)', async () => {
+    const { apiClient } = await import('../apiClient')
     expect(typeof apiClient.delete).toBe('function')
   })
 
@@ -108,24 +120,28 @@ describe('apiClient — singleton identity', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('apiClient — header boundary conditions', () => {
-  it('allows overriding Content-Type per-request without affecting the instance default', () => {
-    const { apiClient } = require('../apiClient')
-    // Axios merges per-request config — verify the default is still application/json
-    const originalContentType = apiClient.defaults.headers['Content-Type']
-
+  it('per-request Content-Type override is applied in merged config', async () => {
+    const { apiClient } = await import('../apiClient')
     // Simulate a call config that overrides Content-Type
     const requestConfig = axios.mergeConfig(apiClient.defaults, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-
-    // The per-request override exists in the merged config
+    // THEN: The per-request override exists in the merged config
     expect(requestConfig.headers['Content-Type']).toBe('multipart/form-data')
-    // But the instance default remains unchanged
+  })
+
+  it('instance default Content-Type is unchanged after per-request override', async () => {
+    const { apiClient } = await import('../apiClient')
+    const originalContentType = apiClient.defaults.headers['Content-Type']
+    axios.mergeConfig(apiClient.defaults, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    // THEN: The instance default remains unchanged
     expect(apiClient.defaults.headers['Content-Type']).toBe(originalContentType)
   })
 
-  it('does NOT include Authorization header by default (no credentials pre-set)', () => {
-    const { apiClient } = require('../apiClient')
+  it('does NOT include Authorization header by default (no credentials pre-set)', async () => {
+    const { apiClient } = await import('../apiClient')
     const commonHeaders = apiClient.defaults.headers.common ?? {}
     expect(commonHeaders['Authorization']).toBeUndefined()
   })
