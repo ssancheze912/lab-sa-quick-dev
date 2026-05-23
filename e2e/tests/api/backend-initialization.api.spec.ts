@@ -109,6 +109,9 @@ test.describe('AC2 — Backend Clean Architecture project structure', () => {
 
 test.describe('AC5 — All four Clean Architecture layer projects exist', () => {
   test('should have SiesaAgents.API.csproj targeting net10.0', () => {
+    // GIVEN: The API project has been created targeting .NET 10
+    // WHEN: The .csproj file is read
+    // THEN: It targets net10.0 framework moniker
     const csprojPath = path.join(BACKEND_ROOT, 'src/SiesaAgents.API/SiesaAgents.API.csproj');
     expect(fs.existsSync(csprojPath), `Expected .csproj at ${csprojPath}`).toBe(true);
 
@@ -117,6 +120,9 @@ test.describe('AC5 — All four Clean Architecture layer projects exist', () => 
   });
 
   test('should have SiesaAgents.Application.csproj', () => {
+    // GIVEN: The backend solution requires an Application layer
+    // WHEN: The project directory is inspected
+    // THEN: The Application .csproj file exists
     const csprojPath = path.join(
       BACKEND_ROOT,
       'src/SiesaAgents.Application/SiesaAgents.Application.csproj'
@@ -125,6 +131,9 @@ test.describe('AC5 — All four Clean Architecture layer projects exist', () => 
   });
 
   test('should have SiesaAgents.Domain.csproj', () => {
+    // GIVEN: The backend solution requires a Domain layer
+    // WHEN: The project directory is inspected
+    // THEN: The Domain .csproj file exists
     const csprojPath = path.join(
       BACKEND_ROOT,
       'src/SiesaAgents.Domain/SiesaAgents.Domain.csproj'
@@ -133,6 +142,9 @@ test.describe('AC5 — All four Clean Architecture layer projects exist', () => 
   });
 
   test('should have SiesaAgents.Infrastructure.csproj', () => {
+    // GIVEN: The backend solution requires an Infrastructure layer
+    // WHEN: The project directory is inspected
+    // THEN: The Infrastructure .csproj file exists
     const csprojPath = path.join(
       BACKEND_ROOT,
       'src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj'
