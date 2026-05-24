@@ -211,21 +211,27 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
-- siesa-ui-kit CSS must be imported in `main.tsx` (not in route components) to avoid test environment resolution errors under node conditions.
+- siesa-ui-kit CSS must be imported as `siesa-ui-kit/styles.css` (not `siesa-ui-kit/dist/style.css`) — the package.json exports field only exposes `./styles.css`; the wrong path causes a Vite resolution error that leaves the app blank in E2E (root cause of 188 test failures).
+- Both NavigationRail and NavigationBar rendered identical `data-testid` on nav items causing Playwright strict mode violations. Fixed using `useMediaQuery('(min-width: 1024px)')` to conditionally render only one navigation at a time.
+- `window.matchMedia` is not implemented in jsdom; added mock in `src/test/setup.ts` that respects `window.innerWidth`.
 - TanStack Router requires `-` prefix for helper files inside `src/routes/` that do not export a `Route` object; `-not-found.tsx` is used instead of `not-found.tsx`.
 - Tests using `RouterProvider` require `await act(async () => { await router.load() })` for async rendering to complete before assertions.
 - `AppLayout` is exported from `_app.tsx` to allow direct import in tests; TanStack Router emits a bundle-split advisory (non-critical).
 - `@heroicons/react` was installed as it is not included by default in the project.
+- 5 E2E tests have pre-existing design issues: 4 use Playwright `framenavigated` to detect SPA navigation (fires for pushState too); 1 uses `.tap()` on non-touch chromium project.
 
 ### Completion Notes List
 
-- Task 1: `_app.tsx` created with `LayoutBase` (desktop) and responsive visibility via `hidden lg:flex`. Active state via `useRouterState` and `data-active` attribute on `Link` elements. NavigationRailGroupMenuItem shape used for LayoutBase navigationItems.
-- Task 2: `NavigationBar` from siesa-ui-kit rendered inside `flex lg:hidden` container. Uses NavigationBarItem shape with `ariaLabel` for WCAG 2.1 AA compliance.
-- Task 3: `_app/clientes.tsx` and `_app/contactos.tsx` created as placeholder routes with Spanish headings.
+- Correction (attempt 2): Fixed `siesa-ui-kit/dist/style.css` → `siesa-ui-kit/styles.css` in `main.tsx`. Root cause of blank page and all 188 E2E failures.
+- Correction (attempt 2): Replaced CSS-only `hidden lg:flex` with `useMediaQuery` conditional rendering in `_app.tsx` to eliminate Playwright strict mode violations from duplicate `data-testid`.
+- Correction (attempt 2): Added `window.matchMedia` mock to `src/test/setup.ts` to keep 65 unit tests passing.
+- Task 1: `_app.tsx` uses `useMediaQuery('(min-width: 1024px)')` for conditional rendering. Active state via `useRouterState` and `data-active` attribute on `Link` elements.
+- Task 2: `NavigationBar` rendered only on `!isDesktop` (single instance, no duplicate testids).
+- Task 3: `_app/clientes.tsx` and `_app/contactos.tsx` created as placeholder routes with Spanish headings and `data-testid`.
 - Task 4: `-not-found.tsx` exports `NotFoundPage` with `data-testid` markers, registered in `__root.tsx` via `notFoundComponent`.
 - Task 5: `index.tsx` updated with `beforeLoad` redirect to `/clientes`.
 - Task 6: `__root.tsx` preserves `id="app-shell"` and renders `Outlet` for pathless layout pickup.
-- Task 7: 65 tests passing across 12 test files, zero TypeScript errors.
+- Task 7: 65 unit tests passing across 12 files; 97/102 E2E tests passing on Chromium + mobile-Chrome.
 
 ### File List
 
@@ -234,11 +240,13 @@ claude-sonnet-4-6
 - `/home/user/lab-sa-quick-dev/frontend/src/routes/_app/clientes.tsx`
 - `/home/user/lab-sa-quick-dev/frontend/src/routes/_app/contactos.tsx`
 - `/home/user/lab-sa-quick-dev/frontend/src/routes/-not-found.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/shared/hooks/useMediaQuery.ts`
 
 #### Modified files
 - `/home/user/lab-sa-quick-dev/frontend/src/routes/__root.tsx`
 - `/home/user/lab-sa-quick-dev/frontend/src/routes/index.tsx`
 - `/home/user/lab-sa-quick-dev/frontend/src/main.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/test/setup.ts`
 - `/home/user/lab-sa-quick-dev/frontend/src/test/routes/app-layout.test.tsx`
 - `/home/user/lab-sa-quick-dev/frontend/src/test/routes/not-found.test.tsx`
 - `/home/user/lab-sa-quick-dev/frontend/src/test/routes/root.edge.test.tsx`
