@@ -10,6 +10,10 @@ const clienteApiRepositoryImpl: IClienteRepository = {
     const response = await apiClient.get<Cliente[]>('/api/v1/clientes')
     return response.data
   },
+  async getById(id: string): Promise<Cliente> {
+    const response = await apiClient.get<Cliente>(`/api/v1/clientes/${id}`)
+    return response.data
+  },
 }
 
 export const clienteApiRepository = clienteApiRepositoryImpl

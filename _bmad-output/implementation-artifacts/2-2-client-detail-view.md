@@ -1,6 +1,6 @@
 # Story 2.2: Client Detail View
 
-Status: draft
+Status: done
 
 ## Story
 
@@ -20,74 +20,74 @@ So that I can review all their information without navigating away from the clie
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: Create `GetClienteByIdQuery` and handler (AC: #2, #3)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs` — record with `Guid Id`
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs` — takes `IClienteRepository`, calls `GetByIdAsync(query.Id, ct)`, returns `ClienteDto?`; returns `null` when not found
-  - [ ] Add method to `IClienteRepository` interface: `Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)`
+- [x] Task 1 — Backend: Create `GetClienteByIdQuery` and handler (AC: #2, #3)
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs` — record with `Guid Id`
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs` — takes `IClienteRepository`, calls `GetByIdAsync(query.Id, ct)`, returns `ClienteDto?`; returns `null` when not found
+  - [x] Add method to `IClienteRepository` interface: `Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)`
 
-- [ ] Task 2 — Backend: Implement `GetByIdAsync` in `ClienteRepository` (AC: #2, #3)
-  - [ ] Add to `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`:
+- [x] Task 2 — Backend: Implement `GetByIdAsync` in `ClienteRepository` (AC: #2, #3)
+  - [x] Add to `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`:
     `await _context.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, cancellationToken)`
 
-- [ ] Task 3 — Backend: Add `GET /api/v1/clientes/{id}` endpoint (AC: #2, #3)
-  - [ ] In `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`, add:
+- [x] Task 3 — Backend: Add `GET /api/v1/clientes/{id}` endpoint (AC: #2, #3)
+  - [x] In `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`, add:
     `app.MapGet("/api/v1/clientes/{id:guid}", async (Guid id, GetClienteByIdQueryHandler handler, CancellationToken ct) => { var dto = await handler.HandleAsync(new GetClienteByIdQuery(id), ct); return dto is null ? Results.Problem(title: "Cliente no encontrado", statusCode: 404) : Results.Ok(dto); })`
-  - [ ] Register DI in `Program.cs`: `builder.Services.AddScoped<GetClienteByIdQueryHandler>()`
+  - [x] Register DI in `Program.cs`: `builder.Services.AddScoped<GetClienteByIdQueryHandler>()`
 
-- [ ] Task 4 — Frontend: Create `useCliente` application hook (AC: #2, #3, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCliente.ts`
-  - [ ] Use `useQuery` from `@tanstack/react-query` with `queryKey: ['clientes', id]` and `queryFn` calling `clienteApiRepository.getById(id)`
-  - [ ] Add `getById(id: string): Promise<Cliente>` to `IClienteRepository` interface
-  - [ ] Implement `getById` in `clienteApiRepository.ts`: `apiClient.get<Cliente>(\`/api/v1/clientes/${id}\`)` → return `response.data`
-  - [ ] Return `{ data, isLoading, isError, error }` from the hook
+- [x] Task 4 — Frontend: Create `useCliente` application hook (AC: #2, #3, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useCliente.ts`
+  - [x] Use `useQuery` from `@tanstack/react-query` with `queryKey: ['clientes', id]` and `queryFn` calling `clienteApiRepository.getById(id)`
+  - [x] Add `getById(id: string): Promise<Cliente>` to `IClienteRepository` interface
+  - [x] Implement `getById` in `clienteApiRepository.ts`: `apiClient.get<Cliente>(\`/api/v1/clientes/${id}\`)` → return `response.data`
+  - [x] Return `{ data, isLoading, isError, error }` from the hook
 
-- [ ] Task 5 — Frontend: Create `ClienteDetailView` presentation component (AC: #1, #2, #3, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
-  - [ ] Accept `clienteId: string` as prop
-  - [ ] Import and call `useCliente(clienteId)` hook
-  - [ ] When `isLoading`: render skeleton placeholders (`react-loading-skeleton`) — 4 skeleton rows for Nombre, NIT/RUC, Teléfono, Ciudad — no spinner
-  - [ ] When `isError` (non-404): render `<ErrorPanel onRetry={refetch} />`
-  - [ ] When 404 (error with HTTP status 404): render not-found message `"Cliente no encontrado"` in a `<p data-testid="cliente-not-found">` element
-  - [ ] When data loaded: render a detail card with labeled fields:
+- [x] Task 5 — Frontend: Create `ClienteDetailView` presentation component (AC: #1, #2, #3, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+  - [x] Accept `clienteId: string` as prop
+  - [x] Import and call `useCliente(clienteId)` hook
+  - [x] When `isLoading`: render skeleton placeholders (`react-loading-skeleton`) — 4 skeleton rows for Nombre, NIT/RUC, Teléfono, Ciudad — no spinner
+  - [x] When `isError` (non-404): render `<ErrorPanel onRetry={refetch} />`
+  - [x] When 404 (error with HTTP status 404): render not-found message `"Cliente no encontrado"` in a `<p data-testid="cliente-not-found">` element
+  - [x] When data loaded: render a detail card with labeled fields:
     - `Nombre`: `<dt>Nombre</dt><dd>{data.nombre}</dd>`
     - `NIT/RUC`: `<dt>NIT/RUC</dt><dd>{data.nitRuc}</dd>`
     - `Teléfono`: `<dt>Teléfono</dt><dd>{data.telefono}</dd>`
     - `Ciudad`: `<dt>Ciudad</dt><dd>{data.ciudad}</dd>`
-  - [ ] Outer container: `<div data-testid="cliente-detail-panel" className="flex-1 p-6 overflow-auto">`
-  - [ ] Detect 404 from TanStack Query error: check `(error as AxiosError)?.response?.status === 404`
-  - [ ] All labels must be in Spanish
+  - [x] Outer container: `<div data-testid="cliente-detail-panel" className="flex-1 p-6 overflow-auto">`
+  - [x] Detect 404 from TanStack Query error: check `(error as AxiosError)?.response?.status === 404`
+  - [x] All labels must be in Spanish
 
-- [ ] Task 6 — Frontend: Create `/clientes/$clienteId` route (AC: #1, #2, #3)
-  - [ ] Create `frontend/src/routes/_app/clientes.$clienteId.tsx`
-  - [ ] Export `Route` constant: `export const Route = createFileRoute('/_app/clientes/$clienteId')({ component: ClienteDetailRoute })`
-  - [ ] `ClienteDetailRoute` reads `clienteId` from route params via `Route.useParams()`
-  - [ ] Renders `<ClienteDetailView clienteId={clienteId} />`
-  - [ ] Update `frontend/src/routes/_app/clientes.tsx` — replace the `<div className="flex-1">` placeholder with `<Outlet />` if not already an `<Outlet />`; confirm the right panel area renders `<Outlet />` so the nested `$clienteId` route renders inside it
+- [x] Task 6 — Frontend: Create `/clientes/$clienteId` route (AC: #1, #2, #3)
+  - [x] Create `frontend/src/routes/_app/clientes.$clienteId.tsx`
+  - [x] Export `Route` constant: `export const Route = createFileRoute('/_app/clientes/$clienteId')({ component: ClienteDetailRoute })`
+  - [x] `ClienteDetailRoute` reads `clienteId` from route params via `Route.useParams()`
+  - [x] Renders `<ClienteDetailView clienteId={clienteId} />`
+  - [x] Update `frontend/src/routes/_app/clientes.tsx` — replace the `<div className="flex-1">` placeholder with `<Outlet />` if not already an `<Outlet />`; confirm the right panel area renders `<Outlet />` so the nested `$clienteId` route renders inside it
 
-- [ ] Task 7 — Frontend: Update `ClienteListItem` to navigate on click (AC: #1)
-  - [ ] In `frontend/src/shared/components/ClienteListItem.tsx`, ensure `onClick` handler updates the URL to `/clientes/${cliente.id}` using TanStack Router's `navigate` or the parent's `onClick` callback
-  - [ ] In `ClienteListView.tsx`, wire `ClienteListItem` `onClick` to `navigate({ to: '/clientes/$clienteId', params: { clienteId: id } })` using `useNavigate` from `@tanstack/react-router`
-  - [ ] Track `selectedClienteId` (from current URL params using `useParams`) to set `isActive` on the matching `ClienteListItem`
+- [x] Task 7 — Frontend: Update `ClienteListItem` to navigate on click (AC: #1)
+  - [x] In `frontend/src/shared/components/ClienteListItem.tsx`, ensure `onClick` handler updates the URL to `/clientes/${cliente.id}` using TanStack Router's `navigate` or the parent's `onClick` callback
+  - [x] In `ClienteListView.tsx`, wire `ClienteListItem` `onClick` to `navigate({ to: '/clientes/$clienteId', params: { clienteId: id } })` using `useNavigate` from `@tanstack/react-router`
+  - [x] Track `selectedClienteId` (from current URL params using `useParams`) to set `isActive` on the matching `ClienteListItem`
 
-- [ ] Task 8 — Frontend and backend unit/component tests (AC: #1–#4)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCliente.test.ts`
-    - [ ] TC: MSW returns client by id → `data` contains client, `isLoading` false, `isError` false
-    - [ ] TC: MSW returns 404 → `isError` is true with status 404
-    - [ ] TC: `queryKey` is exactly `['clientes', id]`
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/-ClienteDetailView.test.tsx`
-    - [ ] TC-E2-P1-06a: Click on client item in list → right panel shows `Nombre`, `NIT/RUC`, `Teléfono`, `Ciudad`
-    - [ ] TC-E2-P1-06b: Click on client item → URL updates to `/clientes/{clienteId}` (no page reload)
-    - [ ] TC-E2-P1-08a: Navigate to `/clientes/00000000-0000-0000-0000-000000000000` → "Cliente no encontrado" message rendered in right panel
-    - [ ] TC-E2-P1-08b: Navigate to invalid id → no unhandled JS error, navigation shell still visible
-    - [ ] TC (skeleton): While loading, skeleton rows rendered, no `role="status"` spinner present
-    - [ ] TC: `data-testid="cliente-detail-panel"` present on container
-    - [ ] TC: `data-testid="cliente-not-found"` present when 404
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
-    - [ ] TC: Repository returns entity → handler returns `ClienteDto` with all fields mapped correctly
-    - [ ] TC: Repository returns `null` → handler returns `null`
-    - [ ] TC: Repository called exactly once with correct id
-  - [ ] API Integration test (TC-E2-P2-02): `GET /api/v1/clientes/{id}` returns 200 with correct `ClienteDto`
-  - [ ] API Integration test (TC-E2-P2-03): `GET /api/v1/clientes/00000000-0000-0000-0000-000000000000` returns 404 `application/problem+json` without stack trace
+- [x] Task 8 — Frontend and backend unit/component tests (AC: #1–#4)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useCliente.test.ts`
+    - [x] TC: MSW returns client by id → `data` contains client, `isLoading` false, `isError` false
+    - [x] TC: MSW returns 404 → `isError` is true with status 404
+    - [x] TC: `queryKey` is exactly `['clientes', id]`
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/-ClienteDetailView.test.tsx`
+    - [x] TC-E2-P1-06a: Click on client item in list → right panel shows `Nombre`, `NIT/RUC`, `Teléfono`, `Ciudad`
+    - [x] TC-E2-P1-06b: Click on client item → URL updates to `/clientes/{clienteId}` (no page reload)
+    - [x] TC-E2-P1-08a: Navigate to `/clientes/00000000-0000-0000-0000-000000000000` → "Cliente no encontrado" message rendered in right panel
+    - [x] TC-E2-P1-08b: Navigate to invalid id → no unhandled JS error, navigation shell still visible
+    - [x] TC (skeleton): While loading, skeleton rows rendered, no `role="status"` spinner present
+    - [x] TC: `data-testid="cliente-detail-panel"` present on container
+    - [x] TC: `data-testid="cliente-not-found"` present when 404
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
+    - [x] TC: Repository returns entity → handler returns `ClienteDto` with all fields mapped correctly
+    - [x] TC: Repository returns `null` → handler returns `null`
+    - [x] TC: Repository called exactly once with correct id
+  - [x] API Integration test (TC-E2-P2-02): `GET /api/v1/clientes/{id}` returns 200 with correct `ClienteDto`
+  - [x] API Integration test (TC-E2-P2-03): `GET /api/v1/clientes/00000000-0000-0000-0000-000000000000` returns 404 `application/problem+json` without stack trace
 
 ## Dev Notes
 

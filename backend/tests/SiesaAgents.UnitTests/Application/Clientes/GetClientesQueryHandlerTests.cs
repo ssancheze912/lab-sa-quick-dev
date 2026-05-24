@@ -40,6 +40,9 @@ public class GetClientesQueryHandlerTests
             return Task.FromResult(_clientes);
         }
 
+        public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+            => Task.FromResult<ClienteEntity?>(_clientes.FirstOrDefault(c => c.Id == id));
+
         public Task AddAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
     }

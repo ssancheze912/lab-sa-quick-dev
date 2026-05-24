@@ -15,6 +15,11 @@ public sealed class ClienteRepository(SiesaAgentsDbContext context) : IClienteRe
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        => await context.Clientes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
     public async Task AddAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
     {
         await context.Clientes.AddAsync(cliente, cancellationToken);

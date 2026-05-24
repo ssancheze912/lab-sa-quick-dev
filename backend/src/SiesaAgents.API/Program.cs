@@ -29,6 +29,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<CreateClienteCommandHandler>();
+// Story 2.2: Client Detail View DI registrations
+builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 
 var app = builder.Build();
 

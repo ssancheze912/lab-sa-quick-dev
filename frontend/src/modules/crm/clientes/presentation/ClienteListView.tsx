@@ -1,4 +1,5 @@
 // Story 2.1: Client List & Search
+// Story 2.2: Client Detail View — updated to navigate on click
 // Presentation: ClienteListView — left panel (280px fixed width)
 
 import { useState, useMemo } from 'react'
@@ -9,10 +10,14 @@ import { EmptyState } from '../../../../shared/components/EmptyState'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 import { ClienteListItem } from '../../../../shared/components/ClienteListItem'
 
-export function ClienteListView() {
+interface ClienteListViewProps {
+  selectedClienteId?: string
+  onClienteClick?: (id: string) => void
+}
+
+export function ClienteListView({ selectedClienteId, onClienteClick }: ClienteListViewProps = {}) {
   const { data = [], isLoading, isError, refetch } = useClientes()
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeId, setActiveId] = useState<string | null>(null)
 
   const filteredClientes = useMemo(
     () =>
@@ -71,8 +76,8 @@ export function ClienteListView() {
               <li key={cliente.id}>
                 <ClienteListItem
                   cliente={cliente}
-                  isActive={activeId === cliente.id}
-                  onClick={(id) => setActiveId(id)}
+                  isActive={cliente.id === selectedClienteId}
+                  onClick={(id) => onClienteClick?.(id)}
                 />
               </li>
             ))}
