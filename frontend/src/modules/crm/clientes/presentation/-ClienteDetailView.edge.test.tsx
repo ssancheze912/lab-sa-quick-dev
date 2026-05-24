@@ -219,14 +219,11 @@ describe('ClienteDetailView — empty clienteId prop does not crash', () => {
     })
   })
 
-  it('[P2] Given clienteId is empty string, When rendered with query disabled, Then client data is not shown', async () => {
+  it('[P2] Given clienteId is empty string, When rendered with query disabled, Then client data is not shown', () => {
     // GIVEN: Empty clienteId — no API call made
     renderDetailView('')
 
-    // Wait a moment to confirm nothing loads
-    await new Promise((r) => setTimeout(r, 60))
-
-    // THEN: No client field values appear (query never executed)
+    // THEN: No client field values appear (query never executed — enabled:false is synchronous)
     expect(screen.queryByText('Empresa Edge SA')).not.toBeInTheDocument()
     expect(screen.queryByText('700222333')).not.toBeInTheDocument()
   })

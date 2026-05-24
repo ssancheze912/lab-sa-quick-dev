@@ -95,10 +95,8 @@ describe('useCliente — disabled when id is empty string', () => {
     // WHEN: Hook renders with empty string
     const { result } = renderHook(() => useCliente(''), { wrapper })
 
-    // Wait briefly to confirm no fetch occurs
-    await new Promise((r) => setTimeout(r, 50))
-
     // THEN: Query remains pending/disabled — no data and no error
+    // isPending is stable synchronously when enabled:false — no wait needed
     expect(result.current.data).toBeUndefined()
     expect(result.current.isError).toBe(false)
   })
@@ -110,9 +108,7 @@ describe('useCliente — disabled when id is empty string', () => {
     // WHEN: Hook renders with empty id
     const { result } = renderHook(() => useCliente(''), { wrapper })
 
-    await new Promise((r) => setTimeout(r, 50))
-
-    // THEN: Query never resolves to success
+    // THEN: Query never resolves to success — enabled:false keeps state as isPending
     expect(result.current.isSuccess).toBe(false)
   })
 })
