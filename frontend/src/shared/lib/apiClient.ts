@@ -5,11 +5,11 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-apiClient.interceptors.request.use((config) => {
-  return config
-})
+// Auth token injection interceptor — populated in subsequent stories when auth is available
+// apiClient.interceptors.request.use((config) => { ... return config })
 
+// Response error normalization interceptor — expanded in subsequent stories
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error),
+  (error: unknown) => Promise.reject(error),
 )

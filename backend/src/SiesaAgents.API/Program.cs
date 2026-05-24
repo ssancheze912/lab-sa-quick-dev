@@ -19,6 +19,7 @@ var app = builder.Build();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("DevCors");
 
+// NOTE: MapOpenApi() exposes /openapi/v1.json. Restrict or disable in production.
 app.MapOpenApi();
 app.MapScalarApiReference();
 
