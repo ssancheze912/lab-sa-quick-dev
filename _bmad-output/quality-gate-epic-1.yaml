@@ -1,0 +1,210 @@
+# Quality Gate Decision — Epic 1: Project Foundation & Application Shell
+# Generated: 2026-05-24
+# Scope: Epic (Stories 1.1, 1.2, 1.3)
+# Workflow: testarch-trace
+
+epic:
+  id: 1
+  title: "Project Foundation & Application Shell"
+  stories:
+    - "1.1 — Project Initialization & Repository Structure"
+    - "1.2 — Frontend Navigation Shell"
+    - "1.3 — Backend Database Foundation"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# QUALITY GATE DECISION
+# ─────────────────────────────────────────────────────────────────────────────
+
+gate:
+  decision: CONCERNS
+  rationale: >
+    All 18 ACs have test cases written and mapped. P0 coverage is 100% and P1/P2/overall
+    coverage is 100% by requirement count. However, CONCERNS are raised because:
+    (1) Story 1.3 remains in sprint-status as 'in-progress' with no code review file generated,
+    indicating the review phase was not completed.
+    (2) Runtime test execution of backend tests (AC-1.1.d, AC-1.3.a, AC-1.3.d, AC-1.3.e)
+    is blocked by the absence of .NET 10 SDK and PostgreSQL in the CI environment —
+    test evidence for these ACs is incomplete (code inspection only).
+    (3) 2/31 E2E tests for AC-1.2.c remain failing, even though the failure is attributed
+    to a Playwright test design issue rather than an implementation defect.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COVERAGE METRICS
+# ─────────────────────────────────────────────────────────────────────────────
+
+coverage:
+  total_requirements: 18
+  requirements_covered: 18
+  overall_percent: 100
+
+  by_priority:
+    P0:
+      requirements: 5
+      covered: 5
+      percent: 100
+      threshold: 100
+      threshold_met: true
+      test_cases:
+        - TC-E1-P0-01  # TS strict build
+        - TC-E1-P0-02  # Frontend dev server 5173
+        - TC-E1-P0-03  # Backend starts / Scalar
+        - TC-E1-P0-04  # CORS localhost:5173
+        - TC-E1-P0-05  # Problem Details RFC 7807 / NFR6
+
+    P1:
+      requirements: 10
+      covered: 10
+      percent: 100
+      threshold: 90
+      threshold_met: true
+      test_cases:
+        - TC-E1-P1-01  # SPA navigation no reload
+        - TC-E1-P1-02  # Deep link /clientes
+        - TC-E1-P1-03  # Deep link /contactos
+        - TC-E1-P1-04  # 404 route
+        - TC-E1-P1-05  # EF Core migration + snake_case
+        - TC-E1-P1-06  # Solution build zero errors
+      notes: >
+        AC-1.1.d and AC-1.3.e dotnet build cannot be executed in CI (no .NET 10 SDK).
+        AC-1.3.a migration runtime verification requires PostgreSQL and .NET 10 SDK.
+        Evidence is INCOMPLETE for these three ACs — test files exist and are correctly
+        mapped but execution evidence is environment-blocked.
+
+    P2:
+      requirements: 3
+      covered: 3
+      percent: 100
+      threshold: 80
+      threshold_met: true
+      test_cases:
+        - TC-E1-P2-01  # NavigationRail desktop
+        - TC-E1-P2-02  # NavigationBar mobile
+        - TC-E1-P2-03  # Index redirect to /clientes
+        - TC-E1-P2-04  # snake_case column naming
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CONCERNS DETAIL
+# ─────────────────────────────────────────────────────────────────────────────
+
+concerns:
+  - id: C-01
+    severity: MEDIUM
+    category: EVIDENCE_INCOMPLETE
+    acs_affected:
+      - AC-1.1.d
+      - AC-1.3.a
+      - AC-1.3.e
+    description: >
+      dotnet build, dotnet ef database update, and dotnet test cannot be executed in this
+      CI environment (no .NET 10 SDK). Test files exist and code is correctly structured per
+      code review inspection, but runtime execution evidence is missing. Manual verification
+      required on a machine with .NET 10 SDK and PostgreSQL 18+.
+    resolution: >
+      Run dotnet build SiesaAgents.sln, dotnet test tests/SiesaAgents.UnitTests, and
+      dotnet ef database update on a .NET 10 environment before closing Epic 1.
+
+  - id: C-02
+    severity: MEDIUM
+    category: STORY_INCOMPLETE
+    acs_affected:
+      - AC-1.3.a
+      - AC-1.3.b
+      - AC-1.3.c
+      - AC-1.3.d
+      - AC-1.3.e
+    description: >
+      Story 1.3 sprint status is 'in-progress' with no code review artifact generated
+      (unlike 1.1 and 1.2 which have review-*.md files). All story tasks are marked [x]
+      complete but the formal review step was not completed. The senior developer review
+      is a required gate per the quick-dev workflow.
+    resolution: >
+      Run code-review workflow for Story 1.3 to generate review-1-3-backend-database-foundation.md
+      and update sprint status to 'done'. Update epic-1 sprint status accordingly.
+
+  - id: C-03
+    severity: LOW
+    category: EVIDENCE_INCOMPLETE
+    acs_affected:
+      - AC-1.2.c
+    description: >
+      2 of 31 E2E Playwright tests for SPA navigation (AC-1.2.c) are failing. The failures
+      are attributed to a Playwright v1.56 test design issue (framenavigated fires on
+      history.pushState) — NOT a code defect. The code review for Story 1.2 returned PASS
+      verdict and confirmed the implementation is correct. However, failing tests represent
+      incomplete test evidence.
+    resolution: >
+      Fix the 2 failing E2E test cases to use an alternative navigation detection strategy
+      (e.g., URL change assertion via page.waitForURL() instead of framenavigated event).
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GAPS
+# ─────────────────────────────────────────────────────────────────────────────
+
+gaps:
+  - gap_id: GAP-01
+    ac: "AC-1.1.d, AC-1.3.e"
+    priority: P1
+    description: "dotnet build not verifiable in CI — no .NET 10 SDK"
+    risk: MEDIUM
+
+  - gap_id: GAP-02
+    ac: "AC-1.3.a"
+    priority: P1
+    description: "dotnet ef database update not runnable — no SDK + no PostgreSQL"
+    risk: MEDIUM
+
+  - gap_id: GAP-03
+    ac: "AC-1.2.c"
+    priority: P1
+    description: "2/31 E2E tests failing — Playwright test design issue, not implementation bug"
+    risk: LOW
+
+  - gap_id: GAP-04
+    ac: "AC-1.3.b, AC-1.3.d"
+    priority: P0
+    description: "Problem Details and AppDbContext DI API tests require running backend; execution unverified in this environment"
+    risk: LOW-MEDIUM
+
+  - gap_id: GAP-05
+    ac: "Story 1.3"
+    priority: P1
+    description: "No code review artifact for Story 1.3 — review step not completed"
+    risk: MEDIUM
+
+# ─────────────────────────────────────────────────────────────────────────────
+# REQUIRED ACTIONS BEFORE GATE CAN BE UPGRADED TO PASS
+# ─────────────────────────────────────────────────────────────────────────────
+
+required_actions:
+  - Complete code review for Story 1.3 (generate review-1-3-backend-database-foundation.md)
+  - Update sprint status 1-3-backend-database-foundation from 'in-progress' to 'done'
+  - Verify dotnet build and dotnet test on a .NET 10 + PostgreSQL environment
+  - Fix 2 failing E2E tests for AC-1.2.c (navigation SPA test design)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# POSITIVE EVIDENCE
+# ─────────────────────────────────────────────────────────────────────────────
+
+positive_evidence:
+  - "Stories 1.1 and 1.2 code reviews: PASS verdict with auto-fixes applied"
+  - "48/48 Vitest component tests passing (Story 1.2)"
+  - "29/31 E2E Playwright tests passing in chromium (Story 1.2)"
+  - "TypeScript strict mode: 0 errors confirmed"
+  - "All P0 test cases have test files and are correctly mapped to ACs"
+  - "Implementation files for all stories exist and are correctly structured"
+  - "ExceptionHandlingMiddleware RFC 7807 pattern verified by code inspection"
+  - "EF Core AppDbContext and Program.cs correctly configured per code review"
+  - "ATDD checklists generated for Stories 1.2 and 1.3 (RED phase complete)"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ARTIFACTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+artifacts:
+  traceability_matrix: "_bmad-output/traceability-matrix-epic-1.md"
+  quality_gate: "_bmad-output/quality-gate-epic-1.yaml"
+  test_design: "_bmad-output/implementation-artifacts/test-design-epic-1.md"
+  atdd_checklist_12: "_bmad-output/atdd-checklist-1-2-frontend-navigation-shell.md"
+  atdd_checklist_13: "_bmad-output/atdd-checklist-1-3-backend-database-foundation.md"
+  review_11: "_bmad-output/review-1-1-project-initialization-repository-structure.md"
+  review_12: "_bmad-output/review-1-2-frontend-navigation-shell.md"
