@@ -141,11 +141,11 @@ public class SiesaAgentsDbContextEdgeCaseTests
     /// This prevents accidental entity registration before Epic 2.
     /// </summary>
     [Fact]
-    public void SiesaAgentsDbContext_Model_ShouldHaveNoEntityTypesInInitialMigration()
+    public void SiesaAgentsDbContext_Model_ShouldHaveClienteEntityRegistered()
     {
         // GIVEN: DbContext configured with InMemory provider
         var options = new DbContextOptionsBuilder<SiesaAgents.Infrastructure.Data.SiesaAgentsDbContext>()
-            .UseInMemoryDatabase($"EmptyModelTestDb_{Guid.NewGuid()}")
+            .UseInMemoryDatabase($"ClienteModelTestDb_{Guid.NewGuid()}")
             .Options;
 
         using var context = new SiesaAgents.Infrastructure.Data.SiesaAgentsDbContext(options);
@@ -153,9 +153,9 @@ public class SiesaAgentsDbContextEdgeCaseTests
         // WHEN: The model entity types are enumerated
         var entityTypes = context.Model.GetEntityTypes().ToList();
 
-        // THEN: No entity types are present in the model
-        // (ClienteEntity and ContactoEntity belong to Epic 2 and 3, NOT Story 1.3)
-        Assert.Empty(entityTypes);
+        // THEN: ClienteEntity is registered (added in Story 2.1)
+        Assert.NotEmpty(entityTypes);
+        Assert.Contains(entityTypes, e => e.ClrType == typeof(SiesaAgents.Domain.Clientes.Entities.ClienteEntity));
     }
 
     /// <summary>
@@ -163,7 +163,7 @@ public class SiesaAgentsDbContextEdgeCaseTests
     /// would imply domain entity registration in this foundational story.
     /// </summary>
     [Fact]
-    public void SiesaAgentsDbContext_ShouldHaveNoDbSetPropertiesInFoundationStory()
+    public void SiesaAgentsDbContext_ShouldHaveClientesDbSetProperty()
     {
         // GIVEN: The SiesaAgentsDbContext type definition
         var contextType = typeof(SiesaAgents.Infrastructure.Data.SiesaAgentsDbContext);
@@ -174,8 +174,9 @@ public class SiesaAgentsDbContextEdgeCaseTests
                         p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
             .ToList();
 
-        // THEN: No DbSet properties exist (no domain entity types registered for Story 1.3)
-        Assert.Empty(dbSetProperties);
+        // THEN: Clientes DbSet property exists (added in Story 2.1)
+        Assert.NotEmpty(dbSetProperties);
+        Assert.Contains(dbSetProperties, p => p.Name == "Clientes");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -336,7 +337,7 @@ public class SiesaAgentsDbContextEdgeCaseTests
     /// Ensures no premature IEntityTypeConfiguration implementations were added.
     /// </summary>
     [Fact]
-    public void SiesaAgentsDbContext_InfrastructureAssembly_ShouldHaveNoEntityTypeConfigurations()
+    public void SiesaAgentsDbContext_InfrastructureAssembly_ShouldHaveClienteConfiguration()
     {
         // GIVEN: The Infrastructure assembly
         var infrastructureAssembly = typeof(SiesaAgents.Infrastructure.Data.SiesaAgentsDbContext).Assembly;
@@ -349,7 +350,8 @@ public class SiesaAgentsDbContextEdgeCaseTests
                            i.GetGenericTypeDefinition() == typeof(Microsoft.EntityFrameworkCore.IEntityTypeConfiguration<>)))
             .ToList();
 
-        // THEN: No configurations exist in Story 1.3 — domain tables come in Epic 2+
-        Assert.Empty(configTypes);
+        // THEN: ClienteConfiguration is present (added in Story 2.1)
+        Assert.NotEmpty(configTypes);
+        Assert.Contains(configTypes, t => t == typeof(SiesaAgents.Infrastructure.Data.Configurations.ClienteConfiguration));
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SiesaAgents.Infrastructure.Data;
@@ -11,9 +12,11 @@ using SiesaAgents.Infrastructure.Data;
 namespace SiesaAgents.Infrastructure.Migrations
 {
     [DbContext(typeof(SiesaAgentsDbContext))]
-    partial class SiesaAgentsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260524091634_AddClientesTable")]
+    partial class AddClientesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

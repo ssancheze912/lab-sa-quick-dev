@@ -1,15 +1,16 @@
 ---
 stepsCompleted: [1, 2, 3, 4, 5, 6]
-status: ready-for-dev
+status: done
 epic: 2
 story: 1
 storyKey: 2-1-client-list-search
 createdAt: '2026-05-24'
+completedAt: '2026-05-24'
 ---
 
 # Story 2.1: Client List & Search
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -424,6 +425,41 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+- Added `VITE_API_URL: 'http://localhost:5000'` to vitest `env` config to fix MSW URL matching in tests.
+- Moq package was missing from UnitTests.csproj — installed version 4.20.72.
+- Updated 3 Story 1.3 edge-case tests (`SiesaAgentsDbContextEdgeCaseTests`) that expected empty model/no DbSets/no configurations; they now assert the presence of `ClienteEntity` / `Clientes` DbSet / `ClienteConfiguration`.
+
 ### Completion Notes List
 
+- siesa-ui-kit not installed in node_modules — created custom `EmptyState`, `ErrorPanel`, `ClientListItem` components per spec.
+- `ClienteListView` replaces `ClientesPlaceholderView` in `frontend/src/routes/_app/clientes.tsx`.
+- EF Core migration `AddClientesTable` created and verified: table `clientes` with snake_case columns, UUID PK, unique index `uk_clientes_nit`.
+- All ACs implemented: list panel (280px), real-time filter (useMemo, no extra API calls), EmptyState, ErrorPanel + Reintentar, keyboard accessibility (WCAG 2.1 AA), scroll.
+
 ### File List
+
+Backend:
+- backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs (NEW)
+- backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs (NEW)
+- backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs (NEW)
+- backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQuery.cs (NEW)
+- backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQueryHandler.cs (NEW)
+- backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs (NEW)
+- backend/src/SiesaAgents.Infrastructure/Data/SiesaAgentsDbContext.cs (MODIFIED — added Clientes DbSet)
+- backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs (NEW)
+- backend/src/SiesaAgents.Infrastructure/Migrations/20260524091634_AddClientesTable.cs (NEW)
+- backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs (NEW)
+- backend/src/SiesaAgents.API/Program.cs (MODIFIED — registered IClienteRepository, GetClientesQueryHandler, MapClienteEndpoints)
+- backend/tests/SiesaAgents.UnitTests/Infrastructure/SiesaAgentsDbContextEdgeCaseTests.cs (MODIFIED — updated 3 stale Story 1.3 tests)
+
+Frontend:
+- frontend/src/modules/crm/clientes/domain/Cliente.ts (NEW)
+- frontend/src/modules/crm/clientes/domain/IClienteRepository.ts (NEW)
+- frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts (NEW)
+- frontend/src/modules/crm/clientes/application/useClientes.ts (NEW)
+- frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx (NEW)
+- frontend/src/shared/components/EmptyState.tsx (NEW)
+- frontend/src/shared/components/ErrorPanel.tsx (NEW)
+- frontend/src/shared/components/ClientListItem.tsx (NEW)
+- frontend/src/routes/_app/clientes.tsx (MODIFIED — replaced ClientesPlaceholderView with ClienteListView)
+- frontend/vite.config.ts (MODIFIED — added VITE_API_URL env for tests)
