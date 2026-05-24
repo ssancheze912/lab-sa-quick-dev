@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -30,76 +30,76 @@ so that I can move between sections without full page reloads from any device.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Install missing dependencies (AC: all)
-  - [ ] Install TanStack Router and its Vite plugin: `pnpm add @tanstack/react-router && pnpm add -D @tanstack/router-plugin @tanstack/router-devtools`
-  - [ ] Install TailwindCSS v4: `pnpm add tailwindcss @tailwindcss/vite`
-  - [ ] Install siesa-ui-kit: `pnpm add siesa-ui-kit`
-  - [ ] Install TanStack Query (needed by later stories, install now per Story 1.1 spec): `pnpm add @tanstack/react-query && pnpm add -D @tanstack/react-query-devtools`
-  - [ ] Install Zustand: `pnpm add zustand`
-  - [ ] Install Axios: `pnpm add axios`
-  - [ ] Install react-loading-skeleton: `pnpm add react-loading-skeleton`
-  - [ ] Install Heroicons: `pnpm add @heroicons/react`
+- [x] Task 1 — Install missing dependencies (AC: all)
+  - [x] Install TanStack Router and its Vite plugin: `pnpm add @tanstack/react-router && pnpm add -D @tanstack/router-plugin @tanstack/router-devtools`
+  - [x] Install TailwindCSS v4: `pnpm add tailwindcss @tailwindcss/vite`
+  - [x] Install siesa-ui-kit: `pnpm add siesa-ui-kit`
+  - [x] Install TanStack Query (needed by later stories, install now per Story 1.1 spec): `pnpm add @tanstack/react-query && pnpm add -D @tanstack/react-query-devtools`
+  - [x] Install Zustand: `pnpm add zustand`
+  - [x] Install Axios: `pnpm add axios`
+  - [x] Install react-loading-skeleton: `pnpm add react-loading-skeleton`
+  - [x] Install Heroicons: `pnpm add @heroicons/react`
 
-- [ ] Task 2 — Configure Vite for TanStack Router + Tailwind (AC: all)
-  - [ ] Update `vite.config.ts` to add `@tailwindcss/vite` plugin and `@tanstack/router-plugin/vite` plugin
-  - [ ] Add `/// <reference types="vitest" />` at the top of `vite.config.ts` if test config is included
-  - [ ] Ensure `server.port: 5173` remains set
+- [x] Task 2 — Configure Vite for TanStack Router + Tailwind (AC: all)
+  - [x] Update `vite.config.ts` to add `@tailwindcss/vite` plugin and `@tanstack/router-plugin/vite` plugin
+  - [x] Add `/// <reference types="vitest" />` at the top of `vite.config.ts` if test config is included
+  - [x] Ensure `server.port: 5173` remains set
 
-- [ ] Task 3 — Configure TailwindCSS v4 (AC: all)
-  - [ ] Update `src/style.css` (or `src/index.css`) to add `@import "tailwindcss"` as the only Tailwind directive
-  - [ ] Verify Siesa brand tokens are applied via Tailwind (`slate-*` for neutrals, primary `#0e79fd`)
+- [x] Task 3 — Configure TailwindCSS v4 (AC: all)
+  - [x] Update `src/style.css` (or `src/index.css`) to add `@import "tailwindcss"` as the only Tailwind directive
+  - [x] Verify Siesa brand tokens are applied via Tailwind (`slate-*` for neutrals, primary `#0e79fd`)
 
-- [ ] Task 4 — Set up TanStack Router file-based structure (AC: #3, #4, #5, #6, #7)
-  - [ ] Create `src/routes/` directory
-  - [ ] Create `src/routes/__root.tsx` — Root route: wraps all routes, imports siesa-ui-kit styles, renders `<Outlet />`. Use `createRootRoute()`.
-  - [ ] Create `src/routes/index.tsx` — Index route: redirects to `/clientes` using `redirect({ to: '/clientes' })` in a `beforeLoad` hook.
-  - [ ] Create `src/routes/_app.tsx` — Pathless layout route (no URL segment). Renders the AppShell with NavigationRail (desktop) / NavigationBar (mobile) plus `<Outlet />` for child routes. Use `createFileRoute('/_app')`.
-  - [ ] Create `src/routes/_app/` directory
-  - [ ] Create `src/routes/_app/clientes.tsx` — Route for `/clientes`. Renders a placeholder `<ClientesPlaceholderView />` with `data-testid="clientes-view"`.
-  - [ ] Create `src/routes/_app/contactos.tsx` — Route for `/contactos`. Renders a placeholder `<ContactosPlaceholderView />` with `data-testid="contactos-view"`.
-  - [ ] Create `src/routes/$notFound.tsx` (or use TanStack Router `notFoundComponent`) — 404 view with Spanish message "Página no encontrada" and link back to `/clientes`.
+- [x] Task 4 — Set up TanStack Router file-based structure (AC: #3, #4, #5, #6, #7)
+  - [x] Create `src/routes/` directory
+  - [x] Create `src/routes/__root.tsx` — Root route: wraps all routes, imports siesa-ui-kit styles, renders `<Outlet />`. Use `createRootRoute()`.
+  - [x] Create `src/routes/index.tsx` — Index route: redirects to `/clientes` using `redirect({ to: '/clientes' })` in a `beforeLoad` hook.
+  - [x] Create `src/routes/_app.tsx` — Pathless layout route (no URL segment). Renders the AppShell with NavigationRail (desktop) / NavigationBar (mobile) plus `<Outlet />` for child routes. Use `createFileRoute('/_app')`.
+  - [x] Create `src/routes/_app/` directory
+  - [x] Create `src/routes/_app/clientes.tsx` — Route for `/clientes`. Renders a placeholder `<ClientesPlaceholderView />` with `data-testid="clientes-view"`.
+  - [x] Create `src/routes/_app/contactos.tsx` — Route for `/contactos`. Renders a placeholder `<ContactosPlaceholderView />` with `data-testid="contactos-view"`.
+  - [x] Create `src/routes/$notFound.tsx` (or use TanStack Router `notFoundComponent`) — 404 view with Spanish message "Página no encontrada" and link back to `/clientes`.
 
-- [ ] Task 5 — Build AppShell component with siesa-ui-kit NavigationRail / NavigationBar (AC: #1, #2, #3, #4, #8)
-  - [ ] Create `src/shared/components/AppShell.tsx`
-  - [ ] Check siesa-ui-kit catalog for `NavigationRail` and `NavigationBar` components (mandatory — do NOT create custom nav components if equivalents exist)
-  - [ ] Import and use `NavigationRail` from `siesa-ui-kit` for desktop layout (viewport >= 1024px / `lg:` breakpoint)
-  - [ ] Import and use `NavigationBar` from `siesa-ui-kit` for mobile layout (viewport < 1024px)
-  - [ ] Add navigation items: "Clientes" (icon: `UserGroupIcon` from `@heroicons/react/24/outline`) and "Contactos" (icon: `UserIcon`)
-  - [ ] Use TanStack Router's `<Link>` component for navigation items to enable SPA transitions (no full page reloads)
-  - [ ] Apply `aria-current="page"` to the active nav item using `useRouterState` or TanStack Router's `<Link activeProps>` API
-  - [ ] Layout: Desktop — left rail (fixed width ~72px) + content area fills remaining space. Mobile — bottom bar + content area fills viewport height minus bar.
-  - [ ] All user-facing text in Spanish: "Clientes", "Contactos"
-  - [ ] Add `<nav>` landmark wrapping the navigation component for WCAG compliance
+- [x] Task 5 — Build AppShell component with siesa-ui-kit NavigationRail / NavigationBar (AC: #1, #2, #3, #4, #8)
+  - [x] Create `src/shared/components/AppShell.tsx`
+  - [x] Check siesa-ui-kit catalog for `NavigationRail` and `NavigationBar` components (mandatory — do NOT create custom nav components if equivalents exist)
+  - [x] Import and use `NavigationRail` from `siesa-ui-kit` for desktop layout (viewport >= 1024px / `lg:` breakpoint)
+  - [x] Import and use `NavigationBar` from `siesa-ui-kit` for mobile layout (viewport < 1024px)
+  - [x] Add navigation items: "Clientes" (icon: `UserGroupIcon` from `@heroicons/react/24/outline`) and "Contactos" (icon: `UserIcon`)
+  - [x] Use TanStack Router's `<Link>` component for navigation items to enable SPA transitions (no full page reloads)
+  - [x] Apply `aria-current="page"` to the active nav item using `useRouterState` or TanStack Router's `<Link activeProps>` API
+  - [x] Layout: Desktop — left rail (fixed width ~72px) + content area fills remaining space. Mobile — bottom bar + content area fills viewport height minus bar.
+  - [x] All user-facing text in Spanish: "Clientes", "Contactos"
+  - [x] Add `<nav>` landmark wrapping the navigation component for WCAG compliance
 
-- [ ] Task 6 — Update `src/main.tsx` to use TanStack Router (AC: all)
-  - [ ] Import `RouterProvider` from `@tanstack/react-router`
-  - [ ] Import or create a `router` instance using `createRouter({ routeTree })` where `routeTree` is the auto-generated `routeTree.gen.ts`
-  - [ ] Wrap the app in `RouterProvider` (and `QueryClientProvider` for future stories)
-  - [ ] Remove old `App.tsx` import if it was the only entry point (replace with router-based structure)
-  - [ ] Create `src/app/providers/QueryProvider.tsx` — wraps `QueryClientProvider` with a `QueryClient` instance
-  - [ ] Create `src/shared/lib/queryClient.ts` — exports singleton `QueryClient` with `staleTime: 60_000`
-  - [ ] Create `src/shared/lib/apiClient.ts` — exports Axios instance with `baseURL: import.meta.env.VITE_API_URL`
-  - [ ] Create `.env.development` with `VITE_API_URL=http://localhost:5000`
+- [x] Task 6 — Update `src/main.tsx` to use TanStack Router (AC: all)
+  - [x] Import `RouterProvider` from `@tanstack/react-router`
+  - [x] Import or create a `router` instance using `createRouter({ routeTree })` where `routeTree` is the auto-generated `routeTree.gen.ts`
+  - [x] Wrap the app in `RouterProvider` (and `QueryClientProvider` for future stories)
+  - [x] Remove old `App.tsx` import if it was the only entry point (replace with router-based structure)
+  - [x] Create `src/app/providers/QueryProvider.tsx` — wraps `QueryClientProvider` with a `QueryClient` instance
+  - [x] Create `src/shared/lib/queryClient.ts` — exports singleton `QueryClient` with `staleTime: 60_000`
+  - [x] Create `src/shared/lib/apiClient.ts` — exports Axios instance with `baseURL: import.meta.env.VITE_API_URL`
+  - [x] Create `.env.development` with `VITE_API_URL=http://localhost:5000`
 
-- [ ] Task 7 — Create placeholder view components (AC: #3, #4)
-  - [ ] Create `src/modules/crm/clientes/presentation/ClientesPlaceholderView.tsx` — returns `<div data-testid="clientes-view"><h1>Clientes</h1></div>` (will be replaced in Epic 2)
-  - [ ] Create `src/modules/crm/contactos/presentation/ContactosPlaceholderView.tsx` — returns `<div data-testid="contactos-view"><h1>Contactos</h1></div>` (will be replaced in Epic 3)
+- [x] Task 7 — Create placeholder view components (AC: #3, #4)
+  - [x] Create `src/modules/crm/clientes/presentation/ClientesPlaceholderView.tsx` — returns `<div data-testid="clientes-view"><h1>Clientes</h1></div>` (will be replaced in Epic 2)
+  - [x] Create `src/modules/crm/contactos/presentation/ContactosPlaceholderView.tsx` — returns `<div data-testid="contactos-view"><h1>Contactos</h1></div>` (will be replaced in Epic 3)
 
-- [ ] Task 8 — Create NotFound view (AC: #7)
-  - [ ] Create `src/shared/components/NotFoundView.tsx` — renders Spanish "Página no encontrada" message with a `<Link to="/clientes">` back link and `data-testid="not-found-view"`
+- [x] Task 8 — Create NotFound view (AC: #7)
+  - [x] Create `src/shared/components/NotFoundView.tsx` — renders Spanish "Página no encontrada" message with a `<Link to="/clientes">` back link and `data-testid="not-found-view"`
 
-- [ ] Task 9 — Ensure `src/routes` directory structure is created for all module directories (AC: implicit)
-  - [ ] Create `src/modules/crm/clientes/domain/`, `src/modules/crm/clientes/application/`, `src/modules/crm/clientes/infrastructure/` directories with `.gitkeep`
-  - [ ] Create `src/modules/crm/contactos/domain/`, `src/modules/crm/contactos/application/`, `src/modules/crm/contactos/infrastructure/` directories with `.gitkeep`
-  - [ ] Create `src/app/providers/`, `src/infrastructure/` directories with `.gitkeep`
+- [x] Task 9 — Ensure `src/routes` directory structure is created for all module directories (AC: implicit)
+  - [x] Create `src/modules/crm/clientes/domain/`, `src/modules/crm/clientes/application/`, `src/modules/crm/clientes/infrastructure/` directories with `.gitkeep`
+  - [x] Create `src/modules/crm/contactos/domain/`, `src/modules/crm/contactos/application/`, `src/modules/crm/contactos/infrastructure/` directories with `.gitkeep`
+  - [x] Create `src/app/providers/`, `src/infrastructure/` directories with `.gitkeep`
 
-- [ ] Task 10 — Unit/Component tests (AC: all)
-  - [ ] Install vitest + RTL + jsdom if not already present: `pnpm add -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom msw`
-  - [ ] Create `src/test-setup.ts` with `import '@testing-library/jest-dom'`
-  - [ ] Configure `vitest` in `vite.config.ts` (environment: jsdom, setupFiles: test-setup.ts)
-  - [ ] Create `src/shared/components/__tests__/AppShell.test.tsx` — test that NavigationRail is rendered on desktop (mock viewport >= 1024px) and NavigationBar on mobile (< 1024px); test ARIA attributes
-  - [ ] Create `src/shared/components/__tests__/NotFoundView.test.tsx` — test "Página no encontrada" text and back-link presence
-  - [ ] Verify `pnpm run dev` starts on port 5173 with zero TypeScript errors after all changes
+- [x] Task 10 — Unit/Component tests (AC: all)
+  - [x] Install vitest + RTL + jsdom if not already present: `pnpm add -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom msw`
+  - [x] Create `src/test-setup.ts` with `import '@testing-library/jest-dom'`
+  - [x] Configure `vitest` in `vite.config.ts` (environment: jsdom, setupFiles: test-setup.ts)
+  - [x] Create `src/shared/components/__tests__/AppShell.test.tsx` — test that NavigationRail is rendered on desktop (mock viewport >= 1024px) and NavigationBar on mobile (< 1024px); test ARIA attributes
+  - [x] Create `src/shared/components/__tests__/NotFoundView.test.tsx` — test "Página no encontrada" text and back-link presence
+  - [x] Verify `pnpm run dev` starts on port 5173 with zero TypeScript errors after all changes
 
 ## Dev Notes
 
@@ -120,7 +120,7 @@ so that I can move between sections without full page reloads from any device.
   - `__root.tsx` = root route wrapping all routes
 - **Responsive breakpoint**: Use Tailwind's `lg:` (1024px) as the desktop/mobile cutoff — show NavigationRail at `lg+`, NavigationBar below `lg`.
 - **Responsive detection**: Use CSS (Tailwind `hidden lg:flex` / `lg:hidden`) rather than JS media queries for show/hide of Rail vs. Bar. This avoids layout flash.
-- **Active route detection**: Use TanStack Router `<Link activeProps={{ 'aria-current': 'page', className: 'nav-active' }}>` or `useRouterState` to apply active styles.
+- **Active route detection**: Use TanStack Router `useRouterState` to read current path and pass `selected`/`active` props to siesa-ui-kit components.
 - **No full page reloads**: All navigation MUST use TanStack Router `<Link to="...">` — never `<a href="...">`.
 - **State**: No Zustand store needed for this story. Navigation state lives in the URL.
 - **Typography**: Inter font (Light 300, Regular 400, Bold 700). Brand primary: `#0e79fd`. Neutrals: Tailwind `slate-*`.
@@ -204,6 +204,54 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+- Used `useRouterState` to read current pathname for active item detection (NavigationRail `selectedId` / NavigationBar `activeItemId`)
+- siesa-ui-kit `NavigationRail` accepts `items: NavigationRailItemProps[]`, `selectedId`, `onItemSelect`
+- siesa-ui-kit `NavigationBar` accepts `items: NavigationBarItem[]`, `activeItemId`, `onItemClick`
+- Both components use `id` field for active state tracking
+- Navigation bridge: hidden TanStack Router `<Link>` elements clicked programmatically when siesa-ui-kit nav item is selected
+- CSS-based responsive: `hidden lg:flex` for rail, `lg:hidden` for bar — avoids JS media query flash
+- TypeScript strict: `NavigationRailItemProps` imported from `siesa-ui-kit` for type safety
+
 ### Completion Notes List
 
+- All 10 tasks implemented and verified
+- 13 tests pass (4 test files: AppShell, NotFoundView, apiClient, queryClient)
+- Zero TypeScript errors with strict mode
+- Route tree auto-generated by `@tanstack/router-plugin` with: `__root`, `/`, `/_app`, `/_app/clientes`, `/_app/contactos`, `/$notFound`
+- siesa-ui-kit `NavigationRail` and `NavigationBar` used exclusively — no custom nav components
+- WCAG compliance: `<nav aria-label="Navegación principal">` landmarks, `aria-current="page"` on active links
+
 ### File List
+
+**Created:**
+- `frontend/src/routes/index.tsx`
+- `frontend/src/routes/_app.tsx`
+- `frontend/src/routes/_app/clientes.tsx`
+- `frontend/src/routes/_app/contactos.tsx`
+- `frontend/src/routes/$notFound.tsx`
+- `frontend/src/shared/components/AppShell.tsx`
+- `frontend/src/shared/components/NotFoundView.tsx`
+- `frontend/src/shared/components/__tests__/AppShell.test.tsx`
+- `frontend/src/shared/components/__tests__/NotFoundView.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClientesPlaceholderView.tsx`
+- `frontend/src/modules/crm/contactos/presentation/ContactosPlaceholderView.tsx`
+- `frontend/src/modules/crm/clientes/domain/.gitkeep`
+- `frontend/src/modules/crm/clientes/application/.gitkeep`
+- `frontend/src/modules/crm/clientes/infrastructure/.gitkeep`
+- `frontend/src/modules/crm/contactos/domain/.gitkeep`
+- `frontend/src/modules/crm/contactos/application/.gitkeep`
+- `frontend/src/modules/crm/contactos/infrastructure/.gitkeep`
+
+**Previously created (in this worktree, pre-existing before this dev run):**
+- `frontend/vite.config.ts` (updated — TanStack Router plugin + Tailwind + Vitest)
+- `frontend/src/index.css` (updated — `@import "tailwindcss"`)
+- `frontend/src/main.tsx` (updated — RouterProvider + QueryProvider + siesa-ui-kit styles)
+- `frontend/src/routes/__root.tsx`
+- `frontend/src/app/providers/QueryProvider.tsx`
+- `frontend/src/shared/lib/queryClient.ts`
+- `frontend/src/shared/lib/apiClient.ts`
+- `frontend/src/shared/lib/__tests__/apiClient.test.ts`
+- `frontend/src/shared/lib/__tests__/queryClient.test.ts`
+- `frontend/src/test-setup.ts`
+- `frontend/.env.development`
+- `frontend/src/routeTree.gen.ts` (auto-generated)

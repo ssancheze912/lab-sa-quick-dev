@@ -1,0 +1,7 @@
+export function ContactosPlaceholderView() {
+  return (
+    <div data-testid="contactos-view" className="p-6">
+      <h1 className="text-2xl font-bold text-slate-800">Contactos</h1>
+    </div>
+  )
+}
