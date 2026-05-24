@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouter, useRouterState } from '@tanstack/react-router'
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
+import { useMediaQuery } from '../shared/hooks/useMediaQuery'
 
 interface NavItem {
   id: string
@@ -23,52 +24,117 @@ function MobileNavItem({ item }: { item: NavItem }) {
       type="button"
       aria-label={item.label}
       onClick={() => router.navigate({ to: item.path })}
-      className={[
-        'flex flex-1 flex-col items-center justify-center py-2 min-h-[44px] text-xs font-medium transition-colors',
-        isActive
-          ? 'text-[#0e79fd] bg-blue-50'
-          : 'text-slate-600 hover:bg-slate-50 hover:text-[#0e79fd]',
-      ].join(' ')}
+      style={{
+        minHeight: '44px',
+        minWidth: '44px',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingTop: '8px',
+        paddingBottom: '8px',
+        fontSize: '12px',
+        fontWeight: 500,
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'colors 150ms',
+        backgroundColor: isActive ? '#eff6ff' : 'transparent',
+        color: isActive ? '#0e79fd' : '#475569',
+      }}
     >
       {item.icon}
-      <span className="mt-1">{item.label}</span>
+      {item.label}
     </button>
   )
 }
 
 function AppShell() {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+
   return (
-    <div data-testid="app-shell" className="flex flex-col h-screen lg:flex-row">
-      {/* Desktop NavigationRail — hidden on mobile */}
+    <div
+      data-testid="app-shell"
+      style={{
+        display: 'flex',
+        flexDirection: isDesktop ? 'row' : 'column',
+        height: '100vh',
+      }}
+    >
+      {/* Desktop NavigationRail — shown on desktop, hidden on mobile */}
       <nav
         aria-label="Navegación principal"
         data-testid="nav-rail"
-        className="hidden lg:flex flex-col w-16 lg:w-56 bg-white border-r border-slate-200 h-full"
+        style={{
+          display: isDesktop ? 'flex' : 'none',
+          flexDirection: 'column',
+          width: isDesktop ? '224px' : '64px',
+          backgroundColor: '#ffffff',
+          borderRight: '1px solid #e2e8f0',
+          height: '100%',
+        }}
       >
         {navItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
             aria-label={item.label}
-            className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-[#0e79fd] [&[aria-current='page']]:text-[#0e79fd] [&[aria-current='page']]:bg-blue-50"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              color: '#475569',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: 500,
+            }}
+            activeProps={{
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                color: '#0e79fd',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: 500,
+                backgroundColor: '#eff6ff',
+              },
+            }}
           >
             {item.icon}
-            <span className="hidden lg:inline text-sm font-medium">{item.label}</span>
+            {item.label}
           </Link>
         ))}
       </nav>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
+      <main
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          paddingBottom: isDesktop ? 0 : '64px',
+        }}
+      >
         <Outlet />
       </main>
 
-      {/* Mobile NavigationBar — hidden on desktop, accessible bottom navigation */}
+      {/* Mobile NavigationBar — shown on mobile, hidden on desktop */}
       <div
         data-testid="nav-bar"
-        className="flex lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200"
         role="navigation"
         aria-label="Navegación principal móvil"
+        style={{
+          display: isDesktop ? 'none' : 'flex',
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+          backgroundColor: '#ffffff',
+          borderTop: '1px solid #e2e8f0',
+        }}
       >
         {navItems.map((item) => (
           <MobileNavItem key={item.id} item={item} />
