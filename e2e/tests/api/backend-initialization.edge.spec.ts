@@ -75,10 +75,8 @@ test.describe('CORS — disallowed origin rejection', () => {
     // THEN: Access-Control-Allow-Origin is exact origin, NOT wildcard
     // (Wildcards block credentials and are not used with AllowAnyHeader + AllowAnyMethod)
     const allowOriginHeader = response.headers()['access-control-allow-origin'] ?? '';
-    // If the header exists, it should be the exact origin (not *)
-    if (allowOriginHeader !== '') {
-      expect(allowOriginHeader).toBe('http://localhost:5173');
-    }
+    // The header MUST be present and equal to the exact origin (not * and not absent)
+    expect(allowOriginHeader).toBe('http://localhost:5173');
   });
 });
 
