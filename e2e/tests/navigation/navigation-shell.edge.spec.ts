@@ -121,11 +121,7 @@ test.describe('E3 — 404 view triggered by SPA in-app navigation to unknown rou
     await page.goto('/clientes');
     await page.waitForLoadState('networkidle');
 
-    // WHEN: JavaScript navigates to an unknown route via router (simulated by URL push)
-    await page.evaluate(() => {
-      window.history.pushState({}, '', '/ruta-inexistente-spa');
-    });
-    // Navigate to a new unknown route so TanStack Router re-evaluates
+    // WHEN: User navigates to an unknown route so TanStack Router re-evaluates
     await page.goto('/seccion-invalida');
     await page.waitForLoadState('networkidle');
 
