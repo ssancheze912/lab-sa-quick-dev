@@ -23,7 +23,7 @@
  *   - Given-When-Then structure
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/base.fixture';
 import { ApiHelper } from '../../helpers/api.helper';
 import { buildCliente } from '../../helpers/data.helper';
 

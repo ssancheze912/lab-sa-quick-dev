@@ -19,7 +19,7 @@
  *           Given-When-Then structure, no hard waits.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/base.fixture';
 import { ApiHelper } from '../../helpers/api.helper';
 import { buildCliente } from '../../helpers/data.helper';
 
@@ -47,26 +47,28 @@ test.describe('Loading state — skeleton visible during slow API response', () 
     const cliente = await apiHelper.createCliente(data);
     createdIds.push(cliente.id);
 
-    // CRITICAL: Intercept BEFORE navigation — delay the detail response
+    // CRITICAL: Intercept BEFORE navigation — gate-style delay (released by test)
+    let releaseRoute!: () => void;
+    const routeGate = new Promise<void>((resolve) => { releaseRoute = resolve; });
+
     await page.route('**/api/v1/clientes', (route) => route.continue());
     await page.route(`**/api/v1/clientes/${cliente.id}`, async (route) => {
-      // Delay 300ms so skeleton state is observable
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await routeGate; // Held until test releases — deterministic regardless of CI speed
       await route.continue();
     });
 
     // WHEN: User navigates directly to /clientes/:clienteId
     await page.goto(`/clientes/${cliente.id}`);
 
-    // THEN: Skeleton rows are visible before data loads (react-loading-skeleton)
-    // The detail panel should be in a loading state initially
+    // THEN: Skeleton rows are visible before data loads (gate is still held)
     const skeletonRows = page.locator('[data-testid="skeleton-row"]');
     await expect(skeletonRows.first()).toBeVisible();
 
     // AND: No spinner element (company UX standard: skeleton not spinner)
     await expect(page.locator('[data-testid="spinner"]')).not.toBeVisible();
 
-    // AND: Eventually data loads
+    // Release gate — data now loads
+    releaseRoute();
     await expect(page.getByText('Slow Loader SA')).toBeVisible();
   });
 
@@ -77,20 +79,24 @@ test.describe('Loading state — skeleton visible during slow API response', () 
     const cliente = await apiHelper.createCliente(data);
     createdIds.push(cliente.id);
 
+    let releaseAriaBusy!: () => void;
+    const ariaGate = new Promise<void>((resolve) => { releaseAriaBusy = resolve; });
+
     await page.route('**/api/v1/clientes', (route) => route.continue());
     await page.route(`**/api/v1/clientes/${cliente.id}`, async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await ariaGate;
       await route.continue();
     });
 
     // WHEN: Navigate to deep link
     await page.goto(`/clientes/${cliente.id}`);
 
-    // THEN: Container has aria-busy="true" during load
+    // THEN: Container has aria-busy="true" during load (gate still held)
     const busyContainer = page.locator('[aria-busy="true"]');
     await expect(busyContainer).toBeVisible();
 
-    // AND: aria-busy is removed once data is loaded
+    // Release gate — AND: aria-busy is removed once data is loaded
+    releaseAriaBusy();
     await expect(page.getByText('Aria Busy Test SA')).toBeVisible();
     await expect(page.locator('[aria-busy="true"]')).not.toBeVisible();
   });
