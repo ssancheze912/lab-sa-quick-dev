@@ -91,31 +91,15 @@ test.describe('AC2 (Edge) — Problem Details RFC 7807 response structure', () =
     const response = await request.get(`${API_BASE_URL}/api/edge-json-parse-1-3`);
 
     // THEN: The response body must be valid JSON (parseable without throwing)
-    let parsed: unknown;
-    const exception = (() => {
-      try {
-        parsed = JSON.parse('{}'); // init
-        return null;
-      } catch {
-        return 'initial parse error';
-      }
-    })();
-    expect(exception).toBeNull();
-
-    // Verify actual response body is valid JSON
     const body = await response.text();
-    let bodyParseError: string | null = null;
-    try {
-      parsed = JSON.parse(body);
-    } catch {
-      bodyParseError = `Body is not valid JSON: ${body.substring(0, 100)}`;
-    }
-    // 404 from ASP.NET may return plain text — we assert at minimum it is not null/empty
+    // 404 from ASP.NET may return plain text — assert at minimum it is not null/empty
     expect(body.trim().length).toBeGreaterThan(0);
+
     // If the content-type is JSON, it MUST be parseable
     const ct = response.headers()['content-type'] ?? '';
     if (ct.toLowerCase().includes('json')) {
-      expect(bodyParseError).toBeNull();
+      // Throws synchronously if body is not valid JSON — test will fail with clear message
+      expect(() => JSON.parse(body)).not.toThrow();
     }
   });
 
@@ -278,14 +262,8 @@ test.describe('AC4 (Edge) — AppDbContext DI registration boundary conditions',
     const body = await response.text();
     expect(body.trim().length).toBeGreaterThan(10);
 
-    let parsed: Record<string, unknown>;
-    let parseError: string | null = null;
-    try {
-      parsed = JSON.parse(body) as Record<string, unknown>;
-    } catch {
-      parseError = 'OpenAPI response is not valid JSON';
-    }
-    expect(parseError).toBeNull();
+    // JSON.parse throws synchronously if body is invalid — test will fail with clear message
+    expect(() => JSON.parse(body)).not.toThrow();
     // OpenAPI 3.x spec must have "openapi" version field
     const spec = JSON.parse(body) as Record<string, unknown>;
     expect(spec).toHaveProperty('openapi');
