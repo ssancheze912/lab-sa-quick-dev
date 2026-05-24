@@ -8,4 +8,5 @@ dist/
 coverage/
 .nyc_output/
 playwright-report/
+playwright-results/
 test-results/
