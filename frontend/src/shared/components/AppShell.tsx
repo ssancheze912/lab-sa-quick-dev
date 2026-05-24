@@ -36,7 +36,7 @@ const NAV_ITEMS: NavItemConfig[] = [
   },
 ]
 
-const DESKTOP_BREAKPOINT = 768
+const DESKTOP_BREAKPOINT = 1024
 
 function useWindowWidth(): number {
   const [width, setWidth] = useState(() =>
@@ -55,7 +55,6 @@ function useWindowWidth(): number {
 }
 
 function useActivePath(currentPathProp?: string): string {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const routerState = useRouterState()
   return currentPathProp ?? routerState.location.pathname
 }

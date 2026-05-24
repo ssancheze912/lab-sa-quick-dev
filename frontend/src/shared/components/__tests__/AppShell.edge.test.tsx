@@ -72,18 +72,16 @@ function setViewportWidth(width: number) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('AppShell — Viewport boundary: exact breakpoint', () => {
-  test('should render NavigationRail at exactly 768px (implementation breakpoint)', () => {
-    // The implementation uses DESKTOP_BREAKPOINT = 768, not 1024.
-    // This test documents the actual boundary the code enforces.
-    setViewportWidth(768);
+  test('should render NavigationRail at exactly 1024px (implementation breakpoint, matches AC1 spec)', () => {
+    setViewportWidth(1024);
     render(<AppShell currentPath="/clientes"><div /></AppShell>);
 
     expect(screen.getByTestId('navigation-rail')).toBeInTheDocument();
     expect(screen.queryByTestId('navigation-bar')).not.toBeInTheDocument();
   });
 
-  test('should render NavigationBar at 767px (one below implementation breakpoint)', () => {
-    setViewportWidth(767);
+  test('should render NavigationBar at 1023px (one below implementation breakpoint)', () => {
+    setViewportWidth(1023);
     render(<AppShell currentPath="/clientes"><div /></AppShell>);
 
     expect(screen.getByTestId('navigation-bar')).toBeInTheDocument();
