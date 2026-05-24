@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Cliente } from '../../modules/crm/clientes/domain/Cliente'
 
 interface ClientListItemProps {
@@ -6,7 +7,7 @@ interface ClientListItemProps {
   onClick?: () => void
 }
 
-export function ClientListItem({ cliente, isSelected = false, onClick }: ClientListItemProps) {
+export const ClientListItem = memo(function ClientListItem({ cliente, isSelected = false, onClick }: ClientListItemProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -32,4 +33,4 @@ export function ClientListItem({ cliente, isSelected = false, onClick }: ClientL
       <p className="text-slate-500 text-xs mt-0.5 truncate">{cliente.nit}</p>
     </div>
   )
-}
+})
