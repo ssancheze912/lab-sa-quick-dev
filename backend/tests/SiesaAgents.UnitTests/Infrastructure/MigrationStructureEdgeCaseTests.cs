@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using SiesaAgents.Infrastructure.Data;
-using SiesaAgents.Infrastructure.Data.Migrations;
 using Xunit;
 
 namespace SiesaAgents.UnitTests.Infrastructure;
