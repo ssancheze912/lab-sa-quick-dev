@@ -71,12 +71,8 @@ describe('Breakpoint boundary — useIsDesktop hook', () => {
 
     // THEN: NavigationRail is in the DOM (>= 1024 is desktop)
     expect(screen.getByTestId('navigation-rail')).toBeDefined();
-    const navBar = screen.queryByTestId('navigation-bar');
-    if (navBar) {
-      expect(navBar).not.toBeVisible();
-    } else {
-      expect(navBar).toBeNull();
-    }
+    // useIsDesktop hook controls rendering — NavigationBar is not mounted at desktop breakpoint
+    expect(screen.queryByTestId('navigation-bar')).toBeNull();
   });
 
   it('[P1] should render NavigationBar at 1023px (one pixel below desktop threshold)', async () => {
@@ -88,12 +84,8 @@ describe('Breakpoint boundary — useIsDesktop hook', () => {
 
     // THEN: NavigationBar is in the DOM (< 1024 is mobile)
     expect(screen.getByTestId('navigation-bar')).toBeDefined();
-    const navRail = screen.queryByTestId('navigation-rail');
-    if (navRail) {
-      expect(navRail).not.toBeVisible();
-    } else {
-      expect(navRail).toBeNull();
-    }
+    // useIsDesktop hook controls rendering — NavigationRail is not mounted at mobile breakpoint
+    expect(screen.queryByTestId('navigation-rail')).toBeNull();
   });
 
   it('[P1] should switch from NavigationRail to NavigationBar when viewport crosses 1024px boundary', async () => {

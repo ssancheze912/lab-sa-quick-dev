@@ -110,13 +110,9 @@ describe('AC1 — Desktop NavigationRail (viewport >= 1024px)', () => {
     await renderAppAtRoute('/clientes');
 
     // THEN: The NavigationBar is not visible (hidden via TailwindCSS responsive class)
+    // useIsDesktop hook controls rendering in jsdom — NavigationBar is not mounted on desktop
     const navBar = screen.queryByTestId('navigation-bar');
-    // Either not in the DOM or hidden — the element may exist but must not be displayed
-    if (navBar) {
-      expect(navBar).not.toBeVisible();
-    } else {
-      expect(navBar).toBeNull();
-    }
+    expect(navBar).toBeNull();
   });
 
   it('should navigate to /contactos without full page reload when clicking Contactos', async () => {
@@ -197,12 +193,9 @@ describe('AC2 — Mobile NavigationBar (viewport < 1024px)', () => {
     await renderAppAtRoute('/clientes');
 
     // THEN: The NavigationRail is not visible on mobile
+    // useIsDesktop hook controls rendering in jsdom — NavigationRail is not mounted on mobile
     const navRail = screen.queryByTestId('navigation-rail');
-    if (navRail) {
-      expect(navRail).not.toBeVisible();
-    } else {
-      expect(navRail).toBeNull();
-    }
+    expect(navRail).toBeNull();
   });
 });
 
