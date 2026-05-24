@@ -15,7 +15,7 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AppShell } from '../AppShell';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,6 +72,10 @@ function setViewportWidth(width: number) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('AppShell — Viewport boundary: exact breakpoint', () => {
+  afterEach(() => {
+    setViewportWidth(1280); // reset to desktop default after each boundary test
+  });
+
   test('should render NavigationRail at exactly 1024px (implementation breakpoint, matches AC1 spec)', () => {
     setViewportWidth(1024);
     render(<AppShell currentPath="/clientes"><div /></AppShell>);
@@ -86,20 +90,6 @@ describe('AppShell — Viewport boundary: exact breakpoint', () => {
 
     expect(screen.getByTestId('navigation-bar')).toBeInTheDocument();
     expect(screen.queryByTestId('navigation-rail')).not.toBeInTheDocument();
-  });
-
-  test('should render NavigationRail at 1024px (AC1 spec breakpoint)', () => {
-    setViewportWidth(1024);
-    render(<AppShell currentPath="/clientes"><div /></AppShell>);
-
-    expect(screen.getByTestId('navigation-rail')).toBeInTheDocument();
-  });
-
-  test('should render NavigationBar at 1023px (one below AC1 spec breakpoint)', () => {
-    setViewportWidth(1023);
-    render(<AppShell currentPath="/clientes"><div /></AppShell>);
-
-    expect(screen.getByTestId('navigation-bar')).toBeInTheDocument();
   });
 
   test('should render NavigationBar at minimum practical width (320px)', () => {
@@ -288,48 +278,4 @@ describe('AppShell — Children rendering', () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Spanish label visibility in both layouts
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('AppShell — Spanish labels visible in both layouts', () => {
-  test('Spanish labels are visible in desktop NavigationRail', () => {
-    setViewportWidth(1280);
-    render(<AppShell currentPath="/clientes"><div /></AppShell>);
-
-    expect(screen.getByText('Clientes')).toBeInTheDocument();
-    expect(screen.getByText('Contactos')).toBeInTheDocument();
-  });
-
-  test('Spanish labels are visible in mobile NavigationBar', () => {
-    setViewportWidth(390);
-    render(<AppShell currentPath="/clientes"><div /></AppShell>);
-
-    expect(screen.getByText('Clientes')).toBeInTheDocument();
-    expect(screen.getByText('Contactos')).toBeInTheDocument();
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Nav items count — no extra items rendered
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('AppShell — Navigation item count', () => {
-  test('desktop nav renders exactly 2 navigation items', () => {
-    setViewportWidth(1280);
-    render(<AppShell currentPath="/clientes"><div /></AppShell>);
-
-    const nav = document.querySelector('nav');
-    const navLinks = nav!.querySelectorAll('a');
-    expect(navLinks.length).toBe(2);
-  });
-
-  test('mobile nav renders exactly 2 navigation items', () => {
-    setViewportWidth(390);
-    render(<AppShell currentPath="/clientes"><div /></AppShell>);
-
-    const nav = document.querySelector('nav');
-    const navLinks = nav!.querySelectorAll('a');
-    expect(navLinks.length).toBe(2);
-  });
-});
+// Spanish label visibility and nav item count tests are in AppShell.labels.test.tsx
