@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: ready
+Status: review
 
 ## Story
 
@@ -16,41 +16,41 @@ so that subsequent stories can define entities and run migrations against a work
 
 3. **Given** an unhandled exception occurs in the backend, **When** the error reaches the middleware, **Then** the response returns Problem Details RFC 7807 format (`status`, `title`, `detail`) with no stack traces exposed, and `Content-Type` is `application/problem+json` (NFR6).
 
-4. **Given** the backend receives any request and the database schema is updated in a future migration, **When** EF Core generates SQL for entity properties, **Then** `ApplySnakeCaseNaming()` is called in `OnModelCreating` of `SiesaAgentsDbContext` so that all column names follow snake_case convention (e.g., `created_at`, not `CreatedAt`).
+4. **Given** the backend receives any request and the database schema is updated in a future migration, **When** EF Core generates SQL for entity properties, **Then** `UseSnakeCaseNamingConvention()` is called on the DbContext options in `Program.cs` so that all column names follow snake_case convention (e.g., `created_at`, not `CreatedAt`).
 
 5. **Given** the Infrastructure project is configured, **When** `dotnet build SiesaAgents.sln` runs, **Then** the build succeeds with zero errors and `SiesaAgentsDbContext` is registered in the DI container via `Program.cs`.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add `EFCore.NamingConventions` package and configure `ApplySnakeCaseNaming()` (AC: #4)
-  - [ ] Add NuGet package `EFCore.NamingConventions` (version `10.*`) to `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj`
-  - [ ] Update `SiesaAgentsDbContext.OnModelCreating` to call `modelBuilder.ApplySnakeCaseNaming()` as the last statement (after `ApplyConfigurationsFromAssembly`)
-  - [ ] Verify no `[Column]` or `[Table]` data annotations are present — naming is handled exclusively via convention
+- [x] Task 1 — Add `EFCore.NamingConventions` package and configure snake_case naming (AC: #4)
+  - [x] Add NuGet package `EFCore.NamingConventions` (version `10.*`) to `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj`
+  - [x] Update `Program.cs` to call `.UseSnakeCaseNamingConvention()` on the DbContext options builder (correct API — convention is applied at options level, not in `OnModelCreating`)
+  - [x] Verify no `[Column]` or `[Table]` data annotations are present — naming is handled exclusively via convention
 
-- [ ] Task 2 — Register `SiesaAgentsDbContext` in DI and configure connection string (AC: #1, #5)
-  - [ ] In `backend/src/SiesaAgents.API/Program.cs`, register the DbContext: `builder.Services.AddDbContext<SiesaAgentsDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")))`
-  - [ ] Add `using SiesaAgents.Infrastructure.Data;` and `using Microsoft.EntityFrameworkCore;` to `Program.cs`
-  - [ ] Confirm `appsettings.Development.json` already contains `ConnectionStrings:DefaultConnection` pointing to `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres` (created in Story 1.1 — verify, do not duplicate)
-  - [ ] Add `Microsoft.EntityFrameworkCore.Design` package reference to `SiesaAgents.API.csproj` (required for `dotnet ef` CLI tooling to resolve the DbContext from the startup project)
+- [x] Task 2 — Register `SiesaAgentsDbContext` in DI and configure connection string (AC: #1, #5)
+  - [x] In `backend/src/SiesaAgents.API/Program.cs`, register the DbContext: `builder.Services.AddDbContext<SiesaAgentsDbContext>(options => options.UseNpgsql(...).UseSnakeCaseNamingConvention())`
+  - [x] Add `using SiesaAgents.Infrastructure.Data;` and `using Microsoft.EntityFrameworkCore;` to `Program.cs`
+  - [x] Confirm `appsettings.Development.json` already contains `ConnectionStrings:DefaultConnection` pointing to `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres` (created in Story 1.1 — verified, not duplicated)
+  - [x] Add `Microsoft.EntityFrameworkCore.Design` package reference to `SiesaAgents.API.csproj` (required for `dotnet ef` CLI tooling to resolve the DbContext from the startup project)
 
-- [ ] Task 3 — Create and apply the initial empty migration (AC: #1, #2)
-  - [ ] From the `backend/` directory, run: `dotnet ef migrations add InitialCreate --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API`
-  - [ ] Verify `backend/src/SiesaAgents.Infrastructure/Data/Migrations/` is created with `<timestamp>_InitialCreate.cs` and `<timestamp>_InitialCreate.Designer.cs` and `SiesaAgentsDbContextModelSnapshot.cs`
-  - [ ] Confirm the `Up()` method in `InitialCreate.cs` is empty (no `CreateTable` calls — no domain entities exist yet)
-  - [ ] Run: `dotnet ef database update --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API` to create `siesa_agents_db` and apply the migration
-  - [ ] Verify `siesa_agents_db` exists with the `__EFMigrationsHistory` table populated with the `InitialCreate` entry
+- [x] Task 3 — Create and apply the initial empty migration (AC: #1, #2)
+  - [x] From the `backend/` directory, run: `dotnet ef migrations add InitialCreate --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API`
+  - [x] Verify `backend/src/SiesaAgents.Infrastructure/Data/Migrations/` is created with `<timestamp>_InitialCreate.cs` and `<timestamp>_InitialCreate.Designer.cs` and `SiesaAgentsDbContextModelSnapshot.cs`
+  - [x] Confirm the `Up()` method in `InitialCreate.cs` is empty (no `CreateTable` calls — no domain entities exist yet)
+  - [ ] Run: `dotnet ef database update --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API` to create `siesa_agents_db` and apply the migration (requires PostgreSQL running locally — deferred to developer environment)
+  - [ ] Verify `siesa_agents_db` exists with the `__EFMigrationsHistory` table populated with the `InitialCreate` entry (requires PostgreSQL running locally — deferred to developer environment)
 
-- [ ] Task 4 — Verify `ExceptionHandlingMiddleware` returns Problem Details RFC 7807 (AC: #3)
-  - [ ] Review existing `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — confirm it already sets `Content-Type: application/problem+json`, `StatusCode: 500`, and returns `ProblemDetails` with `Status`, `Title`, and `Detail = null`
-  - [ ] Confirm `Detail` is always `null` — never expose `ex.Message` or stack traces (NFR6)
-  - [ ] Confirm `app.UseMiddleware<ExceptionHandlingMiddleware>()` is registered before routing in `Program.cs` (created in Story 1.1 — verify, do not duplicate)
+- [x] Task 4 — Verify `ExceptionHandlingMiddleware` returns Problem Details RFC 7807 (AC: #3)
+  - [x] Updated `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — fixed Content-Type handling: uses `JsonSerializer.Serialize` + `WriteAsync` to ensure `Content-Type: application/problem+json` is preserved (prior implementation's `WriteAsJsonAsync` overwrote the Content-Type header)
+  - [x] Confirmed `Detail` is always `null` — never expose `ex.Message` or stack traces (NFR6)
+  - [x] Confirmed `app.UseMiddleware<ExceptionHandlingMiddleware>()` is registered before routing in `Program.cs`
 
-- [ ] Task 5 — Unit tests for DbContext configuration and middleware (AC: #3, #4)
-  - [ ] In `backend/tests/SiesaAgents.UnitTests/`, create `Infrastructure/DbContextConfigurationTests.cs`
-  - [ ] Test: `SiesaAgentsDbContext` can be instantiated with `UseInMemoryDatabase` options (verifies DI wiring compiles)
-  - [ ] Test: `OnModelCreating` does not throw when called (smoke test for `ApplySnakeCaseNaming()` + `ApplyConfigurationsFromAssembly`)
-  - [ ] Review existing `backend/tests/SiesaAgents.UnitTests/API/ExceptionHandlingMiddlewareTests.cs` — confirm it covers: (a) `Content-Type` header is `application/problem+json`, (b) status code is 500, (c) `Detail` field is null, (d) no stack trace in response body. Add missing assertions if any.
-  - [ ] Run `dotnet test` and confirm all tests pass
+- [x] Task 5 — Unit tests for DbContext configuration and middleware (AC: #3, #4)
+  - [x] In `backend/tests/SiesaAgents.UnitTests/`, created `Infrastructure/DbContextConfigurationTests.cs`
+  - [x] Test: `SiesaAgentsDbContext` can be instantiated with `UseInMemoryDatabase` options (verifies DI wiring compiles)
+  - [x] Test: `OnModelCreating` does not throw when called (smoke test via `EnsureCreated()`)
+  - [x] Created `backend/tests/SiesaAgents.UnitTests/API/ExceptionHandlingMiddlewareTests.cs` covering: (a) `Content-Type` header is `application/problem+json`, (b) status code is 500, (c) `Detail` field is null, (d) no stack trace in response body, (e) passes through when no exception
+  - [x] Run `dotnet test` — all 10 tests pass (5 new + 3 existing Entity tests + 2 DbContext tests)
 
 ## Dev Notes
 
@@ -58,25 +58,14 @@ so that subsequent stories can define entities and run migrations against a work
 
 Per company standards (database-conventions.md): all PostgreSQL tables and columns MUST use snake_case. EF Core maps C# PascalCase properties to snake_case automatically via `EFCore.NamingConventions`.
 
+The correct API is `UseSnakeCaseNamingConvention()` on the `DbContextOptionsBuilder` (not `ApplySnakeCaseNaming()` on `ModelBuilder`):
+
 ```csharp
-// backend/src/SiesaAgents.Infrastructure/Data/SiesaAgentsDbContext.cs
-using EFCore.NamingConventions;  // not needed — extension method is on ModelBuilder
-using Microsoft.EntityFrameworkCore;
-
-namespace SiesaAgents.Infrastructure.Data;
-
-public sealed class SiesaAgentsDbContext(DbContextOptions<SiesaAgentsDbContext> options) : DbContext(options)
-{
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(SiesaAgentsDbContext).Assembly);
-        modelBuilder.ApplySnakeCaseNaming();  // MUST be last — applied after all configurations
-    }
-}
+// backend/src/SiesaAgents.API/Program.cs — correct registration
+builder.Services.AddDbContext<SiesaAgentsDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .UseSnakeCaseNamingConvention());
 ```
-
-> `ApplySnakeCaseNaming()` is an extension method provided by `EFCore.NamingConventions`. It must be the LAST call in `OnModelCreating` so it applies after all entity configurations have registered their property names.
 
 ### DbContext Registration in Program.cs
 
@@ -85,10 +74,9 @@ public sealed class SiesaAgentsDbContext(DbContextOptions<SiesaAgentsDbContext> 
 using Microsoft.EntityFrameworkCore;
 using SiesaAgents.Infrastructure.Data;
 
-// ... existing builder setup ...
-
 builder.Services.AddDbContext<SiesaAgentsDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .UseSnakeCaseNamingConvention());
 ```
 
 ### EF Core Migrations — Required Package
@@ -113,7 +101,7 @@ dotnet ef migrations add InitialCreate \
   --project src/SiesaAgents.Infrastructure \
   --startup-project src/SiesaAgents.API
 
-# Apply migration (creates siesa_agents_db)
+# Apply migration (creates siesa_agents_db) — requires PostgreSQL running
 dotnet ef database update \
   --project src/SiesaAgents.Infrastructure \
   --startup-project src/SiesaAgents.API
@@ -132,30 +120,16 @@ public partial class InitialCreate : Migration
 }
 ```
 
-### ExceptionHandlingMiddleware — Current State
+### ExceptionHandlingMiddleware — Fix Applied
 
-The middleware was created as a stub in Story 1.1. It already meets AC #3. This story verifies it is correct and its unit tests cover all RFC 7807 requirements:
+The original implementation used `WriteAsJsonAsync` which overwrote the `Content-Type` header that was set to `application/problem+json`. The fix uses `JsonSerializer.Serialize` + `WriteAsync` to maintain the correct content type:
 
 ```csharp
-// Current implementation — already compliant
-public class ExceptionHandlingMiddleware(RequestDelegate next)
-{
-    public async Task InvokeAsync(HttpContext context)
-    {
-        try { await next(context); }
-        catch (Exception)
-        {
-            context.Response.ContentType = "application/problem+json";
-            context.Response.StatusCode = 500;
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Status = 500,
-                Title = "An unexpected error occurred.",
-                Detail = null   // Never expose ex.Message or stack traces (NFR6)
-            });
-        }
-    }
-}
+// Correct implementation using manual serialization
+context.Response.StatusCode = 500;
+context.Response.ContentType = "application/problem+json";
+var json = JsonSerializer.Serialize(problem, JsonOptions);
+await context.Response.WriteAsync(json);
 ```
 
 ### NuGet Package Versions
@@ -166,55 +140,10 @@ All packages target the `10.*` wildcard to align with .NET 10 and EF Core 10:
 |---|---|---|
 | `EFCore.NamingConventions` | `10.*` | `SiesaAgents.Infrastructure` |
 | `Microsoft.EntityFrameworkCore.Design` | `10.*` | `SiesaAgents.API` (PrivateAssets=all) |
+| `Microsoft.EntityFrameworkCore.InMemory` | `10.*` | `SiesaAgents.UnitTests` |
+| `Microsoft.AspNetCore.Mvc.Testing` | `10.*` | `SiesaAgents.UnitTests` |
 
 > Note: `Npgsql.EntityFrameworkCore.PostgreSQL` is already installed in `SiesaAgents.Infrastructure` from Story 1.1.
-
-### Unit Test Pattern for DbContext
-
-```csharp
-// backend/tests/SiesaAgents.UnitTests/Infrastructure/DbContextConfigurationTests.cs
-using Microsoft.EntityFrameworkCore;
-using SiesaAgents.Infrastructure.Data;
-using Xunit;
-
-namespace SiesaAgents.UnitTests.Infrastructure;
-
-public class DbContextConfigurationTests
-{
-    [Fact]
-    public void DbContext_CanBeInstantiated_WithInMemoryDatabase()
-    {
-        // Arrange
-        var options = new DbContextOptionsBuilder<SiesaAgentsDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-
-        // Act & Assert
-        using var context = new SiesaAgentsDbContext(options);
-        Assert.NotNull(context);
-    }
-
-    [Fact]
-    public void OnModelCreating_DoesNotThrow_WithSnakeCaseNaming()
-    {
-        // Arrange
-        var options = new DbContextOptionsBuilder<SiesaAgentsDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-
-        using var context = new SiesaAgentsDbContext(options);
-
-        // Act — EnsureCreated triggers OnModelCreating
-        var act = () => context.Database.EnsureCreated();
-
-        // Assert
-        var exception = Record.Exception(act);
-        Assert.Null(exception);
-    }
-}
-```
-
-> Note: `UseInMemoryDatabase` does not support `ApplySnakeCaseNaming()` validation at the DB level — but it confirms model building compiles and executes without errors. Integration tests against a real PostgreSQL instance (Story 2+ scope) will validate actual column naming.
 
 ### Scope Boundary — What This Story Does NOT Do
 
@@ -242,20 +171,30 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
-None.
+- `WriteAsJsonAsync` overrides `Content-Type` header — fixed by switching to `JsonSerializer.Serialize` + `WriteAsync`
+- `ApplySnakeCaseNaming()` does not exist on `ModelBuilder` — correct API is `UseSnakeCaseNamingConvention()` on `DbContextOptionsBuilder`
+- EF Core migrations generated in `Migrations/` by default — moved to `Data/Migrations/` per architecture requirement and updated namespaces to `SiesaAgents.Infrastructure.Data.Migrations`
+- PostgreSQL not available in CI environment — `dotnet ef database update` deferred to developer environment
 
 ### Completion Notes List
 
-(To be filled by dev agent after implementation)
+1. All Tasks 1-5 implemented. Tasks 1, 2, 4, and 5 fully verified with passing tests.
+2. Task 3: Migration files created and placed in `Data/Migrations/`. `database update` requires PostgreSQL running locally — deferred.
+3. ExceptionHandlingMiddleware fixed: `WriteAsJsonAsync` was overwriting the `Content-Type` header; replaced with manual JSON serialization to preserve `application/problem+json`.
+4. `EFCore.NamingConventions` applies convention via `UseSnakeCaseNamingConvention()` on the options builder (not `ApplySnakeCaseNaming()` on ModelBuilder as the Dev Notes originally suggested).
+5. Unit test suite: 10 tests total — 3 Entity tests (pre-existing) + 2 DbContext tests + 5 middleware tests. All pass.
 
 ### File List
 
-**Backend (to create/modify):**
-- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — add `EFCore.NamingConventions` package
-- `backend/src/SiesaAgents.Infrastructure/Data/SiesaAgentsDbContext.cs` — add `ApplySnakeCaseNaming()` call
-- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — add `Microsoft.EntityFrameworkCore.Design` package
-- `backend/src/SiesaAgents.API/Program.cs` — register `SiesaAgentsDbContext` via `AddDbContext<>()`
-- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/<timestamp>_InitialCreate.cs` — empty initial migration (generated by dotnet ef)
-- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/<timestamp>_InitialCreate.Designer.cs` — migration designer snapshot (generated)
-- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/SiesaAgentsDbContextModelSnapshot.cs` — EF Core model snapshot (generated)
-- `backend/tests/SiesaAgents.UnitTests/Infrastructure/DbContextConfigurationTests.cs` — 2 unit tests for DbContext
+**Backend (created/modified):**
+- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — `EFCore.NamingConventions` package already present (verified)
+- `backend/src/SiesaAgents.Infrastructure/Data/SiesaAgentsDbContext.cs` — `ApplyConfigurationsFromAssembly` kept; snake_case via options builder (not OnModelCreating)
+- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — `Microsoft.EntityFrameworkCore.Design` already present (verified)
+- `backend/src/SiesaAgents.API/Program.cs` — added `.UseSnakeCaseNamingConvention()` to DbContext registration
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — fixed Content-Type handling using manual JSON serialization
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260524051531_InitialCreate.cs` — empty initial migration (generated + moved to Data/Migrations/)
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260524051531_InitialCreate.Designer.cs` — migration designer snapshot (generated + moved)
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/SiesaAgentsDbContextModelSnapshot.cs` — EF Core model snapshot (generated + moved)
+- `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — added `Microsoft.EntityFrameworkCore.InMemory`, `Microsoft.AspNetCore.Mvc.Testing`, Infrastructure and API project references
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/DbContextConfigurationTests.cs` — 2 unit tests for DbContext (created)
+- `backend/tests/SiesaAgents.UnitTests/API/ExceptionHandlingMiddlewareTests.cs` — 5 unit tests for middleware (created)
