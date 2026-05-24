@@ -32,13 +32,19 @@ import { routeTree } from '../../routeTree.gen'
 /**
  * Renders the full router tree with a given initial path.
  * Uses TanStack Router MemoryHistory so no real browser navigation occurs.
+ *
+ * NOTE: router.load() is required before rendering RouterProvider in tests
+ * for useNavigate() and route matching to work correctly with TanStack Router v1.
+ * See Dev Agent Record debug log in story 1-2-frontend-navigation-shell.md.
  */
-function renderWithRouter(initialPath: string) {
+async function renderWithRouter(initialPath: string) {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [initialPath] }),
   })
-  return render(<RouterProvider router={router} />)
+  await router.load()
+  render(<RouterProvider router={router} />)
+  return router
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -60,7 +66,7 @@ describe('AC1 — Desktop NavigationRail', () => {
 
   it('should render NavigationRail on desktop viewport', async () => {
     // GIVEN: The application is loaded on a desktop browser (viewport >= 1024px)
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: A NavigationRail container is visible
     await waitFor(() => {
@@ -70,7 +76,7 @@ describe('AC1 — Desktop NavigationRail', () => {
 
   it('should display Clientes entry in NavigationRail on desktop', async () => {
     // GIVEN: The application is loaded on a desktop browser
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: NavigationRail contains a Clientes navigation item
     await waitFor(() => {
@@ -80,7 +86,7 @@ describe('AC1 — Desktop NavigationRail', () => {
 
   it('should display Contactos entry in NavigationRail on desktop', async () => {
     // GIVEN: The application is loaded on a desktop browser
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: NavigationRail contains a Contactos navigation item
     await waitFor(() => {
@@ -144,7 +150,7 @@ describe('AC2 — Mobile NavigationBar', () => {
 
   it('should render NavigationBar on mobile viewport', async () => {
     // GIVEN: The application is loaded on a mobile browser (< 1024px)
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: A NavigationBar container is visible
     await waitFor(() => {
@@ -154,7 +160,7 @@ describe('AC2 — Mobile NavigationBar', () => {
 
   it('should display Clientes entry in NavigationBar on mobile', async () => {
     // GIVEN: The application is loaded on a mobile browser
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: NavigationBar contains an accessible Clientes navigation item
     await waitFor(() => {
@@ -164,7 +170,7 @@ describe('AC2 — Mobile NavigationBar', () => {
 
   it('should display Contactos entry in NavigationBar on mobile', async () => {
     // GIVEN: The application is loaded on a mobile browser
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: NavigationBar contains an accessible Contactos navigation item
     await waitFor(() => {
@@ -182,7 +188,7 @@ describe('AC2 — Mobile NavigationBar', () => {
 describe('AC3 — Deep Linking', () => {
   it('should render Clientes view when navigating directly to /clientes', async () => {
     // GIVEN: User navigates directly to /clientes URL
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: The Clientes view is rendered
     await waitFor(() => {
@@ -192,7 +198,7 @@ describe('AC3 — Deep Linking', () => {
 
   it('should render Contactos view when navigating directly to /contactos', async () => {
     // GIVEN: User navigates directly to /contactos URL
-    renderWithRouter('/contactos')
+    await renderWithRouter('/contactos')
 
     // THEN: The Contactos view is rendered
     await waitFor(() => {
@@ -230,7 +236,7 @@ describe('AC3 — Deep Linking', () => {
 
   it('should highlight Clientes nav item as active when on /clientes route', async () => {
     // GIVEN: User navigates directly to /clientes
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: The Clientes navigation item is marked as active
     await waitFor(() => {
@@ -240,7 +246,7 @@ describe('AC3 — Deep Linking', () => {
 
   it('should highlight Contactos nav item as active when on /contactos route', async () => {
     // GIVEN: User navigates directly to /contactos
-    renderWithRouter('/contactos')
+    await renderWithRouter('/contactos')
 
     // THEN: The Contactos navigation item is marked as active
     await waitFor(() => {
@@ -258,7 +264,7 @@ describe('AC3 — Deep Linking', () => {
 describe('AC4 — 404 Not-Found Route', () => {
   it('should display 404 view when navigating to an unknown route', async () => {
     // GIVEN: User navigates to an unknown/unmatched route
-    renderWithRouter('/unknown-path')
+    await renderWithRouter('/unknown-path')
 
     // THEN: The not-found view is displayed
     await waitFor(() => {
@@ -268,7 +274,7 @@ describe('AC4 — 404 Not-Found Route', () => {
 
   it('should display Spanish message "Página no encontrada" on 404 view', async () => {
     // GIVEN: User navigates to an unknown route
-    renderWithRouter('/unknown-path')
+    await renderWithRouter('/unknown-path')
 
     // THEN: A clear Spanish-language message is shown
     await waitFor(() => {
@@ -278,7 +284,7 @@ describe('AC4 — 404 Not-Found Route', () => {
 
   it('should display a return link pointing to /clientes on 404 view', async () => {
     // GIVEN: User navigates to an unknown route
-    renderWithRouter('/unknown-path')
+    await renderWithRouter('/unknown-path')
 
     // THEN: A return link to /clientes is shown
     await waitFor(() => {
@@ -316,7 +322,7 @@ describe('AC4 — 404 Not-Found Route', () => {
 describe('AC5 — Accessibility (WCAG 2.1 AA)', () => {
   it('should have a <nav> element with aria-label="Navegación principal"', async () => {
     // GIVEN: The AppShell is rendered
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: A navigation landmark with the correct aria-label is present
     await waitFor(() => {
@@ -326,7 +332,7 @@ describe('AC5 — Accessibility (WCAG 2.1 AA)', () => {
 
   it('should mark active Clientes nav item with aria-current="page" when on /clientes', async () => {
     // GIVEN: User is on the /clientes route
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: The Clientes navigation item has aria-current="page"
     await waitFor(() => {
@@ -336,7 +342,7 @@ describe('AC5 — Accessibility (WCAG 2.1 AA)', () => {
 
   it('should mark active Contactos nav item with aria-current="page" when on /contactos', async () => {
     // GIVEN: User is on the /contactos route
-    renderWithRouter('/contactos')
+    await renderWithRouter('/contactos')
 
     // THEN: The Contactos navigation item has aria-current="page"
     await waitFor(() => {
@@ -346,7 +352,7 @@ describe('AC5 — Accessibility (WCAG 2.1 AA)', () => {
 
   it('should NOT mark Contactos nav item with aria-current="page" when on /clientes', async () => {
     // GIVEN: User is on the /clientes route
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: The Contactos item does NOT have aria-current="page"
     await waitFor(() => {
@@ -357,7 +363,7 @@ describe('AC5 — Accessibility (WCAG 2.1 AA)', () => {
 
   it('should NOT mark Clientes nav item with aria-current="page" when on /contactos', async () => {
     // GIVEN: User is on the /contactos route
-    renderWithRouter('/contactos')
+    await renderWithRouter('/contactos')
 
     // THEN: The Clientes item does NOT have aria-current="page"
     await waitFor(() => {
