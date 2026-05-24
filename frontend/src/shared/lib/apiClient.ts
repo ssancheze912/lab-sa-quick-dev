@@ -5,8 +5,8 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Auth token injection interceptor — populated in subsequent stories when auth is available
-// apiClient.interceptors.request.use((config) => { ... return config })
+// Auth token injection interceptor — expanded in subsequent stories when auth is available
+apiClient.interceptors.request.use((config) => config)
 
 // Response error normalization interceptor — expanded in subsequent stories
 apiClient.interceptors.response.use(

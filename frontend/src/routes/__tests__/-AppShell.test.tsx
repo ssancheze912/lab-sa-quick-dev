@@ -43,12 +43,10 @@ describe('AppShell', () => {
   it('clicking Clientes nav item navigates to /clientes', async () => {
     await renderWithRouter('/contactos')
     await screen.findByRole('heading', { name: /contactos/i })
-    // NavigationBar buttons have no data-item-id; NavigationRailItem buttons have data-item-id
-    const allButtons = await screen.findAllByRole('button', { name: /clientes/i })
-    const navBarButton = allButtons.find(b => !b.getAttribute('data-item-id'))
-    if (!navBarButton) throw new Error('NavigationBar Clientes button not found')
+    // Nav items render as <a> links (TanStack Router <Link>), not buttons
+    const navLink = await screen.findByTestId('nav-item-clientes')
     await act(async () => {
-      fireEvent.click(navBarButton)
+      fireEvent.click(navLink)
     })
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /clientes/i })).toBeInTheDocument()
@@ -58,11 +56,10 @@ describe('AppShell', () => {
   it('clicking Contactos nav item navigates to /contactos', async () => {
     await renderWithRouter('/clientes')
     await screen.findByRole('heading', { name: /clientes/i })
-    const allButtons = await screen.findAllByRole('button', { name: /contactos/i })
-    const navBarButton = allButtons.find(b => !b.getAttribute('data-item-id'))
-    if (!navBarButton) throw new Error('NavigationBar Contactos button not found')
+    // Nav items render as <a> links (TanStack Router <Link>), not buttons
+    const navLink = await screen.findByTestId('nav-item-contactos')
     await act(async () => {
-      fireEvent.click(navBarButton)
+      fireEvent.click(navLink)
     })
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /contactos/i })).toBeInTheDocument()
@@ -72,10 +69,9 @@ describe('AppShell', () => {
   it('active nav item has aria-current="page" when on matching route', async () => {
     await renderWithRouter('/clientes')
     await screen.findByRole('heading', { name: /clientes/i })
-    // NavigationBar renders buttons with aria-current="page" for the active item
-    const allButtons = await screen.findAllByRole('button', { name: /clientes/i })
-    const activeButton = allButtons.find(b => b.getAttribute('aria-current') === 'page')
-    expect(activeButton).toBeDefined()
+    // Nav items render as <a> links with aria-current="page" set directly on the element
+    const navLink = await screen.findByTestId('nav-item-clientes')
+    expect(navLink.getAttribute('aria-current')).toBe('page')
   })
 
   it('navigating to unknown route renders 404 not-found view', async () => {
