@@ -110,14 +110,15 @@ describe('apiClient — edge cases', () => {
   describe('Axios global defaults isolation', () => {
     let originalGlobalBaseURL: string | undefined;
 
-    beforeEach(() => {
-      originalGlobalBaseURL = undefined;
+    beforeEach(async () => {
+      const axios = await import('axios');
+      originalGlobalBaseURL = axios.default.defaults.baseURL;
     });
 
-    afterEach(() => {
-      // Restore any inadvertent global mutation
-      const axiosModule = vi.importActual('axios') as { default: { defaults: { baseURL?: string } } };
-      void axiosModule;
+    afterEach(async () => {
+      // Restore any inadvertent global mutation to axios global defaults
+      const axios = await import('axios');
+      axios.default.defaults.baseURL = originalGlobalBaseURL;
     });
 
     it('[P1] should NOT mutate the global Axios defaults (isolated instance)', async () => {
