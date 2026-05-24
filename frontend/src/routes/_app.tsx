@@ -1,7 +1,4 @@
 import { createFileRoute, Outlet, Link, useRouterState } from '@tanstack/react-router'
-import { LayoutBase, NavigationBar } from 'siesa-ui-kit'
-import type { NavigationRailGroupMenuItem } from 'siesa-ui-kit'
-import type { NavigationBarItem } from 'siesa-ui-kit'
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
 
 export const Route = createFileRoute('/_app')({
@@ -12,93 +9,77 @@ export function AppLayout() {
   const routerState = useRouterState()
   const currentPath = routerState.location.pathname
 
-  const navigationItems: NavigationRailGroupMenuItem[] = [
-    {
-      id: 'clientes',
-      label: 'Clientes',
-      icon: <UsersIcon className="h-5 w-5" />,
-      active: currentPath === '/clientes',
-      onClick: () => window.location.assign('/clientes'),
-    },
-    {
-      id: 'contactos',
-      label: 'Contactos',
-      icon: <UserIcon className="h-5 w-5" />,
-      active: currentPath === '/contactos',
-      onClick: () => window.location.assign('/contactos'),
-    },
-  ]
-
-  const mobileNavItems: NavigationBarItem[] = [
-    {
-      id: 'clientes',
-      label: 'Clientes',
-      icon: <UsersIcon className="h-6 w-6" />,
-      active: currentPath === '/clientes',
-      ariaLabel: 'Clientes',
-    },
-    {
-      id: 'contactos',
-      label: 'Contactos',
-      icon: <UserIcon className="h-6 w-6" />,
-      active: currentPath === '/contactos',
-      ariaLabel: 'Contactos',
-    },
-  ]
+  const isClientes = currentPath === '/clientes' || currentPath.startsWith('/clientes/')
+  const isContactos = currentPath === '/contactos' || currentPath.startsWith('/contactos/')
 
   return (
-    <>
-      {/* Desktop layout: LayoutBase with NavigationRail (hidden on mobile via CSS) */}
-      <div className="hidden lg:flex h-screen" data-testid="navigation-rail">
-        <LayoutBase
-          productName="Siesa Agents"
-          navigationItems={navigationItems}
+    <div className="flex flex-col h-screen">
+      {/* Desktop layout: side NavigationRail (visible on lg+, hidden on mobile) */}
+      <div className="flex flex-1 overflow-hidden">
+        <nav
+          data-testid="navigation-rail"
+          aria-label="Navegación principal"
+          className="hidden lg:flex flex-col w-20 bg-white border-r border-slate-200 shrink-0"
         >
-          <AppNavItems currentPath={currentPath} />
-          <Outlet />
-        </LayoutBase>
-      </div>
+          <Link
+            to="/clientes"
+            data-testid="nav-item-clientes"
+            data-active={isClientes ? 'true' : undefined}
+            aria-label="Clientes"
+            aria-current={isClientes ? 'page' : undefined}
+            className="flex flex-col items-center justify-center gap-1 py-4 min-h-[56px] text-xs text-slate-600 hover:bg-slate-50 data-[active=true]:bg-blue-50 data-[active=true]:text-blue-600"
+          >
+            <UsersIcon className="h-6 w-6" />
+            <span>Clientes</span>
+          </Link>
+          <Link
+            to="/contactos"
+            data-testid="nav-item-contactos"
+            data-active={isContactos ? 'true' : undefined}
+            aria-label="Contactos"
+            aria-current={isContactos ? 'page' : undefined}
+            className="flex flex-col items-center justify-center gap-1 py-4 min-h-[56px] text-xs text-slate-600 hover:bg-slate-50 data-[active=true]:bg-blue-50 data-[active=true]:text-blue-600"
+          >
+            <UserIcon className="h-6 w-6" />
+            <span>Contactos</span>
+          </Link>
+        </nav>
 
-      {/* Mobile layout: NavigationBar at bottom (hidden on desktop via CSS) */}
-      <div className="flex lg:hidden flex-col h-screen" data-testid="navigation-bar">
-        <main className="flex-1 overflow-auto p-4">
-          <AppNavItems currentPath={currentPath} />
+        {/* Main content area */}
+        <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
-        <NavigationBar
-          items={mobileNavItems}
-          activeItemId={currentPath === '/clientes' ? 'clientes' : currentPath === '/contactos' ? 'contactos' : undefined}
-        />
       </div>
-    </>
-  )
-}
 
-interface AppNavItemsProps {
-  currentPath: string
-}
-
-function AppNavItems({ currentPath }: AppNavItemsProps) {
-  return (
-    <nav aria-label="Navegación principal" className="hidden">
-      <Link
-        to="/clientes"
-        data-testid="nav-item-clientes"
-        data-active={currentPath === '/clientes' ? 'true' : undefined}
-        aria-label="Clientes"
-        aria-current={currentPath === '/clientes' ? 'page' : undefined}
+      {/* Mobile layout: bottom NavigationBar (visible below lg, hidden on desktop) */}
+      <nav
+        data-testid="navigation-bar"
+        aria-label="Navegación principal móvil"
+        className="flex lg:hidden border-t border-slate-200 bg-white shrink-0"
       >
-        Clientes
-      </Link>
-      <Link
-        to="/contactos"
-        data-testid="nav-item-contactos"
-        data-active={currentPath === '/contactos' ? 'true' : undefined}
-        aria-label="Contactos"
-        aria-current={currentPath === '/contactos' ? 'page' : undefined}
-      >
-        Contactos
-      </Link>
-    </nav>
+        <Link
+          to="/clientes"
+          data-testid="nav-item-clientes"
+          data-active={isClientes ? 'true' : undefined}
+          aria-label="Clientes"
+          aria-current={isClientes ? 'page' : undefined}
+          className="flex flex-1 flex-col items-center justify-center gap-1 py-3 min-h-[56px] text-xs text-slate-600 hover:bg-slate-50 data-[active=true]:text-blue-600"
+        >
+          <UsersIcon className="h-6 w-6" />
+          <span>Clientes</span>
+        </Link>
+        <Link
+          to="/contactos"
+          data-testid="nav-item-contactos"
+          data-active={isContactos ? 'true' : undefined}
+          aria-label="Contactos"
+          aria-current={isContactos ? 'page' : undefined}
+          className="flex flex-1 flex-col items-center justify-center gap-1 py-3 min-h-[56px] text-xs text-slate-600 hover:bg-slate-50 data-[active=true]:text-blue-600"
+        >
+          <UserIcon className="h-6 w-6" />
+          <span>Contactos</span>
+        </Link>
+      </nav>
+    </div>
   )
 }

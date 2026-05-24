@@ -8,7 +8,7 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   return (
-    <div id="app-shell">
+    <div id="app-shell" data-testid="app-shell">
       <Outlet />
     </div>
   )
