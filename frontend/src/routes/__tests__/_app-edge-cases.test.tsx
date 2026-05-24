@@ -272,6 +272,10 @@ describe('Navigation items always present in DOM', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('NotFound component — isolated unit tests', () => {
+  afterEach(() => {
+    setViewportWidth(1024);
+  });
+
   it('[P1] should render the not-found-view testid when navigating to an unknown route', async () => {
     // GIVEN: The application receives an unknown path
     setViewportWidth(1280);

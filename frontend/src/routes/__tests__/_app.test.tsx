@@ -215,6 +215,10 @@ describe('AC3 — Deep linking to /clientes and /contactos (FR30)', () => {
     setViewportWidth(1280);
   });
 
+  afterEach(() => {
+    setViewportWidth(1024);
+  });
+
   it('should render ClientesView when navigating directly to /clientes', async () => {
     // GIVEN: The user types /clientes directly in the browser URL bar
     // WHEN: The route loads
@@ -306,6 +310,10 @@ describe('AC4 — 404 not-found view for unknown routes', () => {
     setViewportWidth(1280);
   });
 
+  afterEach(() => {
+    setViewportWidth(1024);
+  });
+
   it('should render the not-found view when navigating to an unknown route', async () => {
     // GIVEN: The user navigates to an unknown route (e.g., /unknown-path)
     // WHEN: The page loads
@@ -366,6 +374,10 @@ describe('AC4 — 404 not-found view for unknown routes', () => {
 describe('AC5 — Navigation landmark accessibility (WCAG 2.1 AA)', () => {
   beforeEach(() => {
     setViewportWidth(1280);
+  });
+
+  afterEach(() => {
+    setViewportWidth(1024);
   });
 
   it('should have a <nav> element with aria-label="Navegación principal"', async () => {
