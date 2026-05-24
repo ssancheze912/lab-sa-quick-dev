@@ -87,12 +87,11 @@ describe('Root route — DOM structure boundary', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('Root route — Outlet content at "/"', () => {
-  it('should render the index route heading inside app-root', async () => {
+  it('should render the clientes view inside app-root after redirect from /', async () => {
     renderWithRouter('/')
 
-    // THEN: The index route component content is present inside the root
-    const heading = await screen.findByText('Siesa Agents')
-    expect(heading).toBeDefined()
-    expect(heading.tagName.toLowerCase()).toBe('h1')
+    // THEN: Root "/" redirects to "/clientes" — clientes-view is rendered inside app-root
+    const clientesView = await screen.findByTestId('clientes-view')
+    expect(clientesView).toBeDefined()
   })
 })
