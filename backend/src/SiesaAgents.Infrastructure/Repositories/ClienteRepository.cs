@@ -14,4 +14,10 @@ public sealed class ClienteRepository(SiesaAgentsDbContext context) : IClienteRe
             .OrderBy(c => c.Nombre)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task AddAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
+    {
+        await context.Clientes.AddAsync(cliente, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+    }
 }
