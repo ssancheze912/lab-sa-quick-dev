@@ -13,7 +13,7 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import { NotFoundView } from '../NotFoundView';
 
 // Mock TanStack Router's Link for unit-test isolation
