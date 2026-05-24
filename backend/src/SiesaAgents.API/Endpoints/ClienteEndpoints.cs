@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Queries;
 
@@ -14,6 +15,24 @@ public static class ClienteEndpoints
             return Results.Ok(result);
         })
         .WithName("GetClientes")
+        .WithTags("Clientes");
+
+        app.MapGet("/api/v1/clientes/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new GetClienteByIdQuery(id), ct);
+            if (result is null)
+            {
+                return Results.Problem(new ProblemDetails
+                {
+                    Type = "https://tools.ietf.org/html/rfc7807",
+                    Title = "Not Found",
+                    Status = 404,
+                    Detail = $"Cliente con id '{id}' no encontrado."
+                });
+            }
+            return Results.Ok(result);
+        })
+        .WithName("GetClienteById")
         .WithTags("Clientes");
 
         app.MapPost("/api/v1/clientes", async (CreateClienteRequest request, IMediator mediator, CancellationToken ct) =>
