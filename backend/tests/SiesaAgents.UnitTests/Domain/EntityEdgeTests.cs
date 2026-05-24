@@ -1,9 +1,18 @@
 using SiesaAgents.Domain.Entities;
+using SiesaAgents.Domain.Events;
 using Xunit;
 
 namespace SiesaAgents.UnitTests.Domain;
 
 // Re-use the TestEntity declared in EntityTests.cs within the same namespace
+
+/// <summary>
+/// Minimal IDomainEvent stub for testing domain event behavior.
+/// </summary>
+internal sealed class TestDomainEvent : IDomainEvent
+{
+    public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
+}
 
 public class EntityEdgeTests
 {
@@ -16,7 +25,7 @@ public class EntityEdgeTests
     {
         // Arrange
         var entity = TestEntityWithEvents.Create();
-        var @event = new object();
+        var @event = new TestDomainEvent();
 
         // Act
         entity.PublicAddDomainEvent(@event);
@@ -32,9 +41,9 @@ public class EntityEdgeTests
         var entity = TestEntityWithEvents.Create();
 
         // Act
-        entity.PublicAddDomainEvent(new object());
-        entity.PublicAddDomainEvent(new object());
-        entity.PublicAddDomainEvent(new object());
+        entity.PublicAddDomainEvent(new TestDomainEvent());
+        entity.PublicAddDomainEvent(new TestDomainEvent());
+        entity.PublicAddDomainEvent(new TestDomainEvent());
 
         // Assert
         Assert.Equal(3, entity.DomainEvents.Count);
@@ -45,8 +54,8 @@ public class EntityEdgeTests
     {
         // Arrange
         var entity = TestEntityWithEvents.Create();
-        entity.PublicAddDomainEvent(new object());
-        entity.PublicAddDomainEvent(new object());
+        entity.PublicAddDomainEvent(new TestDomainEvent());
+        entity.PublicAddDomainEvent(new TestDomainEvent());
 
         // Act
         entity.ClearDomainEvents();
@@ -75,13 +84,8 @@ public class EntityEdgeTests
         // Act
         var events = entity.DomainEvents;
 
-        // Assert: IReadOnlyList — cast to IList must throw NotSupportedException
-        var iList = events as System.Collections.Generic.IList<object>;
-        Assert.NotNull(iList); // IReadOnlyList<T> inherits IList<T> in .NET reflection
-
-        // The actual backing list is not directly accessible; DomainEvents is a read-only view
-        // Verify the returned reference IS a read-only wrapper (not the mutable list itself)
-        Assert.IsAssignableFrom<System.Collections.Generic.IReadOnlyList<object>>(events);
+        // Assert: DomainEvents must be a read-only view of domain events
+        Assert.IsAssignableFrom<IReadOnlyList<IDomainEvent>>(events);
     }
 
     [Fact]
@@ -89,7 +93,7 @@ public class EntityEdgeTests
     {
         // Arrange: domain events are not deduplicated — the same event object can appear twice
         var entity = TestEntityWithEvents.Create();
-        var singleEvent = new object();
+        var singleEvent = new TestDomainEvent();
 
         // Act
         entity.PublicAddDomainEvent(singleEvent);
@@ -150,6 +154,6 @@ public sealed class TestEntityWithEvents : Entity
 {
     public static TestEntityWithEvents Create() => new();
 
-    public void PublicAddDomainEvent(object domainEvent) =>
+    public void PublicAddDomainEvent(IDomainEvent domainEvent) =>
         AddDomainEvent(domainEvent);
 }

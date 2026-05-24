@@ -18,7 +18,7 @@ public abstract class Entity
     /// <summary>
     /// Clears dispatched domain events. Called by the infrastructure layer after events have been published.
     /// </summary>
-    internal void ClearDomainEvents()
+    public void ClearDomainEvents()
     {
         _domainEvents.Clear();
     }

@@ -3,3 +3,5 @@ playwright-results/
 playwright-report/
 package-lock.json
 *.log
+backend/**/bin/
+backend/**/obj/
