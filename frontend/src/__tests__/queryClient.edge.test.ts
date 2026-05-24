@@ -10,13 +10,10 @@
  *   - Query cache and mutation cache are initialized
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { QueryClient } from '@tanstack/react-query'
 
 describe('[P1] queryClient — configuration edge cases and boundary conditions', () => {
-  beforeEach(() => {
-    // Reset module state between tests where isolation is needed
-  })
 
   it('[P1] should export the same singleton instance on repeated imports', async () => {
     // GIVEN: Two separate import calls to the same module
