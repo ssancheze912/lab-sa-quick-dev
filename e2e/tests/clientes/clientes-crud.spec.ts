@@ -41,6 +41,7 @@ test.describe('Gestión de Clientes', () => {
     createdIds.push(cliente.id);
 
     await clientesPage.page.reload();
+    await clientesPage.listPanel.waitFor({ state: 'visible' });
     await expect(
       clientesPage.clienteItems.filter({ hasText: data.nombre })
     ).toBeVisible();
@@ -52,6 +53,7 @@ test.describe('Gestión de Clientes', () => {
     createdIds.push(cliente.id);
 
     await clientesPage.page.reload();
+    await clientesPage.listPanel.waitFor({ state: 'visible' });
     await clientesPage.buscar('Filtro Especial');
 
     await expect(
@@ -65,6 +67,7 @@ test.describe('Gestión de Clientes', () => {
     createdIds.push(cliente.id);
 
     await clientesPage.page.reload();
+    await clientesPage.listPanel.waitFor({ state: 'visible' });
     await clientesPage.buscar('999888777');
 
     await expect(
@@ -95,6 +98,7 @@ test.describe('Gestión de Clientes', () => {
     createdIds.push(cliente.id);
 
     await clientesPage.page.reload();
+    await clientesPage.listPanel.waitFor({ state: 'visible' });
     await clientesPage.abrirFormularioNuevo();
     await clientesPage.llenarFormulario({ ...data, nombre: 'Empresa Diferente' });
     await clientesPage.btnGuardar.click();

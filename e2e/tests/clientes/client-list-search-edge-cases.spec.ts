@@ -196,6 +196,19 @@ test.describe('AC4 edge cases — Network failure variants', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('AC1 edge cases — Panel and list structure', () => {
+  let _ariaLabelApiHelper: import('../../helpers/api.helper').ApiHelper | null = null;
+  const _ariaLabelCreatedIds: string[] = [];
+
+  test.afterEach(async () => {
+    if (_ariaLabelApiHelper) {
+      for (const id of _ariaLabelCreatedIds) {
+        await _ariaLabelApiHelper.deleteCliente(id).catch(() => null);
+      }
+      _ariaLabelCreatedIds.length = 0;
+      _ariaLabelApiHelper = null;
+    }
+  });
+
   test('should still render search input when backend returns empty array', async ({ page }) => {
     // GIVEN: No clients in the system
     await page.route('**/api/v1/clientes', (route) =>
@@ -226,12 +239,11 @@ test.describe('AC1 edge cases — Panel and list structure', () => {
 
   test('should render list items with correct aria-label combining Nombre and NIT/RUC', async ({ page, request }) => {
     // GIVEN: A client with Nombre "Acme Test" and NIT "111222333-4"
-    const apiHelper = new ApiHelper(request);
-    const createdIds: string[] = [];
+    _ariaLabelApiHelper = new ApiHelper(request);
 
     const data = buildCliente({ nombre: 'Acme Test E2E', nit: '111222333-4' });
-    const cliente = await apiHelper.createCliente(data);
-    createdIds.push(cliente.id);
+    const cliente = await _ariaLabelApiHelper.createCliente(data);
+    _ariaLabelCreatedIds.push(cliente.id);
 
     await page.route('**/api/v1/clientes', (route) => route.continue());
     await page.goto('/clientes');
@@ -242,10 +254,5 @@ test.describe('AC1 edge cases — Panel and list structure', () => {
     const ariaLabel = await item.getAttribute('aria-label') ?? '';
     expect(ariaLabel).toContain('Acme Test E2E');
     expect(ariaLabel.toLowerCase()).toContain('nit');
-
-    // Cleanup
-    for (const id of createdIds) {
-      await apiHelper.deleteCliente(id).catch(() => null);
-    }
   });
 });
