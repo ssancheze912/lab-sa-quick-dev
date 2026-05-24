@@ -38,7 +38,7 @@ function MobileNavItem({ item }: { item: NavItem }) {
         fontWeight: 500,
         border: 'none',
         cursor: 'pointer',
-        transition: 'colors 150ms',
+        transition: 'color 150ms, background-color 150ms',
         backgroundColor: isActive ? '#eff6ff' : 'transparent',
         color: isActive ? '#0e79fd' : '#475569',
       }}

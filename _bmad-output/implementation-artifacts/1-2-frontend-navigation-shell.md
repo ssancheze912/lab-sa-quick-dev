@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: review
+Status: done
 
 ## Story
 
