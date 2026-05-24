@@ -14,6 +14,8 @@ export function ClientListItem({ cliente, isSelected, onClick }: ClientListItemP
       aria-label={`${cliente.nombre}, NIT/RUC: ${cliente.nit}`}
       aria-current={isSelected ? 'true' : undefined}
       onClick={onClick}
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
       className={`flex flex-col px-4 py-3 cursor-pointer border-l-2 transition-colors ${
         isSelected
           ? 'border-[#0e79fd] bg-blue-50 text-[#0e79fd]'
