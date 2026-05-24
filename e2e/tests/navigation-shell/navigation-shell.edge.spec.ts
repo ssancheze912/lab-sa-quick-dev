@@ -70,24 +70,27 @@ test.describe('EC2 — Narrow mobile viewport (320px)', () => {
     await expect(page.locator('[data-testid="navigation-bar"]')).toBeVisible();
   });
 
-  test('should make Clientes and Contactos nav items tappable at 320px', async ({ page }) => {
+  test('should make Clientes nav item visible and tappable at 320px', async ({ page }) => {
     await page.goto('/clientes');
     await page.waitForLoadState('networkidle');
 
-    // Both items must be accessible (not clipped or hidden by overflow)
     const clientesItem = page.locator('[data-testid="nav-item-clientes"]');
-    const contactosItem = page.locator('[data-testid="nav-item-contactos"]');
-
     await expect(clientesItem).toBeVisible();
+
+    const clientesBox = await clientesItem.boundingBox();
+    expect(clientesBox).not.toBeNull();
+    expect(clientesBox!.width).toBeGreaterThan(0);
+  });
+
+  test('should make Contactos nav item visible and tappable at 320px', async ({ page }) => {
+    await page.goto('/clientes');
+    await page.waitForLoadState('networkidle');
+
+    const contactosItem = page.locator('[data-testid="nav-item-contactos"]');
     await expect(contactosItem).toBeVisible();
 
-    // Both items must have non-zero bounding boxes
-    const clientesBox = await clientesItem.boundingBox();
     const contactosBox = await contactosItem.boundingBox();
-
-    expect(clientesBox).not.toBeNull();
     expect(contactosBox).not.toBeNull();
-    expect(clientesBox!.width).toBeGreaterThan(0);
     expect(contactosBox!.width).toBeGreaterThan(0);
   });
 });

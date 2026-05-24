@@ -92,12 +92,18 @@ describe('AppLayout — Desktop NavigationRail (AC1)', () => {
     await waitFor(() => expect(screen.getAllByTestId('nav-item-contactos').length).toBeGreaterThan(0))
   })
 
-  it('nav items have accessible text labels in Spanish', async () => {
+  it('Clientes nav item has accessible Spanish text label', async () => {
     await renderAppLayout('/clientes')
     await waitFor(() => {
       const clientesItems = screen.getAllByTestId('nav-item-clientes')
-      const contactosItems = screen.getAllByTestId('nav-item-contactos')
       expect(clientesItems[0].textContent).toMatch(/Clientes/i)
+    })
+  })
+
+  it('Contactos nav item has accessible Spanish text label', async () => {
+    await renderAppLayout('/clientes')
+    await waitFor(() => {
+      const contactosItems = screen.getAllByTestId('nav-item-contactos')
       expect(contactosItems[0].textContent).toMatch(/Contactos/i)
     })
   })

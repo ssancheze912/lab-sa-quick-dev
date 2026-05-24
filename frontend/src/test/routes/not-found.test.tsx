@@ -80,10 +80,16 @@ describe('NotFoundPage — 404 view (AC4)', () => {
     })
   })
 
-  it('does not render the NavigationRail or NavigationBar on the 404 page', async () => {
+  it('does not render the NavigationRail on the 404 page', async () => {
     await renderWithRouter(<NotFoundPage />)
     await waitFor(() => {
       expect(screen.queryByTestId('navigation-rail')).toBeNull()
+    })
+  })
+
+  it('does not render the NavigationBar on the 404 page', async () => {
+    await renderWithRouter(<NotFoundPage />)
+    await waitFor(() => {
       expect(screen.queryByTestId('navigation-bar')).toBeNull()
     })
   })
