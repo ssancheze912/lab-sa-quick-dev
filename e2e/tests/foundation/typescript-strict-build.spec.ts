@@ -19,6 +19,13 @@ import { execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 
+function parseJsonc(content: string): Record<string, unknown> {
+  const stripped = content
+    .replace(/\/\/[^\n]*/g, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+  return JSON.parse(stripped) as Record<string, unknown>;
+}
+
 const ROOT_DIR = path.resolve(__dirname, '../../..');
 const FRONTEND_DIR = path.join(ROOT_DIR, 'frontend');
 const BACKEND_DIR = path.join(ROOT_DIR, 'backend');
@@ -38,7 +45,7 @@ test.describe('AC4 — TypeScript strict mode: zero compilation errors', () => {
     // THEN: tsconfig.app.json exists
     expect(fs.existsSync(tsconfigPath), `tsconfig.app.json must exist at ${tsconfigPath}`).toBe(true);
 
-    const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
+    const tsconfig = parseJsonc(fs.readFileSync(tsconfigPath, 'utf-8'));
 
     // THEN: strict mode is enabled
     expect(
@@ -54,7 +61,7 @@ test.describe('AC4 — TypeScript strict mode: zero compilation errors', () => {
 
     expect(fs.existsSync(tsconfigPath), `tsconfig.app.json must exist at ${tsconfigPath}`).toBe(true);
 
-    const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
+    const tsconfig = parseJsonc(fs.readFileSync(tsconfigPath, 'utf-8'));
 
     // THEN: noImplicitAny is true (explicitly set OR implied by strict: true)
     const strictEnabled = tsconfig.compilerOptions?.strict === true;
@@ -72,7 +79,7 @@ test.describe('AC4 — TypeScript strict mode: zero compilation errors', () => {
 
     expect(fs.existsSync(tsconfigPath), `tsconfig.app.json must exist at ${tsconfigPath}`).toBe(true);
 
-    const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
+    const tsconfig = parseJsonc(fs.readFileSync(tsconfigPath, 'utf-8'));
 
     // THEN: strictNullChecks is true (explicitly set OR implied by strict: true)
     const strictEnabled = tsconfig.compilerOptions?.strict === true;
