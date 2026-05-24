@@ -54,15 +54,6 @@ function createWrapper() {
 describe('useClientes — data fetching', () => {
   test('should call GET /api/v1/clientes once on mount', async () => {
     // GIVEN: MSW intercepts with 5 clients
-    let callCount = 0;
-    server.use(
-      ...([handleGetClientesSuccess(FIVE_CLIENTES)].map((h) => {
-        // Count requests via a wrapping handler
-        return h;
-      })),
-    );
-
-    // Track request count independently
     server.use(handleGetClientesSuccess(FIVE_CLIENTES));
 
     const wrapper = createWrapper();
