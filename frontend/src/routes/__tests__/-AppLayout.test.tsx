@@ -2,8 +2,7 @@
  * Story 1.2: Frontend Navigation Shell
  * Epic 1: Project Foundation & Application Shell
  *
- * Component Tests — RED Phase
- * These tests are intentionally FAILING until AppLayout implementation is complete.
+ * Component Tests
  *
  * Acceptance Criteria covered:
  *   AC1 — NavigationRail renders on desktop viewport (≥1024px)
@@ -16,10 +15,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// AppLayout does not exist yet — these imports will fail (RED phase)
-// Implementation must create: frontend/src/routes/_app.tsx
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error — component not yet implemented (RED phase)
 import { AppLayout } from '../_app';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -45,68 +40,6 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     ),
   };
 });
-
-/**
- * Mock siesa-ui-kit components that AppLayout depends on.
- * These will be replaced by real implementations.
- */
-vi.mock('siesa-ui-kit', () => ({
-  LayoutBase: ({ children, navigationItems }: {
-    children: React.ReactNode;
-    navigationItems: Array<{ label: string; icon: unknown; to: string }>;
-  }) => (
-    <div data-testid="layout-base">
-      <nav aria-label="Navegación principal">
-        {navigationItems.map((item) => (
-          <a
-            key={item.to}
-            href={item.to}
-            data-testid={`nav-item-${item.label.toLowerCase()}`}
-            aria-label={item.label}
-          >
-            {item.label}
-          </a>
-        ))}
-      </nav>
-      {children}
-    </div>
-  ),
-  NavigationRail: ({ navigationItems }: {
-    navigationItems: Array<{ label: string; icon: unknown; to: string }>;
-  }) => (
-    <nav data-testid="navigation-rail" aria-label="Navegación principal">
-      {navigationItems.map((item) => (
-        <a
-          key={item.to}
-          href={item.to}
-          data-testid={`nav-item-${item.label.toLowerCase()}`}
-          aria-label={item.label}
-        >
-          {item.label}
-        </a>
-      ))}
-    </nav>
-  ),
-  NavigationBar: ({ navigationItems }: {
-    navigationItems: Array<{ label: string; icon: unknown; to: string }>;
-  }) => (
-    <nav data-testid="navigation-bar" aria-label="Navegación principal">
-      {navigationItems.map((item) => (
-        <a
-          key={item.to}
-          href={item.to}
-          data-testid={`nav-item-${item.label.toLowerCase()}`}
-          aria-label={item.label}
-        >
-          {item.label}
-        </a>
-      ))}
-    </nav>
-  ),
-  Navbar: ({ productName }: { productName: string }) => (
-    <header data-testid="navbar">{productName}</header>
-  ),
-}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: mock window.matchMedia for viewport simulation

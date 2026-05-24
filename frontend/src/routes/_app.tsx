@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { createFileRoute, Outlet, Link, useRouterState } from '@tanstack/react-router'
 import { UsersIcon, UserIcon } from '@heroicons/react/24/solid'
 import { useMediaQuery } from '../shared/hooks/useMediaQuery'
@@ -9,7 +10,7 @@ export const Route = createFileRoute('/_app')({
 interface NavItem {
   id: string
   label: string
-  icon: React.ReactNode
+  icon: ReactNode
   to: string
 }
 
@@ -34,7 +35,7 @@ export function AppLayout() {
             className="flex-shrink-0 w-20 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex flex-col"
           >
             {navItems.map((item) => {
-              const isActive = currentPath.startsWith(item.to)
+              const isActive = currentPath === item.to || currentPath.startsWith(item.to + '/')
               return (
                 <Link
                   key={item.id}
