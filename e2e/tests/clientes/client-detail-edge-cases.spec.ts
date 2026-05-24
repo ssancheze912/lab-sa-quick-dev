@@ -29,11 +29,13 @@ import { buildCliente } from '../../helpers/data.helper';
 
 test.describe('Loading state — skeleton visible during slow API response', () => {
   const createdIds: string[] = [];
-  let apiHelper: ApiHelper;
+  let apiHelper: ApiHelper | undefined;
 
   test.afterEach(async () => {
-    for (const id of createdIds) {
-      await apiHelper.deleteCliente(id).catch(() => null);
+    if (apiHelper) {
+      for (const id of createdIds) {
+        await apiHelper.deleteCliente(id).catch(() => null);
+      }
     }
     createdIds.length = 0;
   });
@@ -183,11 +185,13 @@ test.describe('Error state — 5xx response shows ErrorPanel with Reintentar', (
 
 test.describe('Accessibility — detail panel aria-label', () => {
   const createdIds: string[] = [];
-  let apiHelper: ApiHelper;
+  let apiHelper: ApiHelper | undefined;
 
   test.afterEach(async () => {
-    for (const id of createdIds) {
-      await apiHelper.deleteCliente(id).catch(() => null);
+    if (apiHelper) {
+      for (const id of createdIds) {
+        await apiHelper.deleteCliente(id).catch(() => null);
+      }
     }
     createdIds.length = 0;
   });
@@ -218,11 +222,13 @@ test.describe('Accessibility — detail panel aria-label', () => {
 
 test.describe('Special characters in client fields render without encoding artifacts', () => {
   const createdIds: string[] = [];
-  let apiHelper: ApiHelper;
+  let apiHelper: ApiHelper | undefined;
 
   test.afterEach(async () => {
-    for (const id of createdIds) {
-      await apiHelper.deleteCliente(id).catch(() => null);
+    if (apiHelper) {
+      for (const id of createdIds) {
+        await apiHelper.deleteCliente(id).catch(() => null);
+      }
     }
     createdIds.length = 0;
   });
@@ -269,11 +275,13 @@ test.describe('Special characters in client fields render without encoding artif
 
 test.describe('Rapid navigation — correct detail shown after switching clients', () => {
   const createdIds: string[] = [];
-  let apiHelper: ApiHelper;
+  let apiHelper: ApiHelper | undefined;
 
   test.afterEach(async () => {
-    for (const id of createdIds) {
-      await apiHelper.deleteCliente(id).catch(() => null);
+    if (apiHelper) {
+      for (const id of createdIds) {
+        await apiHelper.deleteCliente(id).catch(() => null);
+      }
     }
     createdIds.length = 0;
   });
