@@ -36,3 +36,14 @@ workflows:
   sprint_planning:
     status: not_started
     output_file: ~
+
+gate_history:
+  - date: "2026-05-24"
+    workflow: "testarch-trace"
+    gate_type: "epic"
+    target: "Epic 1 - Project Foundation & Application Shell"
+    decision: "CONCERNS"
+    reason: "P1 coverage 83% (below 90%); test execution evidence MISSING (RED phase); Story 1.3 pending"
+    document: "_bmad-output/gate-decision-epic-1.yaml"
+    traceability: "_bmad-output/traceability-matrix.md"
+    action: "Complete Stories 1.1 and 1.3; add live DB integration test; re-run trace for PASS"
