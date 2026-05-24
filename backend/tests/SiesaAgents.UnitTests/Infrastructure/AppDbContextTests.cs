@@ -153,8 +153,8 @@ public class AppDbContextTests
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         // THEN: No exception is thrown — the DI-configured context is functional (AC5)
-        var created = await context.Database.EnsureCreatedAsync();
-        Assert.True(created || !created); // Either true (created) or false (already exists) is acceptable
+        var exception = await Record.ExceptionAsync(() => context.Database.EnsureCreatedAsync());
+        Assert.Null(exception);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
