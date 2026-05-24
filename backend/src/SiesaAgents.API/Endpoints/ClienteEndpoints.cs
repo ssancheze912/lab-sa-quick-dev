@@ -22,13 +22,11 @@ public static class ClienteEndpoints
             var result = await mediator.Send(new GetClienteByIdQuery(id), ct);
             if (result is null)
             {
-                return Results.Problem(new ProblemDetails
-                {
-                    Type = "https://tools.ietf.org/html/rfc7807",
-                    Title = "Not Found",
-                    Status = 404,
-                    Detail = $"Cliente con id '{id}' no encontrado."
-                });
+                return TypedResults.Problem(
+                    detail: $"Cliente con id '{id}' no encontrado.",
+                    statusCode: 404,
+                    title: "Not Found",
+                    type: "https://tools.ietf.org/html/rfc7807");
             }
             return Results.Ok(result);
         })

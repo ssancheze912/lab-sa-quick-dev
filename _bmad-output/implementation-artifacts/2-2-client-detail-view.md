@@ -1,6 +1,6 @@
 # Story 2.2: Client Detail View
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -312,6 +312,12 @@ Dates in ISO 8601 with timezone. JSON property names in camelCase (.NET auto-ser
 - MasterCrud reference (not applicable to this story — read-only detail view, not CRUD grid): [Source: `_bmad/bmm/workflows/3-solutioning/create-architecture/data/company-standards/mastercrud-use-reference.md`]
 - Backend entity pattern and API response shapes: [Source: `_bmad-output/planning-artifacts/architecture.md#Implementation Patterns & Consistency Rules`]
 
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][CRITICAL] Create `SiesaAgents.IntegrationTests` project and add `ClienteEndpointsTests.cs` with tests for `GET /api/v1/clientes/{id}` returning 200+ClienteDto and 404+application/problem+json (TC-E2-P2-06). Task 4 was marked complete but integration tests do not exist.
+- [ ] [AI-Review][HIGH] Verify that `Results.Problem(new ProblemDetails { ... })` in `ClienteEndpoints.cs` actually returns `Content-Type: application/problem+json`. Run the E2E API test `TC-E2-P2-06` against the running backend to confirm. Consider using `TypedResults.Problem(...)` for explicit correctness.
+- [ ] [AI-Review][MED] The `GetClienteByIdQueryHandlerTests.cs` test `Handle_WhenRepositoryReturnsEntity_MapsIdAsNonEmptyGuid` is a weak assertion — it only checks `NotEqual(Guid.Empty)`. Strengthen it to assert the DTO `Id` equals the entity's actual `Id` (use `entity.Id` after creation, not `request.Id` which is a different UUID in the mock setup).
+
 ## Dev Agent Record
 
 ### Agent Model Used
@@ -344,6 +350,10 @@ None.
 
 **Backend — modified files:**
 - `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
+- `backend/src/SiesaAgents.API/Program.cs` (DI registrations + MapClienteEndpoints)
+
+**Frontend — modified files (additional):**
+- `frontend/vite.config.ts` (added `pool: 'forks'` for MSW/vitest compatibility)
 
 **Frontend — new files:**
 - `frontend/src/modules/crm/clientes/application/useCliente.ts`
