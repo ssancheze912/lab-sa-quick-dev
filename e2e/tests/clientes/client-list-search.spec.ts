@@ -243,7 +243,8 @@ test.describe('AC4 — ErrorPanel when backend is unavailable', () => {
     await page.getByRole('button', { name: /Reintentar/i }).click();
 
     // THEN: A second GET /api/v1/clientes request is made (callCount >= 2)
-    await page.waitForTimeout(500); // Allow retry to complete
+    // Wait for the empty-state or list to appear (signals retry response was processed)
+    await expect(page.getByTestId('empty-state')).toBeVisible();
     expect(callCount).toBeGreaterThanOrEqual(2);
   });
 });
