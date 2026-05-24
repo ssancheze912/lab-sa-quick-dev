@@ -69,20 +69,15 @@ test.describe('AC1 — Desktop NavigationRail (viewport ≥ 1024px)', () => {
     await page.goto('/contactos');
     await page.waitForLoadState('domcontentloaded');
 
-    // Track page reload by listening for full navigation (framenavigated without same-document)
-    let fullReloadOccurred = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame() && !frame.url().includes('contactos')) {
-        // A full reload would re-request the HTML document
-        fullReloadOccurred = true;
-      }
-    });
+    // Track page reload: inject a sentinel in window; a full reload destroys it, SPA navigation preserves it
+    await page.evaluate(() => { (window as any).__spaMarker = true; });
 
     // WHEN: The user clicks the "Clientes" nav item
     await page.click('[data-testid="nav-item-clientes"]');
     await page.waitForURL('**/clientes');
 
     // THEN: URL changed to /clientes and no full page reload occurred (SPA navigation)
+    const fullReloadOccurred = !(await page.evaluate(() => !!(window as any).__spaMarker));
     expect(page.url()).toContain('/clientes');
     expect(fullReloadOccurred).toBe(false);
   });
@@ -95,18 +90,15 @@ test.describe('AC1 — Desktop NavigationRail (viewport ≥ 1024px)', () => {
     await page.goto('/clientes');
     await page.waitForLoadState('domcontentloaded');
 
-    let fullReloadOccurred = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame() && !frame.url().includes('clientes')) {
-        fullReloadOccurred = true;
-      }
-    });
+    // Track page reload: inject a sentinel in window; a full reload destroys it, SPA navigation preserves it
+    await page.evaluate(() => { (window as any).__spaMarker = true; });
 
     // WHEN: The user clicks the "Contactos" nav item
     await page.click('[data-testid="nav-item-contactos"]');
     await page.waitForURL('**/contactos');
 
     // THEN: URL changed to /contactos without a full page reload
+    const fullReloadOccurred = !(await page.evaluate(() => !!(window as any).__spaMarker));
     expect(page.url()).toContain('/contactos');
     expect(fullReloadOccurred).toBe(false);
   });
