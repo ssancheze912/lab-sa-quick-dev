@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: ready-for-review
+Status: done
 
 ## Story
 
@@ -214,7 +214,7 @@ claude-sonnet-4-6
 - `frontend/src/app/providers/QueryProvider.tsx` — QueryClientProvider wrapper
 - `frontend/src/test/setup.ts` — vitest setup file
 - `frontend/vitest.config.ts` — vitest configuration
-- `frontend/src/index.css` — added @import "tailwindcss"
+- `frontend/src/index.css` — TailwindCSS v4 import + Siesa design system base styles (replaced Vite boilerplate)
 - `backend/SiesaAgents.sln` — solution file
 - `backend/src/SiesaAgents.API/SiesaAgents.API.csproj`
 - `backend/src/SiesaAgents.API/Program.cs`
@@ -235,3 +235,10 @@ claude-sonnet-4-6
 - `backend/src/SiesaAgents.Domain/{Entities,ValueObjects,Aggregates,Events,Services}/`
 - `backend/src/SiesaAgents.Infrastructure/{Data/Configurations,Data/Migrations,Repositories,Services}/`
 - `backend/tests/SiesaAgents.UnitTests/`
+
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][MED] `ExceptionHandlingMiddleware.cs` — Inject `ILogger<ExceptionHandlingMiddleware>` via primary constructor and log the caught exception at Error level server-side before returning the sanitized `ProblemDetails` response. Ensures observability without exposing internals to the client.
+- [ ] [AI-Review][MED] `Entity.cs` — Add `CreatedAt` and `UpdatedAt` audit fields of type `DateTimeOffset` (with `DateTimeOffset.UtcNow` defaults) to the abstract `Entity` base class per company timestamp standards. All domain entities created in future stories will inherit these automatically.
+- [ ] [AI-Review][LOW] `Program.cs` — Guard `app.MapOpenApi()` (raw JSON schema endpoint) behind an `if (app.Environment.IsDevelopment())` check to prevent accidental exposure in production builds.
+- [ ] [AI-Review][LOW] `main.tsx` — Replace `document.getElementById('root')!` non-null assertion with an explicit null-check and a descriptive error throw: `const rootElement = document.getElementById('root'); if (!rootElement) throw new Error('Root element #root not found in DOM');`.
