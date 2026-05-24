@@ -1,0 +1,30 @@
+## .NET / C# artifacts
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Build outputs
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+publish/
+
+## NuGet
+*.nupkg
+packages/
+*.lock.json
+
+## Secrets — never commit production credentials
+appsettings.Production.json
+appsettings.Staging.json
+
+## Tools
+.idea/
+.vscode/
+
+## OS
+.DS_Store
+Thumbs.db
