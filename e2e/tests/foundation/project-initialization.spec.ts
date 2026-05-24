@@ -111,8 +111,13 @@ test.describe('AC3 — CORS configuration between frontend and backend', () => {
     await page.goto('/');
 
     // Trigger a real request to the backend from the browser context (same as frontend would)
+    // Errors are intentionally swallowed — CORS failures surface as console errors, not JS exceptions
     await page.evaluate(async (apiUrl) => {
-      await fetch(`${apiUrl}/scalar`, { method: 'GET' });
+      try {
+        await fetch(`${apiUrl}/scalar`, { method: 'GET' });
+      } catch {
+        // Network errors are expected when backend is unavailable; CORS errors appear in console
+      }
     }, API_BASE_URL);
 
     // THEN: No CORS-related errors appear in the console
@@ -149,7 +154,8 @@ test.describe('AC4 — TypeScript strict mode active on frontend', () => {
     await appLoad;
 
     // THEN: The Vite error overlay (TypeScript compile errors) is NOT visible
-    // Vite renders compilation errors in a data-testid="vite-error-overlay" or similar overlay
+    // NOTE: vite-error-overlay is a Vite-internal web component; no data-testid is available.
+    // This selector is an intentional exception to the data-testid rule.
     const errorOverlay = page.locator('vite-error-overlay');
     await expect(errorOverlay).toHaveCount(0);
   });

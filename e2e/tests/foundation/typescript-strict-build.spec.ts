@@ -256,7 +256,7 @@ test.describe('AC5 — Backend solution builds with zero errors', () => {
       stdout = execSync('dotnet build SiesaAgents.sln --no-restore 2>&1', {
         cwd: BACKEND_DIR,
         encoding: 'utf-8',
-        timeout: 120000,
+        timeout: 89000,
       });
     } catch (err: unknown) {
       const execError = err as { stdout?: string; stderr?: string; status?: number };
