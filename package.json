@@ -6,5 +6,8 @@
     "dev:frontend": "pnpm --filter frontend dev",
     "build:frontend": "pnpm --filter frontend build",
     "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
   }
 }
