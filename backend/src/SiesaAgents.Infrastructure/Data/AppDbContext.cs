@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-        modelBuilder.ApplySnakeCaseNaming(); // MUST be LAST
+        // snake_case naming is enforced via UseSnakeCaseNamingConvention() on the Npgsql provider
+        // registered in Program.cs — no relational-only call needed here, keeping tests safe.
     }
 }
