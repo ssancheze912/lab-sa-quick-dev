@@ -1,13 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ClienteListView } from '../../modules/crm/clientes/presentation/ClienteListView'
 
-function ClientesView() {
+export const Route = createFileRoute('/_app/clientes')({
+  component: ClientesPage,
+})
+
+function ClientesPage() {
   return (
-    <div data-testid="clientes-view" className="p-6">
-      <h1 className="text-2xl font-bold text-slate-800">Clientes</h1>
+    <div data-testid="clientes-view" className="flex h-full">
+      <h1 className="sr-only">Clientes</h1>
+      <ClienteListView />
+      {/* Right panel: empty placeholder — Story 2.2 */}
+      <div className="flex-1" />
     </div>
   )
 }
-
-export const Route = createFileRoute('/_app/clientes')({
-  component: ClientesView,
-})
