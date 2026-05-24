@@ -39,6 +39,9 @@ public class GetClientesQueryHandlerTests
             GetAllAsyncCallCount++;
             return Task.FromResult(_clientes);
         }
+
+        public Task AddAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
