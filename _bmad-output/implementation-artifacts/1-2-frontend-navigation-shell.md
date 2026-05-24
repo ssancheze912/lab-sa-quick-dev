@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: pending
+Status: review
 
 ## Story
 
@@ -24,40 +24,40 @@ so that I can move between sections without full page reloads from any device.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Create `_app` pathless layout route with NavigationRail (desktop) (AC: #1, #5)
-  - [ ] Create `frontend/src/routes/_app.tsx` — pathless layout wrapping `Outlet` with `LayoutBase` from siesa-ui-kit
-  - [ ] Import `NavigationRail` from `siesa-ui-kit` and render it inside the layout with `navigationItems` for "Clientes" and "Contactos"
-  - [ ] Use TanStack Router's `Link` component with `activeProps` to highlight the active navigation item
-  - [ ] Pass `to="/clientes"` and `to="/contactos"` as TanStack Router `Link` targets for SPA navigation (no full page reload)
-  - [ ] Apply `hidden lg:flex` (Tailwind v4) to render NavigationRail only on desktop (≥ 1024px)
+- [x] Task 1 — Create `_app` pathless layout route with NavigationRail (desktop) (AC: #1, #5)
+  - [x] Create `frontend/src/routes/_app.tsx` — pathless layout wrapping `Outlet` with `LayoutBase` from siesa-ui-kit
+  - [x] Import `NavigationRail` from `siesa-ui-kit` and render it inside the layout with `navigationItems` for "Clientes" and "Contactos"
+  - [x] Use TanStack Router's `Link` component with `activeProps` to highlight the active navigation item
+  - [x] Pass `to="/clientes"` and `to="/contactos"` as TanStack Router `Link` targets for SPA navigation (no full page reload)
+  - [x] Apply `hidden lg:flex` (Tailwind v4) to render NavigationRail only on desktop (≥ 1024px)
 
-- [ ] Task 2 — Add mobile NavigationBar (AC: #2, #5)
-  - [ ] Import `NavigationBar` from `siesa-ui-kit` inside `_app.tsx`
-  - [ ] Render `NavigationBar` with the same `navigationItems` as the rail
-  - [ ] Apply `flex lg:hidden` to render NavigationBar only on mobile (< 1024px)
-  - [ ] Verify all navigation items are tappable with adequate touch target size (WCAG 2.1 AA minimum 44×44px)
+- [x] Task 2 — Add mobile NavigationBar (AC: #2, #5)
+  - [x] Import `NavigationBar` from `siesa-ui-kit` inside `_app.tsx`
+  - [x] Render `NavigationBar` with the same `navigationItems` as the rail
+  - [x] Apply `flex lg:hidden` to render NavigationBar only on mobile (< 1024px)
+  - [x] Verify all navigation items are tappable with adequate touch target size (WCAG 2.1 AA minimum 44×44px)
 
-- [ ] Task 3 — Create `/clientes` and `/contactos` placeholder routes (AC: #3)
-  - [ ] Create `frontend/src/routes/_app/clientes.tsx` — exports `Route` with a placeholder `ClientesPage` component (Spanish heading "Clientes", will be replaced in Epic 2)
-  - [ ] Create `frontend/src/routes/_app/contactos.tsx` — exports `Route` with a placeholder `ContactosPage` component (Spanish heading "Contactos", will be replaced in Epic 3)
-  - [ ] Verify TanStack Router's file-based routing resolves `/clientes` and `/contactos` as direct URL entries (deep linking)
+- [x] Task 3 — Create `/clientes` and `/contactos` placeholder routes (AC: #3)
+  - [x] Create `frontend/src/routes/_app/clientes.tsx` — exports `Route` with a placeholder `ClientesPage` component (Spanish heading "Clientes", will be replaced in Epic 2)
+  - [x] Create `frontend/src/routes/_app/contactos.tsx` — exports `Route` with a placeholder `ContactosPage` component (Spanish heading "Contactos", will be replaced in Epic 3)
+  - [x] Verify TanStack Router's file-based routing resolves `/clientes` and `/contactos` as direct URL entries (deep linking)
 
-- [ ] Task 4 — Create 404 not-found route (AC: #4)
-  - [ ] Create `frontend/src/routes/not-found.tsx` — exports a `NotFoundPage` component with Spanish message "Página no encontrada" and a `Link` back to `/clientes`
-  - [ ] Register the not-found route in `frontend/src/routes/__root.tsx` using TanStack Router's `notFoundComponent` option
-  - [ ] Verify that navigating to `/ruta-inexistente` renders the 404 view without a browser error
+- [x] Task 4 — Create 404 not-found route (AC: #4)
+  - [x] Create `frontend/src/routes/-not-found.tsx` — exports a `NotFoundPage` component with Spanish message "Página no encontrada" and a `Link` back to `/clientes` (prefixed with `-` to exclude from router file-based discovery while still registering via notFoundComponent)
+  - [x] Register the not-found route in `frontend/src/routes/__root.tsx` using TanStack Router's `notFoundComponent` option
+  - [x] Verify that navigating to `/ruta-inexistente` renders the 404 view without a browser error
 
-- [ ] Task 5 — Configure root route redirect `/` → `/clientes` (AC: #6)
-  - [ ] Update `frontend/src/routes/index.tsx` to redirect to `/clientes` using TanStack Router's `redirect` in `beforeLoad`
+- [x] Task 5 — Configure root route redirect `/` → `/clientes` (AC: #6)
+  - [x] Update `frontend/src/routes/index.tsx` to redirect to `/clientes` using TanStack Router's `redirect` in `beforeLoad`
 
-- [ ] Task 6 — Update `__root.tsx` to wire pathless `_app` layout (AC: #1, #2, #3, #4)
-  - [ ] Confirm `__root.tsx` renders `Outlet` so the `_app` pathless layout is picked up by TanStack Router's file-based convention
-  - [ ] Ensure `id="app-shell"` div is preserved from Story 1.1
+- [x] Task 6 — Update `__root.tsx` to wire pathless `_app` layout (AC: #1, #2, #3, #4)
+  - [x] Confirm `__root.tsx` renders `Outlet` so the `_app` pathless layout is picked up by TanStack Router's file-based convention
+  - [x] Ensure `id="app-shell"` div is preserved from Story 1.1
 
-- [ ] Task 7 — Write unit / component tests (AC: #1, #2, #3, #4)
-  - [ ] Write `frontend/src/test/routes/app-layout.test.tsx` — renders `_app` layout, asserts NavigationRail is visible on desktop viewport (≥ 1024px) and NavigationBar on mobile (< 1024px)
-  - [ ] Write `frontend/src/test/routes/not-found.test.tsx` — renders `NotFoundPage`, asserts Spanish "Página no encontrada" text and `/clientes` link are present
-  - [ ] Run `pnpm exec vitest run` — all tests pass with zero TypeScript errors
+- [x] Task 7 — Write unit / component tests (AC: #1, #2, #3, #4)
+  - [x] Write `frontend/src/test/routes/app-layout.test.tsx` — renders `_app` layout, asserts NavigationRail is visible on desktop viewport (≥ 1024px) and NavigationBar on mobile (< 1024px)
+  - [x] Write `frontend/src/test/routes/not-found.test.tsx` — renders `NotFoundPage`, asserts Spanish "Página no encontrada" text and `/clientes` link are present
+  - [x] Run `pnpm exec vitest run` — all tests pass with zero TypeScript errors (65 tests, 12 test files)
 
 ## Dev Notes
 
@@ -73,7 +73,7 @@ src/routes/
   _app/
     clientes.tsx                # /clientes — Clientes placeholder
     contactos.tsx               # /contactos — Contactos placeholder
-  not-found.tsx                 # 404 view (registered via notFoundComponent)
+  -not-found.tsx                # 404 view (prefixed with - to exclude from routing, registered via notFoundComponent)
 ```
 
 `_app.tsx` is a pathless layout (underscore prefix) — it wraps its children without adding a URL segment. All routes inside `_app/` inherit the NavigationRail/NavigationBar shell.
@@ -132,7 +132,7 @@ export const Route = createFileRoute('/')({
 **Not-found registration (`__root.tsx`):**
 ```typescript
 import { createRootRoute, Outlet } from '@tanstack/react-router'
-import { NotFoundPage } from './not-found'
+import { NotFoundPage } from './-not-found'
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -174,6 +174,7 @@ function ClientesPage() {
 - Tests go in `frontend/src/test/routes/` following the co-location pattern established in Story 1.1
 - All test assertions use Spanish strings for user-visible text (matching company standard)
 - WCAG accessibility check via `@testing-library/jest-dom` — ensure nav items have accessible `aria-label` attributes
+- Router-aware tests use `createMemoryHistory` + `act(async () => { await router.load() })` for async rendering
 
 ### File List (Expected)
 
@@ -181,14 +182,15 @@ function ClientesPage() {
 - `frontend/src/routes/_app.tsx` — Pathless application shell layout
 - `frontend/src/routes/_app/clientes.tsx` — `/clientes` placeholder route
 - `frontend/src/routes/_app/contactos.tsx` — `/contactos` placeholder route
-- `frontend/src/routes/not-found.tsx` — 404 not-found view
+- `frontend/src/routes/-not-found.tsx` — 404 not-found view (renamed from not-found.tsx to use `-` prefix)
 - `frontend/src/test/routes/app-layout.test.tsx` — Layout + navigation tests
 - `frontend/src/test/routes/not-found.test.tsx` — 404 page tests
 
 #### Modified files
 - `frontend/src/routes/__root.tsx` — Register `notFoundComponent`
 - `frontend/src/routes/index.tsx` — Add redirect to `/clientes`
-- `frontend/src/routeTree.gen.ts` — Auto-regenerated by TanStack Router plugin
+- `frontend/src/main.tsx` — Add siesa-ui-kit/dist/style.css import
+- `frontend/package.json` — Added @heroicons/react dependency
 
 ### References
 
@@ -209,12 +211,36 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
-_To be filled by Dev Agent during implementation._
+- siesa-ui-kit CSS must be imported in `main.tsx` (not in route components) to avoid test environment resolution errors under node conditions.
+- TanStack Router requires `-` prefix for helper files inside `src/routes/` that do not export a `Route` object; `-not-found.tsx` is used instead of `not-found.tsx`.
+- Tests using `RouterProvider` require `await act(async () => { await router.load() })` for async rendering to complete before assertions.
+- `AppLayout` is exported from `_app.tsx` to allow direct import in tests; TanStack Router emits a bundle-split advisory (non-critical).
+- `@heroicons/react` was installed as it is not included by default in the project.
 
 ### Completion Notes List
 
-_To be filled by Dev Agent during implementation._
+- Task 1: `_app.tsx` created with `LayoutBase` (desktop) and responsive visibility via `hidden lg:flex`. Active state via `useRouterState` and `data-active` attribute on `Link` elements. NavigationRailGroupMenuItem shape used for LayoutBase navigationItems.
+- Task 2: `NavigationBar` from siesa-ui-kit rendered inside `flex lg:hidden` container. Uses NavigationBarItem shape with `ariaLabel` for WCAG 2.1 AA compliance.
+- Task 3: `_app/clientes.tsx` and `_app/contactos.tsx` created as placeholder routes with Spanish headings.
+- Task 4: `-not-found.tsx` exports `NotFoundPage` with `data-testid` markers, registered in `__root.tsx` via `notFoundComponent`.
+- Task 5: `index.tsx` updated with `beforeLoad` redirect to `/clientes`.
+- Task 6: `__root.tsx` preserves `id="app-shell"` and renders `Outlet` for pathless layout pickup.
+- Task 7: 65 tests passing across 12 test files, zero TypeScript errors.
 
 ### File List
 
-_To be filled by Dev Agent during implementation._
+#### New files
+- `/home/user/lab-sa-quick-dev/frontend/src/routes/_app.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/routes/_app/clientes.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/routes/_app/contactos.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/routes/-not-found.tsx`
+
+#### Modified files
+- `/home/user/lab-sa-quick-dev/frontend/src/routes/__root.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/routes/index.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/main.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/test/routes/app-layout.test.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/test/routes/not-found.test.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/test/routes/root.edge.test.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/package.json`
+- `/home/user/lab-sa-quick-dev/frontend/pnpm-lock.yaml`
