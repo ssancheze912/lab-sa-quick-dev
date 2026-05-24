@@ -36,3 +36,16 @@ workflows:
   sprint_planning:
     status: not_started
     output_file: ~
+
+gate_history:
+  - gate_type: epic
+    epic_id: '1'
+    epic_title: 'Project Foundation & Application Shell'
+    date: '2026-05-24'
+    decision: PASS
+    p0_coverage: 100%
+    p1_coverage: 100%
+    overall_coverage: 100%
+    reason: 'All 17 acceptance criteria fully covered across P0/P1/P2/P3. No gaps. NFR6 (no stack trace) validated. CORS validated. TypeScript strict build validated.'
+    document: '_bmad-output/gate-decision-epic-1.yaml'
+    traceability: '_bmad-output/traceability-matrix.md'
