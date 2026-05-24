@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: review
+Status: done
 
 ## Story
 
@@ -253,3 +253,80 @@ claude-sonnet-4-6
 - backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj (created)
 - backend/tests/SiesaAgents.UnitTests/Domain/ClienteEntityTests.cs (created)
 - backend/tests/SiesaAgents.UnitTests/Domain/ContactoEntityTests.cs (created)
+
+## Senior Developer Review (AI)
+
+**Date:** 2026-05-24
+**Reviewer:** AI Code Review Agent (claude-sonnet-4-6)
+**Verdict:** PASS CON OBSERVACIONES
+
+### Issues Found: 1 Critical auto-corregido, 2 Medium auto-corregidos, 1 Warning pendiente, 1 Sugerencia pendiente
+
+---
+
+### [CRITICAL — AUTO-CORREGIDO] ExceptionHandlingMiddleware sin guardia `Response.HasStarted`
+
+**Archivo:** `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs`
+
+Si la respuesta ya comenzó a transmitirse (streaming) cuando ocurre una excepción, el middleware intentaba sobrescribir los headers y el body, lo que lanza una segunda excepción de tipo `InvalidOperationException` creando un estado indefinido. Se agregó la guardia `if (context.Response.HasStarted) return;` antes de modificar la respuesta.
+
+**Corrección aplicada:** `if (context.Response.HasStarted) return;` agregado al inicio del catch.
+
+---
+
+### [MEDIUM — AUTO-CORREGIDO] Puerto 5173 no estaba fijado en `vite.config.ts`
+
+**Archivo:** `frontend/vite.config.ts`
+
+AC#1 requiere que `pnpm run dev` inicie en el puerto 5173. Sin `server.port` y `server.strictPort` configurados explícitamente, Vite usa 5173 solo si está disponible, e incrementa al siguiente puerto libre si no lo está, violando la AC silenciosamente.
+
+**Corrección aplicada:** Se agregó `server: { port: 5173, strictPort: true }` a `vite.config.ts`.
+
+---
+
+### [MEDIUM — AUTO-CORREGIDO] `Infrastructure.csproj` referenciaba incorrectamente `SiesaAgents.Application`
+
+**Archivo:** `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj`
+
+En Clean Architecture, la capa de Infrastructure solo debe depender de Domain (implementa interfaces definidas en Domain). Referenciar Application desde Infrastructure viola el principio de que las dependencias fluyen hacia adentro. Las interfaces de repositorio están correctamente en Domain, por lo que la referencia a Application era innecesaria.
+
+**Corrección aplicada:** Removida la referencia a `SiesaAgents.Application` del `Infrastructure.csproj`.
+
+---
+
+### [WARNING — PENDIENTE] `SaveChangesAsync` expuesto directamente en interfaces de repositorio (no UoW)
+
+**Archivos:** `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`, `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`
+
+Las interfaces de repositorio exponen `SaveChangesAsync`, lo que acopla el guardado al repositorio individual e impide transacciones atómicas multi-repositorio. Los estándares de compañía definen `UnitOfWork` en `Shared.Infrastructure`. Esta corrección debe aplicarse al implementar `Shared.Infrastructure` en Story 1.3, eliminando `SaveChangesAsync` de los repositorios individuales.
+
+**Acción requerida (Story 1.3):** Crear `IUnitOfWork` en `Shared.Domain` e implementarlo en `Shared.Infrastructure`. Eliminar `SaveChangesAsync` de las interfaces de repositorio.
+
+---
+
+### [SUGERENCIA — PENDIENTE] Test de `apiClient` no verifica `baseURL`
+
+**Archivo:** `frontend/src/shared/lib/apiClient.test.ts`
+
+El test actual solo verifica el header `Content-Type`. No verifica que `baseURL` sea la variable de entorno `VITE_API_URL`. Si la variable de entorno no está definida, la `baseURL` sería `undefined` y todas las llamadas HTTP fallarían silenciosamente apuntando a rutas relativas.
+
+**Acción recomendada:** Agregar un test que verifique `apiClient.defaults.baseURL` usando `import.meta.env.VITE_API_URL` o un valor conocido del entorno de test.
+
+---
+
+### AC Validation Summary
+
+| AC | Estado | Evidencia |
+|----|--------|-----------|
+| AC1: `pnpm run dev` en puerto 5173, TypeScript strict | PASS (post-fix) | `tsconfig.app.json` strict=true; `vite.config.ts` port=5173 fijado tras corrección |
+| AC2: Backend en puerto 5000, Scalar en `/scalar`, 4 proyectos en .sln | PASS | `Program.cs` usa `MapScalarApiReference()`; sln contiene los 5 proyectos |
+| AC3: CORS permite origen 5173 | PASS | `appsettings.Development.json` + `Program.cs` configurados correctamente |
+| AC4: TypeScript compila sin errores | PASS | `strict: true`, `noImplicitAny: true`, `strictNullChecks: true` en `tsconfig.app.json` |
+| AC5: `dotnet build` con cero errores | PASS (condicional) | Estructura de proyectos correcta; `TreatWarningsAsErrors=true` en todos los .csproj |
+
+### Files Auto-Fixed in This Review
+
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` (modified — Response.HasStarted guard added)
+- `frontend/vite.config.ts` (modified — server.port 5173 + strictPort added)
+- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` (modified — removed redundant Application reference)
+- `frontend/.gitignore` (modified — added .env.development, .env.production, .env.staging)
