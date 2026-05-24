@@ -89,16 +89,16 @@ test.describe('TanStack Router — home route (index.tsx)', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // THEN: The home page heading is visible
-    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('[data-testid="home-page-title"]')).toBeVisible();
   });
 
   test('[P1] home page h1 should contain "Siesa Agents" (brand title)', async ({ page }) => {
-    // GIVEN: index.tsx renders <h1>Siesa Agents</h1>
+    // GIVEN: index.tsx renders <h1 data-testid="home-page-title">Siesa Agents</h1>
     // WHEN: The root route is visited
     await page.goto('/');
 
     // THEN: The h1 heading contains the app name
-    await expect(page.locator('h1')).toContainText('Siesa Agents');
+    await expect(page.locator('[data-testid="home-page-title"]')).toContainText('Siesa Agents');
   });
 
   test('[P1] Outlet in __root.tsx must render the index route child component', async ({ page }) => {
@@ -106,9 +106,9 @@ test.describe('TanStack Router — home route (index.tsx)', () => {
     // WHEN: The / route is navigated
     await page.goto('/');
 
-    // THEN: The Outlet rendered the index route (h1 appears inside app-root)
-    const h1InsideRoot = await page.locator('[data-testid="app-root"] h1').count();
-    expect(h1InsideRoot).toBe(1);
+    // THEN: The Outlet rendered the index route (home-page-title appears inside app-root)
+    const titleInsideRoot = await page.locator('[data-testid="app-root"] [data-testid="home-page-title"]').count();
+    expect(titleInsideRoot).toBe(1);
   });
 });
 
@@ -128,7 +128,7 @@ test.describe('TanStack Router — browser history navigation', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // THEN: User is back on the home page with the home content visible
-    await expect(page.locator('h1')).toContainText('Siesa Agents');
+    await expect(page.locator('[data-testid="home-page-title"]')).toContainText('Siesa Agents');
   });
 
   test('[P1] should not produce runtime errors during back/forward navigation', async ({
@@ -138,6 +138,7 @@ test.describe('TanStack Router — browser history navigation', () => {
     const pageErrors: string[] = [];
     page.on('pageerror', (err) => pageErrors.push(err.message));
 
+    // WHEN: The user navigates forward then back using browser history
     await page.goto('/');
     await page.goto('/unknown-route-for-history');
     await page.goBack();

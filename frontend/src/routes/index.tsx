@@ -6,8 +6,8 @@ export const Route = createFileRoute('/')({
 
 function HomePage() {
   return (
-    <main>
-      <h1>Siesa Agents</h1>
+    <main data-testid="home-page">
+      <h1 data-testid="home-page-title">Siesa Agents</h1>
     </main>
   )
 }
