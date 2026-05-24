@@ -20,6 +20,12 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SiesaAgents.Application\SiesaAgents.Application.csproj" />
     <ProjectReference Include="..\..\src\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
+    <ProjectReference Include="..\..\src\SiesaAgents.Infrastructure\SiesaAgents.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Required by DbContextConfigurationTests (Story 1.3 ATDD) -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.*" />
   </ItemGroup>
 
 </Project>
