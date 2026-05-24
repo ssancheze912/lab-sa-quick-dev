@@ -172,8 +172,8 @@ test.describe('AC2 — Mobile NavigationBar (viewport < 1024px)', () => {
 
     const navigationPromise = page.waitForURL('**/clientes', { waitUntil: 'networkidle' });
 
-    // WHEN: The user taps the "Clientes" nav item
-    await page.locator('[data-testid="nav-item-clientes"]').tap();
+    // WHEN: The user clicks/taps the "Clientes" nav item
+    await page.locator('[data-testid="nav-item-clientes"]').click();
     await navigationPromise;
 
     // THEN: Navigation goes to /clientes

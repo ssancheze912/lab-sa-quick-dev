@@ -65,12 +65,10 @@ test.describe('AC1 — Desktop NavigationRail', () => {
     await page.goto('/contactos');
     await page.waitForLoadState('networkidle');
 
-    // Track whether a full-page navigation occurs (not SPA)
+    // Track whether a full-page reload occurs (load event fires on full reload, not on SPA pushState)
     let fullPageReload = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame()) {
-        fullPageReload = true;
-      }
+    page.on('load', () => {
+      fullPageReload = true;
     });
 
     // WHEN: The user clicks the "Clientes" nav item
@@ -79,7 +77,7 @@ test.describe('AC1 — Desktop NavigationRail', () => {
     // THEN: URL changes to /clientes (SPA navigation — no full page reload)
     await page.waitForURL('**/clientes');
     expect(page.url()).toContain('/clientes');
-    // SPA: navigation event fires but page does NOT fully reload (no DOMContentLoaded fired)
+    // SPA: load event does NOT fire for client-side pushState navigation
     expect(fullPageReload).toBe(false);
   });
 
@@ -92,10 +90,8 @@ test.describe('AC1 — Desktop NavigationRail', () => {
     await page.waitForLoadState('networkidle');
 
     let fullPageReload = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame()) {
-        fullPageReload = true;
-      }
+    page.on('load', () => {
+      fullPageReload = true;
     });
 
     // WHEN: The user clicks the "Contactos" nav item
