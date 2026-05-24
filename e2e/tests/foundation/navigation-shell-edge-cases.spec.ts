@@ -102,6 +102,8 @@ test.describe('AC1/AC2 (Edge) — Viewport and responsive boundary conditions', 
   }) => {
     // GIVEN: Desktop viewport (≥1024px) — only rail should render
     await page.setViewportSize({ width: 1280, height: 800 });
+    // Network-first: intercept BEFORE navigation
+    await page.route('**/api/**', (route) => route.continue());
     await page.goto('/clientes');
     await page.waitForLoadState('domcontentloaded');
 
@@ -119,6 +121,8 @@ test.describe('AC1/AC2 (Edge) — Viewport and responsive boundary conditions', 
   }) => {
     // GIVEN: Mobile viewport (<1024px) — only bar should render
     await page.setViewportSize({ width: 375, height: 812 });
+    // Network-first: intercept BEFORE navigation
+    await page.route('**/api/**', (route) => route.continue());
     await page.goto('/clientes');
     await page.waitForLoadState('domcontentloaded');
 

@@ -105,6 +105,8 @@ test.describe('AC1 — Desktop NavigationRail (viewport ≥ 1024px)', () => {
 
   test('[P1] NavigationBar should NOT be visible on desktop viewport', async ({ page }) => {
     // GIVEN: Desktop viewport (≥1024px)
+    // Network-first: intercept BEFORE navigation
+    await page.route('**/api/**', (route) => route.continue());
     await page.goto('/clientes');
     await page.waitForLoadState('domcontentloaded');
 
@@ -137,6 +139,8 @@ test.describe('AC2 — Mobile NavigationBar (viewport < 1024px)', () => {
 
   test('[P1] NavigationRail should NOT be visible on mobile viewport', async ({ page }) => {
     // GIVEN: Mobile viewport
+    // Network-first: intercept BEFORE navigation
+    await page.route('**/api/**', (route) => route.continue());
     await page.goto('/clientes');
     await page.waitForLoadState('domcontentloaded');
 
