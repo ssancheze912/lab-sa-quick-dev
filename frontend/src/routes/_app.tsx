@@ -65,7 +65,7 @@ export function AppLayout() {
             data-active={isClientes ? 'true' : undefined}
             aria-label="Clientes"
             aria-current={isClientes ? 'page' : undefined}
-            className="flex flex-1 flex-col items-center justify-center gap-1 py-3 min-h-[56px] text-xs text-slate-600 hover:bg-slate-50 data-[active=true]:text-blue-600"
+            className="flex flex-1 flex-col items-center justify-center gap-1 py-3 min-h-[56px] text-xs text-slate-600 hover:bg-slate-50 data-[active=true]:bg-blue-50 data-[active=true]:text-blue-600"
           >
             <UsersIcon className="h-6 w-6" />
             <span>Clientes</span>
@@ -76,7 +76,7 @@ export function AppLayout() {
             data-active={isContactos ? 'true' : undefined}
             aria-label="Contactos"
             aria-current={isContactos ? 'page' : undefined}
-            className="flex flex-1 flex-col items-center justify-center gap-1 py-3 min-h-[56px] text-xs text-slate-600 hover:bg-slate-50 data-[active=true]:text-blue-600"
+            className="flex flex-1 flex-col items-center justify-center gap-1 py-3 min-h-[56px] text-xs text-slate-600 hover:bg-slate-50 data-[active=true]:bg-blue-50 data-[active=true]:text-blue-600"
           >
             <UserIcon className="h-6 w-6" />
             <span>Contactos</span>
