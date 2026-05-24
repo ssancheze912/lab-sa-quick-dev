@@ -19,7 +19,7 @@ import { execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 
-const ROOT_DIR = path.resolve(__dirname, '../../../..');
+const ROOT_DIR = path.resolve(__dirname, '../../..');
 const FRONTEND_DIR = path.join(ROOT_DIR, 'frontend');
 const BACKEND_DIR = path.join(ROOT_DIR, 'backend');
 
