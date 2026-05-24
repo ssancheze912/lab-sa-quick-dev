@@ -1,13 +1,20 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createElement } from 'react'
 import { routeTree } from '../../routeTree.gen'
 
 async function renderWithRouter(initialPath: string) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const history = createMemoryHistory({ initialEntries: [initialPath] })
   const router = createRouter({ routeTree, history })
   await router.load()
-  render(<RouterProvider router={router} />)
+  render(
+    createElement(QueryClientProvider, { client: queryClient },
+      createElement(RouterProvider, { router })
+    )
+  )
   return { router, history }
 }
 
@@ -30,9 +37,9 @@ describe('AppShell', () => {
     expect(navElements.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('renders Clientes heading at /clientes route', async () => {
+  it('renders Clientes panel at /clientes route', async () => {
     await renderWithRouter('/clientes')
-    expect(await screen.findByRole('heading', { name: /clientes/i })).toBeInTheDocument()
+    expect(await screen.findByTestId('clientes-list-panel')).toBeInTheDocument()
   })
 
   it('renders Contactos heading at /contactos route', async () => {
@@ -49,13 +56,13 @@ describe('AppShell', () => {
       fireEvent.click(navLink)
     })
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clientes/i })).toBeInTheDocument()
+      expect(screen.getByTestId('clientes-list-panel')).toBeInTheDocument()
     })
   })
 
   it('clicking Contactos nav item navigates to /contactos', async () => {
     await renderWithRouter('/clientes')
-    await screen.findByRole('heading', { name: /clientes/i })
+    await screen.findByTestId('clientes-list-panel')
     // Nav items render as <a> links (TanStack Router <Link>), not buttons
     const navLink = await screen.findByTestId('nav-item-contactos')
     await act(async () => {
@@ -68,7 +75,7 @@ describe('AppShell', () => {
 
   it('active nav item has aria-current="page" when on matching route', async () => {
     await renderWithRouter('/clientes')
-    await screen.findByRole('heading', { name: /clientes/i })
+    await screen.findByTestId('clientes-list-panel')
     // Nav items render as <a> links with aria-current="page" set directly on the element
     const navLink = await screen.findByTestId('nav-item-clientes')
     expect(navLink.getAttribute('aria-current')).toBe('page')
@@ -82,6 +89,6 @@ describe('AppShell', () => {
 
   it('redirects from / to /clientes', async () => {
     await renderWithRouter('/')
-    expect(await screen.findByRole('heading', { name: /clientes/i })).toBeInTheDocument()
+    expect(await screen.findByTestId('clientes-list-panel')).toBeInTheDocument()
   })
 })

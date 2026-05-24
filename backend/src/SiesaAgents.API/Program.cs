@@ -1,7 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +24,10 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod()));
 
+// Story 2.1: Client Management DI registrations
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<GetClientesQueryHandler>();
+
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -27,6 +35,9 @@ app.UseCors("DevCors");
 
 app.MapOpenApi();
 app.MapScalarApiReference();
+
+// Story 2.1: Client endpoints
+app.MapClienteEndpoints();
 
 // Test helper endpoint - Development only
 if (app.Environment.IsDevelopment())

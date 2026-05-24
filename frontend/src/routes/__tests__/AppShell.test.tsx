@@ -23,6 +23,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createElement } from 'react'
 import { routeTree } from '../../routeTree.gen'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,14 +38,23 @@ import { routeTree } from '../../routeTree.gen'
  * NOTE: router.load() is required before rendering RouterProvider in tests
  * for useNavigate() and route matching to work correctly with TanStack Router v1.
  * See Dev Agent Record debug log in story 1-2-frontend-navigation-shell.md.
+ *
+ * Story 2.1: Wrapped with QueryClientProvider (required by ClienteListView).
  */
 async function renderWithRouter(initialPath: string) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [initialPath] }),
   })
   await router.load()
-  render(<RouterProvider router={router} />)
+  render(
+    createElement(QueryClientProvider, { client: queryClient },
+      createElement(RouterProvider, { router })
+    )
+  )
   return router
 }
 
@@ -96,11 +107,12 @@ describe('AC1 — Desktop NavigationRail', () => {
 
   it('should navigate to /clientes URL when Clientes nav item is clicked', async () => {
     // GIVEN: The application is on /contactos
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const router = createRouter({
       routeTree,
       history: createMemoryHistory({ initialEntries: ['/contactos'] }),
     })
-    render(<RouterProvider router={router} />)
+    render(createElement(QueryClientProvider, { client: queryClient }, createElement(RouterProvider, { router })))
 
     // WHEN: User clicks the Clientes navigation entry
     const clientesItem = await screen.findByTestId('nav-item-clientes')
@@ -114,11 +126,12 @@ describe('AC1 — Desktop NavigationRail', () => {
 
   it('should navigate to /contactos URL when Contactos nav item is clicked', async () => {
     // GIVEN: The application is on /clientes
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const router = createRouter({
       routeTree,
       history: createMemoryHistory({ initialEntries: ['/clientes'] }),
     })
-    render(<RouterProvider router={router} />)
+    render(createElement(QueryClientProvider, { client: queryClient }, createElement(RouterProvider, { router })))
 
     // WHEN: User clicks the Contactos navigation entry
     const contactosItem = await screen.findByTestId('nav-item-contactos')
@@ -192,7 +205,7 @@ describe('AC3 — Deep Linking', () => {
 
     // THEN: The Clientes view is rendered
     await waitFor(() => {
-      expect(screen.getByTestId('clientes-view')).toBeInTheDocument()
+      expect(screen.getByTestId('clientes-list-panel')).toBeInTheDocument()
     })
   })
 
@@ -208,11 +221,12 @@ describe('AC3 — Deep Linking', () => {
 
   it('should NOT redirect /clientes to home screen on direct URL access', async () => {
     // GIVEN: User navigates directly to /clientes
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const router = createRouter({
       routeTree,
       history: createMemoryHistory({ initialEntries: ['/clientes'] }),
     })
-    render(<RouterProvider router={router} />)
+    render(createElement(QueryClientProvider, { client: queryClient }, createElement(RouterProvider, { router })))
 
     // THEN: URL pathname remains /clientes (no redirect)
     await waitFor(() => {
@@ -222,11 +236,12 @@ describe('AC3 — Deep Linking', () => {
 
   it('should NOT redirect /contactos to home screen on direct URL access', async () => {
     // GIVEN: User navigates directly to /contactos
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const router = createRouter({
       routeTree,
       history: createMemoryHistory({ initialEntries: ['/contactos'] }),
     })
-    render(<RouterProvider router={router} />)
+    render(createElement(QueryClientProvider, { client: queryClient }, createElement(RouterProvider, { router })))
 
     // THEN: URL pathname remains /contactos (no redirect)
     await waitFor(() => {
@@ -296,11 +311,12 @@ describe('AC4 — 404 Not-Found Route', () => {
 
   it('should navigate to /clientes when user clicks the return link on 404 view', async () => {
     // GIVEN: User is on the 404 view
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const router = createRouter({
       routeTree,
       history: createMemoryHistory({ initialEntries: ['/unknown-path'] }),
     })
-    render(<RouterProvider router={router} />)
+    render(createElement(QueryClientProvider, { client: queryClient }, createElement(RouterProvider, { router })))
 
     // WHEN: User clicks the return to Clientes link
     const returnLink = await screen.findByTestId('not-found-return-link')

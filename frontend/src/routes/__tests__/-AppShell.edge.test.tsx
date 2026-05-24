@@ -12,11 +12,16 @@
  *   - Inactive item explicitly has data-active="false"
  *   - Nav item aria-current absent (undefined/not set) for inactive items
  *   - No nav shell rendered on 404 (shell is gated by route match)
+ *
+ * Story 2.1 update: renderWithRouter now wraps with QueryClientProvider
+ * (required by ClienteListView which uses TanStack Query).
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, act } from '@testing-library/react'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createElement } from 'react'
 import { routeTree } from '../../routeTree.gen'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -24,10 +29,15 @@ import { routeTree } from '../../routeTree.gen'
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function renderWithRouter(initialPath: string) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const history = createMemoryHistory({ initialEntries: [initialPath] })
   const router = createRouter({ routeTree, history })
   await router.load()
-  render(<RouterProvider router={router} />)
+  render(
+    createElement(QueryClientProvider, { client: queryClient },
+      createElement(RouterProvider, { router })
+    )
+  )
   return { router, history }
 }
 
@@ -219,13 +229,13 @@ describe('Root Path Redirect — Component Level', () => {
     })
   })
 
-  it('[P1] should render the Clientes view after root redirect (no blank screen)', async () => {
+  it('[P1] should render the Clientes list panel after root redirect (no blank screen)', async () => {
     // GIVEN: Router starts at /
     await renderWithRouter('/')
 
-    // THEN: The actual Clientes content is shown (not a blank screen or loading state)
+    // THEN: The actual Clientes content is shown (clientes-list-panel from Story 2.1)
     await waitFor(() => {
-      expect(screen.getByTestId('clientes-view')).toBeInTheDocument()
+      expect(screen.getByTestId('clientes-list-panel')).toBeInTheDocument()
     })
   })
 })
