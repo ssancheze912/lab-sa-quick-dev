@@ -5,7 +5,12 @@
   "scripts": {
     "dev": "pnpm --filter frontend dev",
     "build": "pnpm --filter frontend build",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:p0": "playwright test --grep '\\[P0\\]'",
+    "test:e2e:p1": "playwright test --grep '\\[P0\\]|\\[P1\\]'",
+    "test:e2e:foundation": "playwright test e2e/tests/foundation",
+    "test:e2e:api": "playwright test e2e/tests/api",
+    "test:e2e:story-1-1": "playwright test e2e/tests/foundation e2e/tests/api"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0"
