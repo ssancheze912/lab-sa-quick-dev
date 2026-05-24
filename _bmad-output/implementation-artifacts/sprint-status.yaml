@@ -26,7 +26,7 @@ development_status:
   # Epic 2 — Client Management
   2-1-client-list-search: review
   2-2-client-detail-view: review
-  2-3-create-client: ready-for-dev
+  2-3-create-client: in-progress
   2-4-edit-client: pending
   2-5-delete-client: pending
   2-6-sort-client-list: pending
