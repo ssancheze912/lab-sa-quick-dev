@@ -28,4 +28,13 @@ app.UseCors("DevCors");
 app.MapOpenApi();
 app.MapScalarApiReference();
 
+// Test helper endpoint - Development only
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/api/test-exception", () =>
+    {
+        throw new InvalidOperationException("Test exception for middleware validation");
+    });
+}
+
 app.Run();
