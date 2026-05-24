@@ -124,7 +124,7 @@ test.describe('Frontend .env.development — required environment variables', ()
     // GIVEN: .env.development is safe to commit (no sensitive data)
     // WHEN: .env.development content is scanned
     const envPath = path.join(FRONTEND_DIR, '.env.development');
-    if (!fs.existsSync(envPath)) return; // graceful skip if missing
+    expect(fs.existsSync(envPath), `.env.development must exist at ${envPath}`).toBe(true);
 
     const content = fs.readFileSync(envPath, 'utf-8').toLowerCase();
 
