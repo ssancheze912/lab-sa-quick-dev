@@ -17,7 +17,8 @@ import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-const FRONTEND_ROOT = resolve(__dirname, '../../../..')
+// From frontend/src/__tests__/setup/ → go up 3 levels to reach frontend/
+const FRONTEND_ROOT = resolve(__dirname, '../../..')
 
 // ─────────────────────────────────────────────────────────────────────────────
 // File existence
