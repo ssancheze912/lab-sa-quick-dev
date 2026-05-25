@@ -1,0 +1,165 @@
+traceability_and_gate:
+  # Phase 1: Traceability
+  traceability:
+    epic_id: "epic-01"
+    epic_title: "Project Foundation & Application Shell"
+    stories:
+      - "1.1"
+      - "1.2"
+      - "1.3"
+    date: "2026-05-25"
+    evaluator: "TEA Agent (testarch-trace v4.0)"
+    coverage:
+      overall: "93%"
+      p0: "100%"
+      p1: "83%"
+      p2: "N/A"
+      p3: "N/A"
+    criteria_totals:
+      p0: 9
+      p1: 6
+      p2: 0
+      p3: 0
+      total: 15
+    criteria_full_coverage:
+      p0: 9
+      p1: 5
+      total: 14
+    gaps:
+      critical: 0
+      high: 1
+      medium: 0
+      low: 0
+    high_priority_gap:
+      criterion_id: "AC-1.3.3"
+      description: "ApplySnakeCaseNaming() snake_case column naming — PARTIAL (OnModelCreating runs but column-level naming not asserted due to no domain entities in scope)"
+      recommended_test: "1.3-UNIT-012 — Add column name assertion in Epic 2 Story 2.1 when ClienteEntity is added"
+    quality:
+      unit_component_tests_total: 83
+      unit_component_tests_passing: 83
+      unit_component_pass_rate: "100%"
+      e2e_api_tests_total: 102
+      e2e_api_tests_passing: 97
+      e2e_api_pass_rate: "95.1%"
+      known_failures_classification: "5 E2E design issues (framenavigated + tap() detection) — P2/P3 concern, not P0/P1"
+      blocker_issues: 0
+      warning_issues: 1
+    recommendations:
+      - "Add snake_case column naming assertion in Epic 2 Story 2.1 (closes AC-1.3.3 to FULL)"
+      - "Confirm /api/test/trigger-exception probe endpoint exists in backend"
+      - "Confirm /api/test/db-context-probe endpoint exists in backend"
+      - "Split navigation-shell.spec.ts into per-AC spec files for maintainability"
+      - "Add CI step for pnpm exec tsc --noEmit to directly assert TypeScript strict mode"
+
+  # Phase 2: Gate Decision
+  gate_decision:
+    decision: "CONCERNS"
+    gate_type: "epic"
+    decision_mode: "deterministic"
+    target: "epic-01"
+    date: "2026-05-25"
+    evaluator: "TEA Agent (testarch-trace v4.0)"
+
+    criteria_evaluation:
+      p0_coverage:
+        threshold: "100%"
+        actual: "100%"
+        status: "PASS"
+      p0_test_pass_rate:
+        threshold: "100%"
+        actual: "100%"
+        status: "PASS"
+      security_issues:
+        threshold: 0
+        actual: 0
+        status: "PASS"
+      critical_nfr_failures:
+        threshold: 0
+        actual: 0
+        status: "PASS"
+      flaky_tests:
+        threshold: 0
+        actual: "NOT_ASSESSED"
+        status: "N/A"
+      p1_coverage:
+        threshold: "90%"
+        actual: "83%"
+        status: "WARN"
+        note: "Below 90% threshold — AC-1.3.3 PARTIAL due to structural scope limitation"
+      p1_test_pass_rate:
+        threshold: "95%"
+        actual: "~100%"
+        status: "PASS"
+      overall_test_pass_rate:
+        threshold: "90%"
+        actual: "97%"
+        status: "PASS"
+      overall_coverage:
+        threshold: "80%"
+        actual: "93%"
+        status: "PASS"
+
+    p0_evaluation: "ALL_PASS"
+    p1_evaluation: "SOME_CONCERNS"
+
+    thresholds_used:
+      min_p0_coverage: 100
+      min_p0_pass_rate: 100
+      min_p1_coverage: 90
+      min_p1_pass_rate: 95
+      min_overall_pass_rate: 90
+      min_coverage: 80
+
+    decision_rationale: >
+      P0 criteria: 100% coverage, 100% pass rate — ALL PASS.
+      P1 criteria: 83% coverage (below 90% threshold) due to AC-1.3.3 snake_case naming not
+      assertable at column level (no domain entities in scope for Story 1.3).
+      CONCERNS (not FAIL) because: the gap is structural scope limitation not a missing test for
+      an implemented feature; P1 test pass rate is ~100%; overall coverage is 93%;
+      overall pass rate is 97%; security validated (NFR6 Problem Details without stack traces
+      tested by 6 unit tests). Risk is LOW — EFCore.NamingConventions is registered in DI,
+      verifiable by code inspection.
+
+    evidence:
+      test_results_source: "Dev Agent Records in implementation artifacts (local run)"
+      test_results_story_1_1: "_bmad-output/implementation-artifacts/1-1-project-initialization-repository-structure.md"
+      test_results_story_1_2: "_bmad-output/implementation-artifacts/1-2-frontend-navigation-shell.md"
+      test_results_story_1_3: "_bmad-output/implementation-artifacts/1-3-backend-database-foundation.md"
+      traceability: "_bmad-output/traceability-matrix.md"
+      nfr_assessment: "inline_validation_via_unit_tests"
+      code_coverage: "not_collected"
+      burn_in: "not_available"
+
+    residual_risks:
+      - risk: "AC-1.3.3 snake_case naming not asserted at column level"
+        priority: "P1"
+        probability: "Low"
+        impact: "High"
+        risk_score: "Medium"
+        mitigation: "Code review confirmed UseSnakeCaseNamingConvention() in DI registration"
+        remediation: "Add 1.3-UNIT-012 in Epic 2 Story 2.1 when ClienteEntity added"
+      - risk: "E2E probe endpoints may not be implemented"
+        priority: "P2"
+        probability: "Medium"
+        impact: "Low"
+        risk_score: "Low"
+        mitigation: "Unit test coverage for AC-1.3.2 and AC-1.3.4 is FULL independently"
+        remediation: "Confirm or add /api/test/trigger-exception and /api/test/db-context-probe"
+
+    overall_residual_risk: "LOW"
+
+    next_steps:
+      immediate:
+        - "Proceed with Epic 2 (Clientes module) — Epic 1 foundation is solid"
+        - "Confirm /api/test/trigger-exception and /api/test/db-context-probe endpoints"
+      epic_2_story_2_1:
+        - "Add 1.3-UNIT-012: Assert ClienteEntity column names use snake_case via EF Core metadata"
+        - "Close AC-1.3.3 traceability gap after test is added"
+      backlog:
+        - "Split navigation-shell.spec.ts into per-AC spec files"
+        - "Add CI step for pnpm exec tsc --noEmit"
+
+    deployment_recommendation: >
+      DEPLOY to development/staging environment. Epic 1 foundation is stable.
+      P0 is 100% covered. One P1 structural gap (AC-1.3.3) will be remediated in Epic 2.
+      No production deployment expected for foundation epic — this is development infrastructure.
