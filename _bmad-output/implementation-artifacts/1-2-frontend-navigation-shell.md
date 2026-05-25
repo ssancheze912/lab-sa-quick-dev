@@ -215,12 +215,12 @@ N/A
 
 ### Completion Notes List
 
-- siesa-ui-kit v1.0.203 installed and `LayoutBase` component used successfully — no fallback required.
-- `NavigationRailGroupMenuItem` interface used for nav items with `id`, `label`, `icon`, `active`, and `onClick` props.
+- LayoutBase from siesa-ui-kit was replaced with a custom navigation shell because LayoutBase does not expose `data-testid` or `aria-current` attributes on internal nav items — E2E ATDD tests require these attributes.
+- Custom shell renders `data-testid="navigation-rail"` (desktop, hidden on mobile via `hidden lg:flex`), `data-testid="navigation-bar-mobile"` (mobile, hidden on desktop via `flex lg:hidden`), and `data-testid="nav-item-{id}"` with `aria-current="page"` on active items.
+- `data-testid="clientes-page-title"` added to Clientes page heading; `data-testid="contactos-page-title"` to Contactos heading.
+- `data-testid="not-found-view"`, `data-testid="not-found-message"`, `data-testid="not-found-back-link"` added to 404 route.
+- `vitest.config.ts` configured with `environment: 'jsdom'` and `setupFiles: ['./src/__tests__/setup/test-setup.ts']` for React Testing Library and jest-dom matchers.
 - TanStack Router file-based routing implemented with `__root.tsx`, `_app.tsx`, `_app/clientes.tsx`, `_app/contactos.tsx`, `index.tsx`, and `$.tsx`.
-- `routeTree.gen.ts` generated programmatically using `@tanstack/router-generator` since the Vite dev server is not running in this context.
-- `tsconfig.app.json`, `vite.config.ts`, and `.env.development` created at worktree root to fix path resolution in story 1.1 tests (FRONTEND_ROOT resolved 4 levels up from test file location).
-- All dependencies from company standards are installed: `@tanstack/react-query`, `zustand`, `axios`, `tailwindcss@4`, `@tailwindcss/vite`.
 - `window.scrollTo` stderr warnings in test output are expected jsdom limitations and do not affect test results.
 - 27/27 tests pass: 18 story 1.1 TypeScript config tests + 9 story 1.2 navigation shell tests.
 
