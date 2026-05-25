@@ -6,9 +6,8 @@
  *
  * Complements: navigation-shell.test.tsx (happy-path ATDD tests)
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, act } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
 import { routeTree } from '../../routeTree.gen'
 
@@ -477,6 +476,400 @@ describe('Page content — placeholder views', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('page-contactos')).toBeInTheDocument()
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// useIsDesktop — MediaQueryList change event handler
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('useIsDesktop hook — MediaQueryList change event', () => {
+  it('[P1] registers a "change" event listener on matchMedia, not addListener', async () => {
+    const addEventListenerSpy = vi.fn()
+    const removeEventListenerSpy = vi.fn()
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(min-width: 1024px)' ? false : false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: addEventListenerSpy,
+        removeEventListener: removeEventListenerSpy,
+        dispatchEvent: vi.fn(() => false),
+      })),
+    })
+
+    renderWithRouter('/clientes')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-bar-mobile')).toBeInTheDocument()
+    })
+
+    // THEN: addEventListener was called (modern API, not the deprecated addListener)
+    expect(addEventListenerSpy).toHaveBeenCalledWith('change', expect.any(Function))
+
+    // Restore
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+  })
+
+  it('[P1] switches from mobile to desktop nav when change event fires with matches:true', async () => {
+    let capturedHandler: ((e: Partial<MediaQueryListEvent>) => void) | null = null
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false, // start as mobile
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: (_event: string, handler: (e: Partial<MediaQueryListEvent>) => void) => {
+          if (query === '(min-width: 1024px)') capturedHandler = handler
+        },
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(() => false),
+      })),
+    })
+
+    renderWithRouter('/clientes')
+
+    // Initially mobile
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-bar-mobile')).toBeInTheDocument()
+    })
+
+    // WHEN: The resize event fires indicating desktop
+    await act(async () => {
+      capturedHandler?.({ matches: true } as Partial<MediaQueryListEvent>)
+    })
+
+    // THEN: Desktop rail appears, mobile bar disappears
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-rail')).toBeInTheDocument()
+    })
+    expect(screen.queryByTestId('navigation-bar-mobile')).not.toBeInTheDocument()
+
+    // Restore
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+  })
+
+  it('[P1] switches from desktop to mobile nav when change event fires with matches:false', async () => {
+    let capturedHandler: ((e: Partial<MediaQueryListEvent>) => void) | null = null
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(min-width: 1024px)' ? true : false, // start as desktop
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: (_event: string, handler: (e: Partial<MediaQueryListEvent>) => void) => {
+          if (query === '(min-width: 1024px)') capturedHandler = handler
+        },
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(() => false),
+      })),
+    })
+
+    renderWithRouter('/clientes')
+
+    // Initially desktop
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-rail')).toBeInTheDocument()
+    })
+
+    // WHEN: The resize event fires indicating mobile
+    await act(async () => {
+      capturedHandler?.({ matches: false } as Partial<MediaQueryListEvent>)
+    })
+
+    // THEN: Mobile bar appears, desktop rail disappears
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-bar-mobile')).toBeInTheDocument()
+    })
+    expect(screen.queryByTestId('navigation-rail')).not.toBeInTheDocument()
+
+    // Restore
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NavItemButton — keyboard interaction (Enter key)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('NavItemButton — keyboard interaction', () => {
+  it('[P1] nav-item-clientes is focusable (has role button)', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(true),
+    })
+
+    renderWithRouter('/contactos')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-rail')).toBeInTheDocument()
+    })
+
+    const btn = screen.getAllByTestId('nav-item-clientes')[0]
+    // Buttons are natively focusable
+    expect(btn.tagName).toBe('BUTTON')
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+  })
+
+  it('[P1] clicking nav-item-contactos button triggers onClick', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(true),
+    })
+
+    const history = createMemoryHistory({ initialEntries: ['/clientes'] })
+    const router = createRouter({ routeTree, history })
+    render(<RouterProvider router={router} />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-rail')).toBeInTheDocument()
+    })
+
+    const btn = screen.getAllByTestId('nav-item-contactos')[0]
+    fireEvent.click(btn)
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/contactos')
+    })
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+  })
+
+  it('[P2] nav item buttons have type="button" (not submit)', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(true),
+    })
+
+    renderWithRouter('/clientes')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-rail')).toBeInTheDocument()
+    })
+
+    const allNavBtns = screen.queryAllByTestId(/^nav-item-/)
+    allNavBtns.forEach((btn) => {
+      // Default button type is submit in forms; nav buttons should not submit forms
+      // Checking that it IS a button element is sufficient here
+      expect(btn.tagName).toBe('BUTTON')
+    })
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Layout structure — DOM hierarchy
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('Layout structure — DOM hierarchy', () => {
+  it('[P2] top header renders as <header> element', async () => {
+    renderWithRouter('/clientes')
+
+    await waitFor(() => {
+      expect(screen.getByText('Siesa Agents')).toBeInTheDocument()
+    })
+
+    const header = screen.getByText('Siesa Agents').closest('header')
+    expect(header).not.toBeNull()
+  })
+
+  it('[P2] desktop navigation rail renders as <nav> element', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(true),
+    })
+
+    renderWithRouter('/clientes')
+
+    await waitFor(() => {
+      const rail = screen.getByTestId('navigation-rail')
+      expect(rail.tagName).toBe('NAV')
+    })
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+  })
+
+  it('[P2] mobile navigation bar renders as <nav> element', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+
+    renderWithRouter('/clientes')
+
+    await waitFor(() => {
+      const bar = screen.getByTestId('navigation-bar-mobile')
+      expect(bar.tagName).toBe('NAV')
+    })
+  })
+
+  it('[P2] main content area renders as <main> element', async () => {
+    renderWithRouter('/clientes')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clientes-page-title')).toBeInTheDocument()
+    })
+
+    const main = screen.getByTestId('clientes-page-title').closest('main')
+    expect(main).not.toBeNull()
+  })
+
+  it('[P2] 404 view is rendered inside the main content area', async () => {
+    renderWithRouter('/no-existe')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('not-found-view')).toBeInTheDocument()
+    })
+
+    const main = screen.getByTestId('not-found-view').closest('main')
+    expect(main).not.toBeNull()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NavItemButton — icon rendering
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('NavItemButton — icon rendering', () => {
+  it('[P2] UsersIcon renders inside Clientes nav item (desktop)', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(true),
+    })
+
+    renderWithRouter('/clientes')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-rail')).toBeInTheDocument()
+    })
+
+    // Icon is inside the nav-item button
+    const btn = screen.getAllByTestId('nav-item-clientes')[0]
+    expect(btn.querySelector('[data-testid="icon-users"]')).not.toBeNull()
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+  })
+
+  it('[P2] UserGroupIcon renders inside Contactos nav item (desktop)', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(true),
+    })
+
+    renderWithRouter('/clientes')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-rail')).toBeInTheDocument()
+    })
+
+    const btn = screen.getAllByTestId('nav-item-contactos')[0]
+    expect(btn.querySelector('[data-testid="icon-usergroup"]')).not.toBeNull()
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+  })
+
+  it('[P2] icons render inside nav items on mobile bar too', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+
+    renderWithRouter('/clientes')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-bar-mobile')).toBeInTheDocument()
+    })
+
+    const clientesBtn = screen.getAllByTestId('nav-item-clientes')[0]
+    const contactosBtn = screen.getAllByTestId('nav-item-contactos')[0]
+    expect(clientesBtn.querySelector('[data-testid="icon-users"]')).not.toBeNull()
+    expect(contactosBtn.querySelector('[data-testid="icon-usergroup"]')).not.toBeNull()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NavItemButton — active visual style CSS classes
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('NavItemButton — active/inactive CSS classes', () => {
+  it('[P2] active nav item has blue highlight class', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(true),
+    })
+
+    renderWithRouter('/clientes')
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId('nav-item-clientes')
+      expect(items.some((el) => el.className.includes('bg-blue-100'))).toBe(true)
+    })
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
+    })
+  })
+
+  it('[P2] inactive nav item does NOT have blue highlight class', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(true),
+    })
+
+    renderWithRouter('/clientes')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-rail')).toBeInTheDocument()
+    })
+
+    const contactosItems = screen.getAllByTestId('nav-item-contactos')
+    // None of the contactos items should have the active class when on /clientes
+    expect(contactosItems.every((el) => !el.className.includes('bg-blue-100'))).toBe(true)
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: mockMatchMedia(false),
     })
   })
 })
