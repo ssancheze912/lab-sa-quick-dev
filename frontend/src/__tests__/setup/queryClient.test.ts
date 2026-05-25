@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { existsSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -39,8 +39,7 @@ describe('queryClient — file structure', () => {
 
 describe('queryClient — configuration content', () => {
   const readContent = () => {
-    const { readFileSync } = require('fs')
-    return readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/queryClient.ts'), 'utf-8') as string
+    return readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/queryClient.ts'), 'utf-8')
   }
 
   it('should configure staleTime to 60000ms (1 minute) as default for queries', () => {

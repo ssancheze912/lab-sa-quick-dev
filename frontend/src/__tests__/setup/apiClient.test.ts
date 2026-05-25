@@ -95,8 +95,7 @@ describe('apiClient — configuration content', () => {
   it('should NOT have any "any" type annotations in apiClient.ts (strict mode requirement)', () => {
     // GIVEN: TypeScript strict mode forbids implicit any — explicit "any" is a smell too
     // WHEN: We scan the file for explicit any annotations (excluding the unknown cast pattern)
-    const { readFileSync } = require('fs')
-    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8') as string
+    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8')
 
     // THEN: No ": any" type annotations are present
     // Note: ": unknown" is acceptable — ": any" is not
@@ -106,8 +105,7 @@ describe('apiClient — configuration content', () => {
 
   it('should use axios.create() to create an instance (not a direct axios import for requests)', () => {
     // GIVEN: axios.create() produces an isolated instance that does not pollute global defaults
-    const { readFileSync } = require('fs')
-    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8') as string
+    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8')
 
     // THEN: axios.create is called
     expect(content).toContain('axios.create(')
