@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { existsSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -48,8 +48,7 @@ describe('apiClient — configuration content', () => {
   it('should reference VITE_API_URL as the baseURL (not a hardcoded http://localhost:5000)', () => {
     // GIVEN: The Axios instance must read baseURL from environment at runtime
     // WHEN: We read the apiClient source
-    const { readFileSync } = require('fs')
-    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8') as string
+    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8')
 
     // THEN: The file uses import.meta.env.VITE_API_URL — not a hardcoded URL
     // (Hardcoded URLs break staging/production environments)
@@ -60,8 +59,7 @@ describe('apiClient — configuration content', () => {
   it('should set Content-Type: application/json as a default header', () => {
     // GIVEN: The backend expects JSON payloads on all endpoints
     // WHEN: We inspect the axios.create config
-    const { readFileSync } = require('fs')
-    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8') as string
+    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8')
 
     // THEN: Content-Type header is declared
     expect(content).toContain('Content-Type')
@@ -70,8 +68,7 @@ describe('apiClient — configuration content', () => {
 
   it('should export apiClient as a named export (not default export)', () => {
     // GIVEN: Named exports are required for tree-shaking and explicit imports
-    const { readFileSync } = require('fs')
-    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8') as string
+    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8')
 
     // THEN: apiClient is exported as a named const
     expect(content).toMatch(/export\s+const\s+apiClient/)
@@ -79,8 +76,7 @@ describe('apiClient — configuration content', () => {
 
   it('should NOT use axios.defaults (instance-based config only, not global mutation)', () => {
     // GIVEN: Mutating axios.defaults affects all axios instances globally — a known footgun
-    const { readFileSync } = require('fs')
-    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8') as string
+    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8')
 
     // THEN: Global defaults must not be mutated
     expect(content).not.toContain('axios.defaults')
@@ -89,8 +85,7 @@ describe('apiClient — configuration content', () => {
   it('should register an error interceptor that rejects with the original error (not swallowed)', () => {
     // GIVEN: Error interceptors must propagate errors to callers for proper error handling
     // WHEN: We inspect the interceptors section
-    const { readFileSync } = require('fs')
-    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8') as string
+    const content = readFileSync(resolve(FRONTEND_ROOT, 'src/shared/lib/apiClient.ts'), 'utf-8')
 
     // THEN: An interceptors.response block must be present and call Promise.reject
     expect(content).toContain('interceptors.response')
