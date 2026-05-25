@@ -216,14 +216,14 @@ N/A
 ### Completion Notes List
 
 - LayoutBase from siesa-ui-kit was replaced with a custom navigation shell because LayoutBase does not expose `data-testid` or `aria-current` attributes on internal nav items — E2E ATDD tests require these attributes.
-- Custom shell renders `data-testid="navigation-rail"` (desktop, hidden on mobile via `hidden lg:flex`), `data-testid="navigation-bar-mobile"` (mobile, hidden on desktop via `flex lg:hidden`), and `data-testid="nav-item-{id}"` with `aria-current="page"` on active items.
+- Custom shell uses `useIsDesktop()` hook (window.matchMedia) to conditionally render ONLY ONE nav component in the DOM at a time: `navigation-rail` on desktop (≥1024px), `navigation-bar-mobile` on mobile (<1024px). This ensures Playwright strict mode does not find duplicate testid elements.
 - `data-testid="clientes-page-title"` added to Clientes page heading; `data-testid="contactos-page-title"` to Contactos heading.
-- `data-testid="not-found-view"`, `data-testid="not-found-message"`, `data-testid="not-found-back-link"` added to 404 route.
+- `data-testid="not-found-view"`, `data-testid="not-found-message"`, `data-testid="not-found-back-link"` added to 404 route. Message updated to "La página que buscas no fue encontrada." to satisfy `containsText('encontrada')` assertion.
+- `window.matchMedia` mock added to `test-setup.ts` (returns `matches: false`) for jsdom compatibility in Vitest unit tests.
 - `vite.config.ts` `test.environment` changed from `node` to `jsdom` with `setupFiles: ['./src/__tests__/setup/test-setup.ts']` for React Testing Library.
 - TanStack Router file-based routing implemented with `__root.tsx`, `_app.tsx`, `_app/clientes.tsx`, `_app/contactos.tsx`, `index.tsx`, and `$.tsx`.
 - `window.scrollTo` stderr warnings in test output are expected jsdom limitations and do not affect test results.
-- 152/152 tests pass in main worktree (including 9 navigation shell tests).
-- 27/27 tests pass in feature branch worktree (18 typescript config + 9 navigation shell).
+- 152/152 unit tests pass. E2E: 45/46 pass across chromium+mobile-chrome; 1 remaining failure is pre-existing test design issue (`.tap()` on chromium project which lacks `hasTouch:true` — passes correctly on mobile-chrome project).
 
 ### File List
 

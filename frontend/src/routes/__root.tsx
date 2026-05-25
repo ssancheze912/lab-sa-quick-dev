@@ -1,5 +1,20 @@
 import { createRootRoute, Outlet, useRouterState, useNavigate } from '@tanstack/react-router'
 import { UsersIcon, UserGroupIcon } from '@heroicons/react/24/outline'
+import { useEffect, useState } from 'react'
+
+function useIsDesktop(): boolean {
+  const [isDesktop, setIsDesktop] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    setIsDesktop(mq.matches)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return isDesktop
+}
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -37,6 +52,7 @@ function RootLayout() {
   const location = useRouterState({ select: (s) => s.location })
   const currentPath = location.pathname
   const navigate = useNavigate()
+  const isDesktop = useIsDesktop()
 
   const navItems: NavItem[] = [
     {
@@ -63,11 +79,35 @@ function RootLayout() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Desktop NavigationRail — visible at ≥ 1024px */}
+        {/* Desktop NavigationRail — rendered only on ≥ 1024px */}
+        {isDesktop && (
+          <nav
+            data-testid="navigation-rail"
+            aria-label="navegación principal"
+            className="flex flex-col gap-1 w-20 bg-white border-r border-slate-200 py-4 px-2 flex-shrink-0"
+          >
+            {navItems.map((item) => (
+              <NavItemButton
+                key={item.id}
+                item={item}
+                onClick={() => void navigate({ to: item.href as '/clientes' | '/contactos' })}
+              />
+            ))}
+          </nav>
+        )}
+
+        {/* Main content area */}
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
+      </div>
+
+      {/* Mobile NavigationBar — rendered only on < 1024px */}
+      {!isDesktop && (
         <nav
-          data-testid="navigation-rail"
-          aria-label="navegación principal"
-          className="hidden lg:flex flex-col gap-1 w-20 bg-white border-r border-slate-200 py-4 px-2 flex-shrink-0"
+          data-testid="navigation-bar-mobile"
+          aria-label="navegación principal móvil"
+          className="flex items-center justify-around h-16 bg-white border-t border-slate-200 flex-shrink-0"
         >
           {navItems.map((item) => (
             <NavItemButton
@@ -77,27 +117,7 @@ function RootLayout() {
             />
           ))}
         </nav>
-
-        {/* Main content area */}
-        <main className="flex-1 overflow-auto">
-          <Outlet />
-        </main>
-      </div>
-
-      {/* Mobile NavigationBar — visible at < 1024px */}
-      <nav
-        data-testid="navigation-bar-mobile"
-        aria-label="navegación principal móvil"
-        className="flex lg:hidden items-center justify-around h-16 bg-white border-t border-slate-200 flex-shrink-0"
-      >
-        {navItems.map((item) => (
-          <NavItemButton
-            key={item.id}
-            item={item}
-            onClick={() => void navigate({ to: item.href as '/clientes' | '/contactos' })}
-          />
-        ))}
-      </nav>
+      )}
     </div>
   )
 }
