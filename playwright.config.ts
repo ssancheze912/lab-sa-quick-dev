@@ -45,7 +45,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'pnpm --filter frontend dev',
+    command: 'pnpm --dir frontend dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

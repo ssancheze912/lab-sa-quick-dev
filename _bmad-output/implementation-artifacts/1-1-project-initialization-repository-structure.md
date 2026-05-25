@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: done
+Status: review
 
 ## Story
 
@@ -184,6 +184,13 @@ N/A
 - All 18 frontend ATDD tests pass (18/18).
 - TypeScript strict mode compiles with zero errors.
 
+### Correction Run (Attempt 2) — ATDD Test Fixes
+
+- **Fix applied**: Added `data-testid="app-root"` to `<div id="root">` in `frontend/index.html`. Commit `55b6e6e`.
+- **Playwright webServer fix**: Changed webServer command from `pnpm --filter frontend dev` (no pnpm workspace) to `pnpm --dir frontend dev` to correctly start the Vite dev server from the `frontend/` subdirectory.
+- **Frontend ATDD results after fix**: 5 of 7 frontend tests pass. 2 remaining failures (AC3 CORS tests) require backend on port 5000.
+- **ENVIRONMENT LIMITATION — Backend tests (9 tests in `e2e/tests/api/backend-initialization.api.spec.ts` + 2 AC3 tests in `project-initialization.spec.ts`)**: All fail with `ECONNREFUSED 127.0.0.1:5000` because .NET SDK is not installed in this CI/sandbox environment. These tests CANNOT be executed here and must be validated on a machine with .NET 10 SDK. This is an infeasible environment constraint — not a code defect.
+
 ### File List
 
 **Frontend (created/modified):**
@@ -223,3 +230,7 @@ N/A
 - `package.json` (copy of `frontend/package.json`)
 - `vite.config.ts` (copy of `frontend/vite.config.ts`)
 - `.env.development` (copy of `frontend/.env.development`)
+
+**Correction run (Attempt 2):**
+- `frontend/index.html` — added `data-testid="app-root"` to React mount div
+- `playwright.config.ts` — fixed webServer command to `pnpm --dir frontend dev`
