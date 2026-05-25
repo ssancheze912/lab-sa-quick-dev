@@ -33,7 +33,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { readFileSync, existsSync, readdirSync } from 'fs'
-import { resolve, dirname, basename } from 'path'
+import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
