@@ -4,3 +4,8 @@ playwright-report/
 test-results/
 dist/
 .cache/
+
+# Environment files — never commit secrets
+.env.*
+!.env.example
+!.env.test

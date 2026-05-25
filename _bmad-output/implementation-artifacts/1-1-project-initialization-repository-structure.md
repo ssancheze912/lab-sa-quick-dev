@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: review
+Status: done
 
 ## Story
 
@@ -234,3 +234,19 @@ N/A
 **Correction run (Attempt 2):**
 - `frontend/index.html` — added `data-testid="app-root"` to React mount div
 - `playwright.config.ts` — fixed webServer command to `pnpm --dir frontend dev`
+
+**Tests (TEA tea-automate phase — undocumented in original File List):**
+- `frontend/src/__tests__/foundation/app-entrypoint.test.ts`
+- `frontend/src/__tests__/foundation/backend-config.test.ts`
+- `frontend/src/__tests__/foundation/query-provider.test.ts`
+- `frontend/src/__tests__/foundation/repository-structure.test.ts`
+- `frontend/src/__tests__/foundation/vite-config-edge-cases.test.ts`
+- `frontend/src/__tests__/setup/apiClient.test.ts`
+- `frontend/src/__tests__/setup/queryClient.test.ts`
+- `frontend/src/__tests__/setup/typescript-config.test.ts`
+
+**Code Review auto-corrections (2026-05-25):**
+- `.gitignore` — added `.env.*` exclusion pattern to prevent future secrets from being committed
+- `frontend/index.html` — changed title from "frontend-react" to "Siesa Agents"
+- `frontend/src/App.css` — removed (dead Vite template leftover, not imported anywhere)
+- `frontend/src/infrastructure/pwa/` — created empty directory per company standard (`infrastructure/ = api/, storage/, pwa/`)
