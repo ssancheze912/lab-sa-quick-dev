@@ -1,11 +1,12 @@
 // Story 1.3: Backend Database Foundation — Automate Expansion
+// Updated in Story 2.1: ClienteEntity DbSet added to AppDbContext
 // Epic 1: Project Foundation & Application Shell
 //
 // Edge-case and boundary-condition tests for AppDbContext.
 // These complement the ATDD acceptance tests in AppDbContextTests.cs.
 //
 // New coverage:
-//   - No DbSet<> properties exposed (empty context is intentional per story scope)
+//   - DbSet<ClienteEntity> Clientes is exposed (added in Story 2.1)
 //   - Multiple DI scopes create independent context instances (scoped lifetime)
 //   - Null options throws ArgumentNullException before reaching OnModelCreating
 //   - OnModelCreating executes without error on an empty assembly configuration
@@ -15,6 +16,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SiesaAgents.Domain.Clientes.Entities;
 using SiesaAgents.Infrastructure.Data;
 using Xunit;
 
@@ -23,16 +25,16 @@ namespace SiesaAgents.UnitTests.Data;
 public class AppDbContextEdgeTests
 {
     // ─────────────────────────────────────────────────────────────────────────
-    // Empty context — no DbSet<> properties exist in this story
-    // Verifies the scope constraint: domain entities are NOT added until Epics 2+
+    // Story 2.1: ClienteEntity DbSet — Clientes is now exposed
+    // Verifies that AppDbContext has exactly the expected DbSet properties
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void AppDbContext_HasNoPublicDbSetProperties()
+    public void AppDbContext_HasClientesDbSetProperty()
     {
         // GIVEN: AppDbContext is instantiated with InMemory provider
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestDb_Edge_NoDbSets")
+            .UseInMemoryDatabase(databaseName: "TestDb_Edge_Clientes")
             .Options;
 
         using var context = new AppDbContext(options);
@@ -45,8 +47,10 @@ public class AppDbContextEdgeTests
                 p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
             .ToList();
 
-        // THEN: No DbSet<> properties exist (domain entities added in Epics 2 and 3)
-        Assert.Empty(dbSetProperties);
+        // THEN: Exactly one DbSet<> property (Clientes) exists
+        Assert.Single(dbSetProperties);
+        Assert.Equal("Clientes", dbSetProperties[0].Name);
+        Assert.Equal(typeof(DbSet<ClienteEntity>), dbSetProperties[0].PropertyType);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -180,22 +184,22 @@ public class AppDbContextEdgeTests
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void AppDbContext_OnModelCreating_ApplyConfigurationsFromAssemblyDoesNotThrowOnEmptyAssembly()
+    public void AppDbContext_OnModelCreating_ApplyConfigurationsFromAssemblyDoesNotThrow()
     {
-        // GIVEN: AppDbContext with InMemory provider (no entity configurations registered yet)
+        // GIVEN: AppDbContext with InMemory provider
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestDb_Edge_EmptyAssembly")
+            .UseInMemoryDatabase(databaseName: "TestDb_Edge_Assembly")
             .Options;
 
         // WHEN: AppDbContext is instantiated and Model accessed
-        //       (ApplyConfigurationsFromAssembly finds zero IEntityTypeConfiguration<> types)
+        //       (ApplyConfigurationsFromAssembly applies ClienteConfiguration)
         var exception = Record.Exception(() =>
         {
             using var context = new AppDbContext(options);
             _ = context.Model; // triggers OnModelCreating
         });
 
-        // THEN: No exception — empty assembly configuration is valid for Story 1.3
+        // THEN: No exception — configurations are valid
         Assert.Null(exception);
     }
 }

@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ClienteListView } from '@/modules/crm/clientes/presentation/ClienteListView'
 
 export const Route = createFileRoute('/_app/clientes')({
   component: ClientesPage,
@@ -6,8 +7,11 @@ export const Route = createFileRoute('/_app/clientes')({
 
 function ClientesPage() {
   return (
-    <main data-testid="clientes-page" className="p-6">
-      <h1 className="text-2xl font-bold">Clientes</h1>
-    </main>
+    <div className="flex h-full" data-testid="clientes-page">
+      <ClienteListView />
+      <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
+        Selecciona un cliente para ver el detalle
+      </div>
+    </div>
   )
 }
