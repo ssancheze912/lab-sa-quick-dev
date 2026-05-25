@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace SiesaAgents.Infrastructure.Migrations
+namespace SiesaAgents.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
