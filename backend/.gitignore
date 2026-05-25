@@ -1,0 +1,16 @@
+## .NET
+bin/
+obj/
+*.user
+.vs/
+*.suo
+.idea/
+
+## NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+## Test results
+TestResults/
+coverage/
