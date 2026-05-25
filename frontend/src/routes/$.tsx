@@ -11,7 +11,7 @@ function NotFoundView() {
       data-testid="not-found-view"
     >
       <h1 className="text-2xl font-bold text-slate-800">Página no encontrada</h1>
-      <p className="text-slate-500" data-testid="not-found-message">La ruta solicitada no existe.</p>
+      <p className="text-slate-500" data-testid="not-found-message">La página solicitada no fue encontrada.</p>
       <Link
         to="/clientes"
         className="text-[#0e79fd] underline hover:text-[#154ca9]"

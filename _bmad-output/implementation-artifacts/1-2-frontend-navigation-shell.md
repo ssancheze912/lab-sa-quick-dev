@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: review
+Status: done
 
 ## Story
 
@@ -216,12 +216,12 @@ N/A
 ### Completion Notes List
 
 - LayoutBase from siesa-ui-kit was replaced with a custom navigation shell because LayoutBase does not expose `data-testid` or `aria-current` attributes on internal nav items — E2E ATDD tests require these attributes.
-- Custom shell renders `data-testid="navigation-rail"` (desktop, hidden on mobile via `hidden lg:flex`), `data-testid="navigation-bar-mobile"` (mobile, hidden on desktop via `flex lg:hidden`), and `data-testid="nav-item-{id}"` with `aria-current="page"` on active items.
+- Custom shell renders `data-testid="navigation-rail"` (desktop, hidden on mobile via CSS `hidden lg:flex` Tailwind classes), `data-testid="navigation-bar-mobile"` (mobile, hidden on desktop via `flex lg:hidden`), and `data-testid="nav-item-{id}"` with `aria-current="page"` on active items. Both nav elements are in the DOM simultaneously; visibility is CSS-only — no JS `useIsDesktop()` hook is used.
 - `data-testid="clientes-page-title"` added to Clientes page heading; `data-testid="contactos-page-title"` to Contactos heading.
 - `data-testid="not-found-view"`, `data-testid="not-found-message"`, `data-testid="not-found-back-link"` added to 404 route.
 - `vitest.config.ts` configured with `environment: 'jsdom'` and `setupFiles: ['./src/__tests__/setup/test-setup.ts']` for React Testing Library and jest-dom matchers.
 - TanStack Router file-based routing implemented with `__root.tsx`, `_app.tsx`, `_app/clientes.tsx`, `_app/contactos.tsx`, `index.tsx`, and `$.tsx`.
-- `window.scrollTo` stderr warnings in test output are expected jsdom limitations and do not affect test results.
+- `window.scrollTo` mock added to `test-setup.ts` to suppress jsdom "Not implemented" stderr noise from TanStack Router scroll restoration. Previously this produced per-test stderr output; now tests run cleanly.
 - 27/27 tests pass: 18 story 1.1 TypeScript config tests + 9 story 1.2 navigation shell tests.
 
 ### File List
