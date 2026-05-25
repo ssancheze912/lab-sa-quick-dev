@@ -1,0 +1,40 @@
+{
+  "name": "siesa-agents-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^18.3.29",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@vitest/coverage-v8": "^3.2.4",
+    "jsdom": "^26.1.0",
+    "tailwindcss": "^4.3.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.12",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@tanstack/react-query": "^5.100.14",
+    "@tanstack/react-router": "^1.170.8",
+    "@tanstack/router-vite-plugin": "^1.167.11",
+    "axios": "^1.16.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "siesa-ui-kit": "^1.0.203",
+    "zustand": "^5.0.13"
+  }
+}
