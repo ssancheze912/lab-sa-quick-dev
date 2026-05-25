@@ -1,42 +1,14 @@
+/// @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
 import { routeTree } from '../../routeTree.gen'
-
-// Mock siesa-ui-kit LayoutBase to simplify test rendering
-vi.mock('siesa-ui-kit', () => ({
-  LayoutBase: ({ children, navigationItems, productName }: {
-    children: React.ReactNode
-    navigationItems?: Array<{ id: string; label: string; active?: boolean; onClick?: () => void }>
-    productName?: string
-  }) => (
-    <div data-testid="layout-base">
-      <div data-testid="product-name">{productName}</div>
-      <nav aria-label="navegación principal">
-        {navigationItems?.map((item) => (
-          <button
-            key={item.id}
-            data-testid={`nav-item-${item.id}`}
-            aria-current={item.active ? 'page' : undefined}
-            onClick={item.onClick}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
-      <main>{children}</main>
-    </div>
-  ),
-}))
 
 // Mock heroicons to avoid SVG issues in jsdom
 vi.mock('@heroicons/react/24/outline', () => ({
   UsersIcon: () => <svg data-testid="icon-users" />,
   UserGroupIcon: () => <svg data-testid="icon-usergroup" />,
 }))
-
-// Mock siesa-ui-kit styles
-vi.mock('siesa-ui-kit/styles.css', () => ({}))
 
 function renderWithRouter(initialPath: string) {
   const history = createMemoryHistory({ initialEntries: [initialPath] })
@@ -45,24 +17,23 @@ function renderWithRouter(initialPath: string) {
 }
 
 describe('Navigation Shell', () => {
-  it('renders LayoutBase with navigation items for Clientes and Contactos', async () => {
+  it('renders navigation items for Clientes and Contactos', async () => {
     renderWithRouter('/clientes')
 
     await waitFor(() => {
-      expect(screen.getByTestId('layout-base')).toBeInTheDocument()
+      expect(screen.getAllByTestId('nav-item-clientes').length).toBeGreaterThanOrEqual(1)
     })
 
-    expect(screen.getByTestId('nav-item-clientes')).toBeInTheDocument()
-    expect(screen.getByTestId('nav-item-contactos')).toBeInTheDocument()
+    expect(screen.getAllByTestId('nav-item-contactos').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('Clientes').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText('Contactos')).toBeInTheDocument()
+    expect(screen.getAllByText('Contactos').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('renders the product name "Siesa Agents" in LayoutBase', async () => {
+  it('renders the product name "Siesa Agents" in the navbar', async () => {
     renderWithRouter('/clientes')
 
     await waitFor(() => {
-      expect(screen.getByTestId('product-name')).toHaveTextContent('Siesa Agents')
+      expect(screen.getByText('Siesa Agents')).toBeInTheDocument()
     })
   })
 
@@ -70,31 +41,31 @@ describe('Navigation Shell', () => {
     renderWithRouter('/clientes')
 
     await waitFor(() => {
-      const clientesItem = screen.getByTestId('nav-item-clientes')
-      expect(clientesItem).toHaveAttribute('aria-current', 'page')
+      const clientesItems = screen.getAllByTestId('nav-item-clientes')
+      expect(clientesItems.some((el) => el.getAttribute('aria-current') === 'page')).toBe(true)
     })
 
-    const contactosItem = screen.getByTestId('nav-item-contactos')
-    expect(contactosItem).not.toHaveAttribute('aria-current', 'page')
+    const contactosItems = screen.getAllByTestId('nav-item-contactos')
+    expect(contactosItems.every((el) => el.getAttribute('aria-current') !== 'page')).toBe(true)
   })
 
   it('sets active state on Contactos nav item when on /contactos route', async () => {
     renderWithRouter('/contactos')
 
     await waitFor(() => {
-      const contactosItem = screen.getByTestId('nav-item-contactos')
-      expect(contactosItem).toHaveAttribute('aria-current', 'page')
+      const contactosItems = screen.getAllByTestId('nav-item-contactos')
+      expect(contactosItems.some((el) => el.getAttribute('aria-current') === 'page')).toBe(true)
     })
 
-    const clientesItem = screen.getByTestId('nav-item-clientes')
-    expect(clientesItem).not.toHaveAttribute('aria-current', 'page')
+    const clientesItems = screen.getAllByTestId('nav-item-clientes')
+    expect(clientesItems.every((el) => el.getAttribute('aria-current') !== 'page')).toBe(true)
   })
 
   it('renders the Clientes page content on /clientes route', async () => {
     renderWithRouter('/clientes')
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Clientes' })).toBeInTheDocument()
+      expect(screen.getByTestId('clientes-page-title')).toBeInTheDocument()
     })
   })
 
@@ -102,7 +73,7 @@ describe('Navigation Shell', () => {
     renderWithRouter('/contactos')
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Contactos' })).toBeInTheDocument()
+      expect(screen.getByTestId('contactos-page-title')).toBeInTheDocument()
     })
   })
 
@@ -110,7 +81,7 @@ describe('Navigation Shell', () => {
     renderWithRouter('/')
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Clientes' })).toBeInTheDocument()
+      expect(screen.getByTestId('clientes-page-title')).toBeInTheDocument()
     })
   })
 
@@ -118,10 +89,10 @@ describe('Navigation Shell', () => {
     renderWithRouter('/ruta-desconocida')
 
     await waitFor(() => {
-      expect(screen.getByText('Página no encontrada')).toBeInTheDocument()
+      expect(screen.getByTestId('not-found-view')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('La ruta solicitada no existe.')).toBeInTheDocument()
+    expect(screen.getByTestId('not-found-message')).toBeInTheDocument()
     expect(screen.getByText('Ir a Clientes')).toBeInTheDocument()
   })
 
@@ -129,7 +100,7 @@ describe('Navigation Shell', () => {
     renderWithRouter('/ruta-desconocida')
 
     await waitFor(() => {
-      const link = screen.getByRole('link', { name: 'Ir a Clientes' })
+      const link = screen.getByTestId('not-found-back-link')
       expect(link).toBeInTheDocument()
       expect(link).toHaveAttribute('href', '/clientes')
     })

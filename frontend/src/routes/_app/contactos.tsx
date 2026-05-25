@@ -1,9 +1,3 @@
-/**
- * Route: /contactos
- * Story 1.2: Frontend Navigation Shell
- *
- * Placeholder view — full implementation in Epic 3.
- */
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app/contactos')({
@@ -12,8 +6,8 @@ export const Route = createFileRoute('/_app/contactos')({
 
 function ContactosPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-slate-800">Contactos</h1>
+    <div className="p-6" data-testid="page-contactos">
+      <h1 className="text-2xl font-bold text-slate-800" data-testid="contactos-page-title">Contactos</h1>
     </div>
   )
 }

@@ -115,12 +115,12 @@ describe('vite.config.ts — Vitest test configuration', () => {
     expect(content).toContain('.test.ts')
   })
 
-  it('should set environment: "node" for the test runner', () => {
-    // GIVEN: Source inspection tests (fs.readFileSync) require node environment
+  it('should set a valid test environment (jsdom or node) for the test runner', () => {
+    // GIVEN: Tests require a DOM environment for React component testing (navigation shell)
     // WHEN: We check the test.environment setting
     const content = readViteConfig()
-    // THEN: Node environment is explicitly configured
-    expect(content).toMatch(/environment\s*:\s*['"]node['"]/)
+    // THEN: A valid environment is explicitly configured (jsdom for React component tests)
+    expect(content).toMatch(/environment\s*:\s*['"](?:jsdom|node)['"]/)
   })
 })
 
