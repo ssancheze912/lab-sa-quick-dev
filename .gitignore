@@ -1,0 +1,4 @@
+node_modules/
+playwright-results/
+dist/
+.env.local
