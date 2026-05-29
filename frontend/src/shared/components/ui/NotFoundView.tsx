@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router'
+
 interface NotFoundViewProps {
   message?: string
 }
@@ -15,13 +17,13 @@ export function NotFoundView({ message = 'Página no encontrada' }: NotFoundView
       >
         {message}
       </p>
-      <a
+      <Link
+        to="/clientes"
         data-testid="not-found-back-link"
-        href="/clientes"
         className="text-[#0e79fd] hover:underline font-medium"
       >
         Volver a Clientes
-      </a>
+      </Link>
     </div>
   )
 }

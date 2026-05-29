@@ -43,8 +43,8 @@ test.describe('AC1 — Desktop NavigationRail (>= 1024px)', () => {
     // WHEN: The user views the app
     await page.goto('/clientes');
 
-    // THEN: "Clientes" navigation entry is visible
-    await expect(page.locator('[data-testid="nav-item-clientes"]')).toBeVisible();
+    // THEN: "Clientes" navigation entry is visible (scoped to NavigationRail)
+    await expect(page.locator('[data-testid="navigation-rail"] [data-testid="nav-item-clientes"]')).toBeVisible();
   });
 
   test('should display "Contactos" entry in the NavigationRail', async ({ page }) => {
@@ -54,8 +54,8 @@ test.describe('AC1 — Desktop NavigationRail (>= 1024px)', () => {
     // WHEN: The user views the app
     await page.goto('/clientes');
 
-    // THEN: "Contactos" navigation entry is visible
-    await expect(page.locator('[data-testid="nav-item-contactos"]')).toBeVisible();
+    // THEN: "Contactos" navigation entry is visible (scoped to NavigationRail)
+    await expect(page.locator('[data-testid="navigation-rail"] [data-testid="nav-item-contactos"]')).toBeVisible();
   });
 
   test('should navigate to /clientes without full page reload when clicking Clientes entry', async ({ page }) => {
@@ -63,9 +63,9 @@ test.describe('AC1 — Desktop NavigationRail (>= 1024px)', () => {
     await page.route('**/api/**', (route) => route.continue());
     await page.goto('/contactos');
 
-    // WHEN: User clicks the "Clientes" navigation entry
+    // WHEN: User clicks the "Clientes" navigation entry (scoped to NavigationRail)
     const navigationPromise = page.waitForURL('**/clientes**', { waitUntil: 'networkidle' });
-    await page.locator('[data-testid="nav-item-clientes"]').click();
+    await page.locator('[data-testid="navigation-rail"] [data-testid="nav-item-clientes"]').click();
     await navigationPromise;
 
     // THEN: URL changes to /clientes without a full page reload (no page navigation event)
@@ -77,9 +77,9 @@ test.describe('AC1 — Desktop NavigationRail (>= 1024px)', () => {
     await page.route('**/api/**', (route) => route.continue());
     await page.goto('/clientes');
 
-    // WHEN: User clicks the "Contactos" navigation entry
+    // WHEN: User clicks the "Contactos" navigation entry (scoped to NavigationRail)
     const navigationPromise = page.waitForURL('**/contactos**', { waitUntil: 'networkidle' });
-    await page.locator('[data-testid="nav-item-contactos"]').click();
+    await page.locator('[data-testid="navigation-rail"] [data-testid="nav-item-contactos"]').click();
     await navigationPromise;
 
     // THEN: URL changes to /contactos without a full page reload
@@ -134,8 +134,8 @@ test.describe('AC2 — Mobile NavigationBar (< 1024px)', () => {
     // WHEN: The user views the app
     await page.goto('/clientes');
 
-    // THEN: "Clientes" navigation item is accessible and tappable
-    await expect(page.locator('[data-testid="nav-item-clientes"]')).toBeVisible();
+    // THEN: "Clientes" navigation item is accessible and tappable (scoped to NavigationBar)
+    await expect(page.locator('[data-testid="navigation-bar"] [data-testid="nav-item-clientes"]')).toBeVisible();
   });
 
   test('should display "Contactos" entry in the NavigationBar on mobile', async ({ page }) => {
@@ -145,8 +145,8 @@ test.describe('AC2 — Mobile NavigationBar (< 1024px)', () => {
     // WHEN: The user views the app
     await page.goto('/clientes');
 
-    // THEN: "Contactos" navigation item is accessible and tappable
-    await expect(page.locator('[data-testid="nav-item-contactos"]')).toBeVisible();
+    // THEN: "Contactos" navigation item is accessible and tappable (scoped to NavigationBar)
+    await expect(page.locator('[data-testid="navigation-bar"] [data-testid="nav-item-contactos"]')).toBeVisible();
   });
 });
 
@@ -186,8 +186,8 @@ test.describe('AC3 — Direct URL deep link to /clientes (FR30)', () => {
     // WHEN: The page loads
     await page.goto('/clientes');
 
-    // THEN: The "Clientes" entry is highlighted as active
-    await expect(page.locator('[data-testid="nav-item-clientes"]')).toHaveAttribute('data-active', 'true');
+    // THEN: The "Clientes" entry is highlighted as active (scoped to NavigationRail)
+    await expect(page.locator('[data-testid="navigation-rail"] [data-testid="nav-item-clientes"]')).toHaveAttribute('data-active', 'true');
   });
 
   test('should NOT redirect to home screen when accessing /clientes directly', async ({ page }) => {
@@ -239,8 +239,8 @@ test.describe('AC4 — Direct URL deep link to /contactos (FR30)', () => {
     // WHEN: The page loads
     await page.goto('/contactos');
 
-    // THEN: The "Contactos" entry is highlighted as active
-    await expect(page.locator('[data-testid="nav-item-contactos"]')).toHaveAttribute('data-active', 'true');
+    // THEN: The "Contactos" entry is highlighted as active (scoped to NavigationRail)
+    await expect(page.locator('[data-testid="navigation-rail"] [data-testid="nav-item-contactos"]')).toHaveAttribute('data-active', 'true');
   });
 
   test('should NOT redirect to home screen when accessing /contactos directly', async ({ page }) => {
