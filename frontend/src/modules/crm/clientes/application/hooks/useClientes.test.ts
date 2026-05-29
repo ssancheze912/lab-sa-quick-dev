@@ -21,7 +21,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { createElement } from 'react';
-import { createCliente, createClientes } from '../../../../test/factories/cliente.factory';
+import { createCliente, createClientes } from '../../../../../test/factories/cliente.factory';
 
 // Hook under test — NOT YET IMPLEMENTED (RED phase)
 import { useClientes } from './useClientes';

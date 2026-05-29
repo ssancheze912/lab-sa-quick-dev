@@ -1,4 +1,4 @@
-import { apiClient } from '../../../../shared/lib/apiClient';
+import { apiClient } from '../../../../../shared/lib/apiClient';
 import type { IClienteRepository } from '../../domain/repositories/IClienteRepository';
 import type { Cliente } from '../../domain/entities/Cliente';
 

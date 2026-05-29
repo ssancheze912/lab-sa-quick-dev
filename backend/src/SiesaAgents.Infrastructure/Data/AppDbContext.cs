@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
 using SiesaAgents.Infrastructure.Extensions;
 
 namespace SiesaAgents.Infrastructure.Data;
@@ -7,7 +8,7 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    // No DbSet<> properties in this story — added in Story 2.1 (ClienteEntity) and Story 3.1 (ContactoEntity)
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

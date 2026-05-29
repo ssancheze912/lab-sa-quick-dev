@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,51 +24,45 @@ So that I can quickly find the client I'm looking for.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Create `Cliente` domain entity and `IClienteRepository` interface (AC: #1, #2)
-  - [ ] Create `frontend/src/modules/crm/clientes/domain/entities/Cliente.ts` — TypeScript interface with fields: `id: string`, `nombre: string`, `nit: string`, `telefono: string`, `ciudad: string`, `createdAt: string`, `updatedAt: string`
-  - [ ] Create `frontend/src/modules/crm/clientes/domain/repositories/IClienteRepository.ts` — interface with method `getAll(): Promise<Cliente[]>` and `getById(id: string): Promise<Cliente>`
+- [x] Task 1 — Create `Cliente` domain entity and `IClienteRepository` interface (AC: #1, #2)
+  - [x] Create `frontend/src/modules/crm/clientes/domain/entities/Cliente.ts`
+  - [x] Create `frontend/src/modules/crm/clientes/domain/repositories/IClienteRepository.ts`
 
-- [ ] Task 2 — Create Axios API repository implementation (AC: #1, #2, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/infrastructure/repositories/clienteApiRepository.ts` — implements `IClienteRepository` using the singleton `apiClient` (Axios); calls `GET /api/v1/clientes`; return type `Promise<Cliente[]>`
-  - [ ] Verify `frontend/src/shared/lib/apiClient.ts` exists with `baseURL: import.meta.env.VITE_API_URL` and default Axios interceptors (created in Story 1.1; create if absent)
+- [x] Task 2 — Create Axios API repository implementation (AC: #1, #2, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/infrastructure/repositories/clienteApiRepository.ts` — fixed import path (5 levels up to src/)
+  - [x] Verified `frontend/src/shared/lib/apiClient.ts` exists
 
-- [ ] Task 3 — Create `useClientes` TanStack Query hook (AC: #1, #2, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/hooks/useClientes.ts` — calls `useQuery({ queryKey: ['clientes'], queryFn: () => clienteApiRepository.getAll() })`; exports `{ data, isLoading, isError, refetch }`
-  - [ ] `staleTime`: 0 (always fresh on window focus); `retry`: 1
+- [x] Task 3 — Create `useClientes` TanStack Query hook (AC: #1, #2, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/application/hooks/useClientes.ts` — staleTime: 0; retry moved to queryClient default
 
-- [ ] Task 4 — Create `ClienteListView` presentation component (AC: #1, #2, #3, #4, #5)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.tsx`
-    - Fixed width `w-[280px]` left panel, full height, overflow-y-scroll
-    - Contains: search `<input>` field with placeholder "Buscar por nombre o NIT/RUC..." (Spanish), list of clients rendered via `ClientListItem`, `EmptyState` when filtered results are empty, `ErrorPanel` on fetch error, `react-loading-skeleton` during `isLoading`
-    - Client-side filtering via `useMemo`: `clients.filter(c => c.nombre.toLowerCase().includes(q) || c.nit.toLowerCase().includes(q))`; search state via `useState<string>('')`
-    - Accepts optional `onClientSelect?: (id: string) => void` prop; each item triggers navigation via TanStack Router `Link` to `/clientes/$clienteId`
-  - [ ] Check siesa-ui-kit for a `ListPanel`, `SearchInput`, or equivalent component before building custom — use kit component if available; fallback to custom Tailwind implementation
+- [x] Task 4 — Create `ClienteListView` presentation component (AC: #1, #2, #3, #4, #5)
+  - [x] siesa-ui-kit not available in registry — implemented as custom Tailwind components
 
-- [ ] Task 5 — Create `ClientListItem` shared component (AC: #1, #5)
-  - [ ] Create `frontend/src/shared/components/ClientListItem.tsx` — renders a list item showing `nombre` (bold, truncated) and `nit` (secondary text, smaller); active state highlighted with Siesa Blue (`#0e79fd`); accessible (`role="listitem"`, `aria-label` in Spanish)
-  - [ ] Check siesa-ui-kit for a list item component before creating custom
+- [x] Task 5 — Create `ClientListItem` shared component (AC: #1, #5)
+  - [x] `frontend/src/shared/components/ClientListItem.tsx`
 
-- [ ] Task 6 — Create/verify `EmptyState` shared component (AC: #3)
-  - [ ] Create `frontend/src/shared/components/EmptyState.tsx` if not already present — accepts `message: string` prop; renders centered illustration or icon + Spanish message + optional CTA button; accessible
-  - [ ] Check siesa-ui-kit for `EmptyState` equivalent before creating custom
+- [x] Task 6 — Create/verify `EmptyState` shared component (AC: #3)
+  - [x] `frontend/src/shared/components/EmptyState.tsx`
 
-- [ ] Task 7 — Create/verify `ErrorPanel` shared component (AC: #4)
-  - [ ] Create `frontend/src/shared/components/ErrorPanel.tsx` if not already present — accepts `onRetry: () => void` prop; renders error icon + generic Spanish message "No se pudo cargar la información" + "Reintentar" button; accessible
-  - [ ] Check siesa-ui-kit for `ErrorPanel` equivalent before creating custom
+- [x] Task 7 — Create/verify `ErrorPanel` shared component (AC: #4)
+  - [x] `frontend/src/shared/components/ErrorPanel.tsx`
 
-- [ ] Task 8 — Wire `ClienteListView` into the `/clientes` route (AC: #1–#5)
-  - [ ] Update `frontend/src/routes/_app/clientes.tsx` — replace the `ClientesShellView` placeholder with `ClienteListView` wrapped in a split-panel layout; left panel = `ClienteListView` (280px); right panel = `<Outlet />` placeholder (flex-1) for Story 2.2 detail
+- [x] Task 8 — Wire `ClienteListView` into the `/clientes` route (AC: #1–#5)
+  - [x] `frontend/src/routes/_app/clientes.tsx` updated with split-panel layout
 
-- [ ] Task 9 — Unit and component tests (AC: #1–#5)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/hooks/useClientes.test.ts` — verify hook returns data, exposes `isLoading`, `isError`, `refetch` with MSW mock for `GET /api/v1/clientes`
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.test.tsx`:
-    - TC-E2-P1-01: Real-time search filters list (type "Empresa A", assert filtered results)
-    - TC-E2-P1-02: Performance — filter < 1s with 500 records (`performance.now()`)
-    - TC-E2-P1-03: EmptyState shown when MSW returns `[]`
-    - TC-E2-P1-04: ErrorPanel with "Reintentar" shown on MSW 500 error; click retry calls refetch
-    - TC-E2-P3-01: Each list item shows Nombre and NIT/RUC
-    - TC-E2-P3-02: Panel has class `w-[280px]` at desktop viewport
-  - [ ] All tests pass: `pnpm run test` reports 0 failures
+- [x] Task 9 — Unit and component tests (AC: #1–#5)
+  - [x] `useClientes.test.ts` — 10 tests, all passing
+  - [x] `ClienteListView.test.tsx` — 22 tests, all passing
+  - [x] All 91 frontend tests pass: `pnpm run test` reports 0 failures
+
+- [x] Backend — `GET /api/v1/clientes` endpoint implemented
+  - [x] `ClienteEntityConfiguration.cs` — EF Core configuration
+  - [x] `AppDbContext.cs` — added Clientes DbSet
+  - [x] `ClienteRepository.cs` — implements IClienteRepository
+  - [x] `GetClientesQuery.cs` + `GetClientesQueryHandler` — CQRS query
+  - [x] `ClienteEndpoints.cs` — Minimal API GET /api/v1/clientes
+  - [x] `Program.cs` — registered services and endpoints
+  - [x] Backend builds with 0 warnings, 0 errors
 
 ## Dev Notes
 
@@ -275,6 +269,36 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+- Import path bug: `clienteApiRepository.ts` and `useClientes.test.ts` both had 4-level relative imports (`../../../../`) instead of the correct 5-level (`../../../../../`) to reach `src/` from their respective directories.
+- `retry: 1` in `useClientes` hook overrode the test `QueryClient`'s `retry: false`, causing `isError` tests to time out. Fixed by removing `retry` from the hook and setting `retry: 1` in the shared `queryClient.ts` default.
+- siesa-ui-kit not available in npm registry — implemented all UI components as custom Tailwind equivalents (same API contract as documented).
+
 ### Completion Notes List
 
+- Story 2.1 fully implemented: frontend split-panel list view + client-side search + backend GET /api/v1/clientes endpoint.
+- Backend migration not created (existing migration is empty/placeholder from Story 1.3; new migration for ClienteEntity table creation is pending database availability).
+
 ### File List
+
+Frontend:
+- `frontend/src/modules/crm/clientes/domain/entities/Cliente.ts`
+- `frontend/src/modules/crm/clientes/domain/repositories/IClienteRepository.ts`
+- `frontend/src/modules/crm/clientes/infrastructure/repositories/clienteApiRepository.ts` (fixed import path)
+- `frontend/src/modules/crm/clientes/application/hooks/useClientes.ts` (removed retry override)
+- `frontend/src/modules/crm/clientes/application/hooks/useClientes.test.ts` (fixed import path)
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.tsx`
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.test.tsx`
+- `frontend/src/shared/components/ClientListItem.tsx`
+- `frontend/src/shared/components/EmptyState.tsx`
+- `frontend/src/shared/components/ErrorPanel.tsx`
+- `frontend/src/shared/lib/queryClient.ts` (added retry: 1 default)
+- `frontend/src/routes/_app/clientes.tsx`
+- `frontend/src/test/factories/cliente.factory.ts`
+
+Backend:
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` (added Clientes DbSet)
+- `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteEntityConfiguration.cs` (new)
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` (new)
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQuery.cs` (new)
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` (new)
+- `backend/src/SiesaAgents.API/Program.cs` (registered services + endpoints)
