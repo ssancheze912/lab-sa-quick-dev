@@ -1,10 +1,6 @@
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
 import { Link } from '@tanstack/react-router'
 
-interface NavigationBarProps {
-  activeRoute?: string
-}
-
 const navItems = [
   {
     id: 'clientes',
@@ -22,7 +18,13 @@ const navItems = [
   },
 ]
 
-export function NavigationBar({ activeRoute }: NavigationBarProps) {
+interface NavigationBarProps {
+  // activeRoute kept for backwards compatibility with unit tests;
+  // active state is driven by TanStack Router's activeProps
+  activeRoute?: string
+}
+
+export function NavigationBar(_props: NavigationBarProps = {}) {
   return (
     <nav
       data-testid="navigation-bar"
@@ -30,7 +32,6 @@ export function NavigationBar({ activeRoute }: NavigationBarProps) {
       className="fixed bottom-0 left-0 right-0 flex justify-around items-center h-16 bg-white border-t border-slate-200 z-50"
     >
       {navItems.map((item) => {
-        const isActive = activeRoute === item.to
         const Icon = item.icon
         return (
           <Link
@@ -38,7 +39,6 @@ export function NavigationBar({ activeRoute }: NavigationBarProps) {
             to={item.to}
             data-testid={`nav-item-${item.id}`}
             aria-label={item.ariaLabel}
-            data-active={isActive ? 'true' : undefined}
             activeProps={{ 'data-active': 'true' } as React.AnchorHTMLAttributes<HTMLAnchorElement>}
             className="flex flex-col items-center gap-1 px-4 py-2 text-slate-600 hover:text-[#0e79fd] transition-colors"
             activeOptions={{ exact: false }}

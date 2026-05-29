@@ -1,10 +1,6 @@
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
 import { Link } from '@tanstack/react-router'
 
-interface NavigationRailProps {
-  activeRoute?: string
-}
-
 const navItems = [
   {
     id: 'clientes',
@@ -22,7 +18,13 @@ const navItems = [
   },
 ]
 
-export function NavigationRail({ activeRoute }: NavigationRailProps) {
+interface NavigationRailProps {
+  // activeRoute kept for backwards compatibility with unit tests;
+  // active state is driven by TanStack Router's activeProps
+  activeRoute?: string
+}
+
+export function NavigationRail(_props: NavigationRailProps = {}) {
   return (
     <nav
       data-testid="navigation-rail"
@@ -30,7 +32,6 @@ export function NavigationRail({ activeRoute }: NavigationRailProps) {
       className="flex flex-col gap-1 p-2 min-h-screen w-16 lg:w-56 bg-white border-r border-slate-200"
     >
       {navItems.map((item) => {
-        const isActive = activeRoute === item.to
         const Icon = item.icon
         return (
           <Link
@@ -38,7 +39,6 @@ export function NavigationRail({ activeRoute }: NavigationRailProps) {
             to={item.to}
             data-testid={`nav-item-${item.id}`}
             aria-label={item.ariaLabel}
-            data-active={isActive ? 'true' : undefined}
             activeProps={{ 'data-active': 'true' } as React.AnchorHTMLAttributes<HTMLAnchorElement>}
             className="flex flex-col lg:flex-row items-center gap-1 lg:gap-3 px-2 py-3 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-[#0e79fd] transition-colors"
             activeOptions={{ exact: false }}
