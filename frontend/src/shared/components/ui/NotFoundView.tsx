@@ -20,7 +20,7 @@ export function NotFoundView({ message = 'Página no encontrada' }: NotFoundView
       <Link
         to="/clientes"
         data-testid="not-found-back-link"
-        className="text-[#0e79fd] hover:underline font-medium"
+        className="text-siesa-blue hover:underline font-medium"
       >
         Volver a Clientes
       </Link>

@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@theme {
+  --color-siesa-blue: #0e79fd;
+  --color-siesa-deep-blue: #154ca9;
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

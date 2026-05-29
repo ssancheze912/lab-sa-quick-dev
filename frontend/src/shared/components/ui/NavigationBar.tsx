@@ -39,8 +39,8 @@ export function NavigationBar(_props: NavigationBarProps = {}) {
             to={item.to}
             data-testid={`nav-item-${item.id}`}
             aria-label={item.ariaLabel}
-            activeProps={{ 'data-active': 'true' } as React.AnchorHTMLAttributes<HTMLAnchorElement>}
-            className="flex flex-col items-center gap-1 px-4 py-2 text-slate-600 hover:text-[#0e79fd] transition-colors"
+            activeProps={{ 'data-active': 'true' } as Record<`data-${string}`, unknown>}
+            className="flex flex-col items-center gap-1 px-4 py-2 text-slate-600 hover:text-siesa-blue transition-colors"
             activeOptions={{ exact: false }}
           >
             <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
