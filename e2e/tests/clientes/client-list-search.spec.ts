@@ -14,7 +14,7 @@
  *   Network-first interception pattern: routes intercepted BEFORE navigation (no race condition).
  *   Component-level tests cover search filter performance and isolated state (see component spec).
  *
- * RED PHASE: All tests fail — ClienteListView and supporting components are not yet implemented.
+ * GREEN PHASE: All tests pass — ClienteListView and supporting components implemented.
  */
 
 import { test, expect } from '@playwright/test';

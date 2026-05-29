@@ -15,7 +15,7 @@
  *   - Each item: { id, nombre, nit, telefono, ciudad, createdAt, updatedAt }
  *   - createdAt / updatedAt: ISO 8601 with timezone (DateTimeOffset)
  *
- * RED PHASE: All tests fail — ClienteEndpoints.cs is not yet implemented.
+ * GREEN PHASE: All tests pass — ClienteEndpoints.cs implemented.
  */
 
 import { test, expect } from '@playwright/test';

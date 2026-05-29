@@ -19,7 +19,7 @@
  *   TC-E2-P3-01: Each list item shows Nombre and NIT/RUC
  *   TC-E2-P3-02: Panel has class w-[280px] at desktop viewport
  *
- * RED PHASE: All tests fail — ClienteListView and supporting components are not yet implemented.
+ * GREEN PHASE: All tests pass — ClienteListView and supporting components implemented.
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
@@ -30,7 +30,7 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { createCliente, createClientes } from '../../../../../test/factories/cliente.factory';
 
-// Component under test — NOT YET IMPLEMENTED (RED phase)
+// Component under test
 import { ClienteListView } from './ClienteListView';
 
 // ─── MSW Server Setup ─────────────────────────────────────────────────────────

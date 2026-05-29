@@ -12,7 +12,7 @@
  *   - staleTime: 0 (always fresh on window focus)
  *   - retry: 1 (single retry on failure)
  *
- * RED PHASE: All tests fail — useClientes hook is not yet implemented.
+ * GREEN PHASE: All tests pass — useClientes hook implemented.
  */
 
 import { describe, it, expect, afterEach } from 'vitest';
@@ -23,7 +23,7 @@ import { setupServer } from 'msw/node';
 import { createElement } from 'react';
 import { createCliente, createClientes } from '../../../../../test/factories/cliente.factory';
 
-// Hook under test — NOT YET IMPLEMENTED (RED phase)
+// Hook under test
 import { useClientes } from './useClientes';
 
 // ─── MSW Server Setup ─────────────────────────────────────────────────────────
