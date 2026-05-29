@@ -1,0 +1,152 @@
+# Quality Gate — Epic 1: Project Foundation & Application Shell
+# Generated: 2026-05-29
+# Scope: epic
+# Source: traceability-matrix-epic-1.md
+
+gate:
+  epic: 1
+  title: "Project Foundation & Application Shell"
+  decision: CONCERNS
+  generatedAt: "2026-05-29"
+  evaluatedBy: "testarch-trace (TEA workflow)"
+
+thresholds:
+  p0_required: 100
+  p1_required: 90
+  overall_required: 80
+
+coverage:
+  p0:
+    total: 5
+    covered: 5
+    partial: 0
+    missing: 0
+    percentage: 100
+    status: PASS
+
+  p1:
+    total: 6
+    covered: 5
+    partial: 1
+    missing: 0
+    percentage: 83
+    # TC-E1-P1-05 (EF Core DB migration) is PARTIAL — InMemory unit tests exist
+    # but PostgreSQL integration test (TestContainers) is not implemented.
+    # 83% < 90% threshold → below threshold for P1
+    status: BELOW_THRESHOLD
+
+  p2:
+    total: 4
+    covered: 3
+    partial: 1
+    missing: 0
+    percentage: 87
+    # TC-E1-P2-04 (snake_case DB column verification) is PARTIAL — ModelBuilderExtensions
+    # unit tested but DB-level column inspection requires PostgreSQL.
+    status: INFORMATIONAL
+
+  p3:
+    total: 2
+    covered: 2
+    partial: 0
+    missing: 0
+    percentage: 100
+    status: PASS
+
+  overall:
+    total_designed: 17
+    covered: 15
+    partial: 2
+    missing: 0
+    percentage: 88
+    # (15 fully covered + 1 partial = 15.5 effective / 17 = ~91%)
+    # Conservative count (partial = 0.5): (15 + 1*0.5) / 17 = 91%
+    # Strict count (partial = not covered): 15/17 = 88%
+    # Using strict count: 88% >= 80% threshold
+    status: PASS
+
+gate_reasoning:
+  decision: CONCERNS
+  rationale: |
+    P0 coverage is 100% (5/5) — all critical infrastructure requirements are tested.
+    Overall coverage at 88% exceeds the 80% threshold.
+
+    However, P1 coverage is 83% (5/6 fully covered, 1 partial) which is below the 90%
+    threshold. TC-E1-P1-05 is the failing case: the EF Core migration test exists only
+    as an InMemory unit test; the actual PostgreSQL integration (verifying siesa_agents_db
+    creation and __ef_migrations_history snake_case table) is NOT implemented.
+
+    This qualifies as CONCERNS rather than FAIL because:
+    - Evidence EXISTS (unit tests, migration files, AppDbContext implementation)
+    - The gap is due to environment constraint (no PostgreSQL/TestContainers in CI)
+    - The implementation is complete (migration file at 20260529053352_InitialCreate.cs)
+    - This is a known and documented gap, not an unmitigated risk
+
+concerns:
+  - id: C1
+    severity: P1
+    test_case: TC-E1-P1-05
+    description: >
+      AC-1.3-1: PostgreSQL integration test not implemented. AppDbContext is verified
+      via InMemory provider only. The actual creation of `siesa_agents_db` and
+      snake_case `__ef_migrations_history` table cannot be validated without a
+      real PostgreSQL instance or TestContainers setup.
+    evidence_exists: true
+    evidence_files:
+      - "backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs"
+      - "backend/src/SiesaAgents.Infrastructure/Migrations/20260529053352_InitialCreate.cs"
+    resolution: >
+      Add xUnit integration test using TestContainers (Postgres) or a local test
+      database to verify: (1) siesa_agents_db created, (2) __ef_migrations_history
+      table uses snake_case columns, (3) no domain tables exist at this stage.
+
+  - id: C2
+    severity: P2
+    test_case: TC-E1-P2-04
+    description: >
+      AC-1.3-3: snake_case column naming is tested at model-build level (unit) but
+      actual DB column names (e.g., migration_id vs MigrationId) are not verified
+      against a real PostgreSQL schema. Custom ModelBuilderExtensions are in place.
+    evidence_exists: true
+    evidence_files:
+      - "backend/tests/SiesaAgents.UnitTests/Infrastructure/ModelBuilderExtensionsTests.cs"
+      - "backend/src/SiesaAgents.Infrastructure/Extensions/ModelBuilderExtensions.cs"
+    resolution: >
+      Close with the same TestContainers integration test from C1 — inspect
+      information_schema.columns after database update to assert snake_case naming.
+
+  - id: C3
+    severity: P2
+    description: >
+      siesa-ui-kit NavigationRail/NavigationBar components are unavailable in the
+      npm registry. Custom Tailwind-based components substitute them. Tests cover
+      the custom implementation only; compliance with the official kit API is
+      unverified.
+    evidence_exists: true
+    resolution: >
+      Once siesa-ui-kit becomes available, verify that component props (data-testid
+      attributes, activeProps, aria-labels) match the kit's public API and rerun tests.
+
+risks_not_mitigated: []
+
+high_risk_items_status:
+  # From test-design-epic-1.md Risk Matrix
+  R1_CORS: MITIGATED  # TC-E1-P0-04 — E2E spec covers preflight + actual request
+  R2_TypeScript: MITIGATED  # TC-E1-P0-01 — tsc --noEmit = 0 errors, build passes
+  R3_Problem_Details: MITIGATED  # TC-E1-P0-05 — 14 xUnit unit tests, E2E API spec
+  R4_Deep_Linking: MITIGATED  # TC-E1-P1-02/03 — E2E tests for /clientes and /contactos
+  R5_EF_Core_Naming: PARTIAL  # TC-E1-P1-05/P2-04 — unit tests only, no DB-level check
+  R6_Connection_String: PARTIAL  # appsettings.Development.json present; DB start unverified
+  R7_Responsive_Nav: MITIGATED  # TC-E1-P2-01/02 — component tests + useIsDesktop hook tests
+  R8_Scalar: MITIGATED  # TC-E1-P0-03 — E2E spec verifies Scalar at /scalar
+  R9_Solution_Build: MITIGATED  # TC-E1-P1-06 — E2E runtime proxy; .NET build documented
+
+non_negotiable_requirements:
+  all_p0_pass: true       # All 5 P0 test cases have test evidence
+  R1_mitigated: true      # CORS verified by E2E spec
+  R2_mitigated: true      # TypeScript strict verified by unit tests + build output
+  R3_mitigated: true      # Problem Details verified by 14 unit tests + E2E
+  problem_details_no_stack_trace: true   # Explicit assertions in middleware tests
+  cors_preflight_verified: true          # E2E spec lines 93-110
+
+traceability_matrix_path: "_bmad-output/implementation-artifacts/traceability-matrix-epic-1.md"
