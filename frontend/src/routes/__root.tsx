@@ -5,9 +5,5 @@ export const Route = createRootRoute({
 })
 
 function RootLayout() {
-  return (
-    <div id="app">
-      <Outlet />
-    </div>
-  )
+  return <Outlet />
 }
