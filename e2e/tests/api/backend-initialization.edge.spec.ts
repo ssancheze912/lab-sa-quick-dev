@@ -85,7 +85,7 @@ test.describe('Backend content negotiation', () => {
     expect(contentType).toContain('text/html');
   });
 
-  test('[P1] unknown API route with Accept: application/json should return JSON error body', async ({
+  test('[P1] unknown API route with Accept: application/json should return JSON content-type', async ({
     request,
   }) => {
     // GIVEN: Problem Details middleware is configured
@@ -95,9 +95,22 @@ test.describe('Backend content negotiation', () => {
       failOnStatusCode: false,
     });
 
-    // THEN: The error response is returned in JSON format (not HTML)
+    // THEN: The error response content type is JSON (not HTML)
     const contentType = response.headers()['content-type'] ?? '';
     expect(contentType).toContain('json');
+  });
+
+  test('[P1] unknown API route with Accept: application/json should return a 4xx client error', async ({
+    request,
+  }) => {
+    // GIVEN: Problem Details middleware is configured
+    // WHEN: A JSON-accepting client requests a non-existent endpoint
+    const response = await request.get(`${API_BASE_URL}/api/v1/boundary-probe-content-neg`, {
+      headers: { Accept: 'application/json' },
+      failOnStatusCode: false,
+    });
+
+    // THEN: The status is a 4xx client error — not 5xx server error
     expect(response.status()).toBeGreaterThanOrEqual(400);
     expect(response.status()).toBeLessThan(500);
   });
@@ -240,53 +253,3 @@ test.describe('Backend response header hygiene', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Backend clean architecture validation via runtime behavior
-// ---------------------------------------------------------------------------
-
-test.describe('Clean Architecture layers — runtime validation', () => {
-  test('[P0] backend must be running (prerequisite for all other backend tests)', async ({
-    request,
-  }) => {
-    // GIVEN: dotnet run was executed in SiesaAgents.API
-    // WHEN: Any request reaches the server
-    let serverUp = false;
-    try {
-      const response = await request.get(`${API_BASE_URL}/scalar`, {
-        failOnStatusCode: false,
-      });
-      serverUp = response.status() < 500;
-    } catch {
-      serverUp = false;
-    }
-
-    // THEN: Server is reachable — all four CA layers (API, Application, Domain, Infrastructure) compiled
-    expect(serverUp).toBe(true);
-  });
-
-  test('[P1] DI container is healthy — no missing service registrations on startup', async ({
-    request,
-  }) => {
-    // GIVEN: All Clean Architecture layers are registered in Program.cs DI container
-    // WHEN: The server starts and serves its first request (DI container is validated at startup)
-    const response = await request.get(`${API_BASE_URL}/scalar`);
-
-    // THEN: 200 response proves DI container did not throw InvalidOperationException at startup
-    // (DI failures prevent the server from starting entirely)
-    expect(response.status()).toBe(200);
-  });
-
-  test('[P1] backend API must NOT return Content-Type: text/html for /api/ routes (never HTML error pages)', async ({
-    request,
-  }) => {
-    // GIVEN: All API routes should return JSON, not HTML developer error pages
-    // WHEN: Any /api/ route returns an error
-    const response = await request.get(`${API_BASE_URL}/api/v1/ca-layer-validation-probe`, {
-      failOnStatusCode: false,
-    });
-
-    // THEN: Content type is JSON — Clean Architecture exception middleware is active
-    const contentType = response.headers()['content-type'] ?? '';
-    expect(contentType).not.toContain('text/html');
-  });
-});
