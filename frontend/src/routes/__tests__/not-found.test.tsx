@@ -43,54 +43,69 @@ async function createLoadedTestRouter(initialPath = '/unknown') {
 
 describe('AC5 — NotFoundView for unknown routes', () => {
   it('should render the not-found view with correct data-testid', async () => {
+    // GIVEN: User navigated to an unknown route
     const router = await createLoadedTestRouter();
+    // WHEN: NotFoundView is rendered
     render(
       <RouterContextProvider router={router}>
         <NotFoundView />
       </RouterContextProvider>
     );
+    // THEN: Not-found container is present
     expect(screen.getByTestId('not-found-view')).toBeInTheDocument();
   });
 
   it('should display Spanish message "Página no encontrada"', async () => {
+    // GIVEN: User navigated to an unknown route
     const router = await createLoadedTestRouter();
+    // WHEN: NotFoundView is rendered
     render(
       <RouterContextProvider router={router}>
         <NotFoundView />
       </RouterContextProvider>
     );
+    // THEN: Spanish not-found message is shown
     expect(screen.getByTestId('not-found-message')).toHaveTextContent('Página no encontrada');
   });
 
   it('should display a link to return to /clientes', async () => {
+    // GIVEN: User navigated to an unknown route
     const router = await createLoadedTestRouter();
+    // WHEN: NotFoundView is rendered
     render(
       <RouterContextProvider router={router}>
         <NotFoundView />
       </RouterContextProvider>
     );
+    // THEN: Back link to /clientes is present
     const backLink = screen.getByTestId('not-found-back-link');
     expect(backLink).toBeInTheDocument();
   });
 
   it('should have the back link pointing to /clientes', async () => {
+    // GIVEN: User navigated to an unknown route
     const router = await createLoadedTestRouter();
+    // WHEN: NotFoundView is rendered
     render(
       <RouterContextProvider router={router}>
         <NotFoundView />
       </RouterContextProvider>
     );
+    // THEN: Back link href is /clientes
     const backLink = screen.getByTestId('not-found-back-link');
     expect(backLink).toHaveAttribute('href', '/clientes');
   });
 
   it('should display a graceful message (not a raw error or stack trace)', async () => {
+    // GIVEN: User navigated to an unknown route
     const router = await createLoadedTestRouter();
+    // WHEN: NotFoundView is rendered
     render(
       <RouterContextProvider router={router}>
         <NotFoundView />
       </RouterContextProvider>
     );
+    // THEN: View is present and no raw error text is shown
     expect(screen.getByTestId('not-found-view')).toBeInTheDocument();
     expect(screen.queryByText(/Error|Exception|stack/i)).not.toBeInTheDocument();
   });

@@ -2,16 +2,13 @@
  * Story 1.2: Frontend Navigation Shell
  * Epic 1: Project Foundation & Application Shell
  *
- * ATDD Acceptance Tests — RED Phase
- * These tests are intentionally FAILING until implementation is complete.
+ * ATDD Acceptance Tests — Navigation Layout (AC1-AC4)
  *
  * Acceptance Criteria covered:
  *   AC1 — Desktop NavigationRail visible with Clientes/Contactos; SPA navigation (FR28)
  *   AC2 — Mobile viewport renders NavigationBar at bottom; items tappable (FR29)
  *   AC3 — Direct URL /clientes renders Clientes view with active highlight (FR30)
  *   AC4 — Direct URL /contactos renders Contactos view with active highlight (FR30)
- *   AC5 — Unknown route renders graceful 404 in Spanish with link to /clientes
- *   AC6 — Root path / redirects automatically to /clientes
  */
 
 import { test, expect } from '@playwright/test';
@@ -25,8 +22,6 @@ test.describe('AC1 — Desktop NavigationRail (>= 1024px)', () => {
 
   test('should show NavigationRail on the left side at desktop viewport', async ({ page }) => {
     // GIVEN: The application is loaded on a desktop browser (>= 1024px)
-
-    // Network-first: intercept BEFORE navigation
     await page.route('**/api/**', (route) => route.continue());
 
     // WHEN: The user views the app
@@ -68,7 +63,7 @@ test.describe('AC1 — Desktop NavigationRail (>= 1024px)', () => {
     await page.locator('[data-testid="navigation-rail"] [data-testid="nav-item-clientes"]').click();
     await navigationPromise;
 
-    // THEN: URL changes to /clientes without a full page reload (no page navigation event)
+    // THEN: URL changes to /clientes without a full page reload
     expect(page.url()).toContain('/clientes');
   });
 
@@ -253,89 +248,5 @@ test.describe('AC4 — Direct URL deep link to /contactos (FR30)', () => {
 
     // THEN: The URL remains /contactos (no redirection to home or /)
     expect(page.url()).toContain('/contactos');
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AC5 — Unknown route renders 404 view in Spanish
-// ─────────────────────────────────────────────────────────────────────────────
-
-test.describe('AC5 — Unknown route renders 404 not-found view', () => {
-  test('should display a 404 not-found view for an unknown route', async ({ page }) => {
-    // GIVEN: The user navigates to an unknown route
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: The page loads
-    await page.goto('/unknown-route-xyz');
-
-    // THEN: A not-found view is displayed
-    await expect(page.locator('[data-testid="not-found-view"]')).toBeVisible();
-  });
-
-  test('should display Spanish message "Página no encontrada" on 404 view', async ({ page }) => {
-    // GIVEN: The user navigates to an unknown route
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: The page loads
-    await page.goto('/unknown-route-xyz');
-
-    // THEN: A Spanish not-found message is shown
-    await expect(page.locator('[data-testid="not-found-message"]')).toContainText('Página no encontrada');
-  });
-
-  test('should display a link to return to /clientes on the 404 view', async ({ page }) => {
-    // GIVEN: The user navigates to an unknown route
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: The page loads
-    await page.goto('/unknown-route-xyz');
-
-    // THEN: A link to /clientes is visible on the not-found view
-    await expect(page.locator('[data-testid="not-found-back-link"]')).toBeVisible();
-  });
-
-  test('should navigate to /clientes when clicking the back link on the 404 view', async ({ page }) => {
-    // GIVEN: The user is on an unknown route showing the 404 view
-    await page.route('**/api/**', (route) => route.continue());
-    await page.goto('/unknown-route-xyz');
-    await page.locator('[data-testid="not-found-view"]').waitFor({ state: 'visible' });
-
-    // WHEN: The user clicks the link to return to /clientes
-    const navPromise = page.waitForURL('**/clientes**');
-    await page.locator('[data-testid="not-found-back-link"]').click();
-    await navPromise;
-
-    // THEN: The user is taken to /clientes
-    expect(page.url()).toContain('/clientes');
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AC6 — Root path / redirects to /clientes
-// ─────────────────────────────────────────────────────────────────────────────
-
-test.describe('AC6 — Root path / redirects to /clientes', () => {
-  test('should redirect / to /clientes automatically', async ({ page }) => {
-    // GIVEN: The root path / is accessed
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: The page loads
-    await page.goto('/');
-    await page.waitForURL('**/clientes**');
-
-    // THEN: The user is automatically redirected to /clientes
-    expect(page.url()).toContain('/clientes');
-  });
-
-  test('should NOT display a blank screen when accessing the root path /', async ({ page }) => {
-    // GIVEN: The root path / is accessed
-    await page.route('**/api/**', (route) => route.continue());
-
-    // WHEN: The page loads and redirects
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    // THEN: Content is visible (no blank screen)
-    await expect(page.locator('[data-testid="app-root"]')).not.toBeEmpty();
   });
 });

@@ -44,72 +44,93 @@ async function createLoadedTestRouter(initialPath = '/clientes') {
 
 describe('AC2 — NavigationBar at mobile viewport (< 1024px)', () => {
   it('should render the NavigationBar component', async () => {
+    // GIVEN: Mobile viewport with router context
     const router = await createLoadedTestRouter();
+    // WHEN: NavigationBar is rendered
     render(
       <RouterContextProvider router={router}>
         <NavigationBar />
       </RouterContextProvider>
     );
+    // THEN: NavigationBar container is present in the DOM
     expect(screen.getByTestId('navigation-bar')).toBeInTheDocument();
   });
 
   it('should display the "Clientes" navigation item in the NavigationBar', async () => {
+    // GIVEN: Mobile viewport with router context
     const router = await createLoadedTestRouter();
+    // WHEN: NavigationBar is rendered
     render(
       <RouterContextProvider router={router}>
         <NavigationBar />
       </RouterContextProvider>
     );
+    // THEN: Clientes nav item is visible
     expect(screen.getByTestId('nav-item-clientes')).toBeInTheDocument();
   });
 
   it('should display the "Contactos" navigation item in the NavigationBar', async () => {
+    // GIVEN: Mobile viewport with router context
     const router = await createLoadedTestRouter();
+    // WHEN: NavigationBar is rendered
     render(
       <RouterContextProvider router={router}>
         <NavigationBar />
       </RouterContextProvider>
     );
+    // THEN: Contactos nav item is visible
     expect(screen.getByTestId('nav-item-contactos')).toBeInTheDocument();
   });
 
   it('should have accessible aria-label on "Clientes" item in Spanish', async () => {
+    // GIVEN: Mobile viewport with router context
     const router = await createLoadedTestRouter();
+    // WHEN: NavigationBar is rendered
     render(
       <RouterContextProvider router={router}>
         <NavigationBar />
       </RouterContextProvider>
     );
+    // THEN: Clientes item has Spanish aria-label
     expect(screen.getByTestId('nav-item-clientes')).toHaveAttribute('aria-label', 'Ir a Clientes');
   });
 
   it('should have accessible aria-label on "Contactos" item in Spanish', async () => {
+    // GIVEN: Mobile viewport with router context
     const router = await createLoadedTestRouter();
+    // WHEN: NavigationBar is rendered
     render(
       <RouterContextProvider router={router}>
         <NavigationBar />
       </RouterContextProvider>
     );
+    // THEN: Contactos item has Spanish aria-label
     expect(screen.getByTestId('nav-item-contactos')).toHaveAttribute('aria-label', 'Ir a Contactos');
   });
 
   it('should highlight "Clientes" as active when activeRoute is /clientes', async () => {
+    // GIVEN: Router is at /clientes
     const router = await createLoadedTestRouter('/clientes');
+    // WHEN: NavigationBar is rendered with activeRoute /clientes
     render(
       <RouterContextProvider router={router}>
         <NavigationBar activeRoute="/clientes" />
       </RouterContextProvider>
     );
+    // THEN: Clientes item has data-active=true
     expect(screen.getByTestId('nav-item-clientes')).toHaveAttribute('data-active', 'true');
   });
 
   it('should highlight "Contactos" as active when activeRoute is /contactos', async () => {
+    // GIVEN: Router is at /contactos
     const router = await createLoadedTestRouter('/contactos');
+    // WHEN: NavigationBar is rendered with activeRoute /contactos
     render(
       <RouterContextProvider router={router}>
         <NavigationBar activeRoute="/contactos" />
       </RouterContextProvider>
     );
+    // THEN: Contactos item has data-active=true
     expect(screen.getByTestId('nav-item-contactos')).toHaveAttribute('data-active', 'true');
   });
 });
