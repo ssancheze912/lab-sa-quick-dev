@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Infrastructure.Extensions;
 
 namespace SiesaAgents.Infrastructure.Data;
 

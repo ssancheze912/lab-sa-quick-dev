@@ -16,8 +16,6 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod()));
 
-builder.Services.AddTransient<ExceptionHandlingMiddleware>();
-
 builder.Services.AddDbContext<AppDbContext>(opts =>
     opts.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -27,5 +25,23 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("DevCors");
 app.MapOpenApi();
 app.MapScalarApiReference();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/api/v1/test-probes/throw-unhandled", () =>
+    {
+        throw new Exception("Unhandled test exception");
+    });
+
+    app.MapGet("/api/v1/test-probes/throw-not-found", () =>
+    {
+        throw new SiesaAgents.Domain.Exceptions.NotFoundException("Test resource", "test-id");
+    });
+
+    app.MapGet("/api/v1/test-probes/throw-validation", () =>
+    {
+        throw new SiesaAgents.Domain.Exceptions.ValidationException("Validation error");
+    });
+}
 
 app.Run();

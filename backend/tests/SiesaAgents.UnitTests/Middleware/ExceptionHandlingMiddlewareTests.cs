@@ -258,7 +258,7 @@ public class ExceptionHandlingMiddlewareTests
     {
         // Arrange
         var context = BuildHttpContext();
-        var middleware = BuildMiddleware(_ => throw new Domain.Exceptions.ValidationException("Validation failed"));
+        var middleware = BuildMiddleware(_ => throw new ValidationException("Validation failed"));
 
         // Act
         await middleware.InvokeAsync(context);
@@ -277,7 +277,7 @@ public class ExceptionHandlingMiddlewareTests
     {
         // Arrange
         var context = BuildHttpContext();
-        var middleware = BuildMiddleware(_ => throw new Domain.Exceptions.ValidationException("Invalid input"));
+        var middleware = BuildMiddleware(_ => throw new ValidationException("Invalid input"));
 
         // Act
         await middleware.InvokeAsync(context);
@@ -296,7 +296,7 @@ public class ExceptionHandlingMiddlewareTests
     {
         // Arrange
         var context = BuildHttpContext();
-        var middleware = BuildMiddleware(_ => throw new Domain.Exceptions.ValidationException("Invalid input"));
+        var middleware = BuildMiddleware(_ => throw new ValidationException("Invalid input"));
 
         // Act
         await middleware.InvokeAsync(context);
@@ -318,7 +318,7 @@ public class ExceptionHandlingMiddlewareTests
     {
         // Arrange
         var context = BuildHttpContext();
-        var middleware = BuildMiddleware(_ => throw new Domain.Exceptions.ValidationException("Invalid input"));
+        var middleware = BuildMiddleware(_ => throw new ValidationException("Invalid input"));
 
         // Act
         await middleware.InvokeAsync(context);
@@ -375,7 +375,7 @@ public class ExceptionHandlingMiddlewareTests
     private static ExceptionHandlingMiddleware BuildMiddleware(Func<HttpContext, Task> next)
     {
         var logger = NullLogger<ExceptionHandlingMiddleware>.Instance;
-        return new ExceptionHandlingMiddleware(next, logger);
+        return new ExceptionHandlingMiddleware(new RequestDelegate(next), logger);
     }
 
     private static async Task<string> ReadBodyAsync(DefaultHttpContext context)

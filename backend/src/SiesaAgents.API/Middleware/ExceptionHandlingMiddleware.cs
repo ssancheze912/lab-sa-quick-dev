@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using SiesaAgents.Domain.Exceptions;
 
@@ -7,6 +8,11 @@ public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
     public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
     {
@@ -33,6 +39,7 @@ public class ExceptionHandlingMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error");
+            // NEVER expose stack trace or internal message to client
             await WriteProblemDetails(context, StatusCodes.Status500InternalServerError, "An unexpected error occurred", null);
         }
     }
@@ -47,6 +54,7 @@ public class ExceptionHandlingMiddleware
         };
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/problem+json";
-        await context.Response.WriteAsJsonAsync(problem);
+        var json = JsonSerializer.Serialize(problem, JsonOptions);
+        await context.Response.WriteAsync(json);
     }
 }

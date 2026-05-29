@@ -316,10 +316,7 @@ test.describe('AC2 — Problem Details RFC 7807 structural compliance', () => {
     );
 
     // THEN: Response body is parseable as JSON (not malformed)
-    let body: unknown;
-    expect(async () => {
-      body = await response.json();
-    }).not.toThrow();
+    const body = await response.json();
     expect(body).toBeTruthy();
   });
 });
