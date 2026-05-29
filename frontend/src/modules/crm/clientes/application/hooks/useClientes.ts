@@ -7,6 +7,7 @@ export function useClientes() {
     queryKey: ['clientes'],
     queryFn: () => clienteApiRepository.getAll(),
     staleTime: 0,
+    retry: 0,
   });
 
   return { data, isLoading, isError, refetch };
