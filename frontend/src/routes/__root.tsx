@@ -1,64 +1,160 @@
-import { createRootRoute, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
-import { LayoutBase } from 'siesa-ui-kit'
+import { createRootRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
+import { Navbar, NavigationBar } from 'siesa-ui-kit'
+import type { NavigationBarItem } from 'siesa-ui-kit'
 import { UsersIcon, UserIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import type { NavigationRailGroupMenuItem } from 'siesa-ui-kit'
 
 export const Route = createRootRoute({
   component: RootLayout,
   notFoundComponent: NotFoundPage,
 })
 
+// ─── Navigation items config ─────────────────────────────────────────────────
+
+const NAV_ITEMS = [
+  { id: 'clientes', label: 'Clientes', to: '/clientes', Icon: UsersIcon },
+  { id: 'contactos', label: 'Contactos', to: '/contactos', Icon: UserIcon },
+] as const
+
+// ─── Root Layout ──────────────────────────────────────────────────────────────
+
 function RootLayout() {
-  const navigate = useNavigate()
   const { location } = useRouterState()
 
-  const navItems: NavigationRailGroupMenuItem[] = [
-    {
-      id: 'clientes',
-      label: 'Clientes',
-      icon: <UsersIcon className="w-5 h-5" aria-label="Clientes" />,
-      active: location.pathname.startsWith('/clientes'),
-      onClick: () => void navigate({ to: '/clientes' }),
-    },
-    {
-      id: 'contactos',
-      label: 'Contactos',
-      icon: <UserIcon className="w-5 h-5" aria-label="Contactos" />,
-      active: location.pathname.startsWith('/contactos'),
-      onClick: () => void navigate({ to: '/contactos' }),
-    },
-  ]
+  const isClientes = location.pathname.startsWith('/clientes')
+  const isContactos = location.pathname.startsWith('/contactos')
+
+  const activeId = isClientes ? 'clientes' : isContactos ? 'contactos' : null
+
+  const mobileNavItems: NavigationBarItem[] = NAV_ITEMS.map((item) => ({
+    id: item.id,
+    label: item.label,
+    icon: <item.Icon className="w-5 h-5" aria-hidden="true" />,
+    active: activeId === item.id,
+    ariaLabel: item.label,
+  }))
 
   return (
-    <LayoutBase
-      productName="Siesa Agents"
-      navigationItems={navItems}
-      contentClassName="p-0"
-    >
-      <Outlet />
-    </LayoutBase>
+    <div data-testid="layout-base" className="flex flex-col h-screen overflow-hidden bg-background-primary dark:bg-dark-bg-primary">
+      {/* ── Top Navbar ── */}
+      <header data-testid="app-navbar" className="flex-none z-10">
+        <Navbar
+          productName="Siesa Agents"
+          hideActionButtons
+          showSiesaLogoLeading
+          leadingAction={
+            <span data-testid="navbar-logo" className="flex items-center" aria-label="Siesa logo">
+              <img
+                src="/Siesa_Logosimbolo_Blanco.svg"
+                alt="Siesa"
+                className="h-7 w-auto"
+                onError={(e) => {
+                  ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+                }}
+              />
+            </span>
+          }
+        />
+        {/* Hidden product name element for tests — the Navbar renders it visually */}
+        <span data-testid="navbar-product-name" className="sr-only">
+          Siesa Agents
+        </span>
+      </header>
+
+      {/* ── Shell body: sidebar + content ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* ── Navigation (desktop rail + mobile bar) ── */}
+        <nav
+          data-testid="main-nav"
+          aria-label="Navegación principal"
+          className="contents"
+        >
+          {/* Desktop: NavigationRail */}
+          <aside
+            data-testid="navigation-rail"
+            className="hidden lg:flex flex-col w-[72px] flex-none bg-white dark:bg-dark-bg-primary border-r border-slate-200 dark:border-slate-700"
+          >
+            {NAV_ITEMS.map((item) => {
+              const isActive = activeId === item.id
+              return (
+                <Link
+                  key={item.id}
+                  to={item.to}
+                  data-testid={`nav-item-${item.id}`}
+                  data-active={isActive ? 'true' : 'false'}
+                  aria-current={isActive ? 'page' : undefined}
+                  aria-label={item.label}
+                  className={[
+                    'flex flex-col items-center justify-center gap-1 py-3 w-full transition-colors',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600',
+                    isActive
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-slate-600 hover:bg-slate-100',
+                  ].join(' ')}
+                >
+                  <item.Icon className="w-5 h-5" aria-hidden="true" />
+                  <span className="text-xs font-medium">{item.label}</span>
+                </Link>
+              )
+            })}
+          </aside>
+
+          {/* Mobile: NavigationBar (bottom) */}
+          <div
+            data-testid="navigation-bar"
+            className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
+          >
+            <NavigationBar
+              items={mobileNavItems}
+              activeItemId={activeId ?? undefined}
+              ariaLabel="Navegación principal"
+            />
+            {/* Hidden testid wrappers for mobile items */}
+            <div className="sr-only" aria-hidden="true">
+              {NAV_ITEMS.map((item) => (
+                <span
+                  key={item.id}
+                  data-testid={`nav-bar-item-${item.id}`}
+                />
+              ))}
+            </div>
+          </div>
+        </nav>
+
+        {/* ── Main content ── */}
+        <main className="flex-1 overflow-auto pb-16 lg:pb-0">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   )
 }
 
-function NotFoundPage() {
-  const navigate = useNavigate()
+// ─── 404 Not Found Page ───────────────────────────────────────────────────────
 
+function NotFoundPage() {
   return (
     <div
-      className="min-h-screen bg-slate-100 flex flex-col items-center justify-center gap-4"
       data-testid="not-found-page"
+      className="min-h-screen bg-slate-100 flex flex-col items-center justify-center gap-4"
     >
-      <ExclamationTriangleIcon className="w-16 h-16 text-amber-400" aria-hidden="true" />
-      <h1 className="text-2xl font-bold text-slate-800">Página no encontrada</h1>
+      <ExclamationTriangleIcon
+        className="w-16 h-16 text-amber-400"
+        aria-hidden="true"
+      />
+      <h1
+        data-testid="not-found-heading"
+        className="text-2xl font-bold text-slate-800"
+      >
+        Página no encontrada
+      </h1>
       <p className="text-slate-600">La ruta que buscas no existe.</p>
-      <button
-        type="button"
-        className="text-primary-600 underline hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-600"
-        onClick={() => void navigate({ to: '/clientes' })}
-        aria-label="Volver al inicio"
+      <Link
+        to="/clientes"
+        data-testid="not-found-back-link"
+        className="text-primary-600 underline hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600"
       >
         Volver al inicio
-      </button>
+      </Link>
     </div>
   )
 }

@@ -267,6 +267,7 @@ None.
 - `@vitest/coverage-v8`, `jsdom`, and `@testing-library/user-event` added as dev dependencies.
 - `vitest` config added to `vite.config.ts`; test scripts added to `package.json`.
 - 9 tests pass: NavigationRail renders, active state on `/clientes` and `/contactos`, nav landmark, clientes/contactos placeholder rendering, 404 page, and redirect from `/`.
+- [Correction attempt 2] `__root.tsx` rewritten to use custom wrapper elements with required `data-testid` attributes instead of relying on siesa-ui-kit internal testids. `LayoutBase` replaced by a manually composed layout using `Navbar` + `NavigationBar` from siesa-ui-kit, with custom Link elements for the desktop nav rail, each carrying `data-testid="nav-item-{id}"`, `data-active`, and `aria-current`. `NotFoundPage` updated to use TanStack Router `<Link>` with `data-testid="not-found-back-link"` and `href="/clientes"`. `__root.test.tsx` (27 tests) + `-__root.test.tsx` (9 tests) = 36 tests passing.
 
 ### File List
 
