@@ -83,7 +83,7 @@ export function ClienteDetailView() {
       aria-label="Detalle del cliente"
       className="flex-1 flex flex-col gap-6 p-8 overflow-auto"
     >
-      <h2 className="text-xl font-bold text-slate-900">{cliente.nombre}</h2>
+      <h2 data-testid="cliente-detail-nombre" className="text-xl font-bold text-slate-900">{cliente.nombre}</h2>
       <dl className="grid grid-cols-2 gap-6">
         <div className="flex flex-col gap-1">
           <dt className="text-xs font-medium text-slate-400 uppercase tracking-wider">
