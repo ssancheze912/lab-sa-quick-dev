@@ -1,0 +1,16 @@
+{
+  "name": "siesa-agents",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev:frontend": "cd frontend && pnpm run dev",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^11.0.0",
+    "uuid": "^14.0.0"
+  }
+}
