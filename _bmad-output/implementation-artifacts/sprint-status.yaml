@@ -17,7 +17,7 @@ development_status:
 
   # Epic 1 — Project Foundation & Application Shell
   1-1-project-initialization-repository-structure: done
-  1-2-frontend-navigation-shell: ready-for-dev
+  1-2-frontend-navigation-shell: review
   1-3-backend-database-foundation: pending
 
   # Epic 2 — Client Management
