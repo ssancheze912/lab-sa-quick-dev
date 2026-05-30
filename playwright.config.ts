@@ -1,10 +1,8 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test'
 
-/**
- * Siesa Agents CRM - Playwright E2E Configuration
- * Frontend: React + Vite (http://localhost:5173)
- * Backend:  .NET 10 Minimal API (http://localhost:5000)
- */
+const FRONTEND_URL = process.env.FRONTEND_BASE_URL ?? 'http://localhost:5173'
+const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000'
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -18,11 +16,14 @@ export default defineConfig({
   ],
 
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: FRONTEND_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     locale: 'es-CO',
+    launchOptions: {
+      executablePath: '/opt/pw-browsers/chromium',
+    },
   },
 
   projects: [
@@ -30,26 +31,18 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+  ],
+
+  webServer: [
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    },
-    {
-      name: 'mobile-chrome',
-      use: { ...devices['Pixel 5'] },
+      command: 'cd frontend && pnpm run dev',
+      url: FRONTEND_URL,
+      reuseExistingServer: true,
+      timeout: 120 * 1000,
     },
   ],
 
-  webServer: {
-    command: 'pnpm --filter frontend dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
-
   outputDir: 'playwright-results/',
-});
+})
+
+export { FRONTEND_URL, API_BASE_URL }
