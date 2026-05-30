@@ -295,9 +295,13 @@ describe('ClienteDetailView — network error panel boundary', () => {
 // ---------------------------------------------------------------------------
 describe('ClienteDetailView — skeleton loading boundary', () => {
   it('Given loading When skeleton renders Then skeleton testid container is present', async () => {
+    // Use deferred promise — no hard timeout
+    let release!: () => void
+    const pending = new Promise<void>((resolve) => { release = resolve })
+
     server.use(
       http.get('/api/v1/clientes/:id', async () => {
-        await new Promise((resolve) => setTimeout(resolve, 300))
+        await pending
         return HttpResponse.json(mockCliente)
       }),
     )
@@ -305,12 +309,17 @@ describe('ClienteDetailView — skeleton loading boundary', () => {
     await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     expect(screen.getByTestId('cliente-detail-skeleton')).toBeInTheDocument()
+    release()
   })
 
   it('Given loading When skeleton renders Then aria-busy is "true"', async () => {
+    // Use deferred promise — no hard timeout
+    let release!: () => void
+    const pending = new Promise<void>((resolve) => { release = resolve })
+
     server.use(
       http.get('/api/v1/clientes/:id', async () => {
-        await new Promise((resolve) => setTimeout(resolve, 300))
+        await pending
         return HttpResponse.json(mockCliente)
       }),
     )
@@ -319,13 +328,17 @@ describe('ClienteDetailView — skeleton loading boundary', () => {
 
     const skeleton = screen.getByTestId('cliente-detail-skeleton')
     expect(skeleton).toHaveAttribute('aria-busy', 'true')
+    release()
   })
 
   it('Given loading When skeleton renders Then no client data fields are visible', async () => {
-    // Edge: skeleton must not prematurely show field testids
+    // Edge: skeleton must not prematurely show field testids — deferred promise, no hard timeout
+    let release!: () => void
+    const pending = new Promise<void>((resolve) => { release = resolve })
+
     server.use(
       http.get('/api/v1/clientes/:id', async () => {
-        await new Promise((resolve) => setTimeout(resolve, 300))
+        await pending
         return HttpResponse.json(mockCliente)
       }),
     )
@@ -335,6 +348,7 @@ describe('ClienteDetailView — skeleton loading boundary', () => {
     expect(screen.queryByTestId('cliente-detail-nit')).not.toBeInTheDocument()
     expect(screen.queryByTestId('cliente-detail-telefono')).not.toBeInTheDocument()
     expect(screen.queryByTestId('cliente-detail-ciudad')).not.toBeInTheDocument()
+    release()
   })
 
   it('Given loading then data arrives When data loads Then skeleton is replaced by detail panel', async () => {

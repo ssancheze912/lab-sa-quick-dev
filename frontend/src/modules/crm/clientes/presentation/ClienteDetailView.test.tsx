@@ -235,10 +235,13 @@ describe('ClienteDetailView — TC-E2-P1-12: not-found state for invalid cliente
 // ---------------------------------------------------------------------------
 describe('ClienteDetailView — AC5: skeleton shown while loading (not spinner)', () => {
   it('Given fetch is in progress When component renders Then skeleton placeholders are shown', async () => {
-    // GIVEN: MSW holds the response — component is in loading state
+    // GIVEN: MSW holds the response indefinitely — no hard timeout
+    let releaseResponse!: () => void
+    const pending = new Promise<void>((resolve) => { releaseResponse = resolve })
+
     server.use(
       http.get('/api/v1/clientes/:id', async () => {
-        await new Promise((resolve) => setTimeout(resolve, 200))
+        await pending
         return HttpResponse.json(mockCliente)
       })
     )
@@ -246,17 +249,23 @@ describe('ClienteDetailView — AC5: skeleton shown while loading (not spinner)'
     // WHEN: Navigate to client detail
     await renderWithRouter(`/clientes/${mockCliente.id}`)
 
-    // THEN: Skeleton is shown immediately
+    // THEN: Skeleton is shown while fetch is pending
     expect(screen.getByTestId('cliente-detail-skeleton')).toBeInTheDocument()
     // And: No spinner (company standard — react-loading-skeleton, not spinners)
     expect(screen.queryByRole('status', { name: /loading/i })).not.toBeInTheDocument()
+
+    // Cleanup: release the held response
+    releaseResponse()
   })
 
   it('Given fetch is in progress When component renders Then aria-busy attribute is set', async () => {
-    // GIVEN: Slow response
+    // GIVEN: MSW holds the response indefinitely — no hard timeout
+    let releaseResponse!: () => void
+    const pending = new Promise<void>((resolve) => { releaseResponse = resolve })
+
     server.use(
       http.get('/api/v1/clientes/:id', async () => {
-        await new Promise((resolve) => setTimeout(resolve, 200))
+        await pending
         return HttpResponse.json(mockCliente)
       })
     )
@@ -266,6 +275,9 @@ describe('ClienteDetailView — AC5: skeleton shown while loading (not spinner)'
 
     // THEN: Loading container has aria-busy="true" (WCAG 2.1 AA)
     expect(screen.getByRole('region', { name: /cargando/i }) || screen.getByTestId('cliente-detail-skeleton')).toBeTruthy()
+
+    // Cleanup: release the held response
+    releaseResponse()
   })
 })
 

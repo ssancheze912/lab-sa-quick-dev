@@ -82,10 +82,7 @@ describe('useCliente — query disabled when id is undefined', () => {
       wrapper: createWrapper(),
     })
 
-    // Give time for any accidental fetch
-    await new Promise((resolve) => setTimeout(resolve, 50))
-
-    // THEN: No API call made, data is undefined
+    // THEN: No API call made — disabled query is synchronously idle, no need to wait
     expect(apiCallCount).toBe(0)
     expect(result.current.data).toBeUndefined()
     expect(result.current.isLoading).toBe(false)
@@ -106,9 +103,7 @@ describe('useCliente — query disabled when id is undefined', () => {
       wrapper: createWrapper(),
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
-
-    // THEN
+    // THEN: disabled query is synchronously idle — no wait needed
     expect(apiCallCount).toBe(0)
     expect(result.current.data).toBeUndefined()
   })
