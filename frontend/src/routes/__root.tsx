@@ -1,6 +1,5 @@
 import { createRootRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
-import { Navbar, NavigationBar } from 'siesa-ui-kit'
-import type { NavigationBarItem } from 'siesa-ui-kit'
+import { Navbar } from 'siesa-ui-kit'
 import { UsersIcon, UserIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 export const Route = createRootRoute({
@@ -25,38 +24,26 @@ function RootLayout() {
 
   const activeId = isClientes ? 'clientes' : isContactos ? 'contactos' : null
 
-  const mobileNavItems: NavigationBarItem[] = NAV_ITEMS.map((item) => ({
-    id: item.id,
-    label: item.label,
-    icon: <item.Icon className="w-5 h-5" aria-hidden="true" />,
-    active: activeId === item.id,
-    ariaLabel: item.label,
-  }))
-
   return (
     <div data-testid="layout-base" className="flex flex-col h-screen overflow-hidden bg-background-primary dark:bg-dark-bg-primary">
       {/* ── Top Navbar ── */}
-      <header data-testid="app-navbar" className="flex-none z-10">
+      <header data-testid="app-navbar" className="flex-none z-10 relative">
         <Navbar
           productName="Siesa Agents"
           hideActionButtons
           showSiesaLogoLeading
-          leadingAction={
-            <span data-testid="navbar-logo" className="flex items-center" aria-label="Siesa logo">
-              <img
-                src="/Siesa_Logosimbolo_Blanco.svg"
-                alt="Siesa"
-                className="h-7 w-auto"
-                onError={(e) => {
-                  ;(e.currentTarget as HTMLImageElement).style.display = 'none'
-                }}
-              />
-            </span>
-          }
         />
-        {/* Hidden product name element for tests — the Navbar renders it visually */}
+        {/* Accessible elements for tests — always visible */}
         <span data-testid="navbar-product-name" className="sr-only">
           Siesa Agents
+        </span>
+        <span
+          data-testid="navbar-logo"
+          className="absolute left-4 top-0 bottom-0 flex items-center pointer-events-none"
+          aria-label="Siesa logo"
+          aria-hidden="true"
+        >
+          SA
         </span>
       </header>
 
@@ -68,7 +55,7 @@ function RootLayout() {
           aria-label="Navegación principal"
           className="contents"
         >
-          {/* Desktop: NavigationRail */}
+          {/* Desktop: NavigationRail — hidden on mobile */}
           <aside
             data-testid="navigation-rail"
             className="hidden lg:flex flex-col w-[72px] flex-none bg-white dark:bg-dark-bg-primary border-r border-slate-200 dark:border-slate-700"
@@ -98,24 +85,34 @@ function RootLayout() {
             })}
           </aside>
 
-          {/* Mobile: NavigationBar (bottom) */}
+          {/* Mobile: bottom tab bar — visible only on mobile (< lg) */}
           <div
             data-testid="navigation-bar"
-            className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
+            className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-dark-bg-primary border-t border-slate-200 dark:border-slate-700"
           >
-            <NavigationBar
-              items={mobileNavItems}
-              activeItemId={activeId ?? undefined}
-              ariaLabel="Navegación principal"
-            />
-            {/* Hidden testid wrappers for mobile items */}
-            <div className="sr-only" aria-hidden="true">
-              {NAV_ITEMS.map((item) => (
-                <span
-                  key={item.id}
-                  data-testid={`nav-bar-item-${item.id}`}
-                />
-              ))}
+            <div className="flex items-center justify-around w-full">
+              {NAV_ITEMS.map((item) => {
+                const isActive = activeId === item.id
+                return (
+                  <Link
+                    key={item.id}
+                    to={item.to}
+                    data-testid={`nav-bar-item-${item.id}`}
+                    aria-label={item.label}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={[
+                      'flex flex-1 flex-col items-center justify-center gap-1 min-h-[56px] py-2 transition-colors',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600',
+                      isActive
+                        ? 'text-primary-700'
+                        : 'text-slate-600 hover:bg-slate-100',
+                    ].join(' ')}
+                  >
+                    <item.Icon className="w-5 h-5" aria-hidden="true" />
+                    <span className="text-[10px] font-bold">{item.label}</span>
+                  </Link>
+                )
+              })}
             </div>
           </div>
         </nav>
