@@ -1,13 +1,17 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { ClienteListView } from '../../modules/crm/clientes/presentation/ClienteListView'
 
 export const Route = createFileRoute('/_app/clientes')({
-  component: ClientesPlaceholder,
+  component: ClientesLayout,
 })
 
-function ClientesPlaceholder() {
+function ClientesLayout() {
   return (
-    <div data-testid="clientes-placeholder">
-      <p>Vista de Clientes — en construcción</p>
+    <div className="flex h-full">
+      <ClienteListView />
+      <div className="flex-1 overflow-auto">
+        <Outlet />
+      </div>
     </div>
   )
 }

@@ -49,11 +49,20 @@ export function ClienteListView() {
 
         {isError && <ErrorPanel onRetry={() => refetch()} />}
 
-        {!isLoading && !isError && filteredClientes.length === 0 && (
+        {!isLoading && !isError && filteredClientes.length === 0 && !searchQuery && (
           <EmptyState
             title="No hay clientes registrados"
             description="Crea el primer cliente para comenzar"
           />
+        )}
+
+        {!isLoading && !isError && filteredClientes.length === 0 && searchQuery && (
+          <p
+            data-testid="no-results-message"
+            className="px-4 py-6 text-sm text-center text-slate-400"
+          >
+            Sin resultados para &ldquo;{searchQuery}&rdquo;
+          </p>
         )}
 
         {!isLoading && !isError && filteredClientes.length > 0 && (

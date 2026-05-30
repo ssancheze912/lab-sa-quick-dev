@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -474,4 +474,42 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- Code review completed by code-review workflow (claude-sonnet-4-6)
+- Auto-corrected: Program.cs missing DI registration for IClienteRepository, GetClientesQueryHandler, and MapClienteEndpoints call
+- Auto-corrected: frontend/src/routes/_app/clientes.tsx was still a placeholder — replaced with ClientesLayout rendering ClienteListView + Outlet
+- Auto-corrected: ClienteListView empty-search condition bug — EmptyState was shown for both truly empty list and zero search results; now shows distinct "Sin resultados" message
+- Auto-corrected: Created missing clientes.$clienteId.tsx route placeholder (Task 21)
+- Auto-corrected: Created GetClientesQueryHandlerTests.cs (Task 10) and added NSubstitute to unit test csproj
+- Integration test (ClienteEndpointsTests.cs) relies on a live PostgreSQL DB — not isolated with test containers; acceptable for current project stage but flagged
+
 ### File List
+
+backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs
+backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs
+backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs
+backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQuery.cs
+backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQueryHandler.cs
+backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs
+backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260530000001_AddClienteEntity.cs
+backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs
+backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs
+backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs
+backend/src/SiesaAgents.API/Program.cs
+backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs
+backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsTests.cs
+frontend/src/modules/crm/clientes/domain/Cliente.ts
+frontend/src/modules/crm/clientes/domain/IClienteRepository.ts
+frontend/src/modules/crm/clientes/application/useClientes.ts
+frontend/src/modules/crm/clientes/application/filterClientes.ts
+frontend/src/modules/crm/clientes/application/clienteFilter.ts
+frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts
+frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx
+frontend/src/modules/crm/clientes/presentation/ClienteListView.test.tsx
+frontend/src/modules/crm/clientes/application/clienteFilter.test.ts
+frontend/src/modules/crm/clientes/application/clienteFilter.edge.test.ts
+frontend/src/shared/components/ClientListItem.tsx
+frontend/src/shared/components/EmptyState.tsx
+frontend/src/shared/components/ErrorPanel.tsx
+frontend/src/routes/_app/clientes.tsx
+frontend/src/routes/_app/clientes.$clienteId.tsx
+frontend/src/__mocks__/handlers/clientes.ts
