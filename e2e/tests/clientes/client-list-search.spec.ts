@@ -209,8 +209,8 @@ test.describe('Story 2.1 — Client List & Search (E2E)', () => {
     await page.goto('/clientes')
 
     // THEN: Reintentar button is present
-    await expect(page.getByTestId('error-panel-retry-button')).toBeVisible()
-    await expect(page.getByTestId('error-panel-retry-button')).toContainText(/reintentar/i)
+    await expect(page.getByTestId('retry-button')).toBeVisible()
+    await expect(page.getByTestId('retry-button')).toContainText(/reintentar/i)
   })
 
   test('AC4 — GIVEN ErrorPanel is shown WHEN user clicks Reintentar THEN a new fetch is triggered', async ({ page }) => {
@@ -236,7 +236,7 @@ test.describe('Story 2.1 — Client List & Search (E2E)', () => {
     await expect(page.getByTestId('error-panel')).toBeVisible()
 
     // WHEN: User clicks Reintentar
-    await page.getByTestId('error-panel-retry-button').click()
+    await page.getByTestId('retry-button').click()
 
     // THEN: A second fetch was made (refetch called)
     await expect(page.getByTestId('error-panel')).not.toBeVisible()
