@@ -17,3 +17,4 @@ playwright/.cache/
 # Frontend
 frontend/dist/
 frontend/.vite/
+frontend/coverage/
