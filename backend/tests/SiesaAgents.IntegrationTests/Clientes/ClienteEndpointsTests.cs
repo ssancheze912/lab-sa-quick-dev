@@ -31,8 +31,15 @@ public class ClienteEndpointsTests : IClassFixture<WebApplicationFactory<Program
         _client = _factory.CreateClient();
     }
 
+    // TODO (TEA Review): InitializeAsync is a no-op. Tests asserting ">= 3 clients" rely on a pre-seeded
+    // live DB, making them non-deterministic. Replace with isolated test DB using WebApplicationFactory
+    // .WithWebHostBuilder() pointing to a dedicated test database, seed via EF Core in InitializeAsync,
+    // and clean up in DisposeAsync. See test-review-2-1.md for details.
+    // Knowledge base: fixture-architecture.md, data-factories.md
     public Task InitializeAsync() => Task.CompletedTask;
 
+    // TODO (TEA Review): DisposeAsync is a no-op — no cleanup of test data written during tests.
+    // Add DELETE calls or DB truncation here to prevent state bleed between test runs.
     public Task DisposeAsync() => Task.CompletedTask;
 
     // =========================================================================
