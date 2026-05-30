@@ -21,6 +21,7 @@ import {
   createRootRoute,
   createRoute,
   createMemoryHistory,
+  Outlet,
 } from '@tanstack/react-router'
 import { ClienteDetailView } from './ClienteDetailView'
 import {
@@ -78,15 +79,11 @@ function createTestQueryClient() {
  * Render ClienteDetailView inside a TanStack Router with a given initial URL.
  * Uses memory history so tests do not hit the browser.
  */
-function renderWithRouter(initialPath: string) {
+async function renderWithRouter(initialPath: string) {
   const queryClient = createTestQueryClient()
 
   const rootRoute = createRootRoute({
-    component: () => {
-      // Inline root element — ClienteDetailView is rendered in child route
-      const { Outlet } = require('@tanstack/react-router')
-      return <Outlet />
-    },
+    component: () => <Outlet />,
   })
 
   const detailRoute = createRoute({
@@ -108,6 +105,8 @@ function renderWithRouter(initialPath: string) {
     history: createMemoryHistory({ initialEntries: [initialPath] }),
   })
 
+  await router.load()
+
   return render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
@@ -124,7 +123,7 @@ describe('ClienteDetailView — TC-E2-P1-11: detail panel fields after URL navig
   it('Given clienteId in URL When component renders Then Nombre is displayed in detail panel', async () => {
     // GIVEN: Route navigated to /clientes/:clienteId with known client
     // WHEN: MSW returns client data and component renders
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     // THEN: Nombre is displayed
     await waitFor(() => {
@@ -134,7 +133,7 @@ describe('ClienteDetailView — TC-E2-P1-11: detail panel fields after URL navig
 
   it('Given clienteId in URL When component renders Then NIT/RUC is displayed in detail panel', async () => {
     // GIVEN: Route navigated to /clientes/:clienteId
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     // THEN: NIT value is visible
     await waitFor(() => {
@@ -144,7 +143,7 @@ describe('ClienteDetailView — TC-E2-P1-11: detail panel fields after URL navig
 
   it('Given clienteId in URL When component renders Then Teléfono is displayed in detail panel', async () => {
     // GIVEN
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     // THEN
     await waitFor(() => {
@@ -154,7 +153,7 @@ describe('ClienteDetailView — TC-E2-P1-11: detail panel fields after URL navig
 
   it('Given clienteId in URL When component renders Then Ciudad is displayed in detail panel', async () => {
     // GIVEN
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     // THEN
     await waitFor(() => {
@@ -164,7 +163,7 @@ describe('ClienteDetailView — TC-E2-P1-11: detail panel fields after URL navig
 
   it('Given clienteId in URL When detail renders Then field labels use semantic dl/dt/dd elements', async () => {
     // GIVEN: WCAG 2.1 AA — semantic HTML for field/value pairs
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     await waitFor(() => {
       // THEN: dt elements for labels, dd elements for values
@@ -181,7 +180,7 @@ describe('ClienteDetailView — TC-E2-P1-11: detail panel fields after URL navig
 describe('ClienteDetailView — TC-E2-P1-11: detail panel data-testid present', () => {
   it('Given clienteId in URL When detail renders Then cliente-detail-panel testid is present', async () => {
     // GIVEN
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     // THEN
     await waitFor(() => {
@@ -198,7 +197,7 @@ describe('ClienteDetailView — TC-E2-P1-11: detail panel data-testid present', 
 describe('ClienteDetailView — TC-E2-P1-12: not-found state for invalid clienteId', () => {
   it('Given non-existent clienteId in URL When backend returns 404 Then not-found message is displayed', async () => {
     // GIVEN: MSW returns 404 for unknown ID (default handler)
-    renderWithRouter('/clientes/00000000-0000-0000-0000-000000000099')
+    await renderWithRouter('/clientes/00000000-0000-0000-0000-000000000099')
 
     // THEN: Not-found message is shown
     await waitFor(() => {
@@ -208,7 +207,7 @@ describe('ClienteDetailView — TC-E2-P1-12: not-found state for invalid cliente
 
   it('Given non-existent clienteId in URL When backend returns 404 Then no spinner is shown', async () => {
     // GIVEN
-    renderWithRouter('/clientes/00000000-0000-0000-0000-000000000099')
+    await renderWithRouter('/clientes/00000000-0000-0000-0000-000000000099')
 
     await waitFor(() => {
       expect(screen.getByText(/cliente no encontrado/i)).toBeInTheDocument()
@@ -220,7 +219,7 @@ describe('ClienteDetailView — TC-E2-P1-12: not-found state for invalid cliente
 
   it('Given non-existent clienteId When backend returns 404 Then retry button is NOT shown (not a retryable error)', async () => {
     // GIVEN: 404 is not a retriable network error — it means client genuinely does not exist
-    renderWithRouter('/clientes/00000000-0000-0000-0000-000000000099')
+    await renderWithRouter('/clientes/00000000-0000-0000-0000-000000000099')
 
     await waitFor(() => {
       expect(screen.getByText(/cliente no encontrado/i)).toBeInTheDocument()
@@ -235,7 +234,7 @@ describe('ClienteDetailView — TC-E2-P1-12: not-found state for invalid cliente
 // AC#5: Loading state → skeleton placeholders, NOT spinner
 // ---------------------------------------------------------------------------
 describe('ClienteDetailView — AC5: skeleton shown while loading (not spinner)', () => {
-  it('Given fetch is in progress When component renders Then skeleton placeholders are shown', () => {
+  it('Given fetch is in progress When component renders Then skeleton placeholders are shown', async () => {
     // GIVEN: MSW holds the response — component is in loading state
     server.use(
       http.get('/api/v1/clientes/:id', async () => {
@@ -245,7 +244,7 @@ describe('ClienteDetailView — AC5: skeleton shown while loading (not spinner)'
     )
 
     // WHEN: Navigate to client detail
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     // THEN: Skeleton is shown immediately
     expect(screen.getByTestId('cliente-detail-skeleton')).toBeInTheDocument()
@@ -253,7 +252,7 @@ describe('ClienteDetailView — AC5: skeleton shown while loading (not spinner)'
     expect(screen.queryByRole('status', { name: /loading/i })).not.toBeInTheDocument()
   })
 
-  it('Given fetch is in progress When component renders Then aria-busy attribute is set', () => {
+  it('Given fetch is in progress When component renders Then aria-busy attribute is set', async () => {
     // GIVEN: Slow response
     server.use(
       http.get('/api/v1/clientes/:id', async () => {
@@ -263,7 +262,7 @@ describe('ClienteDetailView — AC5: skeleton shown while loading (not spinner)'
     )
 
     // WHEN
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     // THEN: Loading container has aria-busy="true" (WCAG 2.1 AA)
     expect(screen.getByRole('region', { name: /cargando/i }) || screen.getByTestId('cliente-detail-skeleton')).toBeTruthy()
@@ -283,7 +282,7 @@ describe('ClienteDetailView — AC4: network error shows retry panel', () => {
     )
 
     // WHEN
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     // THEN: Error state message is displayed
     await waitFor(() => {
@@ -300,7 +299,7 @@ describe('ClienteDetailView — AC4: network error shows retry panel', () => {
     )
 
     // WHEN
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     // THEN
     await waitFor(() => {
@@ -322,7 +321,7 @@ describe('ClienteDetailView — AC4: network error shows retry panel', () => {
     )
 
     const user = userEvent.setup()
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     // Wait for error state
     await waitFor(() => {
@@ -349,7 +348,7 @@ describe('ClienteDetailView — AC4: network error shows retry panel', () => {
     )
 
     // WHEN
-    renderWithRouter(`/clientes/${mockCliente.id}`)
+    await renderWithRouter(`/clientes/${mockCliente.id}`)
 
     // THEN: Retry button has aria-label for accessibility
     await waitFor(() => {
@@ -365,7 +364,7 @@ describe('ClienteDetailView — AC4: network error shows retry panel', () => {
 describe('ClienteDetailView — empty state when no clienteId in URL', () => {
   it('Given no clienteId in URL (at /clientes root) When component renders Then placeholder text is shown', async () => {
     // GIVEN: User is at /clientes without selecting a client
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: Placeholder message is shown in Spanish
     await waitFor(() => {
@@ -373,7 +372,7 @@ describe('ClienteDetailView — empty state when no clienteId in URL', () => {
     })
   })
 
-  it('Given no clienteId in URL When component renders Then no network request is made for single client', () => {
+  it('Given no clienteId in URL When component renders Then no network request is made for single client', async () => {
     // GIVEN: No clienteId — query must be disabled (enabled: !!id)
     let singleClientCallCount = 0
     server.use(
@@ -384,7 +383,7 @@ describe('ClienteDetailView — empty state when no clienteId in URL', () => {
     )
 
     // WHEN: At /clientes root
-    renderWithRouter('/clientes')
+    await renderWithRouter('/clientes')
 
     // THEN: No GET /api/v1/clientes/:id call made
     expect(singleClientCallCount).toBe(0)

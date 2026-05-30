@@ -1,16 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ClienteDetailView } from '../../modules/crm/clientes/presentation/ClienteDetailView'
 
 export const Route = createFileRoute('/_app/clientes/$clienteId')({
-  component: ClienteDetailPlaceholder,
+  component: ClienteDetailView,
 })
-
-function ClienteDetailPlaceholder() {
-  return (
-    <div
-      data-testid="cliente-detail-placeholder"
-      className="flex items-center justify-center h-full text-slate-400"
-    >
-      <p>Selecciona un cliente para ver sus detalles</p>
-    </div>
-  )
-}

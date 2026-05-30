@@ -27,6 +27,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Cliente services
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<GetClientesQueryHandler>();
+builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 
 var app = builder.Build();
 
