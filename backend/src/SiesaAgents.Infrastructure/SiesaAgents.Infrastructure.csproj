@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
-    <ProjectReference Include="..\SiesaAgents.Application\SiesaAgents.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

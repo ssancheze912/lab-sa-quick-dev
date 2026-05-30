@@ -42,7 +42,7 @@ public class ExceptionHandlingMiddleware
             type = $"https://tools.ietf.org/html/rfc7807",
             title = title,
             status = (int)statusCode,
-            detail = exception.Message,
+            detail = (string?)null,
             instance = context.Request.Path.Value
         };
 
