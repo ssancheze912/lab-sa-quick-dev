@@ -40,7 +40,7 @@ export function ClienteListView() {
       {/* Content area */}
       <div className="flex-1 overflow-y-auto">
         {isLoading && (
-          <div className="flex flex-col gap-2 p-3" data-testid="clientes-skeleton">
+          <div className="flex flex-col gap-2 p-3" data-testid="cliente-list-skeleton">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="flex flex-col gap-1 p-3">
                 <Skeleton width="60%" height={16} />

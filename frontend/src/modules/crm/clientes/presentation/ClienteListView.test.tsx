@@ -15,7 +15,7 @@ import {
   mockClientes,
   clientesEmptyHandlers,
   clientesErrorHandlers,
-} from '../../../__mocks__/handlers/clientes'
+} from '../../../../__mocks__/handlers/clientes'
 
 // ---------------------------------------------------------------------------
 // MSW server setup — network-first interception before any navigation
