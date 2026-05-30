@@ -35,7 +35,10 @@ public class AppDbContextTests : IDisposable
             .Build();
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Host=localhost;Port=5432;Database=siesa_agents_db;Username=postgres;Password=postgres";
+            ?? throw new InvalidOperationException(
+                "Integration tests require 'ConnectionStrings:DefaultConnection' in appsettings.Development.json " +
+                "or the CONNECTIONSTRINGS__DEFAULTCONNECTION environment variable. " +
+                "No hardcoded fallback is provided per company security standards (no hardcoded secrets in source).");
 
         var services = new ServiceCollection();
         services.AddDbContext<AppDbContext>(options =>
