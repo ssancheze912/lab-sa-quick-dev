@@ -98,6 +98,7 @@ function RootLayout() {
                     key={item.id}
                     to={item.to}
                     data-testid={`nav-bar-item-${item.id}`}
+                    data-active={isActive ? 'true' : 'false'}
                     aria-label={item.label}
                     aria-current={isActive ? 'page' : undefined}
                     className={[
