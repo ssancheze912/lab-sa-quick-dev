@@ -154,7 +154,7 @@ describe('filterClientes — TC-E2-P1-17: case-insensitive and Unicode-normalize
 // AC#2: "results appear in under 1 second with up to 500 records (NFR1)"
 // ---------------------------------------------------------------------------
 describe('filterClientes — TC-E2-P1-16: filter performance with 500 records', () => {
-  it('Given 500 mock client records When filtering by query "a" Then the filter completes in under 50ms', () => {
+  it('Given 500 mock client records When filtering by query "e" Then the filter completes in under 50ms', () => {
     // Given — Generate 500 mock clients procedurally
     const clientes = Array.from({ length: 500 }, (_, i) => ({
       id: `a1b2c3d4-0000-0000-0000-${String(i + 1).padStart(12, '0')}`,
@@ -168,17 +168,17 @@ describe('filterClientes — TC-E2-P1-16: filter performance with 500 records', 
 
     // When
     const start = performance.now()
-    const result = filterClientes(clientes, 'a')
+    const result = filterClientes(clientes, 'e')
     const elapsed = performance.now() - start
 
     // Then
     expect(elapsed).toBeLessThan(50)
-    // Also sanity check that filter actually ran
+    // Also sanity check that filter actually ran ("Cliente" and "Test" both contain 'e')
     expect(result.length).toBeGreaterThan(0)
     result.forEach((c) => {
       const normalizedNombre = c.nombre.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
       const normalizedNit = c.nit.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
-      expect(normalizedNombre.includes('a') || normalizedNit.includes('a')).toBe(true)
+      expect(normalizedNombre.includes('e') || normalizedNit.includes('e')).toBe(true)
     })
   })
 })
