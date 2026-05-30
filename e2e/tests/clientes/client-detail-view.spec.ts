@@ -227,3 +227,121 @@ test.describe('Story 2.2 — Client Detail View (E2E)', () => {
     expect(jsErrors).toHaveLength(0)
   })
 })
+
+// ─── AC4: Network error (non-404) → error state with retry option ──────────
+
+test.describe('Story 2.2 — AC4: Network error shows retry panel (E2E)', () => {
+  test('AC4 — GIVEN backend returns network error WHEN detail loads THEN error message is shown in right panel', async ({ page }) => {
+    // GIVEN: Intercept GET single client BEFORE navigation — return 500 network error
+    await page.route('**/api/v1/clientes/a1b2c3d4-0000-0000-0000-000000000001', (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: 'application/problem+json',
+        body: JSON.stringify({
+          status: 500,
+          title: 'Error interno del servidor',
+          detail: 'Error de red simulado en prueba.',
+        }),
+      }),
+    )
+
+    // Navigate to deep link
+    await page.goto('/clientes/a1b2c3d4-0000-0000-0000-000000000001')
+
+    // THEN: Error message visible in right panel (not a blank screen)
+    await expect(page.getByTestId('cliente-detail-panel')).toContainText(/no se pudo cargar el cliente/i)
+  })
+
+  test('AC4 — GIVEN backend returns network error WHEN error state renders THEN "Reintentar" button is visible', async ({ page }) => {
+    // GIVEN: 500 error intercept BEFORE navigation
+    await page.route('**/api/v1/clientes/a1b2c3d4-0000-0000-0000-000000000001', (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: 'application/problem+json',
+        body: JSON.stringify({ status: 500, title: 'Error interno', detail: 'Simulated.' }),
+      }),
+    )
+
+    await page.goto('/clientes/a1b2c3d4-0000-0000-0000-000000000001')
+
+    // THEN: Retry button is visible
+    await expect(page.getByRole('button', { name: /reintentar/i })).toBeVisible()
+  })
+
+  test('AC4 — GIVEN error panel with retry WHEN user clicks "Reintentar" THEN a new network request is made', async ({ page }) => {
+    // GIVEN: First request returns 500, subsequent requests succeed
+    let requestCount = 0
+
+    await page.route('**/api/v1/clientes/a1b2c3d4-0000-0000-0000-000000000001', async (route) => {
+      requestCount++
+      if (requestCount === 1) {
+        await route.fulfill({
+          status: 500,
+          body: JSON.stringify({ status: 500, title: 'Error', detail: 'Simulated.' }),
+        })
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            id: 'a1b2c3d4-0000-0000-0000-000000000001',
+            nombre: 'Ana García',
+            nit: '900-111-001',
+            telefono: '3001111111',
+            ciudad: 'Bogotá',
+          }),
+        })
+      }
+    })
+
+    await page.goto('/clientes/a1b2c3d4-0000-0000-0000-000000000001')
+    await expect(page.getByRole('button', { name: /reintentar/i })).toBeVisible()
+
+    const requestsBeforeRetry = requestCount
+
+    // WHEN: User clicks Reintentar
+    await page.getByRole('button', { name: /reintentar/i }).click()
+
+    // THEN: A new request is made (requestCount increases)
+    await expect(async () => {
+      expect(requestCount).toBeGreaterThan(requestsBeforeRetry)
+    }).toPass({ timeout: 3000 })
+  })
+})
+
+// ─── AC5: Loading → skeleton placeholders ─────────────────────────────────
+
+test.describe('Story 2.2 — AC5: Skeleton placeholders during loading (E2E)', () => {
+  test('AC5 — GIVEN client detail is loading WHEN page starts rendering THEN skeleton placeholder is shown', async ({ page }) => {
+    // GIVEN: Intercept BEFORE navigation — delay response to capture skeleton state
+    let resolveRoute: (value: unknown) => void
+    const routePromise = new Promise((resolve) => { resolveRoute = resolve })
+
+    await page.route('**/api/v1/clientes/a1b2c3d4-0000-0000-0000-000000000001', async (route) => {
+      await routePromise
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'a1b2c3d4-0000-0000-0000-000000000001',
+          nombre: 'Ana García',
+          nit: '900-111-001',
+          telefono: '3001111111',
+          ciudad: 'Bogotá',
+        }),
+      })
+    })
+
+    // WHEN: Navigate (detail fetch is held)
+    await page.goto('/clientes/a1b2c3d4-0000-0000-0000-000000000001')
+
+    // THEN: Skeleton is shown before data arrives
+    await expect(page.getByTestId('cliente-detail-skeleton')).toBeVisible()
+
+    // No spinner (company standard — skeleton, not spinner)
+    expect(await page.locator('[role="status"][aria-label*="loading" i]').count()).toBe(0)
+
+    // Cleanup: resolve the held route
+    resolveRoute!(null)
+  })
+})
