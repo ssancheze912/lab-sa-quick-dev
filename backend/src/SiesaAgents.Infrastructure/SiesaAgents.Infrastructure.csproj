@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="EFCore.NamingConventions" Version="9.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-preview.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-preview.4.25258.6">
       <PrivateAssets>all</PrivateAssets>
