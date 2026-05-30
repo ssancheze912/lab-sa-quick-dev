@@ -23,6 +23,11 @@ public class ExceptionHandlingMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception occurred");
+            if (context.Response.HasStarted)
+            {
+                _logger.LogWarning("Response has already started; cannot write Problem Details.");
+                throw;
+            }
             await HandleExceptionAsync(context, ex);
         }
     }
@@ -39,7 +44,7 @@ public class ExceptionHandlingMiddleware
 
         var problemDetails = new
         {
-            type = $"https://tools.ietf.org/html/rfc7807",
+            type = "https://tools.ietf.org/html/rfc7807",
             title = title,
             status = (int)statusCode,
             detail = (string?)null,
