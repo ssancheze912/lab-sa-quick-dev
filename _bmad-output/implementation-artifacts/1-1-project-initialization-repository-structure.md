@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: complete
+Status: in-progress
 
 ## Story
 
