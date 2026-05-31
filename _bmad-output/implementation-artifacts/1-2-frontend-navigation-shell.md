@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -30,49 +30,49 @@ so that I can move between sections without full page reloads from any device.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Install siesa-ui-kit and configure shell dependencies (AC: #1, #4)
-  - [ ] Run `pnpm add siesa-ui-kit` in `/frontend` to ensure the package is available
-  - [ ] Verify `siesa-ui-kit` exports: `LayoutBase`, `Navbar`, `NavigationRail`, `NavigationBar` — document actual export names in Dev Agent Record if they differ from assumed names
-  - [ ] If `siesa-ui-kit` is unavailable in the registry, fall back to shadcn/ui for navigation primitives and document the decision in Dev Agent Record
+- [x] Task 1 — Install siesa-ui-kit and configure shell dependencies (AC: #1, #4)
+  - [x] Run `pnpm add siesa-ui-kit` in `/frontend` to ensure the package is available
+  - [x] Verify `siesa-ui-kit` exports: `LayoutBase`, `Navbar`, `NavigationRail`, `NavigationBar` — document actual export names in Dev Agent Record if they differ from assumed names
+  - [x] If `siesa-ui-kit` is unavailable in the registry, fall back to shadcn/ui for navigation primitives and document the decision in Dev Agent Record
 
-- [ ] Task 2 — Create TanStack Router pathless layout route `_app.tsx` (AC: #1, #4)
-  - [ ] Create `frontend/src/routes/_app.tsx` as a TanStack Router pathless layout route (prefix `_` means no URL segment added)
-  - [ ] The `_app.tsx` component renders the `LayoutBase` shell from siesa-ui-kit wrapping `<Outlet />`
-  - [ ] Pass `navigationItems` prop to `LayoutBase` with Clientes (`/clientes`, Heroicon `UserGroupIcon`) and Contactos (`/contactos`, Heroicon `UserIcon`)
-  - [ ] `Navbar` configuration: `productName="Siesa Agents"`
-  - [ ] `NavigationRail` collapsed at 72px by default on desktop (≥ 1024px breakpoint)
-  - [ ] `NavigationBar` rendered at bottom on mobile (< 1024px breakpoint) — responsive handled by `LayoutBase` or custom CSS if kit does not handle it natively
+- [x] Task 2 — Create TanStack Router pathless layout route `_app.tsx` (AC: #1, #4)
+  - [x] Create `frontend/src/routes/_app.tsx` as a TanStack Router pathless layout route (prefix `_` means no URL segment added)
+  - [x] The `_app.tsx` component renders the `LayoutBase` shell from siesa-ui-kit wrapping `<Outlet />`
+  - [x] Pass `navigationItems` prop to `LayoutBase` with Clientes (`/clientes`, Heroicon `UserGroupIcon`) and Contactos (`/contactos`, Heroicon `UserIcon`)
+  - [x] `Navbar` configuration: `productName="Siesa Agents"`
+  - [x] `NavigationRail` collapsed at 72px by default on desktop (≥ 1024px breakpoint)
+  - [x] `NavigationBar` rendered at bottom on mobile (< 1024px breakpoint) — responsive handled by `LayoutBase` or custom CSS if kit does not handle it natively
 
-- [ ] Task 3 — Create nested route files under `_app/` for Clientes and Contactos (AC: #2, #3, #5, #6)
-  - [ ] Create `frontend/src/routes/_app/` directory
-  - [ ] Create `frontend/src/routes/_app/clientes.tsx` — renders a placeholder `<ClientesPage />` component with text "Clientes" (full implementation in Epic 2)
-  - [ ] Create `frontend/src/routes/_app/contactos.tsx` — renders a placeholder `<ContactosPage />` component with text "Contactos" (full implementation in Epic 3)
-  - [ ] Each route file uses `createFileRoute` with the correct path (`'/clientes'` and `'/contactos'`)
-  - [ ] Active state for NavigationRail/NavigationBar items must reflect the current route (use TanStack Router `useRouterState` or `Link` with `activeProps` to determine active item)
+- [x] Task 3 — Create nested route files under `_app/` for Clientes and Contactos (AC: #2, #3, #5, #6)
+  - [x] Create `frontend/src/routes/_app/` directory
+  - [x] Create `frontend/src/routes/_app/clientes.tsx` — renders a placeholder `<ClientesPage />` component with text "Clientes" (full implementation in Epic 2)
+  - [x] Create `frontend/src/routes/_app/contactos.tsx` — renders a placeholder `<ContactosPage />` component with text "Contactos" (full implementation in Epic 3)
+  - [x] Each route file uses `createFileRoute` with the correct path (`'/clientes'` and `'/contactos'`)
+  - [x] Active state for NavigationRail/NavigationBar items must reflect the current route (use TanStack Router `useRouterState` or `Link` with `activeProps` to determine active item)
 
-- [ ] Task 4 — Update `__root.tsx` and `index.tsx` for redirect and 404 (AC: #7, #8)
-  - [ ] Update `frontend/src/routes/__root.tsx` to use `createRootRoute` with a `notFoundComponent` that renders a Spanish 404 message ("Página no encontrada") and a link back to `/clientes`
-  - [ ] Update `frontend/src/routes/index.tsx` to redirect `/` → `/clientes` using TanStack Router `redirect` in `beforeLoad` or `loader`
+- [x] Task 4 — Update `__root.tsx` and `index.tsx` for redirect and 404 (AC: #7, #8)
+  - [x] Update `frontend/src/routes/__root.tsx` to use `createRootRoute` with a `notFoundComponent` that renders a Spanish 404 message ("Página no encontrada") and a link back to `/clientes`
+  - [x] Update `frontend/src/routes/index.tsx` to redirect `/` → `/clientes` using TanStack Router `redirect` in `beforeLoad` or `loader`
 
-- [ ] Task 5 — Verify TanStack Router auto-generation (AC: all)
-  - [ ] Run `pnpm dev` or `pnpm build` to trigger `@tanstack/router-plugin/vite` to regenerate `routeTree.gen.ts` with the new routes
-  - [ ] Confirm `routeTree.gen.ts` contains `_app`, `_app/clientes`, `_app/contactos` and the root route
-  - [ ] Run `pnpm build` and verify TypeScript compiles with zero errors
+- [x] Task 5 — Verify TanStack Router auto-generation (AC: all)
+  - [x] Run `pnpm dev` or `pnpm build` to trigger `@tanstack/router-plugin/vite` to regenerate `routeTree.gen.ts` with the new routes
+  - [x] Confirm `routeTree.gen.ts` contains `_app`, `_app/clientes`, `_app/contactos` and the root route
+  - [x] Run `pnpm build` and verify TypeScript compiles with zero errors
 
-- [ ] Task 6 — WCAG 2.1 AA and accessibility (AC: #1, #4)
-  - [ ] All navigation items must have ARIA labels in Spanish: `aria-label="Clientes"`, `aria-label="Contactos"`
-  - [ ] Active navigation item must have `aria-current="page"` set
-  - [ ] Focus ring visible on keyboard navigation (2px solid `#0e79fd`)
-  - [ ] NavigationBar mobile items meet 44px minimum touch target
+- [x] Task 6 — WCAG 2.1 AA and accessibility (AC: #1, #4)
+  - [x] All navigation items must have ARIA labels in Spanish: `aria-label="Clientes"`, `aria-label="Contactos"`
+  - [x] Active navigation item must have `aria-current="page"` set
+  - [x] Focus ring visible on keyboard navigation (2px solid `#0e79fd`)
+  - [x] NavigationBar mobile items meet 44px minimum touch target
 
-- [ ] Task 7 — Write Vitest + RTL unit tests (AC: all)
-  - [ ] Create `frontend/src/routes/__tests__/NavigationShell.test.tsx` (or co-located)
-  - [ ] Test: renders NavigationRail with "Clientes" and "Contactos" links on desktop viewport
-  - [ ] Test: renders NavigationBar on mobile viewport (mock window.innerWidth < 1024)
-  - [ ] Test: `/clientes` route renders `ClientesPage` placeholder
-  - [ ] Test: `/contactos` route renders `ContactosPage` placeholder
-  - [ ] Test: unknown route renders 404 not-found component with Spanish message
-  - [ ] Test: root `/` redirects to `/clientes`
+- [x] Task 7 — Write Vitest + RTL unit tests (AC: all)
+  - [x] Create `frontend/src/routes/__tests__/NavigationShell.test.tsx` (or co-located)
+  - [x] Test: renders NavigationRail with "Clientes" and "Contactos" links on desktop viewport
+  - [x] Test: renders NavigationBar on mobile viewport (mock window.innerWidth < 1024)
+  - [x] Test: `/clientes` route renders `ClientesPage` placeholder
+  - [x] Test: `/contactos` route renders `ContactosPage` placeholder
+  - [x] Test: unknown route renders 404 not-found component with Spanish message
+  - [x] Test: root `/` redirects to `/clientes`
 
 ## Dev Notes
 
@@ -258,6 +258,42 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+- pnpm-workspace.yaml had `msw: set this to true or false` — fixed to `msw: true` to allow msw postinstall
+- @vitejs/plugin-react was not installed as devDependency — added with `pnpm add -D @vitejs/plugin-react`
+- @heroicons/react was not installed — added with `pnpm add @heroicons/react`
+- jsdom not installed as devDependency for Vitest — added with `pnpm add -D jsdom`
+- Test file in `src/routes/__tests__/` picked up as route — fixed `routeFileIgnorePattern: '__tests__'` in vite.config.ts
+- Test import path was `../../../routeTree.gen` (wrong) — corrected to `../../routeTree.gen`
+- siesa-ui-kit v1.0.206 IS available. Uses `LayoutBase` + `NavigationRailGroupMenuItem[]` interface for navigation items. `NavigationBar` and `NavigationRail` are exported but used internally by `LayoutBase` via `navigationItems` prop.
+
 ### Completion Notes List
 
+- siesa-ui-kit v1.0.206 was available in the registry. Used `LayoutBase` component directly with `navigationItems` prop (type `NavigationRailGroupMenuItem[]`). `productName` passed directly to `LayoutBase`.
+- Converted vanilla Vite/TS project to React + TanStack Router. Created `main.tsx`, `index.css`, updated `tsconfig.json` (added `jsx: react-jsx`) and `index.html`.
+- Active route highlighting implemented via `useRouterState` in `_app.tsx` — sets `active` prop on each navigation item based on `location.pathname.startsWith()`.
+- Focus ring: `*:focus-visible { outline: 2px solid #0e79fd; outline-offset: 2px; }` in index.css.
+- Mobile responsive navigation (NavigationBar) is handled natively by LayoutBase from siesa-ui-kit.
+- TDD followed: tests written alongside implementation, 7/7 tests pass. siesa-ui-kit LayoutBase mocked in tests to expose navigation items for accessibility assertions.
+- Build: TypeScript zero errors, pnpm build passes cleanly.
+
 ### File List
+
+**Created:**
+- `frontend/vite.config.ts`
+- `frontend/vitest.config.ts`
+- `frontend/src/main.tsx`
+- `frontend/src/index.css`
+- `frontend/src/test-setup.ts`
+- `frontend/src/routes/__root.tsx`
+- `frontend/src/routes/index.tsx`
+- `frontend/src/routes/_app.tsx`
+- `frontend/src/routes/_app/clientes.tsx`
+- `frontend/src/routes/_app/contactos.tsx`
+- `frontend/src/routes/__tests__/NavigationShell.test.tsx`
+- `frontend/src/routeTree.gen.ts` (auto-generated by TanStack Router plugin)
+
+**Modified:**
+- `frontend/tsconfig.json` — added `jsx: react-jsx`, `strict: true`, DOM.Iterable lib
+- `frontend/index.html` — updated to `main.tsx`, `lang="es"`, title "Siesa Agents"
+- `frontend/package.json` — added test/test:watch scripts, heroicons, @vitejs/plugin-react, jsdom devDeps
+- `frontend/pnpm-workspace.yaml` — fixed msw allowBuild flag
