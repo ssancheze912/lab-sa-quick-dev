@@ -11,9 +11,10 @@ development_status:
 
   # Epic statuses
   epic-1: done
-  epic-2: pending
+  epic-2: in-progress
   epic-3: pending
   epic-4: pending
+  epic-2-last-update: 31-05-2026
 
   # Epic 1 — Project Foundation & Application Shell
   1-1-project-initialization-repository-structure: done
@@ -22,7 +23,7 @@ development_status:
 
   # Epic 2 — Client Management
   2-1-client-list-search: done
-  2-2-client-detail-view: pending
+  2-2-client-detail-view: ready-for-dev
   2-3-create-client: pending
   2-4-edit-client: pending
   2-5-delete-client: pending
