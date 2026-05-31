@@ -20,14 +20,31 @@
  * Pattern: Vitest + @testing-library/react + MSW
  */
 
-import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
+import { routeTree } from '../../../../../routeTree.gen'
 import { ClienteListView } from '../ClienteListView'
 import type { Cliente } from '../../domain/Cliente'
+
+// Mock siesa-ui-kit to avoid CSS/DOM issues in jsdom
+vi.mock('siesa-ui-kit', () => ({
+  Navbar: ({ productName }: { productName?: string }) => (
+    <header data-testid="navbar-inner" role="banner">
+      <span>{productName}</span>
+    </header>
+  ),
+  NavigationRail: ({ children }: { children?: React.ReactNode }) => (
+    <nav data-testid="navigation-rail">{children}</nav>
+  ),
+  LayoutBase: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="layout-base">{children}</div>
+  ),
+}))
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -44,12 +61,16 @@ function makeQueryClient() {
   })
 }
 
-function renderWithQuery(ui: React.ReactElement) {
+function renderWithQuery(_ui: React.ReactElement) {
   const queryClient = makeQueryClient()
+  const memoryHistory = createMemoryHistory({ initialEntries: ['/clientes'] })
+  const router = createRouter({ routeTree, history: memoryHistory })
   return {
     queryClient,
     ...render(
-      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     ),
   }
 }

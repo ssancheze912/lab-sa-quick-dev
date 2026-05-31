@@ -13,13 +13,24 @@
  * Network-first: MSW handlers are set up before render (intercept-before-navigate)
  */
 
-import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
+import { routeTree } from '../../../../../routeTree.gen'
 import { ClienteListView } from '../ClienteListView'
+
+// Mock siesa-ui-kit to avoid CSS/DOM issues in jsdom
+vi.mock('siesa-ui-kit', () => ({
+  Navbar: ({ productName }: { productName?: string }) => (
+    <header data-testid="navbar-inner" role="banner">
+      <span>{productName}</span>
+    </header>
+  ),
+}))
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -37,12 +48,16 @@ function makeQueryClient() {
   })
 }
 
-function renderWithQuery(ui: React.ReactElement) {
+function renderWithQuery(_ui: React.ReactElement) {
   const queryClient = makeQueryClient()
+  const memoryHistory = createMemoryHistory({ initialEntries: ['/clientes'] })
+  const router = createRouter({ routeTree, history: memoryHistory })
   return {
     queryClient,
     ...render(
-      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     ),
   }
 }
@@ -503,8 +518,8 @@ describe('Loading state — skeleton placeholders shown during fetch', () => {
     // GIVEN: Network intercepted — delayed response
     server.use(
       http.get(`${API_URL}/api/v1/clientes`, async () => {
-        // Slight delay to keep loading state visible
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        // Long delay to keep loading state visible through router initialization
+        await new Promise((resolve) => setTimeout(resolve, 500))
         return HttpResponse.json(twoClientes, { status: 200 })
       })
     )
@@ -512,15 +527,17 @@ describe('Loading state — skeleton placeholders shown during fetch', () => {
     // WHEN: ClienteListView is rendered (before data resolves)
     renderWithQuery(<ClienteListView />)
 
-    // THEN: Skeleton placeholder is visible
-    expect(screen.getByTestId('cliente-list-skeleton')).toBeInTheDocument()
+    // THEN: Skeleton placeholder is visible once the route renders
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-list-skeleton')).toBeInTheDocument()
+    })
   })
 
   it('Given ClienteListView is loading, When loading skeleton renders, Then ARIA label "Cargando clientes..." is present', async () => {
     // GIVEN: Delayed response keeps loading state
     server.use(
       http.get(`${API_URL}/api/v1/clientes`, async () => {
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        await new Promise((r) => setTimeout(r, 500))
         return HttpResponse.json(twoClientes, { status: 200 })
       })
     )
@@ -529,9 +546,11 @@ describe('Loading state — skeleton placeholders shown during fetch', () => {
     renderWithQuery(<ClienteListView />)
 
     // THEN: ARIA label is present for accessibility
-    expect(
-      screen.getByLabelText('Cargando clientes...')
-    ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText('Cargando clientes...')
+      ).toBeInTheDocument()
+    })
   })
 })
 

@@ -1,12 +1,16 @@
 import { useMemo, useState } from 'react'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
+import { Link } from '@tanstack/react-router'
 import { useClientes } from '../application/useClientes'
-import { ClientListItem } from '../../../../shared/components/ClientListItem'
 import { EmptyState } from '../../../../shared/components/EmptyState'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 
-export function ClienteListView() {
+interface ClienteListViewProps {
+  selectedClienteId?: string
+}
+
+export function ClienteListView({ selectedClienteId }: ClienteListViewProps = {}) {
   const { data, isLoading, isError, refetch } = useClientes()
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -65,11 +69,26 @@ export function ClienteListView() {
 
         {!isLoading && !isError && filteredClientes.length > 0 && (
           <ul>
-            {filteredClientes.map((cliente) => (
-              <li key={cliente.id}>
-                <ClientListItem nombre={cliente.nombre} nit={cliente.nit} />
-              </li>
-            ))}
+            {filteredClientes.map((cliente) => {
+              const isSelected = selectedClienteId === cliente.id
+              return (
+                <li key={cliente.id}>
+                  <Link
+                    to="/clientes/$clienteId"
+                    params={{ clienteId: cliente.id }}
+                    data-testid="cliente-list-item"
+                    className={`flex flex-col p-3 border-b border-slate-200 min-h-[44px] cursor-pointer justify-center no-underline${
+                      isSelected
+                        ? ' bg-blue-50 border-l-2 border-[#0e79fd]'
+                        : ' hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="text-sm font-medium text-slate-900 truncate">{cliente.nombre}</span>
+                    <span className="text-xs text-slate-500 truncate">{cliente.nit}</span>
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>

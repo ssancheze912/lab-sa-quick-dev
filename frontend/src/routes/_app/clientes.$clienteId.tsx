@@ -2,11 +2,12 @@ import { createFileRoute } from '@tanstack/react-router'
 import { ClienteListView } from '../../modules/crm/clientes/presentation/ClienteListView'
 import { ClienteDetailView } from '../../modules/crm/clientes/presentation/ClienteDetailView'
 
-export const Route = createFileRoute('/_app/clientes')({
-  component: ClientesPage,
+export const Route = createFileRoute('/_app/clientes/$clienteId')({
+  component: ClienteDetailPage,
 })
 
-function ClientesPage() {
+function ClienteDetailPage() {
+  const { clienteId } = Route.useParams()
   return (
     <main
       data-testid="clientes-page"
@@ -15,9 +16,9 @@ function ClientesPage() {
       className="flex h-full"
     >
       <h1 className="sr-only">Clientes</h1>
-      <ClienteListView selectedClienteId={undefined} />
+      <ClienteListView selectedClienteId={clienteId} />
       <div className="flex-1">
-        <ClienteDetailView clienteId={undefined} />
+        <ClienteDetailView clienteId={clienteId} />
       </div>
     </main>
   )

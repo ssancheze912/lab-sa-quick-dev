@@ -30,6 +30,7 @@ builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 
 // Query Handlers
 builder.Services.AddScoped<GetClientesQueryHandler>();
+builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 
 var app = builder.Build();
 

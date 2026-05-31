@@ -1,15 +1,16 @@
 interface ErrorPanelProps {
   onRetry: () => void
+  message?: string
 }
 
-export function ErrorPanel({ onRetry }: ErrorPanelProps) {
+export function ErrorPanel({ onRetry, message = 'No se pudo cargar la lista de clientes.' }: ErrorPanelProps) {
   return (
     <div
       data-testid="error-panel"
       role="alert"
       className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3"
     >
-      <p className="text-slate-700">No se pudo cargar la lista de clientes.</p>
+      <p className="text-slate-700">{message}</p>
       <button
         type="button"
         onClick={onRetry}
