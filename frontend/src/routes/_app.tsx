@@ -73,7 +73,7 @@ function AppLayout() {
 
       {/* Mobile NavigationBar (bottom, < 1024px) */}
       <nav
-        data-testid="navigation-bar"
+        data-testid="nav-bottom-bar"
         role="navigation"
         aria-label="Navegación móvil"
         className="lg:hidden flex flex-row border-t border-slate-200 bg-white h-16"

@@ -1,13 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
-  component: IndexPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/clientes' })
+  },
+  component: () => null,
 })
-
-function IndexPage() {
-  return (
-    <div>
-      <h1>Siesa Agents</h1>
-    </div>
-  )
-}

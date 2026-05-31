@@ -60,7 +60,7 @@ describe('AC1 — Desktop: NavigationRail + Navbar visible', () => {
     render(<RouterProvider router={router} />)
     await waitFor(() => {
       // NavigationBar exists in DOM (hidden via Tailwind lg:hidden)
-      expect(screen.getByTestId('navigation-bar')).toBeInTheDocument()
+      expect(screen.getByTestId('nav-bottom-bar')).toBeInTheDocument()
     })
   })
 })
@@ -146,7 +146,7 @@ describe('AC4 — Mobile NavigationBar', () => {
     const router = createTestRouter('/clientes')
     render(<RouterProvider router={router} />)
     await waitFor(() => {
-      expect(screen.getByTestId('navigation-bar')).toBeInTheDocument()
+      expect(screen.getByTestId('nav-bottom-bar')).toBeInTheDocument()
     })
   })
 
@@ -162,7 +162,7 @@ describe('AC4 — Mobile NavigationBar', () => {
     const router = createTestRouter('/clientes')
     render(<RouterProvider router={router} />)
     await waitFor(() => {
-      const bar = screen.getByTestId('navigation-bar')
+      const bar = screen.getByTestId('nav-bottom-bar')
       expect(bar.querySelector('[data-testid="nav-item-clientes"]')).toBeInTheDocument()
       expect(bar.querySelector('[data-testid="nav-item-contactos"]')).toBeInTheDocument()
     })
