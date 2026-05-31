@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
 using System.Reflection;
 
 namespace SiesaAgents.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    // DbSet<ClienteEntity> Clientes will be added in Story 2.1
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
     // DbSet<ContactoEntity> Contactos will be added in Story 3.1
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
