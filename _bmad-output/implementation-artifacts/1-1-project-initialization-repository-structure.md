@@ -188,6 +188,8 @@ claude-sonnet-4-6
 - Frontend uses React 19 (template default), not React 18 — both are compatible with all installed packages.
 - TypeScript: `pnpm exec tsc -b` exits with zero errors; `pnpm build` succeeds with 302KB bundle (well under 500KB gzip budget).
 - Backend: `dotnet build SiesaAgents.sln` — 0 Warnings, 0 Errors; `dotnet test` — 1 test passed.
+- ATDD correction (attempt 3): Added `data-testid="app-root"` to `__root.tsx` wrapper div (React component) — the empty `#root` div in `index.html` had zero size so Playwright `toBeVisible()` failed; rendering the attribute inside the React tree with content ensures visibility.
+- ATDD correction (attempt 3): `ExceptionHandlingMiddleware` already intercepted 404s post-pipeline and returned `application/json; charset=utf-8` — test was already passing against the current implementation. All 16 Playwright tests GREEN.
 
 ### File List
 
