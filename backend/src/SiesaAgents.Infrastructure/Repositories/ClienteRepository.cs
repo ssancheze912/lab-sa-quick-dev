@@ -10,6 +10,7 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
     public async Task<IEnumerable<ClienteEntity>> GetAllAsync()
     {
         return await dbContext.Clientes
+            .AsNoTracking()
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync();
     }

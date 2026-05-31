@@ -12,7 +12,7 @@ export function ClienteListView() {
 
   const filteredClientes = useMemo(() => {
     if (!data) return []
-    const q = searchQuery.toLowerCase()
+    const q = searchQuery.trim().toLowerCase()
     if (!q) return data
     return data.filter(
       (c) =>
