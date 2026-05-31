@@ -15,9 +15,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // Auto-register all IEntityTypeConfiguration<T> in this assembly
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-        // CRITICAL: ApplySnakeCaseNaming() must be called LAST
-        // This converts all PascalCase property/entity names to snake_case automatically
-        // No [Column] or [Table] attributes needed on any entity
-        modelBuilder.ApplySnakeCaseNaming();
+        // Snake_case naming is applied via UseSnakeCaseNamingConvention() on DbContextOptionsBuilder
+        // in Program.cs / DI registration. This is the correct EFCore.NamingConventions API.
+        // No [Column] or [Table] attributes needed on any entity.
     }
 }
