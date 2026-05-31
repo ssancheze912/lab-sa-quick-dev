@@ -28,8 +28,12 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         }
         catch (Exception)
         {
-            context.Response.StatusCode = 500;
-            await WriteProblemDetailsAsync(context, 500, "An unexpected error occurred.");
+            if (!context.Response.HasStarted)
+            {
+                context.Response.Clear();
+                context.Response.StatusCode = 500;
+                await WriteProblemDetailsAsync(context, 500, "An unexpected error occurred.");
+            }
         }
     }
 
