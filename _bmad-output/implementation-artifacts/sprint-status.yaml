@@ -10,7 +10,7 @@ development_status:
   epic-4-source: _bmad-output/planning-artifacts/epics/epic-04-asociacion-cliente-contacto.md
 
   # Epic statuses
-  epic-1: in-progress
+  epic-1: done
   epic-2: pending
   epic-3: pending
   epic-4: pending
