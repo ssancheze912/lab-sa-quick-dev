@@ -15,11 +15,25 @@
  * - Placeholder pages have h1 heading in Spanish
  */
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createRouter, RouterProvider, createMemoryHistory } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { setupServer } from 'msw/node'
+import { http, HttpResponse } from 'msw'
 import { routeTree } from '../../routeTree.gen'
+
+// MSW server — provides a default handler for /api/v1/clientes used by ClienteListView
+const server = setupServer(
+  http.get('http://localhost:5000/api/v1/clientes', () =>
+    HttpResponse.json([], { status: 200 })
+  )
+)
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
 // Mock siesa-ui-kit Navbar to avoid CSS/DOM issues in jsdom
 vi.mock('siesa-ui-kit', () => ({
@@ -35,13 +49,20 @@ function createTestRouter(initialPath: string) {
   return createRouter({ routeTree, history: memoryHistory })
 }
 
+function renderWithProviders(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 0 } },
+  })
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>)
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // EDGE: Structural & Semantic Landmarks
 // ────────────────────────────────────────────────────────────────────────────
 describe('EDGE — Structural & Semantic Landmarks', () => {
   it('Given app loads, When layout renders, Then app-root data-testid container exists', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       expect(screen.getByTestId('app-root')).toBeInTheDocument()
     })
@@ -49,7 +70,7 @@ describe('EDGE — Structural & Semantic Landmarks', () => {
 
   it('Given app loads at /clientes, When layout renders, Then NavigationRail has role="navigation"', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const rail = screen.getByTestId('navigation-rail')
       expect(rail).toHaveAttribute('role', 'navigation')
@@ -58,7 +79,7 @@ describe('EDGE — Structural & Semantic Landmarks', () => {
 
   it('Given app loads at /clientes, When layout renders, Then NavigationRail has aria-label in Spanish', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const rail = screen.getByTestId('navigation-rail')
       expect(rail).toHaveAttribute('aria-label', 'Navegación principal')
@@ -67,7 +88,7 @@ describe('EDGE — Structural & Semantic Landmarks', () => {
 
   it('Given app loads at /clientes, When layout renders, Then NavigationBar has role="navigation"', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const bar = screen.getByTestId('nav-bottom-bar')
       expect(bar).toHaveAttribute('role', 'navigation')
@@ -76,7 +97,7 @@ describe('EDGE — Structural & Semantic Landmarks', () => {
 
   it('Given app loads at /clientes, When layout renders, Then NavigationBar has aria-label in Spanish', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const bar = screen.getByTestId('nav-bottom-bar')
       expect(bar).toHaveAttribute('aria-label', 'Navegación móvil')
@@ -85,7 +106,7 @@ describe('EDGE — Structural & Semantic Landmarks', () => {
 
   it('Given app loads at /clientes, When layout renders, Then Clientes page has role="main"', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const main = screen.getByTestId('clientes-page')
       expect(main).toHaveAttribute('role', 'main')
@@ -94,7 +115,7 @@ describe('EDGE — Structural & Semantic Landmarks', () => {
 
   it('Given app loads at /contactos, When layout renders, Then Contactos page has role="main"', async () => {
     const router = createTestRouter('/contactos')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const main = screen.getByTestId('contactos-page')
       expect(main).toHaveAttribute('role', 'main')
@@ -108,7 +129,7 @@ describe('EDGE — Structural & Semantic Landmarks', () => {
 describe('EDGE — Nav item counts in rail and bar', () => {
   it('Given app loads at /clientes, When rail renders, Then NavigationRail contains exactly 2 nav items', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const rail = screen.getByTestId('navigation-rail')
       const items = within(rail).getAllByRole('link')
@@ -118,7 +139,7 @@ describe('EDGE — Nav item counts in rail and bar', () => {
 
   it('Given app loads at /clientes, When bar renders, Then NavigationBar contains exactly 2 nav items', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const bar = screen.getByTestId('nav-bottom-bar')
       const items = within(bar).getAllByRole('link')
@@ -133,7 +154,7 @@ describe('EDGE — Nav item counts in rail and bar', () => {
 describe('EDGE — Screen-reader text on navigation rail items', () => {
   it('Given desktop NavigationRail renders, When user examines Clientes item, Then it contains visible text or sr-only text "Clientes"', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const rail = screen.getByTestId('navigation-rail')
       // sr-only span with "Clientes" or visible label
@@ -144,7 +165,7 @@ describe('EDGE — Screen-reader text on navigation rail items', () => {
 
   it('Given desktop NavigationRail renders, When user examines Contactos item, Then it contains visible text or sr-only text "Contactos"', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const rail = screen.getByTestId('navigation-rail')
       const contactosItem = within(rail).getByTestId('nav-item-contactos')
@@ -160,7 +181,7 @@ describe('EDGE — Keyboard activation of nav items', () => {
   it('Given user focuses Contactos nav item, When Enter key is pressed, Then URL changes to /contactos', async () => {
     const user = userEvent.setup()
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       expect(screen.getAllByTestId('nav-item-contactos').length).toBeGreaterThan(0)
     })
@@ -176,7 +197,7 @@ describe('EDGE — Keyboard activation of nav items', () => {
   it('Given user focuses Clientes nav item on /contactos, When Enter key is pressed, Then URL changes to /clientes', async () => {
     const user = userEvent.setup()
     const router = createTestRouter('/contactos')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       expect(screen.getAllByTestId('nav-item-clientes').length).toBeGreaterThan(0)
     })
@@ -195,7 +216,7 @@ describe('EDGE — Keyboard activation of nav items', () => {
 describe('EDGE — Active state mutual exclusivity', () => {
   it('Given user is at /clientes, When nav renders, Then exactly one item across rail+bar has aria-current="page" per nav context', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       // In the rail (hidden by CSS but present in DOM)
       const rail = screen.getByTestId('navigation-rail')
@@ -207,7 +228,7 @@ describe('EDGE — Active state mutual exclusivity', () => {
 
   it('Given user is at /contactos, When nav renders, Then exactly one item in NavigationBar has aria-current="page"', async () => {
     const router = createTestRouter('/contactos')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const bar = screen.getByTestId('nav-bottom-bar')
       const activeBarItems = within(bar).queryAllByRole('link')
@@ -219,7 +240,7 @@ describe('EDGE — Active state mutual exclusivity', () => {
   it('Given user navigates Clientes → Contactos → Clientes, When each navigation completes, Then active state is correct at each step', async () => {
     const user = userEvent.setup()
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
 
     // Step 1: at /clientes — Clientes should be active
     await waitFor(() => {
@@ -254,7 +275,7 @@ describe('EDGE — 404 back link restores navigation state', () => {
   it('Given user is on 404 page and clicks "Volver a Clientes", When navigation completes, Then Clientes item is active', async () => {
     const user = userEvent.setup()
     const router = createTestRouter('/ruta-inexistente')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
 
     await waitFor(() => {
       expect(screen.getByTestId('not-found-page')).toBeInTheDocument()
@@ -280,7 +301,7 @@ describe('EDGE — 404 back link restores navigation state', () => {
 describe('EDGE — ARIA labels on navigation items', () => {
   it('Given desktop rail renders, When Clientes item is inspected, Then aria-label is "Ir a Clientes"', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const rail = screen.getByTestId('navigation-rail')
       const clientesItem = within(rail).getByTestId('nav-item-clientes')
@@ -290,7 +311,7 @@ describe('EDGE — ARIA labels on navigation items', () => {
 
   it('Given desktop rail renders, When Contactos item is inspected, Then aria-label is "Ir a Contactos"', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const rail = screen.getByTestId('navigation-rail')
       const contactosItem = within(rail).getByTestId('nav-item-contactos')
@@ -300,7 +321,7 @@ describe('EDGE — ARIA labels on navigation items', () => {
 
   it('Given mobile bar renders, When Clientes item is inspected, Then aria-label is "Ir a Clientes"', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const bar = screen.getByTestId('nav-bottom-bar')
       const clientesItem = within(bar).getByTestId('nav-item-clientes')
@@ -310,7 +331,7 @@ describe('EDGE — ARIA labels on navigation items', () => {
 
   it('Given mobile bar renders, When Contactos item is inspected, Then aria-label is "Ir a Contactos"', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const bar = screen.getByTestId('nav-bottom-bar')
       const contactosItem = within(bar).getByTestId('nav-item-contactos')
@@ -325,7 +346,7 @@ describe('EDGE — ARIA labels on navigation items', () => {
 describe('EDGE — Placeholder page headings', () => {
   it('Given /clientes loads, When page renders, Then h1 heading "Clientes" is present', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Clientes', level: 1 })).toBeInTheDocument()
     })
@@ -333,7 +354,7 @@ describe('EDGE — Placeholder page headings', () => {
 
   it('Given /contactos loads, When page renders, Then h1 heading "Contactos" is present', async () => {
     const router = createTestRouter('/contactos')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Contactos', level: 1 })).toBeInTheDocument()
     })
@@ -341,7 +362,7 @@ describe('EDGE — Placeholder page headings', () => {
 
   it('Given /clientes loads, When page renders, Then Clientes page has correct aria-label', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const page = screen.getByTestId('clientes-page')
       expect(page).toHaveAttribute('aria-label', 'Clientes')
@@ -350,7 +371,7 @@ describe('EDGE — Placeholder page headings', () => {
 
   it('Given /contactos loads, When page renders, Then Contactos page has correct aria-label', async () => {
     const router = createTestRouter('/contactos')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const page = screen.getByTestId('contactos-page')
       expect(page).toHaveAttribute('aria-label', 'Contactos')
@@ -364,7 +385,7 @@ describe('EDGE — Placeholder page headings', () => {
 describe('EDGE — 404 page semantic structure', () => {
   it('Given unknown route /anything-else, When 404 renders, Then not-found page has role="main"', async () => {
     const router = createTestRouter('/anything-else')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const notFound = screen.getByTestId('not-found-page')
       expect(notFound).toHaveAttribute('role', 'main')
@@ -373,7 +394,7 @@ describe('EDGE — 404 page semantic structure', () => {
 
   it('Given unknown route, When 404 renders, Then not-found page has aria-label "Página no encontrada"', async () => {
     const router = createTestRouter('/anything-else')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const notFound = screen.getByTestId('not-found-page')
       expect(notFound).toHaveAttribute('aria-label', 'Página no encontrada')
@@ -382,7 +403,7 @@ describe('EDGE — 404 page semantic structure', () => {
 
   it('Given unknown route with deeply nested path, When 404 renders, Then not-found component is shown', async () => {
     const router = createTestRouter('/very/deep/nested/unknown/path')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       expect(screen.getByTestId('not-found-page')).toBeInTheDocument()
     })
@@ -390,7 +411,7 @@ describe('EDGE — 404 page semantic structure', () => {
 
   it('Given unknown route /clientes-extended (partial match), When page loads, Then 404 is shown (not ClientesPage)', async () => {
     const router = createTestRouter('/clientes-extended')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       expect(screen.getByTestId('not-found-page')).toBeInTheDocument()
     })
@@ -403,7 +424,7 @@ describe('EDGE — 404 page semantic structure', () => {
 describe('EDGE — Navbar does not contain nav item links', () => {
   it('Given app loads, When Navbar renders, Then the navbar wrapper does NOT contain nav-item-clientes', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const navbar = screen.getByTestId('navbar')
       expect(within(navbar).queryByTestId('nav-item-clientes')).not.toBeInTheDocument()
@@ -412,7 +433,7 @@ describe('EDGE — Navbar does not contain nav item links', () => {
 
   it('Given app loads, When Navbar renders, Then the navbar wrapper does NOT contain nav-item-contactos', async () => {
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
     await waitFor(() => {
       const navbar = screen.getByTestId('navbar')
       expect(within(navbar).queryByTestId('nav-item-contactos')).not.toBeInTheDocument()
@@ -428,13 +449,13 @@ describe('EDGE — Router state isolation', () => {
     const routerA = createTestRouter('/contactos')
     const routerB = createTestRouter('/clientes')
 
-    const { unmount } = render(<RouterProvider router={routerA} />)
+    const { unmount } = renderWithProviders(<RouterProvider router={routerA} />)
     await waitFor(() => {
       expect(screen.getByTestId('contactos-page')).toBeInTheDocument()
     })
     unmount()
 
-    render(<RouterProvider router={routerB} />)
+    renderWithProviders(<RouterProvider router={routerB} />)
     await waitFor(() => {
       expect(screen.getByTestId('clientes-page')).toBeInTheDocument()
     })

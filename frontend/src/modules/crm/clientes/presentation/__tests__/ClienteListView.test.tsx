@@ -13,8 +13,8 @@
  * Network-first: MSW handlers are set up before render (intercept-before-navigate)
  */
 
-import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
@@ -57,7 +57,7 @@ const twoClientes = [
   {
     id: 'aaa00000-0000-0000-0000-000000000001',
     nombre: 'Empresa Alpha',
-    nit: '111222333-1',
+    nit: '111000111-1',
     telefono: '3001111111',
     ciudad: 'Bogotá',
     createdAt: '2026-05-01T10:00:00Z',
@@ -78,7 +78,7 @@ const threeClientes = [
   {
     id: 'aaa00000-0000-0000-0000-000000000001',
     nombre: 'Empresa Alpha',
-    nit: '111222333-1',
+    nit: '111000111-1',
     telefono: '3001111111',
     ciudad: 'Bogotá',
     createdAt: '2026-05-01T10:00:00Z',
@@ -148,7 +148,7 @@ describe('TC-E2-P1-04 — Client list renders with Nombre and NIT per item', () 
 
     // THEN: Both NIT values are visible
     await waitFor(() => {
-      expect(screen.getByText('111222333-1')).toBeInTheDocument()
+      expect(screen.getByText('111000111-1')).toBeInTheDocument()
       expect(screen.getByText('222333444-2')).toBeInTheDocument()
     })
   })
