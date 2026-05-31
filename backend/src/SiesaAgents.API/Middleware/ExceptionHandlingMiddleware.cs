@@ -1,44 +1,43 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SiesaAgents.API.Middleware;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next)
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
         {
             await next(context);
 
-            // Handle non-exception error status codes (e.g., 404 from unmatched routes)
             if (!context.Response.HasStarted && context.Response.StatusCode >= 400)
             {
                 var statusCode = context.Response.StatusCode;
-                context.Response.ContentType = "application/problem+json";
-                await context.Response.WriteAsJsonAsync(new ProblemDetails
+                await WriteProblemDetailsAsync(context, statusCode, statusCode switch
                 {
-                    Status = statusCode,
-                    Title = statusCode switch
-                    {
-                        404 => "The requested resource was not found.",
-                        400 => "Bad request.",
-                        401 => "Unauthorized.",
-                        403 => "Forbidden.",
-                        _ => "An error occurred."
-                    }
+                    404 => "The requested resource was not found.",
+                    400 => "Bad request.",
+                    401 => "Unauthorized.",
+                    403 => "Forbidden.",
+                    _ => "An error occurred."
                 });
             }
         }
         catch (Exception)
         {
-            context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = 500;
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Status = 500,
-                Title = "An unexpected error occurred.",
-                Detail = null
-            });
+            await WriteProblemDetailsAsync(context, 500, "An unexpected error occurred.");
         }
+    }
+
+    private static async Task WriteProblemDetailsAsync(HttpContext context, int status, string title)
+    {
+        var problem = new ProblemDetails { Status = status, Title = title };
+        var json = JsonSerializer.Serialize(problem, JsonOptions);
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsync(json);
     }
 }
