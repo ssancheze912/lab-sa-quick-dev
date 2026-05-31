@@ -339,4 +339,131 @@ public class ClienteEndpointsTests : IAsyncLifetime
         document.RootElement.ValueKind.Should().Be(JsonValueKind.Array);
         document.RootElement.GetArrayLength().Should().Be(0);
     }
+
+    // -------------------------------------------------------------------------
+    // TC-E2-P1-02 — Story 2.2: GET /api/v1/clientes/{id}
+    // AC2: Returns 200 with full client object for a known ID
+    // AC3: Returns 404 with Problem Details body for a non-existent UUID
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public async Task GivenClienteExists_WhenGetApiV1ClientesById_ThenReturns200OK()
+    {
+        // GIVEN: One client pre-seeded in the database
+        await ClearClientesAsync();
+        await SeedClientesAsync(1);
+
+        // Get the ID of the seeded client
+        var listResponse = await _client.GetAsync("/api/v1/clientes");
+        var listContent = await listResponse.Content.ReadAsStringAsync();
+        using var listDoc = JsonDocument.Parse(listContent);
+        var clienteId = listDoc.RootElement[0].GetProperty("id").GetString();
+        clienteId.Should().NotBeNullOrEmpty("seed must have created a client with an ID");
+
+        // WHEN: GET /api/v1/clientes/{id}
+        var response = await _client.GetAsync($"/api/v1/clientes/{clienteId}");
+
+        // THEN: HTTP 200 OK
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GivenClienteExists_WhenGetApiV1ClientesById_ThenResponseContainsAllRequiredFields()
+    {
+        // GIVEN: One client pre-seeded
+        await ClearClientesAsync();
+        await SeedClientesAsync(1);
+
+        var listResponse = await _client.GetAsync("/api/v1/clientes");
+        var listContent = await listResponse.Content.ReadAsStringAsync();
+        using var listDoc = JsonDocument.Parse(listContent);
+        var clienteId = listDoc.RootElement[0].GetProperty("id").GetString();
+
+        // WHEN: GET /api/v1/clientes/{id}
+        var response = await _client.GetAsync($"/api/v1/clientes/{clienteId}");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // THEN: Response contains all required fields (id, nombre, nit, telefono, ciudad, createdAt, updatedAt)
+        using var document = JsonDocument.Parse(content);
+        var root = document.RootElement;
+
+        root.TryGetProperty("id", out var idProp).Should().BeTrue("response must contain 'id' field");
+        idProp.GetString().Should().Be(clienteId, "'id' must match the requested client ID");
+
+        root.TryGetProperty("nombre", out var nombreProp).Should().BeTrue("response must contain 'nombre' field");
+        nombreProp.GetString().Should().NotBeNullOrEmpty("'nombre' must not be empty");
+
+        root.TryGetProperty("nit", out var nitProp).Should().BeTrue("response must contain 'nit' field");
+        nitProp.GetString().Should().NotBeNullOrEmpty("'nit' must not be empty");
+
+        root.TryGetProperty("telefono", out _).Should().BeTrue("response must contain 'telefono' field");
+        root.TryGetProperty("ciudad", out _).Should().BeTrue("response must contain 'ciudad' field");
+
+        root.TryGetProperty("createdAt", out var createdAtProp).Should().BeTrue("response must contain 'createdAt' field");
+        DateTimeOffset.TryParse(createdAtProp.GetString(), out _).Should().BeTrue(
+            "'createdAt' must be a valid DateTimeOffset ISO 8601 string");
+
+        root.TryGetProperty("updatedAt", out var updatedAtProp).Should().BeTrue("response must contain 'updatedAt' field");
+        DateTimeOffset.TryParse(updatedAtProp.GetString(), out _).Should().BeTrue(
+            "'updatedAt' must be a valid DateTimeOffset ISO 8601 string");
+    }
+
+    [Fact]
+    public async Task GivenClienteExists_WhenGetApiV1ClientesById_ThenResponseIsObjectNotArray()
+    {
+        // GIVEN: One client pre-seeded
+        await ClearClientesAsync();
+        await SeedClientesAsync(1);
+
+        var listResponse = await _client.GetAsync("/api/v1/clientes");
+        var listContent = await listResponse.Content.ReadAsStringAsync();
+        using var listDoc = JsonDocument.Parse(listContent);
+        var clienteId = listDoc.RootElement[0].GetProperty("id").GetString();
+
+        // WHEN: GET /api/v1/clientes/{id}
+        var response = await _client.GetAsync($"/api/v1/clientes/{clienteId}");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // THEN: Response body is a JSON object (not an array)
+        using var document = JsonDocument.Parse(content);
+        document.RootElement.ValueKind.Should().Be(JsonValueKind.Object,
+            "GET by ID must return a single JSON object, not an array");
+    }
+
+    [Fact]
+    public async Task GivenNonExistentClienteId_WhenGetApiV1ClientesById_ThenReturns404()
+    {
+        // GIVEN: No client with this UUID exists in the database
+        await ClearClientesAsync();
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN: GET /api/v1/clientes/{non-existent-uuid}
+        var response = await _client.GetAsync($"/api/v1/clientes/{nonExistentId}");
+
+        // THEN: HTTP 404 Not Found (not 500 or blank)
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound,
+            "a non-existent ID must return 404, not a server error");
+    }
+
+    [Fact]
+    public async Task GivenNonExistentClienteId_WhenGetApiV1ClientesById_ThenResponseIsProblemDetails()
+    {
+        // GIVEN: No client with this UUID exists
+        await ClearClientesAsync();
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN: GET /api/v1/clientes/{non-existent-uuid}
+        var response = await _client.GetAsync($"/api/v1/clientes/{nonExistentId}");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // THEN: Response body is Problem Details JSON (not empty, not raw exception)
+        content.Should().NotBeNullOrEmpty("404 response must include a Problem Details body");
+
+        using var document = JsonDocument.Parse(content);
+        // Problem Details must contain 'status' field equal to 404
+        document.RootElement.TryGetProperty("status", out var statusProp).Should().BeTrue(
+            "Problem Details must contain a 'status' field");
+        statusProp.GetInt32().Should().Be(404,
+            "Problem Details 'status' must be 404");
+    }
 }

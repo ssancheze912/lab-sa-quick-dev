@@ -32,6 +32,11 @@ export class ApiHelper {
     return response.json();
   }
 
+  async getClienteById(id: string) {
+    const response = await this.request.get(`${API_BASE_URL}/api/v1/clientes/${id}`);
+    return response;
+  }
+
   // --- Contactos ---
 
   async createContacto(data: {
