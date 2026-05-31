@@ -13,7 +13,7 @@ export const Route = createRootRoute({
       <Link
         to="/clientes"
         data-testid="not-found-back-link"
-        className="text-blue-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="text-blue-600 hover:underline"
         aria-label="Volver a Clientes"
       >
         Volver a Clientes
