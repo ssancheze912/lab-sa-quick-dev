@@ -292,9 +292,14 @@ test.describe('[P1] ARIA completeness', () => {
     await expect(nav.navigationRail).toHaveAttribute('aria-label', 'Navegación principal');
   });
 
+});
+
+// Sub-describe for mobile ARIA — viewport must be set at describe scope, not inside test body
+test.describe('[P1] ARIA completeness — mobile NavigationBar', () => {
+  test.use({ viewport: { width: 375, height: 812 } });
+
   test('[P1] Given mobile, When app renders, Then NavigationBar has role="navigation" and aria-label in Spanish', async ({ page }) => {
-    // GIVEN: Mobile viewport
-    test.use({ viewport: { width: 375, height: 812 } });
+    // GIVEN: Mobile viewport (375px)
     const nav = new NavigationPage(page);
     await nav.goto('/clientes');
 
@@ -303,6 +308,10 @@ test.describe('[P1] ARIA completeness', () => {
     await expect(nav.navigationBar).toHaveAttribute('role', 'navigation');
     await expect(nav.navigationBar).toHaveAttribute('aria-label', 'Navegación móvil');
   });
+});
+
+test.describe('[P1] ARIA completeness — desktop remaining', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
 
   test('[P1] Given user is at /contactos, When nav renders on desktop, Then Contactos nav item has aria-label "Ir a Contactos"', async ({ page }) => {
     // GIVEN: Desktop viewport at /contactos
