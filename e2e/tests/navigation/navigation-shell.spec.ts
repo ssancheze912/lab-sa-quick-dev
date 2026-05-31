@@ -94,7 +94,7 @@ test.describe('AC3 — NavigationRail: Contactos navigates client-side', () => {
 // AC4 — Mobile: NavigationBar (bottom nav) (6 tests)
 // ────────────────────────────────────────────────────────────────────────
 test.describe('AC4 — Mobile: NavigationBar (bottom nav)', () => {
-  test.use({ viewport: { width: 375, height: 812 } });
+  test.use({ viewport: { width: 375, height: 812 }, hasTouch: true });
 
   test('should display NavigationBar (bottom nav) on mobile viewport', async ({ page }) => {
     const nav = new NavigationPage(page);

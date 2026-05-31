@@ -28,7 +28,7 @@ export class NavigationPage {
     this.page = page;
     this.navbar = page.getByTestId('navbar');
     this.navigationRail = page.getByTestId('navigation-rail');
-    this.navigationBar = page.getByTestId('navigation-bar');
+    this.navigationBar = page.getByTestId('nav-bottom-bar');
     this.navItemClientes = page.getByTestId('nav-item-clientes').first();
     this.navItemContactos = page.getByTestId('nav-item-contactos').first();
     this.notFoundPage = page.getByTestId('not-found-page');
