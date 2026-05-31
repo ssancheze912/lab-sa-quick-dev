@@ -1,0 +1,10 @@
+node_modules/
+frontend/node_modules/
+backend/**/bin/
+backend/**/obj/
+frontend/dist/
+playwright-results/
+playwright-report/
+test-results/
+*.user
+.env.local
