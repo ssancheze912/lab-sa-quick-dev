@@ -18,7 +18,8 @@ builder.Services.AddCors(options =>
 
 // EF Core + PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .UseSnakeCaseNamingConvention());
 
 var app = builder.Build();
 
@@ -26,5 +27,19 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("DevCors");
 app.MapScalarApiReference();
 app.MapOpenApi();
+
+app.MapGet("/health", async (AppDbContext db) =>
+{
+    await db.Database.CanConnectAsync();
+    return Results.Ok(new { status = "healthy" });
+});
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/__throw-test", () =>
+    {
+        throw new InvalidOperationException("Test exception for middleware validation");
+    });
+}
 
 app.Run();
