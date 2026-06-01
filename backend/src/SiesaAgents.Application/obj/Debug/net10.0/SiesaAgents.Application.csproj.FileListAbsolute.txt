@@ -1,0 +1,15 @@
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/bin/Debug/net10.0/SiesaAgents.Application.deps.json
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/bin/Debug/net10.0/SiesaAgents.Application.dll
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/bin/Debug/net10.0/SiesaAgents.Application.pdb
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/bin/Debug/net10.0/SiesaAgents.Domain.dll
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/bin/Debug/net10.0/SiesaAgents.Domain.pdb
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/obj/Debug/net10.0/SiesaAgents.Application.csproj.AssemblyReference.cache
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/obj/Debug/net10.0/SiesaAgents.Application.GeneratedMSBuildEditorConfig.editorconfig
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/obj/Debug/net10.0/SiesaAgents.Application.AssemblyInfoInputs.cache
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/obj/Debug/net10.0/SiesaAgents.Application.AssemblyInfo.cs
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/obj/Debug/net10.0/SiesaAgents.Application.csproj.CoreCompileInputs.cache
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/obj/Debug/net10.0/SiesaAge.B7D0A3F6.Up2Date
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/obj/Debug/net10.0/SiesaAgents.Application.dll
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/obj/Debug/net10.0/refint/SiesaAgents.Application.dll
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/obj/Debug/net10.0/SiesaAgents.Application.pdb
+/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/obj/Debug/net10.0/ref/SiesaAgents.Application.dll
