@@ -133,9 +133,11 @@ test.describe('Edge — Loading skeleton state', () => {
 
     // THEN: skeleton wrappers are present in the loading state
     // The Skeleton component from react-loading-skeleton renders span elements
-    await expect(page.locator('.react-loading-skeleton').first()).toBeVisible({ timeout: 3000 }).catch(() => {
-      // react-loading-skeleton may use different selectors; check for the loading container instead
-    })
+    // NOTE (TEA Review): Use toBeVisible() OR data-testid for the loading container — do not swallow assertion failure.
+    // If the selector is uncertain, use the data-testid="clientes-loading-skeleton" pattern instead.
+    await expect(
+      page.locator('[data-testid="clientes-loading-skeleton"], .react-loading-skeleton').first()
+    ).toBeVisible({ timeout: 3000 })
 
     // Resolve the API call so the test can finish cleanly
     resolveRoute()
