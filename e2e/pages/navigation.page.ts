@@ -33,15 +33,20 @@ export class NavigationPage {
   constructor(page: Page) {
     this.page = page;
 
+    // navigation-rail and navigation-bar testids are set on the wrapper elements in __root.tsx
     this.navigationRail = page.getByTestId('navigation-rail');
-    this.navRailClientes = page.getByTestId('nav-rail-item-clientes');
-    this.navRailContactos = page.getByTestId('nav-rail-item-contactos');
+    // siesa-ui-kit NavigationRail's r8 item renderer emits data-item-id (not data-testid)
+    // Use locator('[data-item-id]') for individual rail item selection
+    this.navRailClientes = page.locator('[data-item-id="clientes"]');
+    this.navRailContactos = page.locator('[data-item-id="contactos"]');
 
     this.navigationBar = page.getByTestId('navigation-bar');
-    this.navBarClientes = page.getByTestId('nav-bar-item-clientes');
-    this.navBarContactos = page.getByTestId('nav-bar-item-contactos');
+    // siesa-ui-kit NavigationBar: items are located by their label text within the nav bar
+    this.navBarClientes = page.getByTestId('navigation-bar').getByText('Clientes');
+    this.navBarContactos = page.getByTestId('navigation-bar').getByText('Contactos');
 
-    this.activeNavItem = page.locator('[data-active="true"]');
+    // siesa-ui-kit uses aria-current="page" for active navigation items (not data-active)
+    this.activeNavItem = page.locator('[aria-current="page"]');
 
     this.notFoundView = page.getByTestId('not-found-view');
     this.notFoundHeading = page.getByTestId('not-found-heading');

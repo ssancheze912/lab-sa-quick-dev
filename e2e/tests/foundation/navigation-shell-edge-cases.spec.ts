@@ -82,9 +82,9 @@ test.describe('[P1] Rapid successive navigation — race condition boundaries', 
     await page.goto('/clientes');
 
     // WHEN: User rapidly clicks between Contactos and Clientes in quick succession
-    await page.getByTestId('nav-rail-item-contactos').click();
-    await page.getByTestId('nav-rail-item-clientes').click();
-    await page.getByTestId('nav-rail-item-contactos').click();
+    await page.locator('[data-item-id="contactos"]').click();
+    await page.locator('[data-item-id="clientes"]').click();
+    await page.locator('[data-item-id="contactos"]').click();
 
     // THEN: URL stabilizes on the last clicked route (/contactos) without crash
     await page.waitForURL('**/contactos**');
@@ -99,9 +99,9 @@ test.describe('[P1] Rapid successive navigation — race condition boundaries', 
     await page.goto('/clientes');
 
     // WHEN: User navigates rapidly between routes
-    await page.getByTestId('nav-rail-item-contactos').click();
-    await page.getByTestId('nav-rail-item-clientes').click();
-    await page.getByTestId('nav-rail-item-contactos').click();
+    await page.locator('[data-item-id="contactos"]').click();
+    await page.locator('[data-item-id="clientes"]').click();
+    await page.locator('[data-item-id="contactos"]').click();
     await page.waitForURL('**/contactos**');
 
     // THEN: No JavaScript runtime errors occurred
@@ -118,8 +118,8 @@ test.describe('[P1] Rapid successive navigation — race condition boundaries', 
     await page.goto('/clientes');
 
     // WHEN: User performs three rapid navigations
-    await page.getByTestId('nav-rail-item-contactos').click();
-    await page.getByTestId('nav-rail-item-clientes').click();
+    await page.locator('[data-item-id="contactos"]').click();
+    await page.locator('[data-item-id="clientes"]').click();
     await page.waitForURL('**/clientes**');
 
     // THEN: No console errors are emitted
@@ -139,7 +139,7 @@ test.describe('[P1] Browser history — back/forward navigation', () => {
   }) => {
     // GIVEN: User starts at /clientes then navigates to /contactos
     await page.goto('/clientes');
-    await page.getByTestId('nav-rail-item-contactos').click();
+    await page.locator('[data-item-id="contactos"]').click();
     await page.waitForURL('**/contactos**');
 
     // WHEN: User presses the browser back button
@@ -155,22 +155,22 @@ test.describe('[P1] Browser history — back/forward navigation', () => {
   }) => {
     // GIVEN: User navigates from /clientes to /contactos via nav item
     await page.goto('/clientes');
-    await page.getByTestId('nav-rail-item-contactos').click();
+    await page.locator('[data-item-id="contactos"]').click();
     await page.waitForURL('**/contactos**');
-    await expect(page.getByTestId('nav-rail-item-contactos')).toHaveAttribute('data-active', 'true');
+    await expect(page.locator('[data-item-id="contactos"]')).toHaveAttribute('aria-current', 'page');
 
     // WHEN: User presses the browser back button
     await page.goBack();
     await page.waitForURL('**/clientes**');
 
     // THEN: The Clientes nav item becomes active again
-    await expect(page.getByTestId('nav-rail-item-clientes')).toHaveAttribute('data-active', 'true');
+    await expect(page.locator('[data-item-id="clientes"]')).toHaveAttribute('aria-current', 'page');
   });
 
   test('[P1] should navigate forward after browser back (history preserved)', async ({ page }) => {
     // GIVEN: User navigates from /clientes to /contactos and then goes back
     await page.goto('/clientes');
-    await page.getByTestId('nav-rail-item-contactos').click();
+    await page.locator('[data-item-id="contactos"]').click();
     await page.waitForURL('**/contactos**');
     await page.goBack();
     await page.waitForURL('**/clientes**');
@@ -196,7 +196,7 @@ test.describe('[P1] Browser history — back/forward navigation', () => {
     const requestsAfterInitialLoad = documentRequests.length;
 
     // Navigate forward then back
-    await page.getByTestId('nav-rail-item-contactos').click();
+    await page.locator('[data-item-id="contactos"]').click();
     await page.waitForURL('**/contactos**');
     await page.goBack();
     await page.waitForURL('**/clientes**');
@@ -218,17 +218,17 @@ test.describe('[P1] Active navigation state — correctness after route changes'
   }) => {
     // GIVEN: User is at /clientes; Clientes is active
     await page.goto('/clientes');
-    await expect(page.getByTestId('nav-rail-item-clientes')).toHaveAttribute('data-active', 'true');
+    await expect(page.locator('[data-item-id="clientes"]')).toHaveAttribute('aria-current', 'page');
 
     // WHEN: User navigates to /contactos
-    await page.getByTestId('nav-rail-item-contactos').click();
+    await page.locator('[data-item-id="contactos"]').click();
     await page.waitForURL('**/contactos**');
 
     // THEN: Contactos is now active and Clientes is no longer active
-    await expect(page.getByTestId('nav-rail-item-contactos')).toHaveAttribute('data-active', 'true');
-    await expect(page.getByTestId('nav-rail-item-clientes')).not.toHaveAttribute(
-      'data-active',
-      'true',
+    await expect(page.locator('[data-item-id="contactos"]')).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator('[data-item-id="clientes"]')).not.toHaveAttribute(
+      'aria-current',
+      'page',
     );
   });
 
@@ -238,7 +238,7 @@ test.describe('[P1] Active navigation state — correctness after route changes'
     await page.waitForURL('**/clientes**');
 
     // THEN: Clientes nav item is marked as active (redirect sets correct active state)
-    await expect(page.getByTestId('nav-rail-item-clientes')).toHaveAttribute('data-active', 'true');
+    await expect(page.locator('[data-item-id="clientes"]')).toHaveAttribute('aria-current', 'page');
   });
 
   test('[P2] should not have both items active simultaneously', async ({ page }) => {
@@ -248,14 +248,14 @@ test.describe('[P1] Active navigation state — correctness after route changes'
     // WHEN: The navigation shell renders
     // THEN: Only one item is active at a time (mutual exclusivity)
     const clientesActive = await page
-      .getByTestId('nav-rail-item-clientes')
-      .getAttribute('data-active');
+      .getByTestId('navigation-rail-item-clientes')
+      .getAttribute('aria-current');
     const contactosActive = await page
-      .getByTestId('nav-rail-item-contactos')
-      .getAttribute('data-active');
+      .getByTestId('navigation-rail-item-contactos')
+      .getAttribute('aria-current');
 
-    // At /clientes: clientes=true, contactos should not be true simultaneously
-    const bothActive = clientesActive === 'true' && contactosActive === 'true';
+    // At /clientes: clientes=page, contactos should not be page simultaneously
+    const bothActive = clientesActive === 'page' && contactosActive === 'page';
     expect(bothActive).toBe(false);
   });
 });
@@ -445,8 +445,8 @@ test.describe('[P1] Mobile NavigationBar — active state and additional edge ca
     // GIVEN: User navigates directly to /contactos on mobile
     await page.goto('/contactos');
 
-    // THEN: The Contactos bar item is marked active
-    await expect(page.getByTestId('nav-bar-item-contactos')).toHaveAttribute('data-active', 'true');
+    // THEN: The Contactos bar item is marked active (aria-current set by siesa-ui-kit)
+    await expect(page.getByTestId('navigation-bar').getByText('Contactos')).toHaveAttribute('aria-current', 'page');
   });
 
   test('[P1] should highlight Clientes as active in NavigationBar when on /clientes', async ({
@@ -455,8 +455,8 @@ test.describe('[P1] Mobile NavigationBar — active state and additional edge ca
     // GIVEN: User navigates directly to /clientes on mobile
     await page.goto('/clientes');
 
-    // THEN: The Clientes bar item is marked active
-    await expect(page.getByTestId('nav-bar-item-clientes')).toHaveAttribute('data-active', 'true');
+    // THEN: The Clientes bar item is marked active (aria-current set by siesa-ui-kit)
+    await expect(page.getByTestId('navigation-bar').getByText('Clientes')).toHaveAttribute('aria-current', 'page');
   });
 
   test('[P1] should navigate to /clientes when tapping Clientes in mobile NavigationBar', async ({
@@ -472,7 +472,7 @@ test.describe('[P1] Mobile NavigationBar — active state and additional edge ca
     const requestsAfterLoad = documentRequests.length;
 
     // WHEN: User taps the Clientes item in the NavigationBar
-    await page.getByTestId('nav-bar-item-clientes').click();
+    await page.getByTestId('navigation-bar').getByText('Clientes').click();
     await page.waitForURL('**/clientes**');
 
     // THEN: URL changed to /clientes without a document reload
@@ -488,8 +488,8 @@ test.describe('[P1] Mobile NavigationBar — active state and additional edge ca
     await page.goto('/clientes');
 
     // WHEN: User taps rapidly between nav items
-    await page.getByTestId('nav-bar-item-contactos').click();
-    await page.getByTestId('nav-bar-item-clientes').click();
+    await page.getByTestId('navigation-bar').getByText('Contactos').click();
+    await page.getByTestId('navigation-bar').getByText('Clientes').click();
     await page.waitForURL('**/clientes**');
 
     // THEN: No runtime errors
@@ -517,10 +517,10 @@ test.describe('[P1] Keyboard accessibility — additional edge cases', () => {
     // THEN: One of the navigation rail items has focus after two Tabs
     // (Both items should be reachable via sequential Tab navigation)
     const clientesFocused = await page
-      .getByTestId('nav-rail-item-clientes')
+      .getByTestId('navigation-rail-item-clientes')
       .evaluate((el) => el === document.activeElement || el.contains(document.activeElement));
     const contactosFocused = await page
-      .getByTestId('nav-rail-item-contactos')
+      .getByTestId('navigation-rail-item-contactos')
       .evaluate((el) => el === document.activeElement || el.contains(document.activeElement));
 
     expect(clientesFocused || contactosFocused).toBe(true);
@@ -537,11 +537,13 @@ test.describe('[P1] Keyboard accessibility — additional edge cases', () => {
     await page.keyboard.press('Tab');
 
     // THEN: One of the mobile navigation bar items receives focus
-    const clientesFocused = await page
-      .getByTestId('nav-bar-item-clientes')
+    // siesa-ui-kit NavigationBar renders items as <button> inside the <nav> container
+    const navBarContainer = page.getByTestId('navigation-bar');
+    const clientesFocused = await navBarContainer
+      .getByText('Clientes')
       .evaluate((el) => el === document.activeElement || el.contains(document.activeElement));
-    const contactosFocused = await page
-      .getByTestId('nav-bar-item-contactos')
+    const contactosFocused = await navBarContainer
+      .getByText('Contactos')
       .evaluate((el) => el === document.activeElement || el.contains(document.activeElement));
 
     expect(clientesFocused || contactosFocused).toBe(true);
@@ -552,11 +554,11 @@ test.describe('[P1] Keyboard accessibility — additional edge cases', () => {
   }) => {
     // GIVEN: WCAG 2.1 AA requires visible focus indicators
     await page.goto('/clientes');
-    await page.getByTestId('nav-rail-item-clientes').focus();
+    await page.locator('[data-item-id="clientes"]').focus();
 
     // WHEN: The focused element is inspected for outline style
     const outlineStyle = await page
-      .getByTestId('nav-rail-item-clientes')
+      .getByTestId('navigation-rail-item-clientes')
       .evaluate((el) => window.getComputedStyle(el).outlineStyle);
 
     // THEN: Outline is not explicitly hidden (none would be an accessibility failure)

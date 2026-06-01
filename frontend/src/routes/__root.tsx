@@ -91,7 +91,7 @@ function RootLayout() {
   return (
     <div className="flex h-screen">
       {/* Desktop: NavigationRail (left sidebar) — hidden on mobile */}
-      <aside className="hidden lg:flex" aria-label="Navegación principal">
+      <aside data-testid="navigation-rail" className="hidden lg:flex" aria-label="Navegación principal">
         <NavigationRail
           items={railItems}
           selectedId={activeId}
@@ -105,7 +105,7 @@ function RootLayout() {
       </main>
 
       {/* Mobile: NavigationBar (bottom) — hidden on desktop */}
-      <nav className="flex lg:hidden fixed bottom-0 w-full" aria-label="Navegación móvil">
+      <nav data-testid="navigation-bar" className="flex lg:hidden fixed bottom-0 w-full" aria-label="Navegación móvil">
         <NavigationBar
           items={barItems}
           activeItemId={activeId}

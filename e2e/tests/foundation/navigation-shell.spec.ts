@@ -38,7 +38,7 @@ test.describe('AC1 — Desktop NavigationRail', () => {
     await page.goto('/clientes');
 
     // THEN: A Clientes navigation item is present in the rail
-    await expect(page.getByTestId('nav-rail-item-clientes')).toBeVisible();
+    await expect(page.locator('[data-item-id="clientes"]')).toBeVisible();
   });
 
   test('should show "Contactos" navigation entry in the desktop NavigationRail', async ({ page }) => {
@@ -47,7 +47,7 @@ test.describe('AC1 — Desktop NavigationRail', () => {
     await page.goto('/clientes');
 
     // THEN: A Contactos navigation item is present in the rail
-    await expect(page.getByTestId('nav-rail-item-contactos')).toBeVisible();
+    await expect(page.locator('[data-item-id="contactos"]')).toBeVisible();
   });
 
   test('should navigate to /clientes without full page reload when clicking Clientes in rail', async ({
@@ -66,7 +66,7 @@ test.describe('AC1 — Desktop NavigationRail', () => {
     const initialDocRequests = navigationRequests.length;
 
     // WHEN: User clicks the Clientes item in the NavigationRail
-    await page.getByTestId('nav-rail-item-clientes').click();
+    await page.locator('[data-item-id="clientes"]').click();
     await page.waitForURL('**/clientes**');
 
     // THEN: URL changed to /clientes and no new document request was made (SPA behavior)
@@ -90,7 +90,7 @@ test.describe('AC1 — Desktop NavigationRail', () => {
     const initialDocRequests = navigationRequests.length;
 
     // WHEN: User clicks the Contactos item in the NavigationRail
-    await page.getByTestId('nav-rail-item-contactos').click();
+    await page.locator('[data-item-id="contactos"]').click();
     await page.waitForURL('**/contactos**');
 
     // THEN: URL changed to /contactos and no new document request was made (SPA behavior)
@@ -130,7 +130,7 @@ test.describe('AC2 — Mobile NavigationBar', () => {
     await page.goto('/clientes');
 
     // THEN: Clientes item is accessible in the NavigationBar
-    await expect(page.getByTestId('nav-bar-item-clientes')).toBeVisible();
+    await expect(page.getByTestId('navigation-bar').getByText('Clientes')).toBeVisible();
   });
 
   test('should show "Contactos" item in the mobile NavigationBar', async ({ page }) => {
@@ -139,7 +139,7 @@ test.describe('AC2 — Mobile NavigationBar', () => {
     await page.goto('/clientes');
 
     // THEN: Contactos item is accessible in the NavigationBar
-    await expect(page.getByTestId('nav-bar-item-contactos')).toBeVisible();
+    await expect(page.getByTestId('navigation-bar').getByText('Contactos')).toBeVisible();
   });
 
   test('should navigate to /contactos when tapping Contactos in mobile NavigationBar', async ({
@@ -158,7 +158,7 @@ test.describe('AC2 — Mobile NavigationBar', () => {
     const initialDocRequests = navigationRequests.length;
 
     // WHEN: User taps the Contactos item in the NavigationBar
-    await page.getByTestId('nav-bar-item-contactos').click();
+    await page.getByTestId('navigation-bar').getByText('Contactos').click();
     await page.waitForURL('**/contactos**');
 
     // THEN: URL changed to /contactos without a full page reload
@@ -211,7 +211,7 @@ test.describe('AC3 — Deep linking and active navigation state', () => {
     await page.goto('/clientes');
 
     // THEN: The Clientes navigation item has the active indicator
-    await expect(page.getByTestId('nav-rail-item-clientes')).toHaveAttribute('data-active', 'true');
+    await expect(page.locator('[data-item-id="clientes"]')).toHaveAttribute('aria-current', 'page');
   });
 
   test('should highlight the Contactos nav item as active when on /contactos', async ({ page }) => {
@@ -220,9 +220,9 @@ test.describe('AC3 — Deep linking and active navigation state', () => {
     await page.goto('/contactos');
 
     // THEN: The Contactos navigation item has the active indicator
-    await expect(page.getByTestId('nav-rail-item-contactos')).toHaveAttribute(
-      'data-active',
-      'true',
+    await expect(page.locator('[data-item-id="contactos"]')).toHaveAttribute(
+      'aria-current',
+      'page',
     );
   });
 
@@ -318,7 +318,7 @@ test.describe('AC5 — SPA navigation (no full page reload)', () => {
     const documentRequestsAfterInitialLoad = documentNavigations.length;
 
     // WHEN: User clicks Contactos in the NavigationRail
-    await page.getByTestId('nav-rail-item-contactos').click();
+    await page.locator('[data-item-id="contactos"]').click();
     await page.waitForURL('**/contactos**');
 
     // THEN: No additional document request was made (pure client-side routing)
@@ -341,7 +341,7 @@ test.describe('AC5 — SPA navigation (no full page reload)', () => {
     const documentRequestsAfterInitialLoad = documentNavigations.length;
 
     // WHEN: User clicks Clientes in the NavigationRail
-    await page.getByTestId('nav-rail-item-clientes').click();
+    await page.locator('[data-item-id="clientes"]').click();
     await page.waitForURL('**/clientes**');
 
     // THEN: No additional document request was made (pure client-side routing)
@@ -356,7 +356,7 @@ test.describe('AC5 — SPA navigation (no full page reload)', () => {
     await expect(page.getByTestId('navigation-rail')).toBeVisible();
 
     // WHEN: User navigates to /contactos
-    await page.getByTestId('nav-rail-item-contactos').click();
+    await page.locator('[data-item-id="contactos"]').click();
     await page.waitForURL('**/contactos**');
 
     // THEN: NavigationRail is still present (not destroyed and remounted — shell persists)
@@ -376,7 +376,7 @@ test.describe('AC6 — Keyboard accessibility (WCAG 2.1 AA)', () => {
   }) => {
     // GIVEN: App is at /clientes and Contactos nav item is focused via keyboard
     await page.goto('/clientes');
-    await page.getByTestId('nav-rail-item-contactos').focus();
+    await page.locator('[data-item-id="contactos"]').focus();
 
     // WHEN: User presses Enter on the focused navigation item
     await page.keyboard.press('Enter');
@@ -391,7 +391,7 @@ test.describe('AC6 — Keyboard accessibility (WCAG 2.1 AA)', () => {
   }) => {
     // GIVEN: App is at /clientes and Contactos nav item is focused via keyboard
     await page.goto('/clientes');
-    await page.getByTestId('nav-rail-item-contactos').focus();
+    await page.locator('[data-item-id="contactos"]').focus();
 
     // WHEN: User presses Space on the focused navigation item
     await page.keyboard.press('Space');
@@ -406,7 +406,7 @@ test.describe('AC6 — Keyboard accessibility (WCAG 2.1 AA)', () => {
   }) => {
     // GIVEN: App is at /contactos and Clientes nav item is focused via keyboard
     await page.goto('/contactos');
-    await page.getByTestId('nav-rail-item-clientes').focus();
+    await page.locator('[data-item-id="clientes"]').focus();
 
     // WHEN: User presses Enter on the focused navigation item
     await page.keyboard.press('Enter');
@@ -424,10 +424,10 @@ test.describe('AC6 — Keyboard accessibility (WCAG 2.1 AA)', () => {
 
     // THEN: One of the navigation rail items receives focus (keyboard navigable)
     const clientesFocused = await page
-      .getByTestId('nav-rail-item-clientes')
+      .getByTestId('navigation-rail-item-clientes')
       .evaluate((el) => el === document.activeElement || el.contains(document.activeElement));
     const contactosFocused = await page
-      .getByTestId('nav-rail-item-contactos')
+      .getByTestId('navigation-rail-item-contactos')
       .evaluate((el) => el === document.activeElement || el.contains(document.activeElement));
 
     expect(clientesFocused || contactosFocused).toBe(true);
