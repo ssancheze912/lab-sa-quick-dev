@@ -160,13 +160,9 @@ test.describe('[P0] ExceptionHandlingMiddleware — Problem Details RFC 7807 con
     const response = await request.get(`${API_BASE_URL}/api/edge-case-nonexistent`);
 
     // THEN: The response body is valid parseable JSON
-    let body: unknown;
-    try {
-      body = await response.json();
-    } catch {
-      // If JSON parsing fails, the test should fail clearly
-      expect(false, 'Response body is not valid JSON').toBe(true);
-    }
+    // TODO (TEA Review - AUTO-FIXED): Replaced try/catch anti-pattern with direct assertion.
+    // try/catch swallows errors and introduces non-determinism. Use expect directly.
+    const body = await response.json();
     expect(body).toBeDefined();
   });
 
