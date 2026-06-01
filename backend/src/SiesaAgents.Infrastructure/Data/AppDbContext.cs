@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
 using System.Reflection;
 
 namespace SiesaAgents.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    // DbSet properties will be added in Epic 2 (ClienteEntity) and Epic 3 (ContactoEntity)
-    // DO NOT add ClienteEntity or ContactoEntity here
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
