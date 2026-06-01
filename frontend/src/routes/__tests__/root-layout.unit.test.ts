@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Story 1.2: Frontend Navigation Shell
  * Epic 1: Project Foundation & Application Shell

@@ -14,6 +14,9 @@ export default defineConfig({
   test: {
     name: 'frontend-unit',
     environment: 'node',
+    environmentMatchGlobs: [
+      ['src/routes/__tests__/**', 'jsdom'],
+    ],
     globals: false,
     include: [
       'src/**/__tests__/**/*.unit.test.ts',
