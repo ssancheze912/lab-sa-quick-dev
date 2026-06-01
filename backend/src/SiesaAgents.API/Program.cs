@@ -49,9 +49,9 @@ if (app.Environment.IsDevelopment())
                 ? Results.Ok(new { status = "healthy", database = "reachable" })
                 : Results.Json(new { status = "unhealthy", database = "unreachable" }, statusCode: 503);
         }
-        catch (Exception ex)
+        catch
         {
-            return Results.Json(new { status = "unhealthy", error = ex.Message }, statusCode: 503);
+            return Results.Json(new { status = "unhealthy", error = "Database connection failed." }, statusCode: 503);
         }
     });
 
