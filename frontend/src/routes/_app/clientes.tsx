@@ -1,6 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ClientesPlaceholder } from '../../modules/crm/clientes/presentation/ClientesPlaceholder'
+import { ClienteListPanel } from '../../modules/crm/clientes/presentation/ClienteListPanel'
 
 export const Route = createFileRoute('/_app/clientes')({
-  component: ClientesPlaceholder,
+  component: ClientesPage,
 })
+
+function ClientesPage() {
+  return (
+    <div className="flex flex-row h-full">
+      <ClienteListPanel />
+      <div className="flex-1" />
+    </div>
+  )
+}

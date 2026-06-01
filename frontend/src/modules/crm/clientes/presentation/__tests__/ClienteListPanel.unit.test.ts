@@ -47,7 +47,7 @@ describe('[P0] EmptyState — Module contract (AC3)', () => {
   test('[P0] should export an EmptyState function component from shared components', async () => {
     // GIVEN: EmptyState.tsx exists at src/shared/components/EmptyState.tsx
     // WHEN: The module is imported
-    const mod = await import('../../../../shared/components/EmptyState');
+    const mod = await import('../../../../../shared/components/EmptyState');
 
     // THEN: EmptyState is exported as a named function component
     expect(mod).toHaveProperty('EmptyState');
@@ -57,7 +57,7 @@ describe('[P0] EmptyState — Module contract (AC3)', () => {
   test('[P0] EmptyState should have the correct component name', async () => {
     // GIVEN: React DevTools requires function name consistency
     // WHEN: The EmptyState component is imported
-    const { EmptyState } = await import('../../../../shared/components/EmptyState');
+    const { EmptyState } = await import('../../../../../shared/components/EmptyState');
 
     // THEN: The function name matches
     expect(EmptyState.name).toBe('EmptyState');
@@ -66,7 +66,7 @@ describe('[P0] EmptyState — Module contract (AC3)', () => {
   test('[P1] EmptyState should accept message prop (not throw when called with message)', async () => {
     // GIVEN: EmptyState is a React component with a message prop
     // WHEN: It is called with a message
-    const { EmptyState } = await import('../../../../shared/components/EmptyState');
+    const { EmptyState } = await import('../../../../../shared/components/EmptyState');
 
     // THEN: Calling it with a message does not throw synchronously
     expect(() => {
@@ -84,7 +84,7 @@ describe('[P0] ErrorPanel — Module contract (AC4)', () => {
   test('[P0] should export an ErrorPanel function component from shared components', async () => {
     // GIVEN: ErrorPanel.tsx exists at src/shared/components/ErrorPanel.tsx
     // WHEN: The module is imported
-    const mod = await import('../../../../shared/components/ErrorPanel');
+    const mod = await import('../../../../../shared/components/ErrorPanel');
 
     // THEN: ErrorPanel is exported as a named function component
     expect(mod).toHaveProperty('ErrorPanel');
@@ -94,7 +94,7 @@ describe('[P0] ErrorPanel — Module contract (AC4)', () => {
   test('[P0] ErrorPanel should have the correct component name', async () => {
     // GIVEN: React DevTools requires function name consistency
     // WHEN: The ErrorPanel component is imported
-    const { ErrorPanel } = await import('../../../../shared/components/ErrorPanel');
+    const { ErrorPanel } = await import('../../../../../shared/components/ErrorPanel');
 
     // THEN: The function name matches
     expect(ErrorPanel.name).toBe('ErrorPanel');
@@ -103,7 +103,7 @@ describe('[P0] ErrorPanel — Module contract (AC4)', () => {
   test('[P0] ErrorPanel should not expose internal error.message in its output (NFR6)', async () => {
     // GIVEN: ErrorPanel is designed to show a fixed user-facing message (NFR6 compliance)
     // WHEN: ErrorPanel is called with an onRetry callback
-    const { ErrorPanel } = await import('../../../../shared/components/ErrorPanel');
+    const { ErrorPanel } = await import('../../../../../shared/components/ErrorPanel');
 
     // THEN: Calling it does not throw (component exists and accepts props)
     expect(() => {
@@ -115,7 +115,7 @@ describe('[P0] ErrorPanel — Module contract (AC4)', () => {
   test('[P1] ErrorPanel should accept optional message and onRetry props without throwing', async () => {
     // GIVEN: ErrorPanel accepts optional props: message, onRetry
     // WHEN: It is called with no props
-    const { ErrorPanel } = await import('../../../../shared/components/ErrorPanel');
+    const { ErrorPanel } = await import('../../../../../shared/components/ErrorPanel');
 
     // THEN: It does not throw when called with an empty props object
     expect(() => {
@@ -133,7 +133,7 @@ describe('[P0] ClientListItem — Module contract (AC1)', () => {
   test('[P0] should export a ClientListItem function component from shared components', async () => {
     // GIVEN: ClientListItem.tsx exists at src/shared/components/ClientListItem.tsx
     // WHEN: The module is imported
-    const mod = await import('../../../../shared/components/ClientListItem');
+    const mod = await import('../../../../../shared/components/ClientListItem');
 
     // THEN: ClientListItem is exported as a named function component
     expect(mod).toHaveProperty('ClientListItem');
@@ -143,7 +143,7 @@ describe('[P0] ClientListItem — Module contract (AC1)', () => {
   test('[P1] ClientListItem should accept a cliente prop and render without throwing', async () => {
     // GIVEN: ClientListItem renders a single client with nombre and nit
     // WHEN: It is called with a valid cliente object
-    const { ClientListItem } = await import('../../../../shared/components/ClientListItem');
+    const { ClientListItem } = await import('../../../../../shared/components/ClientListItem');
 
     const mockCliente = {
       id: '550e8400-e29b-41d4-a716-446655440000',

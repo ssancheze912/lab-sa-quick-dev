@@ -113,10 +113,10 @@ public class AppDbContextEdgeCasesTests
     // Edge: Entity count boundary — exactly 0 entity types in this story
     // ─────────────────────────────────────────────────────────────────────────
 
-    [Fact(DisplayName = "[P1] Entity count: model has exactly 0 entity types registered in Story 1.3")]
-    public void AppDbContext_Model_HasExactlyZeroEntityTypes()
+    [Fact(DisplayName = "[P1] Entity count: model has exactly 1 entity type registered (ClienteEntity added in Story 2.1)")]
+    public void AppDbContext_Model_HasExactlyOneEntityType()
     {
-        // GIVEN: AppDbContext with no DbSet<> properties (Story 1.3 scope constraint)
+        // GIVEN: AppDbContext with DbSet<ClienteEntity> (Story 2.1 adds ClienteEntity)
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
@@ -126,28 +126,27 @@ public class AppDbContextEdgeCasesTests
         // WHEN: Entity types are enumerated from the model
         var entityTypeCount = ctx.Model.GetEntityTypes().Count();
 
-        // THEN: Count is 0 — no entities registered in this story (Epic 2 adds ClienteEntity)
-        Assert.Equal(0, entityTypeCount);
+        // THEN: Count is 1 — ClienteEntity registered in Story 2.1 (Epic 3 adds ContactoEntity)
+        Assert.Equal(1, entityTypeCount);
     }
 
-    [Fact(DisplayName = "[P2] Table names: no table name in model matches any known domain entity convention")]
-    public void AppDbContext_Model_ContainsNoKnownDomainEntityTableNames()
+    [Fact(DisplayName = "[P2] Table names: model contains ClienteEntity (added in Story 2.1), no Contacto entity yet")]
+    public void AppDbContext_Model_ContainsClienteEntityAndNotContactoEntity()
     {
-        // GIVEN: AppDbContext with no DbSet<> properties
+        // GIVEN: AppDbContext with DbSet<ClienteEntity>
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
         using var ctx = new AppDbContext(options);
 
-        // WHEN: All entity type names (not table names, since no entities) are checked
+        // WHEN: All entity type names are checked
         var entityTypeNames = ctx.Model.GetEntityTypes()
             .Select(e => e.ClrType.Name.ToLowerInvariant())
             .ToList();
 
-        // THEN: No known domain entity class names are present
-        Assert.DoesNotContain("clienteentity", entityTypeNames);
-        Assert.DoesNotContain("cliente", entityTypeNames);
+        // THEN: ClienteEntity is present (Story 2.1); ContactoEntity is not yet (Epic 3)
+        Assert.Contains("clienteentity", entityTypeNames);
         Assert.DoesNotContain("contactoentity", entityTypeNames);
         Assert.DoesNotContain("contacto", entityTypeNames);
     }
