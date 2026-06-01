@@ -18,7 +18,6 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseStatusCodePages();
 app.UseCors("DevCors");
 app.MapScalarApiReference();
 app.MapOpenApi();

@@ -1,10 +1,3 @@
-﻿namespace SiesaAgents.UnitTests;
-
-public class UnitTest1
-{
-    [Fact]
-    public void Test1()
-    {
-
-    }
-}
+﻿// Unit tests will be added alongside domain entities and use-cases in subsequent stories.
+// This file serves as the xUnit project entry point.
+namespace SiesaAgents.UnitTests;
