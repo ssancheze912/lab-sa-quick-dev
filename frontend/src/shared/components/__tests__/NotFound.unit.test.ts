@@ -61,13 +61,15 @@ describe('[P0] NotFound — Module contract (AC4)', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('[P0] NotFound — Back-link route constant (AC4)', () => {
-  test('[P0] should export or reference /clientes as the back navigation target', async () => {
+  test('[P0] NotFound component JSX should reference /clientes in its rendered output', async () => {
     // GIVEN: The not-found view must include a link back to /clientes (story spec)
-    // WHEN: The module source is available
-    // THEN: The back link destination is /clientes (verified in E2E via data-testid)
-    // This unit test documents the contract — the actual href is asserted E2E.
-    // The purpose: ensure the constant is not changed to a different route.
-    const expectedBackRoute = '/clientes';
-    expect(expectedBackRoute).toBe('/clientes');
+    // WHEN: The NotFound component is called and its result is inspected
+    const { NotFound } = await import('../NotFound');
+    const element = NotFound({});
+
+    // THEN: The rendered element contains a reference to /clientes
+    // React elements are plain objects — check props recursively for the /clientes href
+    const elementStr = JSON.stringify(element);
+    expect(elementStr).toContain('/clientes');
   });
 });
