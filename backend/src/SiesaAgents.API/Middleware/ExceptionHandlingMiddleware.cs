@@ -12,14 +12,16 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         }
         catch (Exception)
         {
-            context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = 500;
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Status = 500,
-                Title = "An unexpected error occurred.",
-                Detail = null
-            });
+            await context.Response.WriteAsJsonAsync(
+                new ProblemDetails
+                {
+                    Status = 500,
+                    Title = "An unexpected error occurred.",
+                    Detail = null   // NEVER expose ex.Message or stack traces (NFR6)
+                },
+                options: null,
+                contentType: "application/problem+json");
         }
     }
 }

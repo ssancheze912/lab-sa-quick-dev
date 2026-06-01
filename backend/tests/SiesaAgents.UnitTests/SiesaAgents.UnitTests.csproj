@@ -28,8 +28,8 @@
 
   <ItemGroup>
     <!-- Story 1.3: Required for AppDbContextTests (UseInMemoryDatabase) -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.8" />
   </ItemGroup>
 
 </Project>

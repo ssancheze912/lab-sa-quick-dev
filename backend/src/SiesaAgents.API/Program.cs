@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +16,10 @@ builder.Services.AddCors(options =>
                 ?? ["http://localhost:5173"])
             .AllowAnyHeader()
             .AllowAnyMethod()));
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .UseSnakeCaseNamingConvention());
 
 var app = builder.Build();
 
