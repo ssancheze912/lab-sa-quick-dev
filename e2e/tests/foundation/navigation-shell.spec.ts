@@ -14,7 +14,7 @@
  *   AC6 — Keyboard accessibility: Enter/Space triggers navigation on focused nav items
  */
 
-import { test, expect } from '../../../e2e/fixtures/base.fixture';
+import { test, expect } from '../../fixtures/base.fixture';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AC1 — Desktop NavigationRail visible on left with Clientes and Contactos
