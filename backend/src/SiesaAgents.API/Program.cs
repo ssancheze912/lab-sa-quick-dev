@@ -4,6 +4,7 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddCors(options =>
     options.AddPolicy("DevCors", policy =>
@@ -17,6 +18,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseStatusCodePages();
 app.UseCors("DevCors");
 app.MapScalarApiReference();
 app.MapOpenApi();
