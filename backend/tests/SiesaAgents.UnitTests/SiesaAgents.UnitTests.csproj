@@ -21,6 +21,15 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SiesaAgents.Application\SiesaAgents.Application.csproj" />
     <ProjectReference Include="..\..\src\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
+    <!-- Story 1.3: AppDbContextTests require Infrastructure; ExceptionHandlingMiddlewareTests require API -->
+    <ProjectReference Include="..\..\src\SiesaAgents.Infrastructure\SiesaAgents.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\SiesaAgents.API\SiesaAgents.API.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Story 1.3: Required for AppDbContextTests (UseInMemoryDatabase) -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.0" />
   </ItemGroup>
 
 </Project>
