@@ -9,6 +9,7 @@
  */
 
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
@@ -30,6 +31,11 @@ export default defineConfig({
       provider: 'v8',
       include: ['src/shared/**', 'src/app/**'],
       exclude: ['src/**/__tests__/**', 'node_modules/**'],
+    },
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
     },
   },
   // Replicate import.meta.env for unit tests

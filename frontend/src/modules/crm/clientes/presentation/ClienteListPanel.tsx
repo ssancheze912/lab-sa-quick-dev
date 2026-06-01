@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { useClientes } from '../application/useClientes'
 import { ClientListItem } from '../../../../shared/components/ClientListItem'
 import { EmptyState } from '../../../../shared/components/EmptyState'
@@ -9,6 +10,9 @@ import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 export function ClienteListPanel() {
   const { data: clientes, isLoading, isError, refetch } = useClientes()
   const [searchQuery, setSearchQuery] = useState('')
+  const navigate = useNavigate()
+  const params = useParams({ strict: false })
+  const selectedClienteId = (params as Record<string, string | undefined>).clienteId
 
   const filteredClientes = useMemo(() => {
     if (!searchQuery.trim()) return clientes ?? []
@@ -64,6 +68,10 @@ export function ClienteListPanel() {
               <ClientListItem
                 key={cliente.id}
                 cliente={cliente}
+                isSelected={cliente.id === selectedClienteId}
+                onClick={() => {
+                  void navigate({ to: '/clientes/$clienteId', params: { clienteId: cliente.id } })
+                }}
               />
             ))}
           </div>

@@ -1,6 +1,6 @@
 # Story 2.2: Client Detail View
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -28,66 +28,66 @@ so that I can review all their information without navigating away from the clie
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Create `GetClienteByIdQuery` + `GetClienteByIdQueryHandler` (AC: #3, #7)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs` — record with `Guid Id` parameter
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs` — injects `IClienteRepository`, calls `GetByIdAsync(query.Id, ct)`, returns `ClienteDto?`; throws `NotFoundException` (or returns null) when not found
-  - [ ] Register handler in DI: `builder.Services.AddScoped<GetClienteByIdQueryHandler>()` in `Program.cs`
+- [x] Task 1 — Create `GetClienteByIdQuery` + `GetClienteByIdQueryHandler` (AC: #3, #7)
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs` — record with `Guid Id` parameter
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs` — injects `IClienteRepository`, calls `GetByIdAsync(query.Id, ct)`, returns `ClienteDto?`; throws `NotFoundException` (or returns null) when not found
+  - [x] Register handler in DI: `builder.Services.AddScoped<GetClienteByIdQueryHandler>()` in `Program.cs`
 
-- [ ] Task 2 — Add `GET /api/v1/clientes/{id}` endpoint (AC: #3, #7)
-  - [ ] Add `app.MapGet("/api/v1/clientes/{id:guid}", ...)` inside `ClienteEndpoints.MapClienteEndpoints()`
-  - [ ] If handler returns `null` → `Results.Problem(title: "Cliente no encontrado", statusCode: 404)` (Problem Details RFC 7807)
-  - [ ] If handler returns a `ClienteDto` → `Results.Ok(dto)` (HTTP 200)
-  - [ ] Tag the endpoint with `"Clientes"` for Scalar documentation
+- [x] Task 2 — Add `GET /api/v1/clientes/{id}` endpoint (AC: #3, #7)
+  - [x] Add `app.MapGet("/api/v1/clientes/{id:guid}", ...)` inside `ClienteEndpoints.MapClienteEndpoints()`
+  - [x] If handler returns `null` → `Results.Problem(title: "Cliente no encontrado", statusCode: 404)` (Problem Details RFC 7807)
+  - [x] If handler returns a `ClienteDto` → `Results.Ok(dto)` (HTTP 200)
+  - [x] Tag the endpoint with `"Clientes"` for Scalar documentation
 
-- [ ] Task 3 — Create `useCliente(id)` TanStack Query hook (AC: #3, #5, #6)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCliente.ts`
-  - [ ] Use `useQuery({ queryKey: ['clientes', id], queryFn: () => clienteApiRepository.getById(id), enabled: !!id })`
-  - [ ] `enabled: !!id` ensures no fetch when no client is selected
+- [x] Task 3 — Create `useCliente(id)` TanStack Query hook (AC: #3, #5, #6)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useCliente.ts`
+  - [x] Use `useQuery({ queryKey: ['clientes', id], queryFn: () => clienteApiRepository.getById(id), enabled: !!id })`
+  - [x] `enabled: !!id` ensures no fetch when no client is selected
 
-- [ ] Task 4 — Add `getById` to `IClienteRepository` and `clienteApiRepository` (AC: #3, #7)
-  - [ ] Verify `IClienteRepository.ts` exports a `getById(id: string): Promise<Cliente>` method (already declared in domain — confirm or add)
-  - [ ] Add implementation in `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: `GET /api/v1/clientes/${id}`, return `response.data as Cliente`
-  - [ ] If Axios receives 404, let the error propagate to TanStack Query's `isError` state — do not swallow
+- [x] Task 4 — Add `getById` to `IClienteRepository` and `clienteApiRepository` (AC: #3, #7)
+  - [x] Verify `IClienteRepository.ts` exports a `getById(id: string): Promise<Cliente>` method (already declared in domain — confirm or add)
+  - [x] Add implementation in `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: `GET /api/v1/clientes/${id}`, return `response.data as Cliente`
+  - [x] If Axios receives 404, let the error propagate to TanStack Query's `isError` state — do not swallow
 
-- [ ] Task 5 — Create `ClienteDetailPanel` presentation component (AC: #1, #2, #4, #5, #6)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.tsx`
-  - [ ] Props: none — reads `clienteId` from TanStack Router's `useParams()` (route param `$clienteId`)
-  - [ ] Uses `useCliente(clienteId)` hook internally
-  - [ ] Loading state: renders skeleton rows via `react-loading-skeleton` (4 rows: Nombre, NIT/RUC, Teléfono, Ciudad)
-  - [ ] Error state (non-404): renders `<ErrorPanel onRetry={refetch} />` with fixed message (NFR6)
-  - [ ] Not-found state (404): renders inline "Cliente no encontrado" message — no `ErrorPanel`, no retry button
-  - [ ] Success state: renders a read-only detail card with labeled fields in Spanish:
+- [x] Task 5 — Create `ClienteDetailPanel` presentation component (AC: #1, #2, #4, #5, #6)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.tsx`
+  - [x] Props: none — reads `clienteId` from TanStack Router's `useParams()` (route param `$clienteId`)
+  - [x] Uses `useCliente(clienteId)` hook internally
+  - [x] Loading state: renders skeleton rows via `react-loading-skeleton` (4 rows: Nombre, NIT/RUC, Teléfono, Ciudad)
+  - [x] Error state (non-404): renders `<ErrorPanel onRetry={refetch} />` with fixed message (NFR6)
+  - [x] Not-found state (404): renders inline "Cliente no encontrado" message — no `ErrorPanel`, no retry button
+  - [x] Success state: renders a read-only detail card with labeled fields in Spanish:
     - "Nombre" → `cliente.nombre`
     - "NIT/RUC" → `cliente.nit`
     - "Teléfono" → `cliente.telefono`
     - "Ciudad" → `cliente.ciudad`
-  - [ ] WCAG 2.1 AA: each field uses a `<dl>/<dt>/<dd>` or equivalent semantic structure; labels are visually distinct from values
-  - [ ] Styling: TailwindCSS, `slate-*` for neutrals, `#0e79fd` Siesa Blue for section accents
+  - [x] WCAG 2.1 AA: each field uses a `<dl>/<dt>/<dd>` or equivalent semantic structure; labels are visually distinct from values
+  - [x] Styling: TailwindCSS, `slate-*` for neutrals, `#0e79fd` Siesa Blue for section accents
 
-- [ ] Task 6 — Wire `ClienteDetailPanel` into the `/clientes/$clienteId` route (AC: #1, #2, #3, #4)
-  - [ ] Update (or create) `frontend/src/routes/_app/clientes.$clienteId.tsx`
-  - [ ] Import `ClienteDetailPanel` and render it in the right panel area of the two-panel layout
-  - [ ] Ensure `ClienteListPanel` (left, 280px) remains visible when a client is selected — the layout is a persistent split panel, NOT a navigation replacement
-  - [ ] `ClientListItem` in `ClienteListPanel` must navigate to `/clientes/$clienteId` on click (update `ClienteListPanel.tsx` onClick handler to use TanStack Router's `navigate({ to: '/clientes/$clienteId', params: { clienteId: cliente.id } })`)
-  - [ ] Highlight the selected item in `ClienteListPanel` — compare `cliente.id` with the current route param; apply active styling (border-left `#0e79fd`, bg highlight)
+- [x] Task 6 — Wire `ClienteDetailPanel` into the `/clientes/$clienteId` route (AC: #1, #2, #3, #4)
+  - [x] Update (or create) `frontend/src/routes/_app/clientes.$clienteId.tsx`
+  - [x] Import `ClienteDetailPanel` and render it in the right panel area of the two-panel layout
+  - [x] Ensure `ClienteListPanel` (left, 280px) remains visible when a client is selected — the layout is a persistent split panel, NOT a navigation replacement
+  - [x] `ClientListItem` in `ClienteListPanel` must navigate to `/clientes/$clienteId` on click (update `ClienteListPanel.tsx` onClick handler to use TanStack Router's `navigate({ to: '/clientes/$clienteId', params: { clienteId: cliente.id } })`)
+  - [x] Highlight the selected item in `ClienteListPanel` — compare `cliente.id` with the current route param; apply active styling (border-left `#0e79fd`, bg highlight)
 
-- [ ] Task 7 — Write backend unit tests (AC: #7)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
-    - [ ] Test: existing ID → returns correct `ClienteDto` mapping
-    - [ ] Test: unknown ID → handler returns null / throws (per chosen pattern)
-  - [ ] Structure: Arrange / Act / Assert; mock `IClienteRepository`
+- [x] Task 7 — Write backend unit tests (AC: #7)
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
+    - [x] Test: existing ID → returns correct `ClienteDto` mapping
+    - [x] Test: unknown ID → handler returns null / throws (per chosen pattern)
+  - [x] Structure: Arrange / Act / Assert; mock `IClienteRepository`
 
-- [ ] Task 8 — Write frontend unit tests (AC: #1, #3, #4, #5, #6)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCliente.test.ts`
-    - [ ] MSW handler for `GET /api/v1/clientes/:id` — success path returns valid `Cliente`
-    - [ ] MSW handler for `GET /api/v1/clientes/:id` — 404 path
-    - [ ] Verify hook returns `data` on success; `isError` on 404/error
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.test.tsx`
-    - [ ] Render: loading state → skeletons present, no client data visible
-    - [ ] Render: success state → all 4 fields (Nombre, NIT/RUC, Teléfono, Ciudad) visible in Spanish
-    - [ ] Render: 404 state → "Cliente no encontrado" visible; ErrorPanel NOT rendered
-    - [ ] Render: network error state → `ErrorPanel` with retry button rendered
-    - [ ] Accessibility check via `axe`
+- [x] Task 8 — Write frontend unit tests (AC: #1, #3, #4, #5, #6)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useCliente.test.ts`
+    - [x] MSW handler for `GET /api/v1/clientes/:id` — success path returns valid `Cliente`
+    - [x] MSW handler for `GET /api/v1/clientes/:id` — 404 path
+    - [x] Verify hook returns `data` on success; `isError` on 404/error
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.test.tsx`
+    - [x] Render: loading state → skeletons present, no client data visible
+    - [x] Render: success state → all 4 fields (Nombre, NIT/RUC, Teléfono, Ciudad) visible in Spanish
+    - [x] Render: 404 state → "Cliente no encontrado" visible; ErrorPanel NOT rendered
+    - [x] Render: network error state → `ErrorPanel` with retry button rendered
+    - [x] Accessibility check via `axe`
 
 ## Dev Notes
 
@@ -427,4 +427,31 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- Backend files (GetClienteByIdQuery, GetClienteByIdQueryHandler, endpoint, DI registration) were already fully implemented from prior work.
+- Frontend files (useCliente.ts, clienteApiRepository.ts getById, ClienteDetailPanel.tsx, clientes.$clienteId.tsx) were already implemented.
+- ClienteListPanel.tsx was missing navigation (useNavigate + useParams) and active item highlighting — added in this session.
+- Fixed missing `@/` path alias in vite.config.ts, vitest.config.ts, and tsconfig.app.json (ClienteDetailPanel.tsx used `@/shared/components/ErrorPanel` but the alias was not configured).
+- All 114 backend tests and 141 frontend tests pass.
+
 ### File List
+
+**Backend — existing (verified complete):**
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs`
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs`
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.API/Program.cs`
+- `/home/user/lab-sa-quick-dev/backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
+
+**Frontend — modified:**
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/clientes/presentation/ClienteListPanel.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/vite.config.ts`
+- `/home/user/lab-sa-quick-dev/frontend/vitest.config.ts`
+- `/home/user/lab-sa-quick-dev/frontend/tsconfig.app.json`
+
+**Frontend — existing (verified complete):**
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/clientes/application/useCliente.ts`
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/routes/_app/clientes.$clienteId.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/clientes/application/__tests__/useCliente.unit.test.ts`
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/clientes/presentation/__tests__/ClienteDetailPanel.unit.test.ts`
