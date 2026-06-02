@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  },
+  "dependencies": {
+    "siesa-ui-kit": "^1.0.194"
+  }
+}

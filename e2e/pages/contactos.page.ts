@@ -15,6 +15,7 @@ export class ContactosPage {
   readonly contactoRows: Locator;
   readonly btnNuevoContacto: Locator;
   readonly filtroSinCliente: Locator;
+  readonly orphanCount: Locator;
 
   // Form (dialog/drawer)
   readonly form: Locator;
@@ -30,6 +31,15 @@ export class ContactosPage {
   // Detail
   readonly detailPanel: Locator;
   readonly clienteAsociadoLink: Locator;
+  readonly sinClienteAsignado: Locator;
+  readonly btnVolver: Locator;
+
+  // Reassignment (Story 4.6)
+  readonly btnReasignar: Locator;
+  readonly reassignClienteDialog: Locator;
+  readonly clienteOptions: Locator;
+  readonly btnConfirmarReasignar: Locator;
+  readonly btnCancelarReasignar: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -39,7 +49,8 @@ export class ContactosPage {
     this.searchInput = page.getByPlaceholder(/buscar contacto/i);
     this.contactoRows = page.getByTestId('contacto-row');
     this.btnNuevoContacto = page.getByRole('button', { name: /nuevo contacto/i });
-    this.filtroSinCliente = page.getByRole('checkbox', { name: /sin cliente/i });
+    this.filtroSinCliente = page.getByTestId('filtro-sin-cliente');
+    this.orphanCount = page.getByTestId('orphan-count');
 
     this.form = page.getByRole('dialog');
     this.inputNombre = page.getByLabel(/nombre/i);
@@ -52,7 +63,16 @@ export class ContactosPage {
     this.btnConfirmarEliminar = page.getByRole('button', { name: /confirmar/i });
 
     this.detailPanel = page.getByTestId('contacto-detail-panel');
-    this.clienteAsociadoLink = page.getByTestId('cliente-asociado-link');
+    this.clienteAsociadoLink = page.getByTestId('clienteAsociadoLink');
+    this.sinClienteAsignado = page.getByTestId('sin-cliente-asignado');
+    this.btnVolver = page.getByTestId('btn-volver');
+
+    // Reassignment locators (Story 4.6)
+    this.btnReasignar = page.getByTestId('btn-reasignar');
+    this.reassignClienteDialog = page.getByTestId('reassign-cliente-dialog');
+    this.clienteOptions = page.getByTestId('cliente-option');
+    this.btnConfirmarReasignar = page.getByTestId('btn-confirmar-reasignar');
+    this.btnCancelarReasignar = page.getByTestId('btn-cancelar-reasignar');
   }
 
   async goto() {
