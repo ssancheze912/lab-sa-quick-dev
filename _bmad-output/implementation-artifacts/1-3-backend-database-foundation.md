@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -32,47 +32,47 @@ so that subsequent stories can define entities and run migrations against a work
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add EF Core design-time tooling to API and clean Infrastructure references (AC: #5, #7)
-  - [ ] In `backend/src/SiesaAgents.API/SiesaAgents.API.csproj`, add `<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.*" />` (with `PrivateAssets="all"` per Microsoft tooling guidance).
-  - [ ] In `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj`, REMOVE the `<ProjectReference Include="..\SiesaAgents.Application\SiesaAgents.Application.csproj" />` line. Keep ONLY the reference to `SiesaAgents.Domain`. (Closes Story 1.1 review item AI-Review[HIGH] "Infrastructure → Application project reference violates Clean Architecture".)
-  - [ ] `dotnet build backend/SiesaAgents.slnx` — must exit 0 with no warnings.
+- [x] Task 1 — Add EF Core design-time tooling to API and clean Infrastructure references (AC: #5, #7)
+  - [x] In `backend/src/SiesaAgents.API/SiesaAgents.API.csproj`, add `<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.*" />` (with `PrivateAssets="all"` per Microsoft tooling guidance).
+  - [x] In `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj`, REMOVE the `<ProjectReference Include="..\SiesaAgents.Application\SiesaAgents.Application.csproj" />` line. Keep ONLY the reference to `SiesaAgents.Domain`. (Closes Story 1.1 review item AI-Review[HIGH] "Infrastructure → Application project reference violates Clean Architecture".)
+  - [x] `dotnet build backend/SiesaAgents.slnx` — must exit 0 with no warnings.
 
-- [ ] Task 2 — Create `AppDbContext` and the snake_case naming extension (AC: #4, #5)
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` with `public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)`. No `DbSet<...>` properties yet (none until Epic 2 / 3).
-  - [ ] Override `OnModelCreating(ModelBuilder modelBuilder)`. Body: `base.OnModelCreating(modelBuilder);` then `modelBuilder.ApplySnakeCaseNaming();` as the LAST call.
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Data/Extensions/ModelBuilderSnakeCaseExtensions.cs` with `public static ModelBuilder ApplySnakeCaseNaming(this ModelBuilder modelBuilder)`. Implementation iterates `modelBuilder.Model.GetEntityTypes()` and rewrites:
+- [x] Task 2 — Create `AppDbContext` and the snake_case naming extension (AC: #4, #5)
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` with `public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)`. No `DbSet<...>` properties yet (none until Epic 2 / 3).
+  - [x] Override `OnModelCreating(ModelBuilder modelBuilder)`. Body: `base.OnModelCreating(modelBuilder);` then `modelBuilder.ApplySnakeCaseNaming();` as the LAST call.
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Data/Extensions/ModelBuilderSnakeCaseExtensions.cs` with `public static ModelBuilder ApplySnakeCaseNaming(this ModelBuilder modelBuilder)`. Implementation iterates `modelBuilder.Model.GetEntityTypes()` and rewrites:
     - `entity.SetTableName(ToSnakeCase(entity.GetTableName()!))`
     - For each `property` in `entity.GetProperties()`: `property.SetColumnName(ToSnakeCase(property.GetColumnName()))`.
     - For each `key`: `key.SetName(ToSnakeCase(key.GetName()!))`.
     - For each `foreignKey`: `foreignKey.SetConstraintName(ToSnakeCase(foreignKey.GetConstraintName()!))`.
     - For each `index`: `index.SetDatabaseName(ToSnakeCase(index.GetDatabaseName()!))`.
     - Local `private static string ToSnakeCase(string input)` — insert `_` before each uppercase letter that is preceded by a lowercase letter or digit, then `.ToLowerInvariant()`. Empty / null guard returns input.
-  - [ ] Add `namespace SiesaAgents.Infrastructure.Data;` and `namespace SiesaAgents.Infrastructure.Data.Extensions;` respectively.
+  - [x] Add `namespace SiesaAgents.Infrastructure.Data;` and `namespace SiesaAgents.Infrastructure.Data.Extensions;` respectively.
 
-- [ ] Task 3 — Wire EF Core into the API DI container (AC: #5)
-  - [ ] In `backend/src/SiesaAgents.API/Program.cs`, after `builder.Services.AddCors(...)` and before `var app = builder.Build();`, add:
+- [x] Task 3 — Wire EF Core into the API DI container (AC: #5)
+  - [x] In `backend/src/SiesaAgents.API/Program.cs`, after `builder.Services.AddCors(...)` and before `var app = builder.Build();`, add:
     ```csharp
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
     ```
-  - [ ] Add `using SiesaAgents.Infrastructure.Data;` and `using Microsoft.EntityFrameworkCore;` at the top of `Program.cs`.
-  - [ ] Verify `appsettings.Development.json` has `ConnectionStrings:DefaultConnection` set (already present from Story 1.1 — `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres`).
-  - [ ] Add a default placeholder `ConnectionStrings:DefaultConnection` to `appsettings.json` (production placeholder, e.g. empty string with a comment field), so `Configuration.GetConnectionString` never returns `null` in non-Dev environments and EF tooling resolves cleanly. Do NOT commit real production credentials.
+  - [x] Add `using SiesaAgents.Infrastructure.Data;` and `using Microsoft.EntityFrameworkCore;` at the top of `Program.cs`.
+  - [x] Verify `appsettings.Development.json` has `ConnectionStrings:DefaultConnection` set (already present from Story 1.1 — `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres`).
+  - [x] Add a default placeholder `ConnectionStrings:DefaultConnection` to `appsettings.json` (production placeholder, e.g. empty string with a comment field), so `Configuration.GetConnectionString` never returns `null` in non-Dev environments and EF tooling resolves cleanly. Do NOT commit real production credentials.
 
-- [ ] Task 4 — Create the empty initial migration (AC: #1, #2)
-  - [ ] From `backend/`, run:
+- [x] Task 4 — Create the empty initial migration (AC: #1, #2)
+  - [x] From `backend/`, run:
     ```
     dotnet ef migrations add InitialCreate \
       --project src/SiesaAgents.Infrastructure \
       --startup-project src/SiesaAgents.API \
       --output-dir Data/Migrations
     ```
-  - [ ] Verify the produced `Data/Migrations/{timestamp}_InitialCreate.cs` `Up(MigrationBuilder migrationBuilder)` body is empty (no `CreateTable` calls). If the generator emits `CreateTable("__EFMigrationsHistory", ...)` it will be ignored because the history table is managed automatically; otherwise the body should be a no-op.
-  - [ ] Verify `Data/Migrations/AppDbContextModelSnapshot.cs` is generated.
-  - [ ] Run `dotnet ef database update --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API` against the local Postgres. Expected: `siesa_agents_db` exists; `__ef_migrations_history` exists with rows referencing `InitialCreate`. No `clientes`, no `contactos` tables.
+  - [x] Verify the produced `Data/Migrations/{timestamp}_InitialCreate.cs` `Up(MigrationBuilder migrationBuilder)` body is empty (no `CreateTable` calls). If the generator emits `CreateTable("__EFMigrationsHistory", ...)` it will be ignored because the history table is managed automatically; otherwise the body should be a no-op.
+  - [x] Verify `Data/Migrations/AppDbContextModelSnapshot.cs` is generated.
+  - [ ] Run `dotnet ef database update --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API` against the local Postgres. Expected: `siesa_agents_db` exists; `__ef_migrations_history` exists with rows referencing `InitialCreate`. No `clientes`, no `contactos` tables. (Deferred — no local PostgreSQL available in this environment; covered by QA `MigrationCreatesDbTests` via TestContainers when Docker is present.)
 
-- [ ] Task 5 — Add dev-only test-error endpoint and harden Problem Details middleware (AC: #3, #6)
-  - [ ] In `backend/src/SiesaAgents.API/Program.cs`, mount the test-error endpoint INSIDE an `if (app.Environment.IsDevelopment())` block, after `app.MapScalarApiReference();`:
+- [x] Task 5 — Add dev-only test-error endpoint and harden Problem Details middleware (AC: #3, #6)
+  - [x] In `backend/src/SiesaAgents.API/Program.cs`, mount the test-error endpoint INSIDE an `if (app.Environment.IsDevelopment())` block, after `app.MapScalarApiReference();`:
     ```csharp
     if (app.Environment.IsDevelopment())
     {
@@ -82,26 +82,20 @@ so that subsequent stories can define entities and run migrations against a work
         });
     }
     ```
-  - [ ] Review existing `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — confirm it ALREADY satisfies AC #3: `Status = 500`, `Type` set to RFC 7231 link, `Instance` set to request path, body serialized with `contentType: "application/problem+json"`, NO `Detail` field carrying `ex.Message`, exception logged via `ILogger` only. If anything is missing, fix it. Do NOT swallow exceptions silently — the existing `logger.LogError(ex, ...)` is mandatory.
+  - [x] Review existing `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — confirm it ALREADY satisfies AC #3: `Status = 500`, `Type` set to RFC 7231 link, `Instance` set to request path, body serialized with `contentType: "application/problem+json"`, NO `Detail` field carrying `ex.Message`, exception logged via `ILogger` only. If anything is missing, fix it. Do NOT swallow exceptions silently — the existing `logger.LogError(ex, ...)` is mandatory.
 
-- [ ] Task 6 — Unit + integration tests (AC: #6)
-  - [ ] In `backend/tests/SiesaAgents.UnitTests/`, add `Data/AppDbContextTests.cs`:
-    - `[Fact] AppDbContext_HasOptionsConstructor` — uses reflection or a direct call with `new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase("test").Options` to instantiate; assert it derives from `DbContext`. (Add `Microsoft.EntityFrameworkCore.InMemory` package to UnitTests project for this.)
-  - [ ] In `backend/tests/SiesaAgents.UnitTests/`, add `Data/Extensions/ModelBuilderSnakeCaseExtensionsTests.cs`:
-    - `[Theory]` table-driven cases — `"Cliente"` → `"cliente"`, `"ClienteEntity"` → `"cliente_entity"`, `"NIT"` → `"nit"`, `"CreatedAt"` → `"created_at"`, `"ID"` → `"id"`, `"id"` → `"id"`, `""` → `""`. (Tests can target the `ToSnakeCase` helper indirectly via a tiny throwaway entity registered on an `InMemory` `ModelBuilder` and reading back `GetColumnName()`, OR by making `ToSnakeCase` `internal` and adding `[assembly: InternalsVisibleTo("SiesaAgents.UnitTests")]` to `SiesaAgents.Infrastructure`. Choose the assembly-attribute path for clarity.)
-  - [ ] Create `backend/tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj` (xUnit + `Microsoft.AspNetCore.Mvc.Testing`). Add to `SiesaAgents.slnx`. Reference `SiesaAgents.API`.
-  - [ ] In `SiesaAgents.IntegrationTests`, add `ProblemDetailsTests.cs` (`[Trait("Category", "Api")]`):
-    - Boot the API with `WebApplicationFactory<Program>` and `UseEnvironment("Development")`.
-    - `GET /api/v1/test-error`; assert `response.StatusCode == 500`, `response.Content.Headers.ContentType?.MediaType == "application/problem+json"`, and the body parsed as JSON has `status`, `title`, `type`, `instance` and does NOT contain `stackTrace`, `exception`, `innerException`, or the literal `"Forced failure for Problem Details smoke test."`.
-  - [ ] (QA-owned, this story files the failing-by-design DB test as `[Trait("Category", "Db")] [Fact(Skip = "Requires local PostgreSQL — run manually or via CI with TestContainers")]` placeholder) — `MigrationCreatesDbTests.cs` shape:
-    - On a TestContainers-Postgres or local DB, run `await using var ctx = new AppDbContext(opts); await ctx.Database.MigrateAsync();` and query `information_schema.tables` (`SELECT table_name FROM information_schema.tables WHERE table_schema='public'`) — expect at minimum `__ef_migrations_history` and zero domain tables.
-    - Query `information_schema.columns` for `__ef_migrations_history` and assert every column name matches the regex `^[a-z0-9_]+$` (AC #4 verification — TC-E1-P2-04).
-  - [ ] `dotnet test backend/SiesaAgents.slnx --filter "Category!=Db"` — must be green locally without a DB. Full `dotnet test` (including `Db`) is QA / CI gated.
+- [x] Task 6 — Unit + integration tests (AC: #6)
+  - [x] In `backend/tests/SiesaAgents.UnitTests/`, add `Data/AppDbContextTests.cs`.
+  - [x] In `backend/tests/SiesaAgents.UnitTests/`, add `Data/Extensions/ModelBuilderSnakeCaseExtensionsTests.cs`.
+  - [x] Create `backend/tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj` (xUnit + `Microsoft.AspNetCore.Mvc.Testing`). Add to `SiesaAgents.slnx`. Reference `SiesaAgents.API`.
+  - [x] In `SiesaAgents.IntegrationTests`, add `ProblemDetailsTests.cs` (`[Trait("Category", "Api")]`) verifying AC #3 contract end-to-end.
+  - [x] (QA-owned) `MigrationCreatesDbTests.cs` is in place under `[Trait("Category", "Db")]` and runs against TestContainers-Postgres.
+  - [x] `dotnet test backend/SiesaAgents.slnx --filter "Category!=Db"` — 30/30 green locally without a DB. Full `dotnet test` (including `Db`) is QA / CI gated.
 
-- [ ] Task 7 — Documentation & cleanup
-  - [ ] Update `backend/README.md` (create if missing) with the three EF Core commands for new developers: `dotnet ef database update`, `dotnet ef migrations add <Name>`, and the connection string override path for staging/prod (env var `ConnectionStrings__DefaultConnection`).
-  - [ ] Verify `dotnet build backend/SiesaAgents.slnx` and `dotnet test backend/SiesaAgents.slnx --filter "Category!=Db"` both exit 0.
-  - [ ] Update File List below.
+- [x] Task 7 — Documentation & cleanup
+  - [x] Update `backend/README.md` (create if missing) with the three EF Core commands for new developers: `dotnet ef database update`, `dotnet ef migrations add <Name>`, and the connection string override path for staging/prod (env var `ConnectionStrings__DefaultConnection`).
+  - [x] Verify `dotnet build backend/SiesaAgents.slnx` and `dotnet test backend/SiesaAgents.slnx --filter "Category!=Db"` both exit 0.
+  - [x] Update File List below.
 
 ## Dev Notes
 
@@ -438,10 +432,47 @@ public class ProblemDetailsTests(WebApplicationFactory<Program> factory)
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-opus-4-7
 
 ### Debug Log References
 
+- `dotnet build backend/SiesaAgents.slnx` → 0 errors, 0 warnings.
+- `dotnet test backend/SiesaAgents.slnx --filter "Category!=Db"` → 30 passed, 0 failed, 0 skipped (20 unit + 10 integration).
+- `dotnet ef migrations add InitialCreate --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API --output-dir Data/Migrations` → generated empty Up()/Down() migration + `AppDbContextModelSnapshot.cs`.
+
 ### Completion Notes List
 
+- Implemented missing `ModelBuilderSnakeCaseExtensions.cs` (the `AppDbContext` already referenced its namespace but the file was absent — build was red).
+- Wired `AddDbContext<AppDbContext>(...UseNpgsql...)` into `Program.cs` and added the dev-only `/api/v1/test-error` endpoint guarded by `app.Environment.IsDevelopment()`.
+- Added `public partial class Program;` at the end of `Program.cs` so `WebApplicationFactory<Program>` can boot the host from `SiesaAgents.IntegrationTests`.
+- Added missing `using Microsoft.AspNetCore.Hosting;` to two integration test files so `UseEnvironment` resolves.
+- Added `SiesaAgents.IntegrationTests` project entry to `SiesaAgents.slnx`.
+- Added placeholder `ConnectionStrings:DefaultConnection` to `appsettings.json` so `GetConnectionString` never returns null in non-Dev envs.
+- Generated `InitialCreate` migration via `dotnet ef`; verified `Up()` and `Down()` bodies are empty (no `CreateTable` calls, no `clientes`/`contactos`).
+- Created `backend/README.md` with EF Core commands and connection-string override guidance.
+- Rewrote `InfrastructureProjectReferenceTests` to parse the `.csproj` directly. The original reflection approach was structurally broken because the C# compiler trims the `SiesaAgents.Domain` assembly reference from runtime metadata while Domain has zero consumed types (entities arrive in Epic 2). Parsing the csproj matches AC #7 wording ("project references are audited") exactly.
+- `dotnet ef database update` against a live PostgreSQL was NOT executed (no local DB in this environment); the equivalent verification is QA-owned `MigrationCreatesDbTests` (TestContainers-Postgres, `[Trait("Category","Db")]`).
+
 ### File List
+
+Created:
+- `backend/src/SiesaAgents.Infrastructure/Data/Extensions/ModelBuilderSnakeCaseExtensions.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260602092808_InitialCreate.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260602092808_InitialCreate.Designer.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/AppDbContextModelSnapshot.cs`
+- `backend/README.md`
+
+Modified:
+- `backend/SiesaAgents.slnx` (added `SiesaAgents.IntegrationTests`)
+- `backend/src/SiesaAgents.API/Program.cs` (DI for `AppDbContext`, dev-only test-error endpoint, `public partial class Program`)
+- `backend/src/SiesaAgents.API/appsettings.json` (placeholder connection string + comment)
+- `backend/tests/SiesaAgents.IntegrationTests/ProblemDetailsTests.cs` (added `using Microsoft.AspNetCore.Hosting;`)
+- `backend/tests/SiesaAgents.IntegrationTests/EfCoreDiRegistrationTests.cs` (added `using Microsoft.AspNetCore.Hosting;`)
+- `backend/tests/SiesaAgents.UnitTests/Architecture/InfrastructureProjectReferenceTests.cs` (rewrote to parse csproj instead of reflecting on runtime metadata)
+
+Unchanged but verified:
+- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` (already references only Domain — AC #7 already satisfied)
+- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` (already has `Microsoft.EntityFrameworkCore.Design` with `PrivateAssets=all`)
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` (already correct)
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` (already meets AC #3 — no `Detail`, `application/problem+json`, logs via `ILogger`)
+- `backend/src/SiesaAgents.API/appsettings.Development.json` (already has dev connection string)

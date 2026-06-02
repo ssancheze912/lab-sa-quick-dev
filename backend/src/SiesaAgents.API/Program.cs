@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,12 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
+
+// EF Core / PostgreSQL — single registration of AppDbContext (Story 1.3 AC #5).
+// Connection string is sourced from configuration; appsettings.Development.json carries the
+// local dev credentials, production must override via env var ConnectionStrings__DefaultConnection.
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
@@ -55,4 +63,19 @@ app.MapScalarApiReference();
 
 app.MapGet("/", () => Results.Redirect("/scalar"));
 
+// Dev-only endpoint that throws — used by QA's TC-E1-P0-05 integration test to
+// drive ExceptionHandlingMiddleware end-to-end. MUST be gated by Development so
+// it never ships to production (Story 1.3 AC #3).
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/api/v1/test-error", () =>
+    {
+        throw new InvalidOperationException("Forced failure for Problem Details smoke test.");
+    });
+}
+
 app.Run();
+
+// Required so WebApplicationFactory<Program> can boot the host from
+// SiesaAgents.IntegrationTests (Microsoft minimal-hosting canonical pattern).
+public partial class Program;
