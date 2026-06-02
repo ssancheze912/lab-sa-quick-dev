@@ -460,15 +460,21 @@ Created:
 - `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260602092808_InitialCreate.cs`
 - `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260602092808_InitialCreate.Designer.cs`
 - `backend/src/SiesaAgents.Infrastructure/Data/Migrations/AppDbContextModelSnapshot.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/SnakeCaseNpgsqlHistoryRepository.cs` (added during code-review auto-fix — see Review Follow-ups)
 - `backend/README.md`
 
 Modified:
 - `backend/SiesaAgents.slnx` (added `SiesaAgents.IntegrationTests`)
-- `backend/src/SiesaAgents.API/Program.cs` (DI for `AppDbContext`, dev-only test-error endpoint, `public partial class Program`)
+- `backend/src/SiesaAgents.API/Program.cs` (DI for `AppDbContext`, dev-only test-error endpoint, `public partial class Program`, snake_case history-repo wiring during code-review auto-fix)
 - `backend/src/SiesaAgents.API/appsettings.json` (placeholder connection string + comment)
 - `backend/tests/SiesaAgents.IntegrationTests/ProblemDetailsTests.cs` (added `using Microsoft.AspNetCore.Hosting;`)
 - `backend/tests/SiesaAgents.IntegrationTests/EfCoreDiRegistrationTests.cs` (added `using Microsoft.AspNetCore.Hosting;`)
+- `backend/tests/SiesaAgents.IntegrationTests/SnakeCaseHistoryRepositoryTests.cs` (added during code-review auto-fix — regression guard for AC #1 / AC #4)
 - `backend/tests/SiesaAgents.UnitTests/Architecture/InfrastructureProjectReferenceTests.cs` (rewrote to parse csproj instead of reflecting on runtime metadata)
+
+### Review Follow-ups (AI)
+
+- [AI-Review][CRITICAL][AUTO-FIXED 2026-06-02] AC #1 / AC #4 — the EF Core history table was emitting `"__EFMigrationsHistory"` with PascalCase columns (`"MigrationId"`, `"ProductVersion"`) because that table is created by `IHistoryRepository`, OUTSIDE `OnModelCreating`, so `ApplySnakeCaseNaming()` could not rewrite it. Verified by running `dotnet ef migrations script` against the generated `InitialCreate` migration. Fix: added `SnakeCaseNpgsqlHistoryRepository` (overrides `ConfigureTable` to rename columns), registered via `options.UseNpgsql(..., npg => npg.MigrationsHistoryTable("__ef_migrations_history")).ReplaceService<IHistoryRepository, SnakeCaseNpgsqlHistoryRepository>()` in `Program.cs`. Post-fix `dotnet ef migrations script` emits `__ef_migrations_history`, `migration_id`, `product_version` as required. Added two regression tests in `SnakeCaseHistoryRepositoryTests.cs`. EF1001 internal-API warning suppressed locally with explanatory comment (no public EF Core 10 API exists for this rename).
 
 Unchanged but verified:
 - `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` (already references only Domain — AC #7 already satisfied)

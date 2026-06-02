@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
 using SiesaAgents.Infrastructure.Data;
@@ -26,8 +27,18 @@ builder.Services.AddCors(options =>
 // EF Core / PostgreSQL — single registration of AppDbContext (Story 1.3 AC #5).
 // Connection string is sourced from configuration; appsettings.Development.json carries the
 // local dev credentials, production must override via env var ConnectionStrings__DefaultConnection.
+//
+// Story 1.3 AC #1 / AC #4 also mandate that the EF Core history table be
+// `__ef_migrations_history` with snake_case columns `migration_id` / `product_version`.
+// That table lives OUTSIDE `OnModelCreating` so `ApplySnakeCaseNaming()` cannot rewrite it.
+// We force the snake_case shape here by (a) renaming the table via Npgsql options and
+// (b) replacing the default history repository with a snake_case-aware override.
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options
+        .UseNpgsql(
+            builder.Configuration.GetConnectionString("DefaultConnection"),
+            npg => npg.MigrationsHistoryTable("__ef_migrations_history"))
+        .ReplaceService<IHistoryRepository, SnakeCaseNpgsqlHistoryRepository>());
 
 var app = builder.Build();
 
