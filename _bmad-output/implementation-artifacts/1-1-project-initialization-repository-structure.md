@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: review
+Status: done
 
 ## Story
 
@@ -257,3 +257,15 @@ claude-opus-4-7
 - `backend/src/SiesaAgents.{Application,Domain,Infrastructure}/Class1.cs`
 - `backend/tests/SiesaAgents.UnitTests/UnitTest1.cs`
 - `frontend/src/App.tsx`, `frontend/src/App.css`, `frontend/src/assets/react.svg`
+
+## Review Follow-ups (AI)
+
+Items surfaced by adversarial code review (`2026-06-02`). Auto-fixes already applied are noted; remaining items are deferred follow-ups (no impact on PASS verdict for Story 1.1, but tracked for visibility).
+
+- [x] [AI-Review][MED] **ESLint failing on `pnpm lint`** — added per-folder rule override for `src/routes/**` to disable `react-refresh/only-export-components` (false positive for TanStack Router file-based routing). Also added `src/routeTree.gen.ts` to global ignores. → `frontend/eslint.config.js`
+- [x] [AI-Review][MED] **`apiClient` had no-op response interceptor and no timeout** — removed dead interceptor, added `timeout: 15000` to prevent UI hangs on stalled connections. Added a regression test asserting `timeout > 0`. → `frontend/src/shared/lib/apiClient.ts`, `frontend/src/shared/lib/apiClient.test.ts`
+- [x] [AI-Review][LOW] **`index.html` had `<title>frontend</title>` and `lang="en"`** — Spanish-first product requires `lang="es"` and product title. → `frontend/index.html`
+- [x] [AI-Review][LOW] **`appsettings.Development.json` ships hard-coded `postgres` credentials with no warning** — added explicit comment field clarifying DEV-ONLY scope and the override path for staging/production. → `backend/src/SiesaAgents.API/appsettings.Development.json`
+- [ ] [AI-Review][HIGH] **Infrastructure → Application project reference violates Clean Architecture** — `SiesaAgents.Infrastructure.csproj` currently references both `Domain` and `Application`. Per company standards Clean Architecture diagram, Infrastructure depends ONLY on Domain (it implements interfaces declared there). The story spec also explicitly stated "API → Infrastructure → Domain" — not Application. Action: Remove the `Application → Infrastructure` direction is fine; what must change is `Infrastructure.csproj` dropping its `Application` reference. Reintroduce dependency inversion by moving any cross-layer abstractions (e.g. `IUnitOfWork`, `IUserContext`) into Application as interfaces and letting Infrastructure implement them via interface-only references at runtime DI registration. Defer to Story 1.3 (backend & database foundation) where Infrastructure starts implementing real repositories — flagged here so it is not lost.
+- [ ] [AI-Review][HIGH] **Stack versions exceed company-standards minimums** — `company-standards.md` specifies Vite 7+, React 18+, TypeScript 5+; installed versions are Vite 8, React 19, TypeScript 6. The "+" suffix permits this, but React 19 introduces breaking changes (refs as props, removed legacy APIs) and TS 6 deprecated `baseUrl` (already worked around). Action: Either update `company-standards.md` to reflect the new floor versions and add a "tested-against" note, or pin frontend dependencies to the documented majors. Decision belongs to the architecture owner — not blocking Story 1.1.
+- [ ] [AI-Review][MED] **`using Microsoft.AspNetCore.Mvc;` in `Program.cs` for a Minimal API** — only used to access `ProblemDetails`. While `ProblemDetails` does live in the MVC assembly, the namespace import pulls a wider type surface. Consider either: (a) replacing with a small local `ProblemDetails` record matching RFC 7807, or (b) accepting the MVC import as the pragmatic .NET way and documenting it as intentional. Cosmetic; no functional impact.

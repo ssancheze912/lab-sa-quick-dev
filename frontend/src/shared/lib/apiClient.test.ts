@@ -17,4 +17,8 @@ describe('apiClient', () => {
     const baseURL = apiClient.defaults.baseURL
     expect(typeof baseURL === 'string' || baseURL === undefined).toBe(true)
   })
+
+  it('has a finite timeout to prevent hanging requests', () => {
+    expect(apiClient.defaults.timeout).toBeGreaterThan(0)
+  })
 })
