@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Navbar, NavigationBar, NavigationRailGroup } from 'siesa-ui-kit'
 import type {
   NavigationBarItem,
@@ -11,6 +11,19 @@ import type { NavId } from './useShellNavigation'
 
 interface AppShellProps {
   children: ReactNode
+}
+
+/**
+ * Spanish aria-labels required by AC #8 / WCAG 2.1 AA for each desktop rail
+ * entry. `NavigationRailGroupMenuItem` only exposes `label` (no `ariaLabel`
+ * prop), so we set `aria-label` on the rendered `<button>` elements via a DOM
+ * effect that matches buttons by their visible text. This preserves the
+ * siesa-ui-kit composition (no custom navigation) while giving the rail items
+ * the same accessible name as their mobile counterparts.
+ */
+const RAIL_ARIA_LABELS: Record<string, string> = {
+  Clientes: 'Ir a Clientes',
+  Contactos: 'Ir a Contactos',
 }
 
 /**
@@ -37,6 +50,50 @@ interface AppShellProps {
  */
 export function AppShell({ children }: AppShellProps) {
   const { activeId, onNavigate } = useShellNavigation()
+  const railContainerRef = useRef<HTMLDivElement | null>(null)
+
+  // Track whether we are above the `lg:` (1024px) breakpoint so we can mark
+  // the OFF-SCREEN surface as `aria-hidden`. The visual swap remains
+  // Tailwind-driven (`hidden lg:block` / `lg:hidden`) — this state is used
+  // only to dedupe the accessibility tree so that screen readers (and Playwright /
+  // RTL `getByRole`) see exactly one entry per nav item, matching what the
+  // user actually perceives.
+  const [isDesktop, setIsDesktop] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true
+    if (typeof window.matchMedia !== 'function') return true
+    return window.matchMedia('(min-width: 1024px)').matches
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (typeof window.matchMedia !== 'function') return
+    const mql = window.matchMedia('(min-width: 1024px)')
+    const handler = (event: MediaQueryListEvent) => setIsDesktop(event.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
+
+  // Apply the Spanish aria-labels to the rendered rail buttons (AC #8).
+  // Runs on every render so that re-mounts / re-renders from siesa-ui-kit
+  // keep the accessible name aligned with the test/AC contract.
+  // siesa-ui-kit's NavigationRailGroup renders icon-only buttons in collapsed
+  // state, so we match the button by either its existing aria-label (set by
+  // the kit from `label`) OR its visible text (expanded state).
+  useEffect(() => {
+    const container = railContainerRef.current
+    if (!container) return
+    const buttons = container.querySelectorAll<HTMLButtonElement>('button')
+    buttons.forEach((button) => {
+      const key =
+        button.getAttribute('aria-label')?.trim() ||
+        button.textContent?.trim() ||
+        ''
+      const ariaLabel = RAIL_ARIA_LABELS[key]
+      if (ariaLabel) {
+        button.setAttribute('aria-label', ariaLabel)
+      }
+    })
+  })
 
   const navigationItems: NavigationRailGroupMenuItem[] = [
     {
@@ -93,8 +150,10 @@ export function AppShell({ children }: AppShellProps) {
             carries the `shell-rail-container` test id so the responsive contract
             can be asserted. */}
         <div
+          ref={railContainerRef}
           data-testid="shell-rail-container"
           className="hidden lg:block"
+          aria-hidden={!isDesktop || undefined}
         >
           <NavigationRailGroup
             items={navigationItems}
@@ -114,6 +173,7 @@ export function AppShell({ children }: AppShellProps) {
       <div
         data-testid="shell-mobile-nav"
         className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200"
+        aria-hidden={isDesktop || undefined}
       >
         <NavigationBar
           items={mobileItems}
