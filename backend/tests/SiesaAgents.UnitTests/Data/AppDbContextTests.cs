@@ -88,18 +88,20 @@ public class AppDbContextTests
     }
 
     [Fact]
-    public void AppDbContext_DoesNotExposeDomainTables_ScopeNoteForEpic1()
+    public void AppDbContext_ExposesClienteEntity_AfterStory21()
     {
-        // GIVEN: per the Story 1.3 Scope Note, NO domain DbSet<T> properties are declared yet.
+        // GIVEN: Story 2.1 introduces the first domain DbSet<ClienteEntity>.
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: $"AppDbContextScope_{Guid.NewGuid():N}")
             .Options;
         using var context = new AppDbContext(options);
 
         // WHEN: we enumerate the model's entity types
-        var entityTypes = context.Model.GetEntityTypes().ToList();
+        var entityTypes = context.Model.GetEntityTypes()
+            .Select(e => e.ClrType.Name)
+            .ToList();
 
-        // THEN: there are zero domain entities mapped (clientes / contactos arrive in Epic 2 & 3).
-        Assert.Empty(entityTypes);
+        // THEN: ClienteEntity is mapped (contactos arrive in Epic 3 Story 3.1).
+        Assert.Contains("ClienteEntity", entityTypes);
     }
 }

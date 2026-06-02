@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: ready-for-dev
+Status: ready-for-review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -149,7 +149,7 @@ so that I can quickly find the client I'm looking for without leaving the `/clie
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Backend domain entity + EF Core configuration (AC #6)**
+- [x] **Task 1 — Backend domain entity + EF Core configuration (AC #6)**
   - [ ] Create `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs` per the spec in AC-2.1.f (UUID PK, private setters, public static `Create` factory, `DateTimeOffset` for timestamps).
   - [ ] Create `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` with `Task<IReadOnlyList<ClienteEntity>> GetAllAsync(CancellationToken ct = default)`.
   - [ ] Create `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs` per AC-2.1.f.
@@ -159,14 +159,14 @@ so that I can quickly find the client I'm looking for without leaving the `/clie
   - [ ] Add `<ProjectReference Include="..\SiesaAgents.Infrastructure\SiesaAgents.Infrastructure.csproj" />` to `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` IF not already present (Story 1.3 already added `Infrastructure.Data` usage, so the project reference may already exist — verify).
   - [ ] Add `<ProjectReference Include="..\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />` to `SiesaAgents.API.csproj` IF not already present.
 
-- [ ] **Task 2 — Backend EF Core migration `AddClientesTable` (AC #6)**
+- [x] **Task 2 — Backend EF Core migration `AddClientesTable` (AC #6)**
   - [ ] From `backend/`, run: `dotnet ef migrations add AddClientesTable --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API --output-dir Data/Migrations`.
   - [ ] Verify the generated `Up()` body calls `migrationBuilder.CreateTable(name: "clientes", ...)` with columns `id` (uuid PK), `nombre`, `nit`, `telefono`, `ciudad` (text/varchar with maxLength), `created_at`, `updated_at` (`timestamptz`); creates unique index `uk_clientes_nit` on column `nit`.
   - [ ] Verify `Down()` body drops the `clientes` table and the unique index.
   - [ ] Verify `AppDbContextModelSnapshot.cs` is updated to include the `ClienteEntity` model.
   - [ ] Do NOT run `dotnet ef database update` in this environment (no live Postgres in dev container) — the migration must compile and the snapshot must round-trip cleanly. The DB-touching test is QA-owned (Category=Db).
 
-- [ ] **Task 3 — Backend Minimal API endpoint `GET /api/v1/clientes` (AC #5)**
+- [x] **Task 3 — Backend Minimal API endpoint `GET /api/v1/clientes` (AC #5)**
   - [ ] Create `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` with:
     ```csharp
     public static class ClienteEndpoints
@@ -201,7 +201,7 @@ so that I can quickly find the client I'm looking for without leaving the `/clie
   - [ ] Do NOT add OpenAPI metadata customizations beyond `WithTags("Clientes")` — Scalar picks up the default minimal-API metadata.
   - [ ] **DO NOT** add a search query parameter (`?q=`) to the endpoint in this story. Search is **100 % client-side** per architecture (line 233). Adding a `?q` would create an unused code path that contradicts NFR1's strategy.
 
-- [ ] **Task 4 — Backend tests (AC #10 — backend half)**
+- [x] **Task 4 — Backend tests (AC #10 — backend half)**
   - [ ] Create `backend/tests/SiesaAgents.UnitTests/Domain/ClienteEntityTests.cs` per spec in AC-2.1.j.
   - [ ] Create `backend/tests/SiesaAgents.UnitTests/Infrastructure/ClienteConfigurationTests.cs` per spec in AC-2.1.j. Use `new ModelBuilder()` (test-only API on EF Core 10) + apply `ClienteConfiguration` directly via `new ClienteConfiguration().Configure(builder.Entity<ClienteEntity>())`, then call `ApplySnakeCaseNaming()` and inspect `modelBuilder.Model.FindEntityType(typeof(ClienteEntity))!.GetTableName()` etc.
   - [ ] Create `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs`:
@@ -223,7 +223,7 @@ so that I can quickly find the client I'm looking for without leaving the `/clie
   - [ ] Run `dotnet build backend/SiesaAgents.slnx` — must exit 0 with 0 errors and 0 warnings.
   - [ ] Run `dotnet test backend/SiesaAgents.slnx --filter "Category!=Db"` — all tests (existing + new) must be green.
 
-- [ ] **Task 5 — Frontend domain + infrastructure + application layers (AC #7)**
+- [x] **Task 5 — Frontend domain + infrastructure + application layers (AC #7)**
   - [ ] Create `frontend/src/modules/crm/clientes/domain/Cliente.ts` per AC-2.1.g.
   - [ ] Create `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` per AC-2.1.g.
   - [ ] Create `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` per AC-2.1.g. Use the existing `apiClient` from `@/shared/lib/apiClient`. Implementation:
@@ -280,7 +280,7 @@ so that I can quickly find the client I'm looking for without leaving the `/clie
     ```
     This pure function is the unit-of-test for TC-E2-P1-02 dual search. Unit-test it independently of the React tree.
 
-- [ ] **Task 6 — Frontend shared components: `EmptyState` + `ErrorPanel` (AC #3, #4)**
+- [x] **Task 6 — Frontend shared components: `EmptyState` + `ErrorPanel` (AC #3, #4)**
   - [ ] Create `frontend/src/shared/components/EmptyState.tsx` with the props in AC-2.1.c. Use Tailwind classes for layout. Default `role="status"` and `aria-live="polite"`. Default `data-testid="empty-state"`.
   - [ ] Create `frontend/src/shared/components/EmptyState.test.tsx` — render with all props; assert text content, CTA click handler is called, ARIA attributes.
   - [ ] Create `frontend/src/shared/components/ErrorPanel.tsx` with the props in AC-2.1.d. Default `role="alert"` and `aria-live="assertive"`. Default `data-testid="error-panel"`. When `isRetrying` is true, the `Reintentar` button must be `disabled` and its visible label changes to `Reintentando...`. **Never** render `error.message` — the component does not even accept an `error` prop.
@@ -288,7 +288,7 @@ so that I can quickly find the client I'm looking for without leaving the `/clie
   - [ ] Create `frontend/src/shared/components/ClientListItem.tsx` per AC-2.1.h. Use a `<button type="button">` with `aria-current` set when `isSelected`. Item layout: vertical stack, `nombre` (`text-sm font-semibold text-slate-900`), `nit` (`text-xs text-slate-500`). Hover background `hover:bg-slate-50`; selected background `bg-primary-50 border-l-2 border-l-primary-600`. Min-height `56px`.
   - [ ] Create `frontend/src/shared/components/ClientListItem.test.tsx` — render with `isSelected: true` asserts `aria-current="true"` + active CSS; click fires `onClick`.
 
-- [ ] **Task 7 — Frontend `ClienteListView` + route wiring (AC #1, #2, #8, #9)**
+- [x] **Task 7 — Frontend `ClienteListView` + route wiring (AC #1, #2, #8, #9)**
   - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` orchestrating the four states (loading / error / empty / list). Use `useClientes()` to fetch; use `useMemo` over `data + searchQuery` to compute the filtered list with `filterClientes`. Render the siesa-ui-kit `Input` for the search box. The root container is `<aside aria-label="Lista de clientes" className="w-full lg:w-[280px] flex-shrink-0 h-full overflow-y-auto border-r border-slate-200 bg-slate-50">`. Loading state: render 3 `<Skeleton height={56} />` items from `react-loading-skeleton` (already installed and used in `ClientesPlaceholderView.tsx`).
   - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteListView.test.tsx` covering TC-E2-P1-01, TC-E2-P1-02, TC-E2-P1-03, TC-E2-P1-04. Mock `useClientes` via MSW handlers on the shared Axios instance OR by wrapping the component in a test `QueryClientProvider` and pre-warming the cache with `queryClient.setQueryData(['clientes'], fixtures)`. Use the second approach for the perf test (TC-E2-P0-06) to keep it deterministic — see Task 8.
   - [ ] Update `frontend/src/routes/clientes.tsx`:
@@ -324,7 +324,7 @@ so that I can quickly find the client I'm looking for without leaving the `/clie
   - [ ] Delete `frontend/src/modules/crm/clientes/presentation/ClientesPlaceholderView.tsx` and `ClientesPlaceholderView.test.tsx`. Remove any orphan imports.
   - [ ] Run `pnpm tsc -b` (or `pnpm build`) — must pass with no errors.
 
-- [ ] **Task 8 — Frontend NFR1 performance test (AC #2, #10 — TC-E2-P0-06)**
+- [x] **Task 8 — Frontend NFR1 performance test (AC #2, #10 — TC-E2-P0-06)**
   - [ ] Create `frontend/src/modules/crm/clientes/application/__fixtures__/clientes.fixtures.ts` exporting `makeClientes(count: number, seed: number)` that uses a deterministic PRNG (write a 30-line LCG / Mulberry32 helper — do NOT add a `faker` dependency for one helper; the seed determinism is what TC-E2-P0-06 requires).
   - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteListView.perf.test.tsx`:
     - Pre-warm `queryClient.setQueryData(['clientes'], makeClientes(500, 20260601))`.
@@ -333,7 +333,7 @@ so that I can quickly find the client I'm looking for without leaving the `/clie
     - Assert `p95(deltas) < 200` AND `MSW request spy count === 0` during typing.
   - [ ] Create `frontend/src/modules/crm/clientes/application/filterClientes.test.ts` covering: case-insensitive nombre match, case-insensitive NIT match, diacritic-insensitive match (`José` ↔ `jose`), empty query returns input array, whitespace-only query returns input array.
 
-- [ ] **Task 9 — MSW + test infra updates (AC #10)**
+- [x] **Task 9 — MSW + test infra updates (AC #10)**
   - [ ] Verify `msw` is already a dev dependency (it is, per `package.json`). If `src/test/handlers/` does not yet exist, create `frontend/src/test/handlers/clientes.handlers.ts` with named exports `clientesSuccessEmpty`, `clientesSuccessThree`, `clientesError500` returning `http.get('/api/v1/clientes', ...)` handlers (use `import { http, HttpResponse } from 'msw'`).
   - [ ] Create `frontend/src/test/utils/renderWithQuery.tsx` — a helper that wraps a component in a fresh `QueryClientProvider` with `retry: false` for tests. Re-use it from all the new test files.
   - [ ] Update `frontend/src/test/setup.ts` to start/stop an MSW `setupServer` once per Vitest run:
@@ -351,7 +351,7 @@ so that I can quickly find the client I'm looking for without leaving the `/clie
     Tests will call `server.use(...)` to register per-test handlers. Document this in a 2-line JSDoc comment in `setup.ts`. **Do NOT** add the MSW server to the production bundle — `setup.ts` is only loaded by Vitest (see `vitest.config.ts` line 15).
   - [ ] Add `VITE_API_URL=http://localhost:5000` to a new `frontend/.env.test` file so MSW intercepts the correct absolute URL when Axios builds the request URL. The existing `apiClient.ts` uses `import.meta.env.VITE_API_URL` — provide a sensible test value.
 
-- [ ] **Task 10 — Documentation & cleanup**
+- [x] **Task 10 — Documentation & cleanup**
   - [ ] Update `backend/README.md`: append a section describing the new `GET /api/v1/clientes` endpoint and the migration command for `AddClientesTable`.
   - [ ] Run `pnpm test` in `frontend/` — all tests (existing + new) must pass. Existing tests to verify still pass: `apiClient.test.ts`, `queryClient.test.ts`, all `AppShell*.test.tsx`, `NotFoundView.test.tsx`, `ContactosPlaceholderView.test.tsx`. The deleted `ClientesPlaceholderView.test.tsx` is expected to NOT run anymore.
   - [ ] Run `dotnet build backend/SiesaAgents.slnx` AND `dotnet test backend/SiesaAgents.slnx --filter "Category!=Db"` — must exit 0.
@@ -652,6 +652,75 @@ claude-opus-4-7
 
 ### Debug Log References
 
+- Integration test `ClienteEndpointsTests` initially failed with
+  `InvalidOperationException: Services for database providers 'Npgsql...',
+  'Microsoft.EntityFrameworkCore.InMemory' have been registered`. Resolved by
+  also removing `IDbContextOptionsConfiguration<>` descriptors before
+  registering the InMemory provider in the test fixture (avoids the dual-provider
+  conflict without needing `UseInternalServiceProvider`).
+- Story 1.3 unit tests `AppDbContextEdgeCasesTests.AppDbContext_HasNoPublicDbSetProperties_PerStory13ScopeNote`
+  and `AppDbContextTests.AppDbContext_DoesNotExposeDomainTables_ScopeNoteForEpic1`
+  became obsolete once Story 2.1 introduced the first `DbSet<ClienteEntity>` —
+  rewritten as positive assertions (`Contains Clientes` / `Contains ClienteEntity`).
+- ATDD test `ClienteListView.test.tsx` line 69 used `/\bw-\[280px\]\b/` which
+  cannot match `lg:w-[280px]` followed by whitespace (`]` and ` ` are both
+  non-word in JS regex, so the trailing `\b` never matches). Removed the trailing
+  `\b` — intent preserved.
+
 ### Completion Notes List
 
+- Backend build: 0 errors / 0 warnings.
+- Backend tests (excluding `Category=Db`): 86 passing (62 unit + 24 integration).
+- Frontend tests: 93 passing across 14 files.
+- Frontend `pnpm build` succeeds; bundle warning (>500 KB) is pre-existing.
+- EF Core migration `20260602104351_AddClientesTable` generated with snake_case
+  columns + `uk_clientes_nit` unique index. NOT applied to a real DB (no live
+  Postgres in this env — by design per Task 2).
+- `ClienteListView` internally mirrors the parent `searchQuery` prop into local
+  state so the search input filters even when the parent's `onSearchChange` is a
+  no-op (required by the ATDD component tests that pass `() => {}`). Parent state
+  remains the source of truth for hydration (Story 2.2 deep-linking will rely on
+  this seam).
+- Backend list endpoint is unauthenticated; auth ships in a later story.
+- ContactosPlaceholderView and other non-Story-2.1 modules untouched.
+
 ### File List
+
+**Backend — NEW:**
+- `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs`
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260602104351_AddClientesTable.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260602104351_AddClientesTable.Designer.cs`
+
+**Backend — MODIFIED:**
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` (added `DbSet<ClienteEntity>` + `ApplyConfigurationsFromAssembly`)
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/AppDbContextModelSnapshot.cs` (auto-updated by `dotnet ef`)
+- `backend/src/SiesaAgents.API/Program.cs` (registered `IClienteRepository` + `app.MapClienteEndpoints()`)
+- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` (added `SiesaAgents.Domain` ProjectReference)
+- `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs` (fixture: also strip `IDbContextOptionsConfiguration<>` descriptors)
+- `backend/tests/SiesaAgents.UnitTests/Data/AppDbContextEdgeCasesTests.cs` (story-1.3 scope-note test → story-2.1 positive assertion)
+- `backend/tests/SiesaAgents.UnitTests/Data/AppDbContextTests.cs` (story-1.3 scope-note test → story-2.1 positive assertion)
+- `backend/README.md` (documented `GET /api/v1/clientes` + `AddClientesTable` migration)
+
+**Frontend — NEW:**
+- `frontend/src/modules/crm/clientes/domain/Cliente.ts`
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`
+- `frontend/src/modules/crm/clientes/application/useClientes.ts`
+- `frontend/src/modules/crm/clientes/application/normalizeText.ts`
+- `frontend/src/modules/crm/clientes/application/filterClientes.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`
+- `frontend/src/shared/components/EmptyState.tsx`
+- `frontend/src/shared/components/ErrorPanel.tsx`
+- `frontend/src/shared/components/ClientListItem.tsx`
+
+**Frontend — MODIFIED:**
+- `frontend/src/routes/clientes.tsx` (wired `ClienteListView` + detail placeholder)
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.test.tsx` (fixed broken `\bw-\[280px\]\b` regex)
+
+**Frontend — DELETED:**
+- `frontend/src/modules/crm/clientes/presentation/ClientesPlaceholderView.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClientesPlaceholderView.test.tsx`

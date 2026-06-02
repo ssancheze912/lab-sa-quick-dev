@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SiesaAgents.Application\SiesaAgents.Application.csproj" />
+    <ProjectReference Include="..\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
     <ProjectReference Include="..\SiesaAgents.Infrastructure\SiesaAgents.Infrastructure.csproj" />
   </ItemGroup>
 

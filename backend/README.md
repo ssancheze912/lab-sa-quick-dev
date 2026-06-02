@@ -85,3 +85,39 @@ never returns `null` in non-Dev environments and EF tooling resolves cleanly.
 
 The API exposes Scalar at `/scalar` (NEVER Swagger). The root path redirects
 there.
+
+## Endpoints
+
+### `GET /api/v1/clientes` (Story 2.1)
+
+Returns the full cliente list as a JSON array (no wrapper object). Search is
+intentionally client-side — no `?q=` parameter is exposed (see architecture
+doc, "Search Strategy"). Each element has the shape:
+
+```json
+{
+  "id": "uuid",
+  "nombre": "string",
+  "nit": "string",
+  "telefono": "string",
+  "ciudad": "string",
+  "createdAt": "ISO-8601 with offset",
+  "updatedAt": "ISO-8601 with offset"
+}
+```
+
+The endpoint is mounted via the extension method
+`app.MapClienteEndpoints()` (file: `SiesaAgents.API/Endpoints/ClienteEndpoints.cs`).
+
+### Migration: `AddClientesTable`
+
+Creates the `clientes` table (snake_case columns: `id`, `nombre`, `nit`,
+`telefono`, `ciudad`, `created_at`, `updated_at`) with a unique index
+`uk_clientes_nit` on `nit`. Generated with:
+
+```bash
+dotnet ef migrations add AddClientesTable \
+  --project src/SiesaAgents.Infrastructure \
+  --startup-project src/SiesaAgents.API \
+  --output-dir Data/Migrations
+```

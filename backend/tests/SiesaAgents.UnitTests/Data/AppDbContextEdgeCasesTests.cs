@@ -130,21 +130,20 @@ public class AppDbContextEdgeCasesTests
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void AppDbContext_HasNoPublicDbSetProperties_PerStory13ScopeNote()
+    public void AppDbContext_ExposesClientesDbSet_PerStory21Scope()
     {
         // GIVEN: the AppDbContext type
         var type = typeof(AppDbContext);
 
-        // WHEN: we enumerate its public instance properties that are DbSet<T>
+        // WHEN: we enumerate its public instance DbSet<T> properties
         var dbSetProperties = type
             .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Where(p => p.PropertyType.IsGenericType
                 && p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
             .ToList();
 
-        // THEN: there are zero DbSet<T> properties — Story 1.3 explicitly defers
-        //       clientes (Epic 2 Story 2.1) and contactos (Epic 3 Story 3.1).
-        //       Adding any DbSet<T> here is a scope-creep regression.
-        Assert.Empty(dbSetProperties);
+        // THEN: Clientes is registered (Story 2.1 introduced it).
+        //       Contactos arrives later in Epic 3 (Story 3.1).
+        Assert.Contains(dbSetProperties, p => p.Name == "Clientes");
     }
 }

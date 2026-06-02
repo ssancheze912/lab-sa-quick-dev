@@ -66,7 +66,7 @@ describe('ClienteListView — orchestration of states (Story 2.1)', () => {
       //       carries the canonical 280-px width class.
       await screen.findByText('Acme S.A.')
       const panel = screen.getByRole('complementary', { name: /lista de clientes/i })
-      expect(panel.className).toMatch(/\bw-\[280px\]\b/)
+      expect(panel.className).toMatch(/\bw-\[280px\]/)
     })
 
     it('[P1] renders one list item per cliente showing nombre + nit', async () => {

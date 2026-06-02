@@ -41,22 +41,26 @@ public class ClienteEndpointsTests : IClassFixture<WebApplicationFactory<Program
             builder.UseEnvironment("Development");
             builder.ConfigureServices(services =>
             {
-                // Remove the production AppDbContext registration so the test
-                // host does not try to open a Postgres connection.
-                var dbContextDescriptors = services
+                // Remove EVERY descriptor that contributes to AppDbContext (the
+                // options, the context itself, and any IDbContextOptionsConfiguration
+                // registered by Program.cs's AddDbContext call). Then register a fresh
+                // InMemory-backed AppDbContext for this test host.
+                var toRemove = services
                     .Where(d =>
                         d.ServiceType == typeof(DbContextOptions<AppDbContext>) ||
                         d.ServiceType == typeof(DbContextOptions) ||
-                        d.ServiceType == typeof(AppDbContext))
+                        d.ServiceType == typeof(AppDbContext) ||
+                        (d.ServiceType.IsGenericType &&
+                         d.ServiceType.GetGenericTypeDefinition().Name.StartsWith("IDbContextOptionsConfiguration", StringComparison.Ordinal)))
                     .ToList();
-                foreach (var d in dbContextDescriptors)
+                foreach (var d in toRemove)
                 {
                     services.Remove(d);
                 }
 
                 services.AddDbContext<AppDbContext>(options =>
                 {
-                    options.UseInMemoryDatabase("clientes-endpoints-tests");
+                    options.UseInMemoryDatabase($"clientes-endpoints-tests-{Guid.NewGuid()}");
                 });
             });
         });

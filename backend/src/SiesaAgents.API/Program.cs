@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +42,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
             builder.Configuration.GetConnectionString("DefaultConnection"),
             npg => npg.MigrationsHistoryTable("__ef_migrations_history"))
         .ReplaceService<IHistoryRepository, SnakeCaseNpgsqlHistoryRepository>());
+
+// Repository registrations (Epic 2 — Story 2.1).
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 
 var app = builder.Build();
 
@@ -84,6 +90,9 @@ if (app.Environment.IsDevelopment())
         throw new InvalidOperationException("Forced failure for Problem Details smoke test.");
     });
 }
+
+// Epic 2 — Clientes module endpoints.
+app.MapClienteEndpoints();
 
 app.Run();
 
