@@ -1,231 +1,200 @@
-# Automation Summary — Story 1.2: Frontend Navigation Shell
+# Automation Summary — Story 1.3: Backend Database Foundation
 
 **Date:** 2026-06-02
-**Story:** 1.2 (Epic 1 — Project Foundation & Application Shell)
-**Mode:** BMad-Integrated (expand ATDD coverage post-implementation)
-**Coverage Target:** critical-paths + edge cases / error paths / boundary conditions
-**Healing Iterations Used:** 1 (mobile touch-target measurement adjusted to walk ancestor chain to closest interactive container)
+**Story:** 1.3 — Backend Database Foundation (Epic 1: Project Foundation & Application Shell)
+**Mode:** BMad-Integrated (expands existing ATDD coverage with edge cases / negative paths)
+**Coverage Target:** critical-paths + edge-cases (P1-P2)
+**Output:** `_bmad-output/automation-summary.md`
 
 ---
 
-## Context
+## Baseline (ATDD — already in place)
 
-ATDD suite (RED → GREEN) authored before implementation, covering happy paths for AC #1–#9:
+The `testarch-atdd` sub-agent generated 6 test files (30 tests, 30/30 green pre-expansion):
 
-- `frontend/src/app/layout/AppShell.test.tsx` — SPA navigation + active state + product name + 404 in shell (8 tests)
-- `frontend/src/app/layout/AppShellResponsive.test.tsx` — desktop rail vs mobile bar wrappers and aria-labels (5 tests)
-- `e2e/tests/foundation/navigation-shell.spec.ts` — deep links, SPA round trip, redirect from /, 404 link recovery, viewport surfaces (8 tests)
+| File | Level | Tests | AC |
+|---|---|---|---|
+| `tests/SiesaAgents.UnitTests/Data/AppDbContextTests.cs` | Unit | 5 | #4, #5, #6 |
+| `tests/SiesaAgents.UnitTests/Data/Extensions/ModelBuilderSnakeCaseExtensionsTests.cs` | Unit | 11 | #4, #6 |
+| `tests/SiesaAgents.UnitTests/Architecture/InfrastructureProjectReferenceTests.cs` | Unit | 2 | #7 |
+| `tests/SiesaAgents.IntegrationTests/ProblemDetailsTests.cs` | Integration | 8 | #3, #6 |
+| `tests/SiesaAgents.IntegrationTests/EfCoreDiRegistrationTests.cs` | Integration | 2 | #5 |
+| `tests/SiesaAgents.IntegrationTests/MigrationCreatesDbTests.cs` | Integration (Db) | 3 | #1, #2, #4 (skipped without Docker) |
 
-Story 1.2 introduces the application shell (siesa-ui-kit `Navbar` + `NavigationRailGroup` + `NavigationBar`), the file-based TanStack Router with `notFoundComponent` and `/` → `/clientes` redirect, two Spanish placeholder views, and the in-shell 404 view. The expansion targets **branch-level edge cases the ATDD tests do not exercise**: hook activeId derivation across all branches, multi-round-trip SPA stability, browser back/forward, nested 404 paths, querystring / hash / trailing-slash URL variants, keyboard navigation (Tab + Enter + Space), focus outline preservation, breakpoint boundary (1023/1024px), touch target ≥44×44px, console hygiene on round trip, and a bundle-availability sanity check. Unit tests on the `useShellNavigation` hook isolate the URL-as-source-of-truth contract, and isolated component tests on the placeholder views and `NotFoundView` lock in their Spanish copy contract.
-
----
-
-## Tests Created
-
-### Unit (Vitest + RTL on jsdom) — `frontend/src/app/layout/useShellNavigation.test.tsx`
-
-| Priority | # Tests | Focus |
-| --- | --- | --- |
-| P0 | 2 | `onNavigate('clientes' \| 'contactos')` triggers SPA navigation via TanStack Router |
-| P1 | 5 | activeId derivation for /clientes, /contactos, /, unknown route, no window.location mutation |
-| P2 | 4 | startsWith forward-compat for /clientes/:id and /contactos/abc, querystring tolerance, documented substring edge (/clientess-…) |
-
-**Total: 11 tests**
-
-### Component (Vitest + RTL) — `frontend/src/shared/components/NotFoundView.test.tsx`
-
-| Priority | # Tests | Focus |
-| --- | --- | --- |
-| P1 | 4 | Spanish heading "Página no encontrada", test id, recovery link Spanish label, link href = /clientes |
-| P2 | 3 | Secondary Spanish copy, focus-visible ring tokens preserved (WCAG AA), brand-primary styling |
-
-**Total: 7 tests**
-
-### Component (Vitest + RTL) — `frontend/src/modules/crm/clientes/presentation/ClientesPlaceholderView.test.tsx`
-
-| Priority | # Tests | Focus |
-| --- | --- | --- |
-| P1 | 3 | Spanish heading "Clientes" at level 1, "Sección en construcción." copy, data-testid="clientes-placeholder" |
-| P2 | 2 | 3 Skeleton placeholders emitted, SSR-safe (no window access on render) |
-
-**Total: 5 tests**
-
-### Component (Vitest + RTL) — `frontend/src/modules/crm/contactos/presentation/ContactosPlaceholderView.test.tsx`
-
-| Priority | # Tests | Focus |
-| --- | --- | --- |
-| P1 | 3 | Spanish heading "Contactos" at level 1, "Sección en construcción." copy, data-testid="contactos-placeholder" |
-| P2 | 2 | 3 Skeleton placeholders emitted, SSR-safe |
-
-**Total: 5 tests**
-
-### Component (Vitest + RTL) — `frontend/src/app/layout/AppShell.edge.test.tsx`
-
-| Priority | # Tests | Focus |
-| --- | --- | --- |
-| P1 | 6 | Shell wrapper identity across 3 round-trip navs, browser Back restores active state, idempotent same-active click, route children rendered exactly once (no double-mount), no nav-id drift between rail and mobile bar, desktop/mobile aria-hidden dedup of accessibility tree |
-| P2 | 3 | Missing window.matchMedia does not throw (SSR-ish guard), Spanish "Navegación principal" aria-label on mobile NavigationBar |
-
-**Total: 9 tests**
-
-### E2E (Playwright) — `e2e/tests/foundation/navigation-shell-edge.spec.ts`
-
-| Priority | # Tests | Focus |
-| --- | --- | --- |
-| P0 | 1 | 4 round-trip SPA navigations without a full document reload (`page.on('load')` count) |
-| P1 | 7 | Browser Back / Forward across SPA navs, nested 404 paths under /clientes and /contactos, index redirect does not flash legacy landing content, Tab focus + Enter activation on rail entries, console hygiene (no React errors/warnings on round trip) |
-| P2 | 11 | Multi-segment unknown root path, querystring / hash / trailing-slash URL variants, Space activation, focus outline NOT removed, breakpoint boundary 1024px (rail visible) and 1023px (mobile bar visible), touch target ≥44×44px tap area, JS bundle no 4xx/5xx |
-
-**Total: 19 tests**
+Plus the pre-existing `tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs` (2 tests, Story 1.1).
 
 ---
 
-## Infrastructure Reused
+## Tests Created (this run — +33 new)
 
-No new fixtures, factories, or helpers were created. All Vitest tests use only `@testing-library/react` + `@testing-library/jest-dom/vitest` + the in-tree `@tanstack/react-router` test patterns established by the ATDD files. The E2E suite uses only the stock `@playwright/test` `test` and `expect` plus the in-tree `playwright.config.ts` (devices, projects, baseURL). The existing `e2e/fixtures/`, `e2e/helpers/`, and `e2e/pages/` infrastructure targets the Clientes / Contactos domain (Stories 2.x / 3.x) and is intentionally not consumed by Story 1.2 (presentation-layer-only shell with no data flow).
+### Unit Tests — Edge Cases / Negative Paths (P2, +25 tests)
 
----
+**`backend/tests/SiesaAgents.UnitTests/Data/Extensions/ModelBuilderSnakeCaseExtensionsEdgeCasesTests.cs`** (13 tests, 174 lines)
 
-## Execution Results
+Extends `ModelBuilderSnakeCaseExtensionsTests` with boundary inputs and contract checks the baseline ATDD did not cover:
 
-### Vitest (frontend) — all suites
+- `[P2] ToSnakeCase_HandlesBoundaryShapesPerStoryContract` — 10 theory cases covering:
+  - Single-letter identifiers (`A` → `a`, `a` → `a`)
+  - All-uppercase acronyms (`UUID` → `uuid`)
+  - Acronym + lowercase boundary glue (`HTTPSConnection` → `httpsconnection`)
+  - Idempotent snake input (`already_snake` → `already_snake`)
+  - Digit↔letter boundaries (`Address2Line` → `address2_line`, `Version2` → `version2`, `V2` → `v2`)
+  - Mixed PascalCase + acronym + digit (`MyHTTPServer` → `my_httpserver`, `OrderID2` → `order_id2`)
+- `[P2] ToSnakeCase_IsIdempotent_RunningTwiceProducesSameOutput` — second pass returns identity
+- `[P2] ApplySnakeCaseNaming_ReturnsSameModelBuilderInstance_ForFluentChaining` — fluent contract (Assert.Same inside probe context)
+- `[P2] ApplySnakeCaseNaming_OnEmptyModel_IsSafeNoOp` — zero entities = zero exceptions (Story 1.3 shape)
+- `[P2] ApplySnakeCaseNaming_RewritesExplicitHasColumnNameOverrides` — Epic 2 forward-compatibility guard
 
-```
-Test Files  9 passed (9)
-Tests       56 passed (56)
-Duration    5.23s
-```
+**`backend/tests/SiesaAgents.UnitTests/Data/AppDbContextEdgeCasesTests.cs`** (7 tests, 144 lines)
 
-Breakdown:
-- 19 ATDD tests (pre-existing): `AppShell.test.tsx` (8) + `AppShellResponsive.test.tsx` (5) + `apiClient.test.ts` (3) + `queryClient.test.ts` (3)
-- 37 new tests generated by this workflow: 11 hook + 7 NotFoundView + 5 + 5 placeholders + 9 AppShell.edge
+Extends `AppDbContextTests` with constructor-guard, multi-instance, disposal, and scope-note enforcement:
 
-### Playwright (E2E) — chromium project
+- `[P2] AppDbContext_Constructor_ThrowsArgumentNullException_WhenOptionsAreNull` — null-guard contract
+- `[P2] AppDbContext_CanBeConstructedMultipleTimes_WithIndependentInMemoryDatabases` — DI lifecycle safety
+- `[P2] AppDbContext_IsDisposable_AndSafeToDisposeTwice` — idempotent disposal (DI shutdown path)
+- `[P2] AppDbContext_Model_IsStable_AcrossRepeatedAccess` — EF Core model caching contract
+- `[P2] AppDbContext_ProviderName_IsInMemory_WhenConfiguredWithInMemory` — no hardcoded `UseNpgsql` in OnConfiguring
+- `[P2] AppDbContext_HasNoPublicDbSetProperties_PerStory13ScopeNote` — reflection-based scope-creep guard
 
-```
-e2e/tests/foundation/navigation-shell.spec.ts        8 passed (ATDD)
-e2e/tests/foundation/navigation-shell-edge.spec.ts  19 passed (new)
-Total                                                27 / 27 passed
-```
+**`backend/tests/SiesaAgents.UnitTests/Data/MigrationsStructureTests.cs`** (5 tests, 117 lines)
 
-**83 / 83 tests pass** (56 Vitest + 27 E2E). One healing iteration consumed (touch-target measurement). Zero tests marked `test.fixme()`.
+NEW architecture guard for the on-disk migration files (no DB required — does NOT carry `Category=Db`):
 
-```bash
-# Run all Vitest tests
-cd frontend && pnpm run test
+- `[P1] MigrationsFolder_Exists_UnderInfrastructureData` — Task 4 deliverable lives at the spec path
+- `[P1] MigrationsFolder_ContainsExactlyOneInitialCreateMigration` — guards accidental duplicate regeneration
+- `[P1] MigrationsFolder_ContainsDesignerAndModelSnapshot` — EF Core companion files present
+- `[P1] InitialCreateMigration_UpAndDownBodies_AreEmpty_NoCreateTableCalls` — scope-note enforcement (no `clientes`/`contactos`/`CreateTable`)
+- `[P1] ModelSnapshot_TargetsAppDbContext_NotADifferentContext` — context-name drift detector
 
-# Run only the new edge suites
-cd frontend && pnpm vitest run \
-  src/app/layout/useShellNavigation.test.tsx \
-  src/app/layout/AppShell.edge.test.tsx \
-  src/shared/components/NotFoundView.test.tsx \
-  src/modules/crm/clientes/presentation/ClientesPlaceholderView.test.tsx \
-  src/modules/crm/contactos/presentation/ContactosPlaceholderView.test.tsx
+### Integration Tests — Edge Cases / Negative Paths (P1, +8 tests)
 
-# Run only the new E2E edge tests
-npx playwright test e2e/tests/foundation/navigation-shell-edge.spec.ts --project=chromium
+**`backend/tests/SiesaAgents.IntegrationTests/ProblemDetailsEdgeCasesTests.cs`** (8 tests, 184 lines)
 
-# Run by priority across the E2E project (uses [Pn] tags embedded in test names)
-npx playwright test --project=chromium --grep "\[P0\]"
-npx playwright test --project=chromium --grep "\[P0\]|\[P1\]"
-```
+Extends `ProblemDetailsTests` with production gating, the previously-uncovered `UseStatusCodePages` 404 path, determinism, and body-shape negative assertions:
 
----
-
-## Coverage Map (ATDD + Expanded)
-
-| AC | ATDD Tests | Expanded Tests | Total | Notes |
-| --- | --- | --- | --- | --- |
-| AC #1 — Desktop shell (Navbar + NavigationRailGroup, "Siesa Agents") | 4 (AppShell + Responsive) | 6 (round-trip identity, no-drift between surfaces, breakpoint 1024px, idempotent active click, productName via E2E hygiene) | 10 | |
-| AC #2 — Mobile NavigationBar with Spanish aria-labels | 2 (Responsive) | 3 (breakpoint 1023px, ≥44×44px touch target, Spanish "Navegación principal" container aria-label) | 5 | |
-| AC #3 — /clientes deep link → ClientesPlaceholderView | 1 (E2E ATDD) | 5 (placeholder component isolated: heading + copy + testid + Skeleton + SSR-safe) | 6 | |
-| AC #4 — /contactos deep link → ContactosPlaceholderView | 1 (E2E ATDD) | 5 (placeholder component isolated: heading + copy + testid + Skeleton + SSR-safe) | 6 | |
-| AC #5 — NotFoundView for unknown route inside shell | 2 (AppShell + 1 E2E) | 6 (NotFoundView isolated × 4 + 3 nested unknown path variants in E2E) | 8 | |
-| AC #6 — `/` → `/clientes` redirect via TanStack Router | 1 (AppShell + 1 E2E) | 2 (no flash of legacy landing content, trailing-slash deep link) | 4 | |
-| AC #7 — Active item derived from pathname | 2 (AppShell ATDD) | 8 (hook unit tests for all branches + browser Back restores + startsWith forward-compat) | 10 | |
-| AC #8 — WCAG 2.1 AA (aria-label, focus rings, keyboard) | 1 (AppShell ATDD) | 5 (Tab focus, Enter activation, Space activation, focus outline NOT removed, focus-visible tokens on NotFound link) | 6 | |
-| AC #9 — Build & bundle gates | 0 (verified via `pnpm build` in Dev Agent Record) | 1 (JS bundle no 4xx/5xx on runtime fetch — sanity check) | 1 | Build itself remains the canonical gate |
+- `[P1] TestErrorEndpoint_IsNotMounted_InProductionEnvironment` — dev-only gating proof (404 in Production)
+- `[P1] TestErrorEndpoint_IsNotMounted_InStagingEnvironment` — same, for Staging
+- `[P1] UnknownRoute_Returns404_WithApplicationProblemJsonContentType` — `UseStatusCodePages` middleware coverage (previously untested)
+- `[P1] UnknownRoute_BodyHasRfc7807MinimalFields` — 404 path also conforms to RFC 7807
+- `[P1] UnknownRoute_BodyDoesNotLeakInternals` — NFR6 enforcement on the 404 path
+- `[P1] TestErrorEndpoint_RepeatedCalls_ReturnDeterministicResponseShape` — no shared-state leak between requests
+- `[P1] TestErrorEndpoint_BodyDoesNotIncludeDetailField_PerStoryDevNotes` — guards "helpful PR adds `Detail = ex.Message`" regression
+- `[P1] TestErrorEndpoint_StatusInBody_MatchesHttpStatusCode` — RFC 7807 §3.1 consistency
 
 ---
 
-## Healing Report
+## Test Healing Report
 
-**Auto-Heal Enabled:** true (pattern-based, per `_bmad/bmm/config.yaml` — `tea_use_mcp_enhancements: false`)
-**Iteration Cap:** 3 attempts per failing test
-**Iterations Consumed:** 1
+**Auto-Heal Enabled:** true (BMad-Integrated mode)
+**Healing Mode:** Pattern-based (no MCP)
+**Iterations Allowed:** 3
 
-### Validation Results
+### Validation Results (initial)
 
-- **Total tests run:** 83 (56 Vitest + 27 Playwright chromium)
-- **Passing on first run:** 82
-- **Failing on first run:** 1
+- **Total tests:** 63 (30 baseline + 33 new)
+- **Passing:** 62
+- **Failing:** 1
 
 ### Healing Outcomes
 
-**Successfully Healed (1 test):**
+**Successfully Healed (1 test, 1 iteration):**
 
-- `e2e/tests/foundation/navigation-shell-edge.spec.ts` — `[P2] mobile NavigationBar items meet the ≥44×44px touch target requirement (AC #2 / FR29)`
-  - **Failure:** raw `<button>` boundingBox height was 40px (< 44px) — siesa-ui-kit ships the icon button at 40px tall and extends the tap surface via the parent row's padding.
-  - **Fix (1 iteration):** measurement now walks the ancestor chain from the button up to `[data-testid="shell-mobile-nav"]` and asserts the LARGEST box found, which is the true tap target (WCAG 2.5.5 / Apple HIG measure the interactive target, not the visual chrome).
-  - **Re-run result:** PASSED (tap box ≥ 44px on both axes).
+- `tests/SiesaAgents.UnitTests/Data/AppDbContextEdgeCasesTests.cs` —
+  `AppDbContext_CanBeConstructedMultipleTimes_WithIndependentInMemoryDatabases`
+  - **Failure:** `Assert.NotSame(contextA.Model, contextB.Model)` failed — EF Core caches the materialized `IModel` by context type + provider, so two `AppDbContext` instances built from the same provider share the same `Model` reference (by design — perf optimization).
+  - **Fix applied (iteration 1):** Removed the `Assert.NotSame(contextA.Model, contextB.Model)` assertion and added a comment documenting the cache contract. Kept `Assert.NotSame(contextA, contextB)` (the contexts themselves are still distinct instances) and added non-null model sanity asserts.
+  - **Outcome:** PASS on first heal attempt.
 
-**Unable to Heal (0 tests):**
+**Unable to Heal:** none.
 
-None.
+**Tests Marked `test.fixme()`:** none.
 
 ### Healing Patterns Applied
 
-- **Selector/measurement fix:** 1 (DOM ancestor walk instead of single-element boundingBox for tap-target validation).
+- **Dynamic-data fix:** 1 (removed an assertion that contradicted an EF Core perf optimization — re-anchored the contract to what is actually invariant).
 
-### Knowledge Base References
+---
 
-- `test-quality.md` — deterministic assertions, single source of truth for tap targets
-- `selector-resilience.md` — ancestor walk pattern instead of brittle single-element measurement
+## Final Validation
+
+```bash
+cd backend && dotnet test SiesaAgents.slnx --filter "Category!=Db" --nologo
+# → Passed!  - Failed: 0, Passed: 45 — SiesaAgents.UnitTests.dll
+# → Passed!  - Failed: 0, Passed: 18 — SiesaAgents.IntegrationTests.dll
+# Total: 63 passed / 0 failed / 0 skipped
+```
+
+The 3 Db-tagged migration tests in `MigrationCreatesDbTests.cs` remain QA-gated via `--filter "Category!=Db"` and require Docker / TestContainers-Postgres (unchanged from the ATDD baseline).
+
+---
+
+## Coverage Analysis
+
+**Total backend tests (excluding Db-gated):** 63 (was 30 — +33, +110%)
+
+**By level:**
+- Unit: 45 (was 20 — +25)
+- Integration (API): 18 (was 10 — +8)
+- Integration (Db, opt-in): 3 (unchanged)
+
+**By priority:**
+- P0 (critical, baseline): 30
+- P1 (edge cases this run): 13
+- P2 (edge cases this run): 20
+
+**Coverage Status (Story 1.3 AC matrix):**
+- ✅ AC #1 (DB created) — baseline ATDD (Db-gated) + new `MigrationsStructureTests` (no-DB structural guard)
+- ✅ AC #2 (empty migration) — baseline ATDD + new `InitialCreateMigration_UpAndDownBodies_AreEmpty_NoCreateTableCalls`
+- ✅ AC #3 (Problem Details / NFR6) — baseline (7 tests) + 8 new edge cases (production gating, 404 path, determinism, no Detail field)
+- ✅ AC #4 (snake_case) — baseline (4 tests) + 13 new boundary tests covering acronyms, digits, idempotency, fluent contract, empty model, explicit `HasColumnName` overrides
+- ✅ AC #5 (DI wiring) — baseline ATDD + new provider-name & null-options guards
+- ✅ AC #6 (xUnit unit + integration tests) — baseline + new constructor null-guard, multi-instance, disposal, model caching, scope-note (no DbSet) tests
+- ✅ AC #7 (Clean Architecture refs) — baseline ATDD (unchanged — already tight)
+
+**Gaps identified:**
+- ⚠️ Live `dotnet ef database update` against PostgreSQL is QA-owned (requires Docker — TestContainers). Already correctly Db-gated in `MigrationCreatesDbTests`. No new gap.
+- ⚠️ Connection-string parsing edge cases (empty / null `DefaultConnection`) are exercised by `appsettings.json` placeholder — not regression-prone enough to warrant a dedicated test at this layer.
 
 ---
 
 ## Quality Checks
 
-- [x] All tests follow Given-When-Then structure (header comments + assertions)
-- [x] All tests carry a `[Pn]` priority tag in the test name (E2E + Vitest)
-- [x] All tests use deterministic waits — no `waitForTimeout()` / `cy.wait(number)` / `sleep()`
-- [x] All tests prefer `data-testid` and ARIA selectors over CSS class hooks
-- [x] All tests self-clean (stateless — no DB rows, no user data, no localStorage writes)
-- [x] All test files under 400 lines (max: 393 lines on the E2E edge suite)
-- [x] Network-first pattern applied where applicable (E2E response listeners + console listeners registered BEFORE `page.goto`)
-- [x] No page objects, no shared mutable state across tests, no `try/catch` around assertions
-- [x] All Vitest tests cleanup via `afterEach(cleanup)` and isolated TanStack Router memory histories
-- [x] All E2E tests respect the project `webServer` / `baseURL` from `playwright.config.ts`
-
-## Tests Marked `test.fixme()`
-
-**None.** All 37 generated tests (11 unit + 26 component + 19 E2E) pass after the single healing iteration above.
+- ✅ All tests follow Given-When-Then (xUnit Arrange/Act/Assert)
+- ✅ All tests have priority tags in comments (`[P1]`, `[P2]`)
+- ✅ All tests are deterministic (no `Thread.Sleep`, no time-of-day asserts, no shared state)
+- ✅ All tests are self-cleaning (`using` on every `DbContext`; InMemory databases scoped by `Guid.NewGuid()`)
+- ✅ No hard waits, no try-catch for test logic, no conditional flow
+- ✅ All new test files under 200 lines
+- ✅ All assertions are atomic and explicit
+- ✅ Probe entities / contexts are `private sealed` (no leakage into production)
 
 ---
 
-## Coverage Gaps (Out of Scope for Story 1.2 — Tracked Forward)
+## Files Created (this run)
 
-- **Real list/detail flows for Clientes and Contactos** — Stories 2.x / 3.x. The current placeholder coverage only validates the Spanish copy + Skeleton stand-in.
-- **Multi-browser parity for E2E edges** — the new edge suite was executed on chromium only. The `playwright.config.ts` matrix includes firefox / edge / mobile-chrome; these projects will pick up the new file automatically on the next full CI run.
-- **Visual regression for the navigation chrome** — not in scope here; the visual contract is validated indirectly via aria-labels + breakpoint container test ids.
-- **Bundle-size budget enforcement at CI** — Story 1.2's Dev Agent Record measured 393.30 KB gzipped against the 500 KB budget; an automated size-limit check belongs in the CI workflow (testarch-ci) rather than per-suite assertions.
+- `backend/tests/SiesaAgents.UnitTests/Data/Extensions/ModelBuilderSnakeCaseExtensionsEdgeCasesTests.cs` (13 tests)
+- `backend/tests/SiesaAgents.UnitTests/Data/AppDbContextEdgeCasesTests.cs` (7 tests, 1 healed)
+- `backend/tests/SiesaAgents.UnitTests/Data/MigrationsStructureTests.cs` (5 tests)
+- `backend/tests/SiesaAgents.IntegrationTests/ProblemDetailsEdgeCasesTests.cs` (8 tests)
+
+## Files Modified (this run)
+
+- None (no production code changed; only tests added)
 
 ---
 
 ## Next Steps
 
-1. The new spec files are picked up automatically by `playwright.config.ts` (`testDir: './e2e'`) and by Vitest (default discovery). No CI wiring needed.
-2. After Story 1.3 (backend foundation) lands, re-run the E2E edge suite across all `playwright.config.ts` projects (firefox / edge / mobile-chrome) to confirm cross-browser parity of the keyboard + focus tests.
-3. Consider running the burn-in loop (`testarch-ci` workflow) once Stories 2.1 / 3.1 land to flag any flake before merging to `main`, especially around the SPA round-trip and focus-outline tests.
+1. Story 1.3 is now ready for `testarch-trace` (requirements traceability matrix) and `testarch-review` (test-quality review).
+2. CI gate command unchanged: `dotnet test backend/SiesaAgents.slnx --filter "Category!=Db"` → expect 63/63 green.
+3. QA opt-in DB suite (Docker required): `dotnet test backend/SiesaAgents.slnx` → expect 66/66 when TestContainers can pull `postgres:18-alpine`.
 
 ---
 
-## Output Files
+## Knowledge Base References Applied
 
-- **Generated tests (Vitest unit):** `/home/user/lab-sa-quick-dev/frontend/src/app/layout/useShellNavigation.test.tsx`
-- **Generated tests (Vitest component):** `/home/user/lab-sa-quick-dev/frontend/src/shared/components/NotFoundView.test.tsx`
-- **Generated tests (Vitest component):** `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/clientes/presentation/ClientesPlaceholderView.test.tsx`
-- **Generated tests (Vitest component):** `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/presentation/ContactosPlaceholderView.test.tsx`
-- **Generated tests (Vitest component):** `/home/user/lab-sa-quick-dev/frontend/src/app/layout/AppShell.edge.test.tsx`
-- **Generated tests (E2E Playwright):** `/home/user/lab-sa-quick-dev/e2e/tests/foundation/navigation-shell-edge.spec.ts`
-- **This summary:** `/home/user/lab-sa-quick-dev/_bmad-output/automation-summary.md`
+- `test-levels-framework.md` — Unit for pure logic & DbContext shape, Integration for end-to-end HTTP middleware (`WebApplicationFactory<Program>`)
+- `test-priorities-matrix.md` — P1 for NFR6 / dev-only gating, P2 for boundary inputs
+- `test-quality.md` — atomic assertions, deterministic InMemory provider, sealed probe types
+- `fixture-architecture.md` — `IClassFixture<WebApplicationFactory<Program>>` reused with per-test `WithWebHostBuilder` for environment override
+- `test-healing-patterns.md` — dynamic-data fix (re-anchored an assertion that contradicted an EF Core perf optimization)
