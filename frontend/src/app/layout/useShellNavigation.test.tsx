@@ -21,7 +21,7 @@
  * Test rules: deterministic, isolated, one assertion per test where practical.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { renderHook, act, cleanup } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import {

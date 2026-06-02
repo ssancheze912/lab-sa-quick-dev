@@ -74,11 +74,12 @@ export function AppShell({ children }: AppShellProps) {
   }, [])
 
   // Apply the Spanish aria-labels to the rendered rail buttons (AC #8).
-  // Runs on every render so that re-mounts / re-renders from siesa-ui-kit
-  // keep the accessible name aligned with the test/AC contract.
-  // siesa-ui-kit's NavigationRailGroup renders icon-only buttons in collapsed
-  // state, so we match the button by either its existing aria-label (set by
-  // the kit from `label`) OR its visible text (expanded state).
+  // Re-runs whenever the active surface changes (so re-renders triggered by
+  // siesa-ui-kit's internal re-mounts on active toggle re-apply the label) —
+  // avoids the unbounded "runs on every render" cost a missing dep array
+  // would cause. siesa-ui-kit's NavigationRailGroup renders icon-only buttons
+  // in collapsed state, so we match the button by either its existing
+  // aria-label (set by the kit from `label`) OR its visible text (expanded state).
   useEffect(() => {
     const container = railContainerRef.current
     if (!container) return
@@ -93,7 +94,7 @@ export function AppShell({ children }: AppShellProps) {
         button.setAttribute('aria-label', ariaLabel)
       }
     })
-  })
+  }, [activeId])
 
   const navigationItems: NavigationRailGroupMenuItem[] = [
     {
