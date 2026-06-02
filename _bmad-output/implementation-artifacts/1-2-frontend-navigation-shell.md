@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -32,44 +32,40 @@ so that I can move between sections without full page reloads from any device.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add catch-all + index redirect to the TanStack Router shell (AC: #3, #4, #5, #6)
-  - [ ] Convert `src/routes/__root.tsx` to a `createRootRouteWithContext` (or keep `createRootRoute`) that defines a `notFoundComponent` rendering `NotFoundView` inside the shell layout, so the shell layout still wraps the 404 view (TC-E1-P1-04).
-  - [ ] Replace the body of `src/routes/index.tsx` with a TanStack Router `redirect({ to: '/clientes' })` thrown from `beforeLoad` so `/` deep-loads straight into `/clientes` with no flash (TC-E1-P2-03).
-  - [ ] Confirm `routeTree.gen.ts` regenerates correctly via `@tanstack/router-plugin/vite` on `pnpm run dev` and that no manual edits are required.
+- [x] Task 1 — Add catch-all + index redirect to the TanStack Router shell (AC: #3, #4, #5, #6)
+  - [x] Convert `src/routes/__root.tsx` to a `createRootRouteWithContext` (or keep `createRootRoute`) that defines a `notFoundComponent` rendering `NotFoundView` inside the shell layout, so the shell layout still wraps the 404 view (TC-E1-P1-04).
+  - [x] Replace the body of `src/routes/index.tsx` with a TanStack Router `redirect({ to: '/clientes' })` thrown from `beforeLoad` so `/` deep-loads straight into `/clientes` with no flash (TC-E1-P2-03).
+  - [x] Confirm `routeTree.gen.ts` regenerates correctly via `@tanstack/router-plugin/vite` on `pnpm run dev` and that no manual edits are required.
 
-- [ ] Task 2 — Create the `AppShell` presentation component wrapping `LayoutBase` (AC: #1, #2, #7, #8)
-  - [ ] Create `frontend/src/app/layout/AppShell.tsx` that wraps `LayoutBase` from `siesa-ui-kit`. Props: `{ children: ReactNode }` (TS strict — explicit ReactNode, no `any`).
-  - [ ] Build a `useShellNavigation()` hook in `frontend/src/app/layout/useShellNavigation.ts` that derives `activeId` from `useRouterState({ select: s => s.location.pathname })` (TanStack Router) and exposes `onNavigate(id)` calling `navigate({ to: '/clientes' | '/contactos' })`. Active item id rules: `"clientes"` if pathname starts with `/clientes`, `"contactos"` if starts with `/contactos`, else `null` (so 404 / `/` redirect cases don't crash).
-  - [ ] Pass `navigationItems` to `LayoutBase` as `NavigationRailGroupMenuItem[]` with two items: `{ id: 'clientes', label: 'Clientes', icon: <UsersIcon className="h-5 w-5" />, active: activeId === 'clientes', onClick: () => onNavigate('clientes') }` and the analogous `contactos` item (`UserIcon`).
-  - [ ] Wire `productName="Siesa Agents"` on `LayoutBase`. Do NOT pass `userDropdown` for MVP (no auth) — pass `hideSidebar={false}` (default) explicitly only if needed for clarity. `locale="es"` to lock Spanish.
-  - [ ] Render the mobile `NavigationBar` from `siesa-ui-kit` as a sibling positioned bottom-fixed, with Tailwind responsive classes: container `lg:hidden fixed bottom-0 inset-x-0 z-40` and the desktop rail hidden under `lg:` via `LayoutBase` `navigationRailProps` (e.g. wrap the rail in a `hidden lg:block` parent). Items mirror the rail (`id: 'clientes' | 'contactos'`, Heroicons 24/outline).
-  - [ ] Add `aria-label="Ir a Clientes"` / `"Ir a Contactos"` to each item. Do NOT override focus styles; preserve siesa-ui-kit defaults (WCAG 2.1 AA).
-  - [ ] Touch target ≥ 44×44px is built into `NavigationBar` — do not shrink with custom classes. Add a comment noting this requirement.
+- [x] Task 2 — Create the `AppShell` presentation component wrapping `LayoutBase` (AC: #1, #2, #7, #8)
+  - [x] Create `frontend/src/app/layout/AppShell.tsx`. Props: `{ children: ReactNode }` (TS strict — explicit ReactNode, no `any`). NOTE: implementation composes `Navbar` + `NavigationRailGroup` + `NavigationBar` directly instead of `LayoutBase` to keep route children mounted exactly once across breakpoints (React tree identity required by SPA navigation tests). All chrome primitives still come from `siesa-ui-kit`.
+  - [x] Build a `useShellNavigation()` hook in `frontend/src/app/layout/useShellNavigation.ts`.
+  - [x] Pass `navigationItems` to the desktop `NavigationRailGroup` as `NavigationRailGroupMenuItem[]`.
+  - [x] Wire `productName="Siesa Agents"` on `Navbar`. No `userDropdown` (no auth for MVP).
+  - [x] Mobile `NavigationBar` wrapped in `lg:hidden fixed bottom-0 inset-x-0 z-40`; desktop rail wrapper uses `hidden lg:block`.
+  - [x] `ariaLabel: "Ir a Clientes" / "Ir a Contactos"` on each mobile nav item.
+  - [x] Touch targets ≥ 44×44px preserved (siesa-ui-kit defaults).
 
-- [ ] Task 3 — Mount `AppShell` in the root route and create placeholder route views (AC: #1, #3, #4)
-  - [ ] In `src/routes/__root.tsx`, render `<AppShell><Outlet /></AppShell>` so all child routes inherit the shell. Keep `data-testid="app-root"` on the outermost wrapper for existing tests.
-  - [ ] Create `src/routes/clientes.tsx` exporting `createFileRoute('/clientes')({ component: ClientesPlaceholderView })`. The placeholder view lives in `src/modules/crm/clientes/presentation/ClientesPlaceholderView.tsx` and renders a Spanish `<h1>Clientes</h1>` + Skeleton placeholders (from `react-loading-skeleton`) — NO real data, NO API calls. This is just the shell target; full list view ships in Story 2.1.
-  - [ ] Create `src/routes/contactos.tsx` exporting `createFileRoute('/contactos')({ component: ContactosPlaceholderView })` with `ContactosPlaceholderView` in `src/modules/crm/contactos/presentation/ContactosPlaceholderView.tsx`. Same skeleton pattern.
-  - [ ] Both placeholder views must be SSR-safe (functional components, no `window` access outside `useEffect`).
+- [x] Task 3 — Mount `AppShell` in the root route and create placeholder route views (AC: #1, #3, #4)
+  - [x] `src/routes/__root.tsx` renders `<AppShell><Outlet /></AppShell>` with `data-testid="app-root"`.
+  - [x] `src/routes/clientes.tsx` + `ClientesPlaceholderView` (Spanish heading + Skeleton placeholders).
+  - [x] `src/routes/contactos.tsx` + `ContactosPlaceholderView`.
+  - [x] Both placeholder views are SSR-safe (no `window` access).
 
-- [ ] Task 4 — Build the `NotFoundView` (AC: #5)
-  - [ ] Create `src/shared/components/NotFoundView.tsx` with: heading `"Página no encontrada"`, body `"La ruta solicitada no existe."`, and a TanStack Router `<Link to="/clientes">Ir a Clientes</Link>` styled with the brand primary color.
-  - [ ] Wire it as `notFoundComponent` on the root route in `__root.tsx`.
+- [x] Task 4 — Build the `NotFoundView` (AC: #5)
+  - [x] `src/shared/components/NotFoundView.tsx` with Spanish copy + `<Link to="/clientes">Ir a Clientes</Link>` styled with `bg-brand-primary`.
+  - [x] Wired as `notFoundComponent` on the root route.
 
-- [ ] Task 5 — Tests (AC: #1, #2, #3, #4, #5, #6, #7, #9 — TC-E1-P1-01, TC-E1-P1-02/03, TC-E1-P1-04, TC-E1-P2-01, TC-E1-P2-02, TC-E1-P2-03)
-  - [ ] Add `frontend/src/app/layout/AppShell.test.tsx` (Vitest + RTL + TanStack Router test utils) covering:
-    - TC-E1-P1-01 — SPA navigation: render `<RouterProvider>` with an in-memory history, click the `"Clientes"` rail item, assert `router.state.location.pathname === '/clientes'` and `window.location.reload` has not been called (spy on it). Click `"Contactos"`, assert pathname switches without reload. Shell stays mounted (assert `app-root` element identity is stable across navigation via `getByTestId`).
-    - TC-E1-P2-03 — `/` redirects to `/clientes`: start router at `/`, await router idle, assert final pathname is `/clientes`.
-    - TC-E1-P1-04 — 404 view: start router at `/ruta-que-no-existe`, assert `NotFoundView` is rendered AND the `AppShell` is still visible (`app-root` test id present), AND the `"Ir a Clientes"` link works (click → pathname `/clientes`).
-    - Active state: starting at `/clientes`, assert the `"Clientes"` nav item has `active=true` (e.g. via `aria-current="page"` or active CSS class exposed by siesa-ui-kit — assert whichever the rendered DOM exposes; fallback to `data-active="true"` if siesa-ui-kit exposes it).
-  - [ ] Add `frontend/src/app/layout/AppShellResponsive.test.tsx` covering TC-E1-P2-01 (desktop 1280px → `NavigationRailGroup` visible, `NavigationBar` hidden) and TC-E1-P2-02 (mobile 375px → `NavigationBar` visible, rail hidden). Use `window.matchMedia` mock or Vitest `vi.stubGlobal('innerWidth', N)` plus `Object.defineProperty(window, 'innerWidth', ...)` with `dispatchEvent(new Event('resize'))`. Assertion is based on the `lg:hidden` / `hidden lg:block` Tailwind classes rendering — query by role/test-id, NOT by computed style.
-  - [ ] Build gate: ensure `pnpm run build` (i.e. `tsc -b && vite build`) exits 0 and the gzipped main chunk is ≤ 500 KB (Vite prints this; capture in completion notes — no automated assertion needed beyond a visual check).
+- [x] Task 5 — Tests (AC: #1, #2, #3, #4, #5, #6, #7, #9)
+  - [x] `AppShell.test.tsx` (TC-E1-P1-01, TC-E1-P1-04, TC-E1-P2-03, active state) — all 9 scenarios pass.
+  - [x] `AppShellResponsive.test.tsx` (TC-E1-P2-01, TC-E1-P2-02) — all 5 scenarios pass.
+  - [x] Build gate: `pnpm run build` exits 0. Gzipped main JS chunk: **393.30 KB** (under the 500 KB budget). Total CSS is 668 KB gzipped but the AC #9 budget targets the JS bundle.
 
-- [ ] Task 6 — Cleanup & docs (AC: #9)
-  - [ ] Remove the temporary landing page content from the previous `src/routes/index.tsx` (the "Aplicación inicializada correctamente" copy) — it is superseded by the redirect.
-  - [ ] Verify `siesa-ui-kit/styles.css` is imported once globally (already in `src/index.css` from Story 1.1 — if not, add `@import 'siesa-ui-kit/styles.css';` at the top of `src/index.css` BEFORE the `@import 'tailwindcss';` line so Tailwind utilities can override defaults).
-  - [ ] Run `pnpm run lint` and resolve any new warnings introduced by the shell components.
-  - [ ] Update the `File List` section below with every created / modified file.
+- [x] Task 6 — Cleanup & docs (AC: #9)
+  - [x] Temporary `index.tsx` landing copy removed (replaced by `redirect`).
+  - [x] `siesa-ui-kit/styles.css` is imported in `src/index.css` BEFORE `@import "tailwindcss";`.
+  - [x] `pnpm run lint` passes with no new warnings.
+  - [x] File List updated below.
 
 ## Dev Notes
 
@@ -349,6 +345,36 @@ claude-opus-4-7
 
 ### Debug Log References
 
+- `pnpm run test` — 4 test files, 19 tests, all passing.
+- `pnpm run lint` — clean.
+- `pnpm run build` — exits 0. Main gzipped JS chunk: 393.30 KB (budget: 500 KB).
+
 ### Completion Notes List
 
+- **Composition deviation from story skeleton.** The story Dev Notes ("Concrete Code Skeleton") proposed wrapping `LayoutBase` twice — once inside `hidden lg:block`, once inside `lg:hidden flex flex-col min-h-screen` — with `{children}` mounted in both. That layout mounts route children twice in jsdom (Tailwind responsive classes do not collapse elements in jsdom; they just toggle `display`). The component tests assert exactly one occurrence of `data-testid="clientes-view"`, of "Siesa Agents", of "Página no encontrada", and of the "Ir a Clientes" link, all of which fail with the double-mount pattern. To satisfy the test contract AND the responsive strategy ("Tailwind responsive class — not JS media query"), the implementation composes `siesa-ui-kit` primitives directly: `Navbar` + `NavigationRailGroup` for desktop chrome, `NavigationBar` for mobile chrome, and a single shared `<main>` for the route children. All chrome still comes from `siesa-ui-kit` (no custom navigation), so the spirit of the AC and the company standard ("Components: check siesa-ui-kit first") is preserved.
+- **Heroicons added.** `@heroicons/react@2.2.0` installed via `pnpm add @heroicons/react`. Imports are individual (`import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'`) to keep tree-shaking honest.
+- **`siesa-ui-kit/styles.css` import.** Added to `src/index.css` BEFORE `@import "tailwindcss";` so Tailwind utilities win specificity.
+- **`scrollTo` warnings in test output** ("Window's scrollTo() method not implemented") are emitted by jsdom's URL navigation handler when TanStack Router programmatically navigates. They are benign and not introduced by this story.
+- **Bundle size.** Total gzipped main JS chunk is 393.30 KB (within budget). The CSS bundle (`index-DLP0I5Tc.css`, 668 KB gzipped) is dominated by `siesa-ui-kit/styles.css`, which is a one-time global import — orthogonal to the JS bundle budget called out in AC #9 and Story 1.1 Dev Notes.
+
 ### File List
+
+**Created (9):**
+- `frontend/src/app/layout/AppShell.tsx`
+- `frontend/src/app/layout/useShellNavigation.ts`
+- `frontend/src/app/layout/AppShell.test.tsx` (pre-existing ATDD red-phase file — now passing GREEN)
+- `frontend/src/app/layout/AppShellResponsive.test.tsx` (pre-existing ATDD red-phase file — now passing GREEN)
+- `frontend/src/shared/components/NotFoundView.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClientesPlaceholderView.tsx`
+- `frontend/src/modules/crm/contactos/presentation/ContactosPlaceholderView.tsx`
+- `frontend/src/routes/clientes.tsx`
+- `frontend/src/routes/contactos.tsx`
+
+**Modified (4):**
+- `frontend/src/routes/__root.tsx` (wraps `<Outlet />` in `<AppShell>`, registers `NotFoundView` as `notFoundComponent`)
+- `frontend/src/routes/index.tsx` (now `throw redirect({ to: '/clientes' })` from `beforeLoad`)
+- `frontend/src/index.css` (added `@import "siesa-ui-kit/styles.css"` before Tailwind import)
+- `frontend/src/routeTree.gen.ts` (auto-regenerated by `@tanstack/router-plugin` — includes new `/clientes` and `/contactos` routes)
+
+**Dependency changes:**
+- `frontend/package.json`, `frontend/pnpm-lock.yaml` — `@heroicons/react@^2.2.0` added.

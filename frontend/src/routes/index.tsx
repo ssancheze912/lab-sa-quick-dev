@@ -1,16 +1,12 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
+/**
+ * Root path `/` redirects to `/clientes` via TanStack Router (TC-E1-P2-03).
+ * Using `beforeLoad` + `throw redirect` is the official declarative pattern;
+ * NO `window.location` manipulation, NO full reload.
+ */
 export const Route = createFileRoute('/')({
-  component: IndexPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/clientes' })
+  },
 })
-
-function IndexPage() {
-  return (
-    <main className="flex flex-col items-center justify-center min-h-screen gap-4 p-8">
-      <h1 className="text-3xl font-bold text-brand-primary">Siesa Agents</h1>
-      <p className="text-slate-600">
-        Aplicación inicializada correctamente. Listo para implementar funcionalidades.
-      </p>
-    </main>
-  )
-}
