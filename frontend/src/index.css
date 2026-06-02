@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  /* Siesa brand tokens */
+  --color-brand-primary: #0e79fd;
+  --color-brand-secondary: #000000;
+  --color-brand-tertiary: #154ca9;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #0f172a;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+}
