@@ -323,5 +323,5 @@ internal class TestProbeEntity
 {
     public Guid Id { get; set; }
     public string FirstName { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
 }
