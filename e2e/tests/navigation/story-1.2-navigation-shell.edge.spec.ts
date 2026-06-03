@@ -30,10 +30,9 @@ test.describe('Viewport boundary transitions', () => {
 
     // WHEN: Viewport resizes to mobile (390px)
     await page.setViewportSize({ width: 390, height: 844 });
-    // Allow React re-render triggered by matchMedia
-    await page.waitForTimeout(100);
 
     // THEN: NavigationBar is visible and NavigationRail is not
+    // (Playwright's built-in retry on toBeVisible() handles the React re-render delay)
     await expect(page.locator('[data-testid="navigation-bar"]')).toBeVisible();
     await expect(page.locator('[data-testid="navigation-rail"]')).not.toBeVisible();
   });
@@ -47,9 +46,9 @@ test.describe('Viewport boundary transitions', () => {
 
     // WHEN: Viewport resizes to desktop (1280px)
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.waitForTimeout(100);
 
     // THEN: NavigationRail is visible and NavigationBar is not
+    // (Playwright's built-in retry on toBeVisible() handles the React re-render delay)
     await expect(page.locator('[data-testid="navigation-rail"]')).toBeVisible();
     await expect(page.locator('[data-testid="navigation-bar"]')).not.toBeVisible();
   });
