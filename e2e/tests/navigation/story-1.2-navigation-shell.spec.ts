@@ -60,11 +60,12 @@ test.describe('AC1 — Desktop NavigationRail (viewport >= 1024px)', () => {
     await page.waitForLoadState('networkidle');
 
     // WHEN: User clicks the "Clientes" navigation item
-    // Network-first: register beforeunload listener to detect full-page reload
-    let fullReloadOccurred = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame()) {
-        fullReloadOccurred = true;
+    // Network-first: detect full-page reload by checking for a new document request
+    // (client-side navigation via history.pushState does NOT trigger a new document request)
+    let fullPageReloadOccurred = false;
+    page.on('request', (request) => {
+      if (request.isNavigationRequest() && request.resourceType() === 'document') {
+        fullPageReloadOccurred = true;
       }
     });
 
@@ -73,7 +74,7 @@ test.describe('AC1 — Desktop NavigationRail (viewport >= 1024px)', () => {
 
     // THEN: URL changes to /clientes (client-side routing — no full reload)
     expect(page.url()).toContain('/clientes');
-    expect(fullReloadOccurred).toBe(false);
+    expect(fullPageReloadOccurred).toBe(false);
   });
 
   test('should navigate to /contactos without full page reload when clicking Contactos nav item', async ({ page }) => {
@@ -82,10 +83,11 @@ test.describe('AC1 — Desktop NavigationRail (viewport >= 1024px)', () => {
     await page.waitForLoadState('networkidle');
 
     // WHEN: User clicks the "Contactos" navigation item
-    let fullReloadOccurred = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame()) {
-        fullReloadOccurred = true;
+    // Network-first: detect full-page reload by checking for a new document request
+    let fullPageReloadOccurred = false;
+    page.on('request', (request) => {
+      if (request.isNavigationRequest() && request.resourceType() === 'document') {
+        fullPageReloadOccurred = true;
       }
     });
 
@@ -94,7 +96,7 @@ test.describe('AC1 — Desktop NavigationRail (viewport >= 1024px)', () => {
 
     // THEN: URL changes to /contactos (client-side routing — no full reload)
     expect(page.url()).toContain('/contactos');
-    expect(fullReloadOccurred).toBe(false);
+    expect(fullPageReloadOccurred).toBe(false);
   });
 
   test('should hide NavigationBar on desktop viewport', async ({ page }) => {
@@ -158,8 +160,9 @@ test.describe('AC2 — Mobile NavigationBar (viewport < 1024px)', () => {
     await page.goto('/clientes');
     await page.waitForLoadState('networkidle');
 
-    // WHEN: User taps the "Contactos" navigation item
-    await page.locator('[data-testid="nav-item-contactos"]').tap();
+    // WHEN: User taps/clicks the "Contactos" navigation item
+    // Note: using click() for cross-browser compatibility (tap() requires hasTouch context)
+    await page.locator('[data-testid="nav-item-contactos"]').click();
     await page.waitForURL('/contactos');
 
     // THEN: URL changes to /contactos

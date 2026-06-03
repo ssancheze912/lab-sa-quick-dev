@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet, Link, useRouter } from '@tanstack/react-router'
-import { NavigationRail, NavigationBar } from 'siesa-ui-kit'
+import { NavigationRailItem } from 'siesa-ui-kit'
 import { UserGroupIcon, UserIcon } from '@heroicons/react/24/outline'
+import { useState, useEffect } from 'react'
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -18,9 +19,37 @@ const NAV_ITEMS: NavItemDef[] = [
   { id: 'contactos', label: 'Contactos', path: '/contactos' },
 ]
 
+const DESKTOP_BREAKPOINT = 1024
+
+function getNavIcon(id: string) {
+  const cls = 'w-4 h-4'
+  if (id === 'clientes') return <UserGroupIcon className={cls} />
+  return <UserIcon className={cls} />
+}
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') return true
+    if (typeof window.matchMedia !== 'function') return window.innerWidth >= DESKTOP_BREAKPOINT
+    return window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`).matches
+  })
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const mql = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`)
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mql.addEventListener('change', handler)
+    setIsDesktop(mql.matches)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
+
+  return isDesktop
+}
+
 function RootLayout() {
   const router = useRouter()
   const currentPath = router.state.location.pathname
+  const isDesktop = useIsDesktop()
 
   const activeItemId = currentPath.startsWith('/contactos')
     ? 'contactos'
@@ -28,86 +57,63 @@ function RootLayout() {
       ? 'clientes'
       : undefined
 
-  const railItems = NAV_ITEMS.map((item) => ({
-    id: item.id,
-    icon: item.id === 'clientes'
-      ? <UserGroupIcon className="w-6 h-6" />
-      : <UserIcon className="w-6 h-6" />,
-    label: item.label,
-    selected: item.id === activeItemId,
-    onClick: () => router.navigate({ to: item.path }),
-    ariaLabel: `Ir a ${item.label}`,
-  }))
-
-  const barItems = NAV_ITEMS.map((item) => ({
-    id: item.id,
-    icon: item.id === 'clientes'
-      ? <UserGroupIcon className="w-4 h-4" />
-      : <UserIcon className="w-4 h-4" />,
-    label: item.label,
-    active: item.id === activeItemId,
-    onClick: () => router.navigate({ to: item.path }),
-    ariaLabel: `Ir a ${item.label}`,
-  }))
-
   return (
     <div className="flex h-screen">
-      {/* Accessible nav anchors — used for testing and assistive tech */}
-      <nav className="sr-only" aria-label="Accesos de navegación">
-        {NAV_ITEMS.map((item) => (
-          <a
-            key={item.id}
-            href={item.path}
-            data-testid={`nav-item-${item.id}`}
-            aria-current={item.id === activeItemId ? 'page' : undefined}
-            onClick={(e) => {
-              e.preventDefault()
-              router.navigate({ to: item.path })
-            }}
-          >
-            {item.label}
-          </a>
-        ))}
-      </nav>
-
-      {/* Desktop NavigationRail — hidden on mobile */}
-      <div
-        className="hidden lg:flex"
-        data-testid="navigation-rail"
-        role="navigation"
-        aria-label="Navegación principal"
-      >
-        <NavigationRail
-          items={railItems}
-          selectedId={activeItemId}
-          onItemSelect={(id) => {
-            const item = NAV_ITEMS.find((n) => n.id === id)
-            if (item) router.navigate({ to: item.path })
-          }}
-        />
-      </div>
+      {isDesktop ? (
+        /* Desktop NavigationRail — vertical left rail */
+        <nav
+          className="flex flex-col items-center bg-white border-r border-slate-200 w-[72px] pt-2 gap-1"
+          data-testid="navigation-rail"
+          aria-label="Navegación principal"
+        >
+          {NAV_ITEMS.map((item) => (
+            <div
+              key={item.id}
+              data-testid={`nav-item-${item.id}`}
+              aria-current={item.id === activeItemId ? 'page' : undefined}
+            >
+              <NavigationRailItem
+                id={item.id}
+                icon={getNavIcon(item.id)}
+                label={item.label}
+                selected={item.id === activeItemId}
+                onClick={() => router.navigate({ to: item.path })}
+                ariaLabel={`Ir a ${item.label}`}
+              />
+            </div>
+          ))}
+        </nav>
+      ) : (
+        /* Mobile NavigationBar — horizontal fixed bottom bar */
+        <nav
+          className="fixed bottom-0 w-full z-50 bg-white border-t border-slate-200 flex flex-row"
+          data-testid="navigation-bar"
+          aria-label="Navegación móvil"
+        >
+          {NAV_ITEMS.map((item) => (
+            <div
+              key={item.id}
+              data-testid={`nav-item-${item.id}`}
+              aria-current={item.id === activeItemId ? 'page' : undefined}
+              className="flex-1"
+            >
+              <NavigationRailItem
+                id={item.id}
+                icon={getNavIcon(item.id)}
+                label={item.label}
+                selected={item.id === activeItemId}
+                onClick={() => router.navigate({ to: item.path })}
+                ariaLabel={`Ir a ${item.label}`}
+                className="w-full"
+              />
+            </div>
+          ))}
+        </nav>
+      )}
 
       <main className="flex-1 overflow-auto">
         <Outlet />
       </main>
-
-      {/* Mobile NavigationBar — hidden on desktop */}
-      <div
-        className="flex lg:hidden fixed bottom-0 w-full z-50"
-        data-testid="navigation-bar"
-        role="navigation"
-        aria-label="Navegación móvil"
-      >
-        <NavigationBar
-          items={barItems}
-          activeItemId={activeItemId}
-          onItemClick={(id) => {
-            const item = NAV_ITEMS.find((n) => n.id === id)
-            if (item) router.navigate({ to: item.path })
-          }}
-          className="w-full"
-        />
-      </div>
     </div>
   )
 }
