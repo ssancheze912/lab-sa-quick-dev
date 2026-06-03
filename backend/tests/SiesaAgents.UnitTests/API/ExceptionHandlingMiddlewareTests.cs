@@ -8,6 +8,11 @@ namespace SiesaAgents.UnitTests.API;
 /// <summary>
 /// Unit tests for ExceptionHandlingMiddleware — edge cases and boundary conditions.
 /// Complements the ATDD E2E test that verifies Problem Details format at the HTTP level.
+///
+/// Story 1.3 additions (RED phase — will pass once ExceptionHandlingMiddleware adds the
+/// Type = "https://tools.ietf.org/html/rfc7807" field per AC2):
+///   - InvokeAsync_ShouldIncludeTypeField_WithRfc7807Uri_InProblemDetailsResponse
+///   - InvokeAsync_ShouldNotExposeStackTrace_InResponseBody
 /// </summary>
 public class ExceptionHandlingMiddlewareTests
 {
@@ -176,6 +181,77 @@ public class ExceptionHandlingMiddlewareTests
         var hasStatus = doc.RootElement.TryGetProperty("status", out var statusElement);
         Assert.True(hasStatus, "Problem Details must contain a 'status' field");
         Assert.Equal(500, statusElement.GetInt32());
+    }
+
+    // ─── AC2 (Story 1.3) — RFC 7807 strict compliance: Type field ────────────
+
+    /// <summary>
+    /// Given an unhandled exception occurs in the backend,
+    /// When the error reaches the middleware,
+    /// Then the response body includes a "type" field equal to
+    /// "https://tools.ietf.org/html/rfc7807" for strict RFC 7807 compliance.
+    ///
+    /// RED: This test will FAIL until ExceptionHandlingMiddleware sets
+    /// Type = "https://tools.ietf.org/html/rfc7807" in ProblemDetails.
+    /// </summary>
+    [Fact]
+    public async Task InvokeAsync_ShouldIncludeTypeField_WithRfc7807Uri_InProblemDetailsResponse()
+    {
+        // Arrange
+        RequestDelegate next = _ => throw new Exception("any error");
+
+        var middleware = new ExceptionHandlingMiddleware(next);
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert — RFC 7807 "type" field must be the standard problem-details URI
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        using var doc = JsonDocument.Parse(body);
+        var hasType = doc.RootElement.TryGetProperty("type", out var typeElement);
+        Assert.True(hasType, "Problem Details must contain a 'type' field (RFC 7807 strict compliance)");
+        Assert.Equal("https://tools.ietf.org/html/rfc7807", typeElement.GetString());
+    }
+
+    /// <summary>
+    /// Given an unhandled exception occurs,
+    /// When the error reaches the middleware,
+    /// Then the response body does NOT contain a "stackTrace" or "stack_trace" field —
+    /// no stack trace is exposed to the client (NFR6 / security requirement).
+    ///
+    /// RED: This test verifies the absence of stackTrace exposure — should already pass
+    /// given Detail = null in Story 1.1 implementation, but added here as explicit guard.
+    /// </summary>
+    [Fact]
+    public async Task InvokeAsync_ShouldNotExposeStackTrace_InResponseBody()
+    {
+        // Arrange
+        RequestDelegate next = _ => throw new Exception("some error with stacktrace");
+
+        var middleware = new ExceptionHandlingMiddleware(next);
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert — no stackTrace or stack_trace key in response
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        using var doc = JsonDocument.Parse(body);
+        Assert.False(
+            doc.RootElement.TryGetProperty("stackTrace", out _),
+            "Problem Details must NOT contain a 'stackTrace' field");
+        Assert.False(
+            doc.RootElement.TryGetProperty("stack_trace", out _),
+            "Problem Details must NOT contain a 'stack_trace' field");
+        Assert.False(
+            doc.RootElement.TryGetProperty("detail", out var detailProp)
+                && detailProp.ValueKind != JsonValueKind.Null,
+            "Problem Details 'detail' field must be null — never expose ex.Message or stack traces");
     }
 
     // ─── Boundary: different exception types all produce 500 ─────────────────
