@@ -18,7 +18,8 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
             {
                 Status = 500,
                 Title = "An unexpected error occurred.",
-                Detail = null
+                Detail = null,
+                Type = "https://tools.ietf.org/html/rfc7807"
             });
         }
     }
