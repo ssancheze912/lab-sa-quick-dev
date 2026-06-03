@@ -278,4 +278,192 @@ public class ExceptionHandlingMiddlewareTests
         // Assert — all unhandled exception types must return HTTP 500
         Assert.Equal(500, context.Response.StatusCode);
     }
+
+    // ─── Edge cases: body content and structure ───────────────────────────────
+
+    [Fact]
+    public async Task InvokeAsync_ShouldProduceNonEmptyResponseBody_WhenExceptionIsThrown()
+    {
+        // Arrange — response body must always have bytes (not an empty 500)
+        RequestDelegate next = _ => throw new Exception("any error");
+
+        var middleware = new ExceptionHandlingMiddleware(next);
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert — body must have written bytes (ensures WriteAsJsonAsync was called)
+        Assert.True(context.Response.Body.Length > 0, "Response body must not be empty after exception handling");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ShouldNotIncludeDetailField_OrDetailMustBeNull_WhenExceptionIsThrown()
+    {
+        // Arrange — "detail" field must be absent or explicitly null (never contain ex.Message)
+        RequestDelegate next = _ => throw new Exception("should not appear as detail");
+
+        var middleware = new ExceptionHandlingMiddleware(next);
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        using var doc = JsonDocument.Parse(body);
+
+        if (doc.RootElement.TryGetProperty("detail", out var detailProp))
+        {
+            // If "detail" key exists it MUST be null
+            Assert.Equal(JsonValueKind.Null, detailProp.ValueKind);
+        }
+        // else: "detail" absent is equally acceptable
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ShouldNotIncludeErrorsField_InResponseBody()
+    {
+        // Arrange — "errors" is a ValidationProblemDetails field; plain 500 MUST NOT have it
+        RequestDelegate next = _ => throw new Exception("generic error");
+
+        var middleware = new ExceptionHandlingMiddleware(next);
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert — unhandled-exception response is not a validation problem details
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        using var doc = JsonDocument.Parse(body);
+        Assert.False(
+            doc.RootElement.TryGetProperty("errors", out _),
+            "A generic 500 ProblemDetails must NOT contain an 'errors' field");
+    }
+
+    // ─── Edge cases: aggregate and wrapped exceptions ─────────────────────────
+
+    [Fact]
+    public async Task InvokeAsync_ShouldReturn500_WhenAggregateExceptionIsThrown()
+    {
+        // Arrange — AggregateException wrapping multiple inner exceptions
+        var inner1 = new InvalidOperationException("inner one");
+        var inner2 = new TimeoutException("inner two");
+        RequestDelegate next = _ => throw new AggregateException(inner1, inner2);
+
+        var middleware = new ExceptionHandlingMiddleware(next);
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert — AggregateException is still an unhandled exception → 500
+        Assert.Equal(500, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ShouldNotExposeInnerExceptionMessages_WhenAggregateExceptionIsThrown()
+    {
+        // Arrange — inner exception messages must not leak into the response
+        const string sensitiveInner = "INNER_SECRET_DB_CREDENTIALS";
+        var inner = new InvalidOperationException(sensitiveInner);
+        RequestDelegate next = _ => throw new AggregateException("aggregate wrapper", inner);
+
+        var middleware = new ExceptionHandlingMiddleware(next);
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        Assert.DoesNotContain(sensitiveInner, body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ShouldReturn500_WhenExceptionWithNullMessage_IsThrown()
+    {
+        // Arrange — exception with null/empty message (boundary: middleware must not crash)
+        RequestDelegate next = _ => throw new Exception(null!);
+
+        var middleware = new ExceptionHandlingMiddleware(next);
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act
+        var ex = await Record.ExceptionAsync(() => middleware.InvokeAsync(context));
+
+        // Assert — middleware must not re-throw; must return 500
+        Assert.Null(ex);
+        Assert.Equal(500, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ShouldReturn500_WhenOperationCanceledExceptionIsThrown()
+    {
+        // Arrange — cancellation exceptions can propagate from async pipelines
+        RequestDelegate next = _ => throw new OperationCanceledException();
+
+        var middleware = new ExceptionHandlingMiddleware(next);
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert — OperationCanceledException is caught like any other exception → 500
+        Assert.Equal(500, context.Response.StatusCode);
+    }
+
+    // ─── Edge case: middleware does NOT re-throw ──────────────────────────────
+
+    [Fact]
+    public async Task InvokeAsync_ShouldNotRethrowException_AfterHandling()
+    {
+        // Arrange — the middleware must swallow the exception and not propagate it
+        RequestDelegate next = _ => throw new InvalidOperationException("should be swallowed");
+
+        var middleware = new ExceptionHandlingMiddleware(next);
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act — record whether middleware itself throws
+        var propagatedException = await Record.ExceptionAsync(() => middleware.InvokeAsync(context));
+
+        // Assert — no exception escapes the middleware
+        Assert.Null(propagatedException);
+    }
+
+    // ─── Concurrency boundary: multiple concurrent requests ───────────────────
+
+    [Fact]
+    public async Task InvokeAsync_ShouldHandle_MultipleConcurrentExceptions_Independently()
+    {
+        // Arrange — simulate several concurrent requests hitting the middleware at the same time
+        const int concurrency = 10;
+
+        var tasks = Enumerable.Range(0, concurrency).Select(async _ =>
+        {
+            RequestDelegate next = _ => throw new Exception("concurrent error");
+            var middleware = new ExceptionHandlingMiddleware(next);
+            var ctx = new DefaultHttpContext();
+            ctx.Response.Body = new MemoryStream();
+            await middleware.InvokeAsync(ctx);
+            return ctx.Response.StatusCode;
+        });
+
+        // Act
+        var results = await Task.WhenAll(tasks);
+
+        // Assert — every concurrent invocation must independently produce 500
+        Assert.All(results, statusCode => Assert.Equal(500, statusCode));
+    }
 }
