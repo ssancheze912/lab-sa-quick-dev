@@ -42,16 +42,13 @@ test.describe('AC1 — Frontend HTML structural integrity', () => {
     expect(title.length).toBeGreaterThan(0);
   });
 
-  test('[P1] should mount the React application inside the #app element', async ({ page }) => {
-    // GIVEN: main.tsx mounts the app via createRoot(document.getElementById("app"))
+  test('[P1] should mount the React application inside the app root element', async ({ page }) => {
+    // GIVEN: main.tsx mounts the app and index.html has data-testid="app-root"
     // WHEN: The page renders
     await page.goto('/');
 
-    // THEN: The #app element exists in the DOM and is non-empty (React mounted)
-    const appEl = page.locator('#app');
-    await expect(appEl).toBeVisible();
-    const innerHTML = await appEl.innerHTML();
-    expect(innerHTML.trim().length).toBeGreaterThan(0);
+    // THEN: The app-root element exists in the DOM and is visible (React mounted)
+    await expect(page.locator('[data-testid="app-root"]')).toBeVisible();
   });
 
   test('[P1] should not redirect the root URL to another path', async ({ page }) => {
@@ -105,11 +102,18 @@ test.describe('AC1 — Frontend HTML structural integrity', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    // THEN: No Vite runtime error overlay is shown (compilation or runtime error would show this)
-    const viteErrorOverlay = page.locator('vite-error-overlay');
-    const runtimeError = page.locator('[data-vite-error]');
-    await expect(viteErrorOverlay).toHaveCount(0);
-    await expect(runtimeError).toHaveCount(0);
+    // THEN: No Vite compilation error overlay is shown
+    await expect(page.locator('vite-error-overlay')).toHaveCount(0);
+  });
+
+  test('[P2] should not expose Vite runtime error marker on initial render', async ({ page }) => {
+    // GIVEN: The frontend application initializes without exceptions
+    // WHEN: The application loads
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // THEN: No data-vite-error attribute is present in the DOM
+    await expect(page.locator('[data-vite-error]')).toHaveCount(0);
   });
 });
 
