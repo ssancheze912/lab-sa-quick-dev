@@ -10,6 +10,11 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         {
             await next(context);
         }
+        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+        {
+            // Client disconnected — not an application error, suppress silently
+            context.Response.StatusCode = 499;
+        }
         catch (Exception)
         {
             context.Response.ContentType = "application/problem+json";
