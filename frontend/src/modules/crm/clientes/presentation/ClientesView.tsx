@@ -8,7 +8,7 @@ export function ClientesView() {
     <div data-testid="clientes-view" className="flex h-full">
       <ClienteListView selectedId={selectedId} onClienteSelect={setSelectedId} />
       {/* Right panel — placeholder for Story 2.2 */}
-      <div className="flex-1" aria-label="Detalle del cliente" />
+      <div className="flex-1" aria-hidden="true" />
     </div>
   );
 }
