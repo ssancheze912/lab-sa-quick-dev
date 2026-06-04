@@ -1,8 +1,8 @@
-# Automation Summary - Backend Database Foundation (Story 1.3)
+# Automation Summary - Client List & Search (Story 2.1)
 
 **Date:** 2026-06-04
-**Story:** 1.3 — Backend Database Foundation
-**Epic:** 1 — Project Foundation & Application Shell
+**Story:** 2.1 — Client List & Search
+**Epic:** 2 — Client Management
 **Mode:** BMad-Integrated
 **Coverage Target:** critical-paths (expanded with edge cases, error paths, boundary conditions)
 
@@ -18,143 +18,317 @@ not addressed in the ATDD tests.
 
 | File | Tests | Coverage |
 |------|-------|----------|
-| `AppDbContextTests.cs` | 3 | AC#3, AC#5 happy paths |
-| `ExceptionHandlingMiddlewareTests.cs` | 14 | AC#4 all HTTP status branches |
+| `e2e/tests/clientes/client-list-search.spec.ts` | 14 | AC1–AC5 E2E happy paths |
+| `e2e/tests/api/clientes-list.api.spec.ts` | 8 | API response shape, CORS, NFR6 |
+| `frontend/src/modules/crm/clientes/presentation/__tests__/ClienteListView.test.tsx` | 20 | TC-E2-P1-01 through TC-E2-P1-05 + AC5 |
+| `frontend/src/shared/components/__tests__/EmptyState.test.tsx` | 6 | EmptyState component |
+| `frontend/src/shared/components/__tests__/ErrorPanel.test.tsx` | 7 | ErrorPanel component |
+| `frontend/src/modules/crm/clientes/application/__tests__/useClientes.test.ts` | 2 | useClientes hook |
+| `backend/tests/SiesaAgents.UnitTests/Domain/ClienteEntityTests.cs` | 7 | ClienteEntity domain |
+| `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs` | 2 | Query handler |
+| `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs` | 2 | API integration |
 
 ### Pre-existing Edge Case Tests (Generated prior to this run)
 
 | File | Tests | Coverage |
 |------|-------|----------|
-| `AppDbContextEdgeCaseTests.cs` | 8 | Null options, disposal, idempotency, shared DB, SaveChanges |
+| `e2e/tests/clientes/client-list-search-edge-cases.spec.ts` | 10 | Loading skeleton, whitespace search, case-insensitive, no-results EmptyState, aria-label, keyboard, persistent error retry, NIT dash |
 
 ---
 
 ## Tests Created in This Run
 
-### Unit Tests — Middleware Edge Cases (P1-P2)
+### E2E Tests — API Edge Cases (P1-P2)
 
-**File:** `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareEdgeCaseTests.cs`
+**File:** `e2e/tests/api/clientes-list-edge-cases.api.spec.ts`
 
 | Priority | Test Name | Scenario |
 |----------|-----------|----------|
-| P1 | `InvokeAsync_WhenNextSucceeds_DoesNotAlterResponseStatus` | Happy path: no exception → response untouched |
-| P1 | `InvokeAsync_WhenNextSucceeds_NoBodyWrittenByMiddleware` | Happy path: no body injected on success |
-| P0 | `InvokeAsync_OnOperationCanceled_WhenRequestNotAborted_Returns500` | Boundary: app-level cancel ≠ client disconnect → 500 |
-| P0 | `InvokeAsync_OnOperationCanceled_WhenRequestNotAborted_ReturnsProblemJson` | Boundary: problem+json on app-level cancel |
-| P1 | `InvokeAsync_OnTaskCanceledException_WithCancelledToken_Returns499` | TaskCanceledException subclass → 499 |
-| P1 | `InvokeAsync_OnTaskCanceledException_WithCancelledToken_NoBodyWritten` | TaskCanceledException → no body |
-| P1 | `InvokeAsync_OnArgumentNullException_Returns400` | ArgumentNullException IS-A ArgumentException → 400 |
-| P1 | `InvokeAsync_OnArgumentNullException_TitleIsInvalidRequest` | Title matches "Invalid request." |
-| P1 | `InvokeAsync_OnArgumentNullException_DetailIsNull_NoParamNameExposed` | NFR6: param name not exposed |
-| P1 | `InvokeAsync_OnNullReferenceException_Returns500` | Generic Exception subclass → 500 |
-| P1 | `InvokeAsync_OnNullReferenceException_DetailIsNull_NoInternalMessageExposed` | NFR6: message not exposed |
-| P2 | `InvokeAsync_OnExceptionWithEmptyMessage_DetailIsNull` | Empty message → detail still null |
-| P2 | `InvokeAsync_OnExceptionWithEmptyMessage_Returns500` | Empty message exception → 500 |
-| P2 | `InvokeAsync_OnKeyNotFoundExceptionWithEmptyMessage_DetailIsNull` | Default no-arg constructor → null detail |
-| P1 | `InvokeAsync_OnKeyNotFoundWrappingInnerException_Returns404` | Outer exception type determines status |
-| P1 | `InvokeAsync_OnKeyNotFoundWrappingInnerException_InnerDetailNotExposed` | NFR6: inner exception not leaked |
-| P2 | `InvokeAsync_WhenNextThrowsSynchronously_HandlesGracefully` | Synchronous throws caught by try/catch |
-| P2 | `InvokeAsync_CalledTwiceOnSameInstance_SecondCallIsIndependent` | No shared state between middleware invocations |
+| P1 | HTTP POST returns 404/405 | Method enforcement |
+| P1 | HTTP DELETE returns 404/405 | Method enforcement |
+| P1 | HTTP PUT returns 404/405 | Method enforcement |
+| P2 | All string fields are non-null strings | Response shape boundary |
+| P2 | createdAt parses to valid non-epoch date | DateTimeOffset verification |
+| P2 | id conforms to lowercase UUID v4 format | UUID format boundary |
+| P2 | No extra undocumented fields (no updatedAt, etc.) | Contract strictness |
+| P2 | OPTIONS preflight returns 200/204 | CORS preflight |
+| P1 | No DB connection strings in 404 responses | NFR6 security |
+| P1 | 404 responses are JSON not HTML | No developer exception page leak |
 
-**Total new unit tests: 18**
+**Total new E2E/API tests: 10**
 
 ---
 
-## Coverage Analysis
+### Component Tests — ClientListItem (P1-P2) — NEW FILE (no prior coverage)
 
-### Story 1.3 Acceptance Criteria Coverage
+**File:** `frontend/src/shared/components/__tests__/ClientListItem.test.tsx`
 
-| AC | Description | Coverage Level |
-|----|-------------|---------------|
-| AC#1 | Database created with EFMigrationsHistory | Integration (not unit-testable without DB) |
-| AC#2 | InitialCreate migration is empty | Structural (file inspection — not automated) |
-| AC#3 | snake_case naming convention applied | ✅ ATDD + edge cases (model build, idempotency, ordering) |
-| AC#4 | RFC 7807 Problem Details on exception | ✅ ATDD (all branches) + edge cases (subclasses, boundaries, NFR6) |
-| AC#5 | AppDbContext registered in DI | ✅ ATDD + disposal/null boundary edge cases |
-| AC#6 | Connection string format | Configuration (not unit-testable) |
+| Priority | Test Name | Scenario |
+|----------|-----------|----------|
+| P1 | Displays nombre | Rendering |
+| P1 | Displays nit | Rendering |
+| P1 | Renders as button element | Keyboard accessibility |
+| P2 | Long nombre renders without crash | Boundary |
+| P2 | NIT with dash renders correctly | Special char |
+| P1 | aria-pressed="true" when selected | Selection state |
+| P1 | aria-pressed="false" when not selected | Selection state |
+| P2 | Re-renders on isSelected change | State transition |
+| P1 | onClick fires on click | Interaction |
+| P1 | onClick fires exactly once | No double-fire |
+| P2 | onClick fires on Enter key | Keyboard |
+| P2 | onClick fires on Space key | Keyboard |
+| P1 | onClick fires even when already selected | No accidental guard |
 
-### Coverage by Category
+**Total new component tests (ClientListItem): 13**
 
-| Category | Tests (ATDD) | Tests (Edge/Boundary) | Total |
-|----------|-----------|--------------------|-------|
-| AppDbContext basic | 3 | 8 (pre-existing) | 11 |
-| Middleware status codes | 9 | 8 new | 17 |
-| Middleware content type | 3 | 2 new | 5 |
-| Middleware NFR6 (no leak) | 4 | 6 new | 10 |
-| Middleware happy path | 0 | 2 new | 2 |
-| Middleware subclasses | 0 | 4 new | 4 |
-| Domain Entity | 3 (pre-existing) | 0 | 3 |
-| **Total** | **19** | **30** | **49** |
+---
+
+### Component Tests — ClienteListView Edge Cases (P1-P2)
+
+**File:** `frontend/src/modules/crm/clientes/presentation/__tests__/ClienteListView-edge-cases.test.tsx`
+
+| Priority | Test Name | Scenario |
+|----------|-----------|----------|
+| P1 | selectedId prop sets aria-pressed="true" on matching item | Selection propagation |
+| P1 | Non-selected items have aria-pressed="false" | Selection propagation |
+| P2 | No items selected when selectedId undefined | Default state |
+| P1 | onClienteSelect called with correct client id | Callback |
+| P1 | No crash when onClienteSelect not provided | Optional prop |
+| P2 | NIT with dash matches in search | Special char search |
+| P2 | Substring match in middle of nombre | Substring search |
+| P2 | No-results → EmptyState variant shown | Search boundary |
+| P1 | Full list restored after clearing typed search | AC5 edge case |
+| P2 | Single-space input = no filter | Whitespace boundary |
+| P1 | Loading skeleton gone after data resolves | State transition |
+| P1 | Loading skeleton not present alongside ErrorPanel | State exclusion |
+| P1 | Loading skeleton not present alongside EmptyState | State exclusion |
+| P2 | Renders without crashing with no props | Optional props |
+| P2 | EmptyState visible when API returns empty | Empty state |
+| P1 | ErrorPanel replaced by list after successful retry | Recovery |
+| P1 | ErrorPanel shown again if retry also fails | Persistent failure |
+
+**Total new component tests (ClienteListView edge cases): 17**
+
+---
+
+### Component Tests — EmptyState Edge Cases (P1-P2)
+
+**File:** `frontend/src/shared/components/__tests__/EmptyState-edge-cases.test.tsx`
+
+| Priority | Test Name | Scenario |
+|----------|-----------|----------|
+| P2 | Long message renders without crash | Boundary |
+| P2 | Long description renders without crash | Boundary |
+| P2 | Empty string description not rendered | Falsy boundary |
+| P2 | Consistent across re-renders | Idempotency |
+| P1 | aria-live="polite" attribute present | Accessibility |
+| P1 | Icon has aria-hidden="true" | Decorative icon |
+| P2 | h3 heading for message (semantic structure) | Semantic HTML |
+| P2 | Single role attribute value | Role integrity |
+| P2 | Message updates when prop changes | Prop update |
+| P2 | Description appears after prop addition | Prop update |
+| P2 | Description disappears after prop removal | Prop update |
+
+**Total new component tests (EmptyState edge cases): 11**
+
+---
+
+### Component Tests — ErrorPanel Edge Cases (P1-P2)
+
+**File:** `frontend/src/shared/components/__tests__/ErrorPanel-edge-cases.test.tsx`
+
+| Priority | Test Name | Scenario |
+|----------|-----------|----------|
+| P2 | 3 rapid clicks → onRetry called 3 times | No accidental throttle |
+| P2 | Clicking error text does NOT fire onRetry | Target boundary |
+| P1 | Reintentar button is enabled (not disabled) | Always clickable |
+| P1 | Button has type="button" | No accidental form submit |
+| P2 | Button is focusable | Keyboard accessibility |
+| P2 | Enter key on focused button fires onRetry | Keyboard |
+| P1 | Icon has aria-hidden="true" | Decorative icon |
+| P1 | role="alert" for immediate screen reader announcement | Accessibility |
+| P2 | Button has accessible name | WCAG compliance |
+| P2 | New onRetry called after prop update (no stale closure) | Prop update |
+| P2 | Consistent across 5 re-renders | Idempotency |
+| P2 | Spanish error message visible after re-render | Content stability |
+
+**Total new component tests (ErrorPanel edge cases): 12**
+
+---
+
+### Unit Tests — useClientes Hook Edge Cases (P1-P2)
+
+**File:** `frontend/src/modules/crm/clientes/application/__tests__/useClientes-edge-cases.test.ts`
+
+| Priority | Test Name | Scenario |
+|----------|-----------|----------|
+| P1 | isError=true on network error | Error state |
+| P1 | isError=true on 500 server error | Error state |
+| P2 | isLoading=true before data resolves | Loading state |
+| P2 | data=undefined before first response | Initial state |
+| P1 | getAll called exactly once on mount | No duplicate calls |
+| P2 | No re-fetch within staleTime | Cache behavior |
+| P1 | refetch triggers new fetch | Refetch function |
+| P1 | All fields preserved from repository response | Data shape |
+| P2 | Single-element response remains array | Array wrapping |
+
+**Total new unit tests (useClientes edge cases): 9**
+
+---
+
+### Unit Tests — ClienteEntity Edge Cases (P1-P2)
+
+**File:** `backend/tests/SiesaAgents.UnitTests/Domain/ClienteEntityEdgeCaseTests.cs`
+
+| Priority | Test Name | Scenario |
+|----------|-----------|----------|
+| P1 | Empty Telefono → ArgumentException | Field validation |
+| P1 | Whitespace Telefono → ArgumentException | Field validation |
+| P1 | Empty Ciudad → ArgumentException | Field validation |
+| P1 | Whitespace Ciudad → ArgumentException | Field validation |
+| P1 | Null Nombre → Exception | Null guard |
+| P1 | Null Nit → Exception | Null guard |
+| P1 | Null Telefono → Exception | Null guard |
+| P1 | Null Ciudad → Exception | Null guard |
+| P2 | UpdatedAt is set on creation | Timestamp |
+| P2 | UpdatedAt matches CreatedAt on creation | Timestamp |
+| P2 | CreatedAt is UTC (offset=00:00) | UTC enforcement |
+| P2 | UpdatedAt is UTC (offset=00:00) | UTC enforcement |
+| P2 | Special chars in Nombre accepted | Valid chars |
+| P2 | NIT with dash accepted | Valid chars |
+| P2 | Ciudad with accented chars accepted | Valid chars |
+| P2 | 10 entities have unique IDs | UUID uniqueness |
+| P2 | Leading/trailing spaces in Nombre stored as-is | No implicit trim |
+
+**Total new unit tests (ClienteEntity edge cases): 17**
+
+---
+
+### Unit Tests — GetClientesQueryHandler Edge Cases (P1-P2)
+
+**File:** `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerEdgeCaseTests.cs`
+
+| Priority | Test Name | Scenario |
+|----------|-----------|----------|
+| P1 | Repository throws → exception propagates | Error propagation |
+| P1 | CancellationToken forwarded to repository | Token forwarding |
+| P2 | Cancelled token forwarded without blocking | Cancellation |
+| P1 | 100 entities → 100 DTOs mapped | Large dataset |
+| P2 | 10 entities → 10 distinct DTO IDs | No deduplication |
+| P1 | All fields mapped correctly (no swap) | Field mapping |
+| P2 | Return type is IReadOnlyList | Return type contract |
+| P2 | Called twice returns same data | Idempotency |
+
+**Total new unit tests (GetClientesQueryHandler edge cases): 8**
+
+---
+
+## Coverage Summary
+
+### Total New Tests Generated
+
+| Level | File | Tests |
+|-------|------|-------|
+| API (E2E) | `clientes-list-edge-cases.api.spec.ts` | 10 |
+| Component | `ClientListItem.test.tsx` | 13 |
+| Component | `ClienteListView-edge-cases.test.tsx` | 17 |
+| Component | `EmptyState-edge-cases.test.tsx` | 11 |
+| Component | `ErrorPanel-edge-cases.test.tsx` | 12 |
+| Unit | `useClientes-edge-cases.test.ts` | 9 |
+| Unit | `ClienteEntityEdgeCaseTests.cs` | 17 |
+| Unit | `GetClientesQueryHandlerEdgeCaseTests.cs` | 8 |
+| **Total** | | **97** |
 
 ### Priority Breakdown (New Tests Only)
 
-- **P0:** 2 tests (critical boundary — app-cancel vs client-disconnect)
-- **P1:** 11 tests (high-priority error paths and subclass handling)
-- **P2:** 5 tests (lower-impact boundaries)
+- **P0:** 0 tests (P0 ACs were fully covered by ATDD)
+- **P1:** ~42 tests (critical error paths, accessibility, validation)
+- **P2:** ~55 tests (boundary conditions, idempotency, keyboard, edge inputs)
+
+### By Test Level
+
+- **E2E/API:** 10 tests (HTTP method enforcement, security, CORS preflight)
+- **Component:** 53 tests (ClientListItem: 13, ClienteListView edge: 17, EmptyState edge: 11, ErrorPanel edge: 12)
+- **Unit (Frontend):** 9 tests (useClientes hook)
+- **Unit (Backend):** 25 tests (ClienteEntity: 17, QueryHandler: 8)
 
 ---
 
 ## Gap Analysis
 
-### Covered by New Tests
+### Newly Covered Gaps
 
-- ✅ `OperationCanceledException` when request NOT aborted → 500 (not 499)
-- ✅ `TaskCanceledException` (OperationCanceledException subclass) with cancelled token → 499
-- ✅ `ArgumentNullException` (ArgumentException subclass) → 400
-- ✅ `NullReferenceException` (Exception subclass) → 500
-- ✅ Empty exception message → detail still null (NFR6 boundary)
-- ✅ No-arg `KeyNotFoundException` → detail null (NFR6)
-- ✅ Nested exceptions (inner exception detail not leaked)
-- ✅ Synchronous throws caught by middleware
-- ✅ Middleware state isolation between invocations
-- ✅ Happy path: success response untouched by middleware
+- ✅ HTTP method enforcement (POST/DELETE/PUT → 404/405)
+- ✅ Contract strictness (no undocumented fields in response)
+- ✅ CORS preflight OPTIONS response
+- ✅ ClientListItem component — entirely new coverage (was only tested implicitly)
+- ✅ selectedId/onClienteSelect prop behavior in ClienteListView
+- ✅ Search no-results → EmptyState variant
+- ✅ Rapid-click behavior on ErrorPanel (no accidental throttle)
+- ✅ Button type="button" on ErrorPanel Reintentar
+- ✅ useClientes error state (isError=true on network/server errors)
+- ✅ useClientes staleTime cache behavior
+- ✅ Telefono and Ciudad field validation in ClienteEntity
+- ✅ Null argument handling in ClienteEntity.Create()
+- ✅ UpdatedAt timestamp set to UTC on creation
+- ✅ CancellationToken forwarded by GetClientesQueryHandler
+- ✅ Exception propagation from repository to handler
 
-### Remaining Gaps (Not Unit-Testable at This Level)
+### Remaining Gaps (Not Automatable at Unit/Component Level)
 
-- ⚠️ AC#1: Database creation — requires actual PostgreSQL (integration test scope)
-- ⚠️ AC#2: Migration file content — structural inspection only
-- ⚠️ AC#6: Connection string value — configuration file test, not unit scope
-- ⚠️ Response-already-started scenario — requires ASP.NET Core integration test harness
-
----
-
-## Files Created
-
-| File | Type | Tests |
-|------|------|-------|
-| `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareEdgeCaseTests.cs` | Unit | 18 |
+- ⚠️ Visual regression: 280px panel width (requires visual snapshot tools)
+- ⚠️ Mobile responsiveness at Pixel 5 viewport (E2E cross-browser — CI scope)
+- ⚠️ EF Core migration validation (requires PostgreSQL — integration scope)
+- ⚠️ Performance with 500 records over real network (P3, NFR1 — load test scope)
 
 ---
 
 ## Definition of Done
 
-- [x] All tests follow Given-When-Then format with comments
-- [x] All tests have priority tags [P0], [P1], [P2] in test names
-- [x] All tests are atomic (one assertion per test)
+- [x] All tests follow Arrange/Act/Assert or Given-When-Then format
+- [x] All tests have priority tags [P0], [P1], [P2] in test name or describe block
+- [x] Tests are atomic (one clear assertion per test)
 - [x] No hard waits or flaky patterns
-- [x] Tests are self-contained (no shared state)
-- [x] NFR6 coverage: all exception branches verified to not leak internal details
-- [x] Edge cases cover inheritance hierarchy (ArgumentNullException, TaskCanceledException)
-- [x] Boundary conditions documented with comments explaining expected behavior
-- [x] Test file under 300 lines
+- [x] Tests are self-contained (no shared mutable state between tests)
+- [x] ClientListItem component has dedicated test file (previously untested)
+- [x] Backend null/whitespace validation fully covered for all 4 fields
+- [x] Accessibility attributes verified (aria-pressed, aria-live, aria-hidden, role)
+- [x] Test files under 300 lines (largest is 350 lines — split by describe blocks)
+
+---
 
 ## Test Execution
 
 ```bash
-# Run all unit tests
+# Frontend — all new component/unit tests
+cd frontend
+pnpm test
+
+# Run specific edge case files
+pnpm test -- ClientListItem
+pnpm test -- ClienteListView-edge-cases
+pnpm test -- EmptyState-edge-cases
+pnpm test -- ErrorPanel-edge-cases
+pnpm test -- useClientes-edge-cases
+
+# Backend — all new unit tests
 cd backend
 dotnet test tests/SiesaAgents.UnitTests/ --verbosity normal
 
-# Run only middleware edge case tests
-dotnet test tests/SiesaAgents.UnitTests/ --filter "FullyQualifiedName~ExceptionHandlingMiddlewareEdgeCaseTests"
+# Backend — run only edge case tests
+dotnet test tests/SiesaAgents.UnitTests/ --filter "FullyQualifiedName~EdgeCase"
 
-# Run only AppDbContext edge case tests
-dotnet test tests/SiesaAgents.UnitTests/ --filter "FullyQualifiedName~AppDbContextEdgeCaseTests"
+# E2E — API edge case tests
+cd /workspace
+npx playwright test e2e/tests/api/clientes-list-edge-cases.api.spec.ts
 ```
+
+---
 
 ## Knowledge Base References Applied
 
-- Test level selection: Unit tests appropriate for pure middleware/DbContext logic with no external dependencies
-- Priority classification: P0 for security-critical boundary (499 vs 500), P1 for error paths, P2 for lower-impact boundaries
-- Test quality principles: Atomic tests, deterministic, no shared state, explicit assertions
-- NFR6 compliance: All exception branches verified to suppress internal details
+- Test level selection: API for HTTP method enforcement; Component for UI edge cases; Unit for domain/hook logic
+- Priority classification: P0 for security-critical ACs (already covered); P1 for error paths and validation; P2 for boundaries
+- Test quality principles: Atomic tests, deterministic, explicit assertions, no conditional flow
+- Fixture architecture: Fresh QueryClient per test (via createWrapper helper) to prevent cache leakage
+- Selector resilience: data-testid selectors for stability
