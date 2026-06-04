@@ -181,9 +181,7 @@ public class ExceptionHandlingMiddlewareTests
         Assert.Null(problem?.Detail);
     }
 
-    // ──────────────────────────────────────────────────────────────────────────────
     // AC #4 — ArgumentException → HTTP 400 Problem Details
-    // ──────────────────────────────────────────────────────────────────────────────
 
     [Fact]
     public async Task InvokeAsync_OnArgumentException_Returns400StatusCode()
@@ -228,9 +226,7 @@ public class ExceptionHandlingMiddlewareTests
         Assert.Equal("Invalid request.", problem?.Title);
     }
 
-    // ──────────────────────────────────────────────────────────────────────────────
     // AC #4 — InvalidOperationException → HTTP 400 Problem Details
-    // ──────────────────────────────────────────────────────────────────────────────
 
     [Fact]
     public async Task InvokeAsync_OnInvalidOperationException_Returns400StatusCode()
@@ -261,9 +257,7 @@ public class ExceptionHandlingMiddlewareTests
         Assert.Equal("Invalid request.", problem?.Title);
     }
 
-    // ──────────────────────────────────────────────────────────────────────────────
     // AC #4 — Cancelled request → HTTP 499, no response body written
-    // ──────────────────────────────────────────────────────────────────────────────
 
     [Fact]
     public async Task InvokeAsync_OnCancelledRequest_Returns499StatusCode()
