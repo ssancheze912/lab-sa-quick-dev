@@ -53,6 +53,7 @@ function NavLinks({ className }: { className?: string }) {
           className={className}
           activeProps={{
             'aria-current': 'page' as const,
+            className: 'text-[#0e79fd] bg-slate-100 dark:bg-slate-800',
           }}
         >
           {item.icon}
