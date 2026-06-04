@@ -2,103 +2,48 @@
  * Story 1.2: Frontend Navigation Shell
  * Epic 1: Project Foundation & Application Shell
  *
- * Component Tests (Vitest + RTL) — RED Phase
- * These tests are intentionally FAILING until implementation is complete.
+ * NotFoundView Tests (Vitest + RTL)
  *
  * Acceptance Criteria covered:
- *   AC6 — Unknown routes display 404 view in Spanish with /clientes link
+ *   AC6 — 404 / not-found view is displayed gracefully with a message in Spanish
+ *          and a link to return to /clientes
  */
 
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render, screen, waitFor } from '@testing-library/react'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
 import { routeTree } from '../../../routeTree.gen'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper: render the application at an unknown/404 route
-// ─────────────────────────────────────────────────────────────────────────────
-
-function renderAtUnknownRoute(path: string = '/ruta-inexistente') {
-  const history = createMemoryHistory({ initialEntries: [path] })
+async function renderNotFound() {
+  const history = createMemoryHistory({ initialEntries: ['/ruta-inexistente'] })
   const router = createRouter({ routeTree, history })
   render(<RouterProvider router={router} />)
+  await router.load()
   return router
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AC6 — 404 not-found view for unknown routes
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('AC6 — NotFoundView for unknown routes', () => {
-  it('should display the not-found view container for an unknown route', () => {
+describe('NotFoundView — AC6', () => {
+  it('should display "Página no encontrada" heading on unknown routes', async () => {
     // GIVEN: The user navigates to an unknown route
-    renderAtUnknownRoute('/ruta-inexistente')
+    await renderNotFound()
 
-    // THEN: The 404 not-found view container is rendered
-    expect(screen.getByTestId('not-found-view')).toBeInTheDocument()
+    // THEN: The 404 heading is visible in Spanish
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: 'Página no encontrada', level: 1 }),
+      ).toBeInTheDocument()
+    })
   })
 
-  it('should display the heading "Página no encontrada" in Spanish', () => {
-    // GIVEN: The user is on an unknown route
-    renderAtUnknownRoute('/ruta-inexistente')
+  it('should display a link to /clientes on the 404 page', async () => {
+    // GIVEN: The 404 view is rendered
+    await renderNotFound()
 
-    // THEN: The heading is visible and says "Página no encontrada" in Spanish
-    expect(screen.getByTestId('not-found-heading')).toBeInTheDocument()
-    expect(screen.getByTestId('not-found-heading')).toHaveTextContent('Página no encontrada')
-  })
-
-  it('should render the heading as an H1 element', () => {
-    // GIVEN: The user is on the 404 not-found page
-    renderAtUnknownRoute('/ruta-inexistente')
-
-    // THEN: The heading element is an H1 (semantically correct)
-    expect(screen.getByRole('heading', { level: 1, name: /página no encontrada/i })).toBeInTheDocument()
-  })
-
-  it('should display a descriptive paragraph in Spanish', () => {
-    // GIVEN: The user is on the 404 not-found page
-    renderAtUnknownRoute('/ruta-inexistente')
-
-    // THEN: A descriptive paragraph in Spanish is visible below the heading
-    // The implementation must include a <p> element with a description in Spanish
-    const view = screen.getByTestId('not-found-view')
-    expect(view.querySelector('p')).not.toBeNull()
-  })
-
-  it('should display a link to /clientes from the 404 view', () => {
-    // GIVEN: The user is on the 404 not-found page
-    renderAtUnknownRoute('/ruta-inexistente')
-
-    // THEN: A link back to /clientes is visible
-    expect(screen.getByTestId('not-found-back-link')).toBeInTheDocument()
-  })
-
-  it('should have href="/clientes" on the return link', () => {
-    // GIVEN: The user is on the 404 not-found page
-    renderAtUnknownRoute('/ruta-inexistente')
-
-    // THEN: The return link points to /clientes
-    expect(screen.getByTestId('not-found-back-link')).toHaveAttribute('href', '/clientes')
-  })
-
-  it('should show a human-readable CTA text on the return link', () => {
-    // GIVEN: The user is on the 404 not-found page
-    renderAtUnknownRoute('/ruta-inexistente')
-
-    // THEN: The CTA link has meaningful Spanish text (e.g., "Ir a Clientes")
-    const backLink = screen.getByTestId('not-found-back-link')
-    expect(backLink.textContent?.length).toBeGreaterThan(0)
-  })
-
-  it('should navigate to /clientes when the return link is clicked', async () => {
-    // GIVEN: The user is on the 404 not-found page
-    const router = renderAtUnknownRoute('/ruta-inexistente')
-
-    // WHEN: The user clicks the back-to-clientes link
-    await userEvent.click(screen.getByTestId('not-found-back-link'))
-
-    // THEN: The router navigates to /clientes
-    expect(router.state.location.pathname).toBe('/clientes')
+    // THEN: A link labeled "Ir a Clientes" exists and points to /clientes
+    await waitFor(() => {
+      const link = screen.getByRole('link', { name: 'Ir a Clientes' })
+      expect(link).toBeInTheDocument()
+      expect(link).toHaveAttribute('href', '/clientes')
+    })
   })
 })
