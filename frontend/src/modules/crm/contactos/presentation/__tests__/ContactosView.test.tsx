@@ -25,12 +25,12 @@ describe('ContactosView — unit', () => {
     expect(container).toBeTruthy()
   })
 
-  it('should render a <main> element as the root node', () => {
+  it('should render a <section> element as the root node', () => {
     // GIVEN: The component renders
-    render(<ContactosView />)
+    const { container } = render(<ContactosView />)
 
-    // THEN: A <main> landmark is present (semantic HTML)
-    expect(screen.getByRole('main')).toBeInTheDocument()
+    // THEN: A <section> element is present as root (avoids nested <main> with root layout)
+    expect(container.querySelector('section[data-testid="contactos-view"]')).toBeTruthy()
   })
 
   it('should have the data-testid="contactos-view" attribute on root element', () => {
@@ -49,21 +49,20 @@ describe('ContactosView — unit', () => {
     expect(screen.getByText('Vista de Contactos (próximamente)')).toBeInTheDocument()
   })
 
-  it('should render exactly one <main> element (no duplicate landmarks)', () => {
-    // GIVEN: The component renders
-    render(<ContactosView />)
+  it('should NOT render a <main> element (root layout owns the main landmark)', () => {
+    // GIVEN: The component renders in isolation
+    const { container } = render(<ContactosView />)
 
-    // THEN: There is only one main landmark
-    const mains = screen.getAllByRole('main')
-    expect(mains).toHaveLength(1)
+    // THEN: No nested <main> landmark is created (root layout already provides one)
+    expect(container.querySelector('main')).toBeNull()
   })
 
-  it('should contain the placeholder text inside the main element', () => {
+  it('should contain the placeholder text inside the section element', () => {
     // GIVEN: The component renders
     render(<ContactosView />)
 
-    // THEN: The text is a descendant of the main element
-    const main = screen.getByRole('main')
-    expect(main).toHaveTextContent('Vista de Contactos (próximamente)')
+    // THEN: The text is a descendant of the section element
+    const section = screen.getByTestId('contactos-view')
+    expect(section).toHaveTextContent('Vista de Contactos (próximamente)')
   })
 })

@@ -25,12 +25,12 @@ describe('ClientesView — unit', () => {
     expect(container).toBeTruthy()
   })
 
-  it('should render a <main> element as the root node', () => {
+  it('should render a <section> element as the root node', () => {
     // GIVEN: The component renders
-    render(<ClientesView />)
+    const { container } = render(<ClientesView />)
 
-    // THEN: A <main> landmark is present (semantic HTML)
-    expect(screen.getByRole('main')).toBeInTheDocument()
+    // THEN: A <section> element is present as root (avoids nested <main> with root layout)
+    expect(container.querySelector('section[data-testid="clientes-view"]')).toBeTruthy()
   })
 
   it('should have the data-testid="clientes-view" attribute on root element', () => {
@@ -49,21 +49,20 @@ describe('ClientesView — unit', () => {
     expect(screen.getByText('Vista de Clientes (próximamente)')).toBeInTheDocument()
   })
 
-  it('should render exactly one <main> element (no duplicate landmarks)', () => {
-    // GIVEN: The component renders
-    render(<ClientesView />)
+  it('should NOT render a <main> element (root layout owns the main landmark)', () => {
+    // GIVEN: The component renders in isolation
+    const { container } = render(<ClientesView />)
 
-    // THEN: There is only one main landmark (no duplicate semantics)
-    const mains = screen.getAllByRole('main')
-    expect(mains).toHaveLength(1)
+    // THEN: No nested <main> landmark is created (root layout already provides one)
+    expect(container.querySelector('main')).toBeNull()
   })
 
-  it('should contain the placeholder text inside the main element', () => {
+  it('should contain the placeholder text inside the section element', () => {
     // GIVEN: The component renders
     render(<ClientesView />)
 
-    // THEN: The text is a descendant of the main element
-    const main = screen.getByRole('main')
-    expect(main).toHaveTextContent('Vista de Clientes (próximamente)')
+    // THEN: The text is a descendant of the section element
+    const section = screen.getByTestId('clientes-view')
+    expect(section).toHaveTextContent('Vista de Clientes (próximamente)')
   })
 })
