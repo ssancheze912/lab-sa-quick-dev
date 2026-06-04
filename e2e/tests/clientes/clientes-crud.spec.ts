@@ -1,3 +1,8 @@
+// TODO (TEA Review): This file covers FR4 (create), FR7 (NIT unique), FR8 (required fields)
+// which are OUT OF SCOPE for Story 2.1. These tests belong to Stories 2.3–2.5.
+// The createCliente / deleteCliente API helpers call POST/DELETE endpoints not yet implemented.
+// Move or skip these tests until the corresponding stories are implemented.
+// See test-review-2-1.md for details.
 import { test, expect } from '../../fixtures/base.fixture';
 import { ClientesPage } from '../../pages/clientes.page';
 import { ApiHelper } from '../../helpers/api.helper';
