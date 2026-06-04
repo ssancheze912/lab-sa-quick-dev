@@ -72,14 +72,11 @@ describe('apiClient — edge cases and boundary conditions', () => {
     expect(firstRef).toBe(secondRef)
   })
 
-  it('[P3] should have application/json as the Content-Type header in the common headers object', () => {
+  it('[P3] should have application/json as the Content-Type header accessible via direct header path', () => {
     // GIVEN: axios.create receives { headers: { 'Content-Type': 'application/json' } }
-    // WHEN: We access the specific header via the common headers path
-    // THEN: Content-Type is present (both paths should work)
-    const commonContentType = apiClient.defaults.headers.common?.['Content-Type']
+    // WHEN: We access the header directly from defaults.headers
+    // THEN: Content-Type is 'application/json'
     const directContentType = apiClient.defaults.headers['Content-Type']
-    // At least one of the two header paths must hold the value
-    const found = commonContentType === 'application/json' || directContentType === 'application/json'
-    expect(found).toBe(true)
+    expect(directContentType).toBe('application/json')
   })
 })

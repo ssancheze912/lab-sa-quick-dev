@@ -37,17 +37,26 @@ test.describe('ExceptionHandlingMiddleware — RFC 7807 Problem Details boundary
     expect(contentType.toLowerCase()).toMatch(/json/);
   });
 
-  test('[P1] should return a numeric status code in the Problem Details body for 404 responses', async ({
+  test('[P1] should return 404 status for a non-existent API endpoint', async ({
     request,
   }) => {
     // GIVEN: The backend is running with ExceptionHandlingMiddleware
     // WHEN: A non-existent API endpoint is requested
     const response = await request.get(`${API_BASE_URL}/api/does-not-exist-boundary`);
 
-    // THEN: HTTP status is 404 and body does NOT contain raw stack trace
+    // THEN: HTTP status is 404
     expect(response.status()).toBe(404);
+  });
+
+  test('[P1] should not expose raw stack traces in 404 response bodies', async ({
+    request,
+  }) => {
+    // GIVEN: The backend is running with ExceptionHandlingMiddleware
+    // WHEN: A non-existent API endpoint is requested
+    const response = await request.get(`${API_BASE_URL}/api/does-not-exist-boundary`);
     const body = await response.text();
-    // Stack traces contain "at " followed by method names — must not be exposed
+
+    // THEN: Body does NOT contain raw stack trace (stack traces have "at MethodName.")
     expect(body).not.toMatch(/\s+at\s+\w+\./);
   });
 

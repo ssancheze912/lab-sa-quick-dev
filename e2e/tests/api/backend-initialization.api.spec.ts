@@ -83,11 +83,10 @@ test.describe('AC2 — Backend server initialization and Scalar API documentatio
       },
     });
 
-    // THEN: The Access-Control-Allow-Origin header is present and allows the frontend origin
+    // THEN: The Access-Control-Allow-Origin header explicitly allows the frontend origin
+    // Wildcard (*) is NOT acceptable — the policy must use specific origin per architecture spec
     const allowOriginHeader = response.headers()['access-control-allow-origin'] ?? '';
-    expect(
-      allowOriginHeader === 'http://localhost:5173' || allowOriginHeader === '*'
-    ).toBe(true);
+    expect(allowOriginHeader).toBe('http://localhost:5173');
   });
 
   test('should respond to OPTIONS preflight from frontend origin without CORS rejection', async ({
