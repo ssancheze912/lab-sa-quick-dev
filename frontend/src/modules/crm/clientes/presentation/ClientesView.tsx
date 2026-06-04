@@ -1,14 +1,23 @@
-import { useState } from 'react';
+import { ClienteDetailView } from './ClienteDetailView';
 import { ClienteListView } from './ClienteListView';
 
-export function ClientesView() {
-  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+interface ClientesViewProps {
+  selectedClienteId?: string;
+}
 
+export function ClientesView({ selectedClienteId }: ClientesViewProps = {}) {
   return (
     <div data-testid="clientes-view" className="flex h-full">
-      <ClienteListView selectedId={selectedId} onClienteSelect={setSelectedId} />
-      {/* Right panel — placeholder for Story 2.2 */}
-      <div className="flex-1" aria-label="Detalle del cliente" />
+      <ClienteListView selectedClienteId={selectedClienteId} />
+      <div className="flex-1">
+        {selectedClienteId ? (
+          <ClienteDetailView clienteId={selectedClienteId} />
+        ) : (
+          <div className="flex h-full items-center justify-center text-slate-400 text-sm">
+            Selecciona un cliente para ver sus detalles
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { ClientListItem } from '../../../../shared/components/ClientListItem';
@@ -7,13 +8,13 @@ import { ErrorPanel } from '../../../../shared/components/ErrorPanel';
 import { useClientes } from '../application/useClientes';
 
 interface ClienteListViewProps {
-  selectedId?: string;
-  onClienteSelect?: (id: string) => void;
+  selectedClienteId?: string;
 }
 
-export function ClienteListView({ selectedId, onClienteSelect }: ClienteListViewProps) {
+export function ClienteListView({ selectedClienteId }: ClienteListViewProps) {
   const { data, isLoading, isError, refetch } = useClientes();
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   const filteredClientes = useMemo(() => {
     if (!data) return [];
@@ -23,6 +24,10 @@ export function ClienteListView({ selectedId, onClienteSelect }: ClienteListView
       (c) => c.nombre.toLowerCase().includes(q) || c.nit.toLowerCase().includes(q),
     );
   }, [data, searchQuery]);
+
+  const handleClienteClick = (clienteId: string) => {
+    void navigate({ to: '/clientes/$clienteId', params: { clienteId } });
+  };
 
   if (isLoading) {
     return (
@@ -77,8 +82,8 @@ export function ClienteListView({ selectedId, onClienteSelect }: ClienteListView
             <div key={cliente.id} role="listitem" data-testid="cliente-list-item">
               <ClientListItem
                 cliente={cliente}
-                isSelected={selectedId === cliente.id}
-                onClick={() => onClienteSelect?.(cliente.id)}
+                isSelected={selectedClienteId === cliente.id}
+                onClick={() => handleClienteClick(cliente.id)}
               />
             </div>
           ))
