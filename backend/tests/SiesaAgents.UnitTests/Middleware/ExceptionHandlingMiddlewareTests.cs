@@ -7,14 +7,13 @@ using Xunit;
 namespace SiesaAgents.UnitTests.Middleware;
 
 /// <summary>
-/// ATDD tests for Story 1.3 — Backend Database Foundation.
+/// Tests for Story 1.3 — Backend Database Foundation.
 /// AC #4: ExceptionHandlingMiddleware returns RFC 7807 Problem Details on unhandled exceptions.
 ///   - HTTP 500 for generic exceptions (no stack trace, no detail message).
 ///   - HTTP 404 for KeyNotFoundException.
 ///   - HTTP 400 for ArgumentException / InvalidOperationException.
 ///   - HTTP 499 for cancelled requests (no body written).
 ///   - Content-Type: application/problem+json on all error branches.
-/// Tests are in RED phase — enhanced middleware branches (404/400) do not exist yet.
 /// </summary>
 public class ExceptionHandlingMiddlewareTests
 {

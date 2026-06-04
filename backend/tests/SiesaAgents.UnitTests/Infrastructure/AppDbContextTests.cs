@@ -5,10 +5,9 @@ using Xunit;
 namespace SiesaAgents.UnitTests.Infrastructure;
 
 /// <summary>
-/// ATDD tests for Story 1.3 — Backend Database Foundation.
+/// Tests for Story 1.3 — Backend Database Foundation.
 /// AC #3: OnModelCreating applies UseSnakeCaseNamingConvention().
 /// AC #5: AppDbContext can be instantiated with valid options (DI registration precondition).
-/// Tests are in RED phase — AppDbContext does not exist yet (rename from SiesaAgentsDbContext pending).
 /// </summary>
 public class AppDbContextTests
 {
