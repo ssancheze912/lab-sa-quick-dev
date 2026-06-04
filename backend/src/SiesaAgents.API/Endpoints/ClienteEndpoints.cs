@@ -14,6 +14,17 @@ public static class ClienteEndpoints
             return Results.Ok(result);
         });
 
+        group.MapGet("/{id:guid}", async (Guid id, GetClienteByIdQueryHandler handler, CancellationToken ct) =>
+        {
+            var result = await handler.HandleAsync(new GetClienteByIdQuery(id), ct);
+            return result is not null
+                ? Results.Ok(result)
+                : Results.Problem(
+                    title: "Not Found",
+                    detail: "El cliente no fue encontrado",
+                    statusCode: StatusCodes.Status404NotFound);
+        });
+
         return app;
     }
 }

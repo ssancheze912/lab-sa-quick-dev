@@ -117,4 +117,80 @@ public class ClienteEndpointsTests : IClassFixture<WebApplicationFactory<Program
         Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
         Assert.Equal(0, doc.RootElement.GetArrayLength());
     }
+
+    /// <summary>
+    /// TC-E2-P2-02: Seed 1 client, GET /api/v1/clientes/{id}, assert 200 + JSON object with all required fields.
+    /// </summary>
+    [Fact]
+    public async Task GetClienteById_WithSeededClient_Returns200AndClienteDto()
+    {
+        // Arrange
+        var entity = ClienteEntity.Create("Empresa XYZ", "900777777-7", "3007777777", "Cali");
+        var client = CreateClientWithSeed(entity);
+
+        // Act
+        var response = await client.GetAsync($"/api/v1/clientes/{entity.Id}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        var obj = doc.RootElement;
+
+        Assert.Equal(JsonValueKind.Object, obj.ValueKind);
+        Assert.True(obj.TryGetProperty("id", out var idProp));
+        Assert.Equal(entity.Id.ToString(), idProp.GetString());
+        Assert.True(obj.TryGetProperty("nombre", out var nombreProp));
+        Assert.Equal("Empresa XYZ", nombreProp.GetString());
+        Assert.True(obj.TryGetProperty("nit", out var nitProp));
+        Assert.Equal("900777777-7", nitProp.GetString());
+        Assert.True(obj.TryGetProperty("telefono", out var telefonoProp));
+        Assert.Equal("3007777777", telefonoProp.GetString());
+        Assert.True(obj.TryGetProperty("ciudad", out var ciudadProp));
+        Assert.Equal("Cali", ciudadProp.GetString());
+        Assert.True(obj.TryGetProperty("createdAt", out var createdAtProp));
+        Assert.True(DateTimeOffset.TryParse(createdAtProp.GetString(), out _));
+    }
+
+    /// <summary>
+    /// TC-E2-P2-03: GET /api/v1/clientes/{non-existent-id} returns 404 with Problem Details RFC 7807, no stack trace.
+    /// </summary>
+    [Fact]
+    public async Task GetClienteById_WithNonExistentId_Returns404WithProblemDetails()
+    {
+        // Arrange
+        var client = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptor = services.SingleOrDefault(d =>
+                    d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                if (descriptor != null) services.Remove(descriptor);
+
+                services.AddDbContext<AppDbContext>(options =>
+                    options.UseInMemoryDatabase("NotFoundDb_" + Guid.NewGuid()));
+            });
+        }).CreateClient();
+
+        var nonExistentId = Guid.Empty;
+
+        // Act
+        var response = await client.GetAsync($"/api/v1/clientes/{nonExistentId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        var obj = doc.RootElement;
+
+        Assert.Equal(JsonValueKind.Object, obj.ValueKind);
+        Assert.True(obj.TryGetProperty("status", out var statusProp));
+        Assert.Equal(404, statusProp.GetInt32());
+        Assert.True(obj.TryGetProperty("title", out _));
+        // No stack trace in response
+        Assert.False(obj.TryGetProperty("stackTrace", out _));
+        Assert.False(obj.TryGetProperty("exception", out _));
+    }
 }
