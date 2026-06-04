@@ -18,10 +18,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-
-// EmptyState does not exist yet — import will fail in RED phase (intentional)
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { EmptyState } = require('../EmptyState');
+import { EmptyState } from '../EmptyState';
 
 describe('EmptyState — component tests (RED phase)', () => {
   it('should render with data-testid="empty-state"', () => {

@@ -32,6 +32,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { setupServer } from 'msw/node';
 import { clienteFixtures, createClientes } from '../../../../../test-support/factories/cliente.factory';
 import { clientesHandlers } from '../../../../../test-support/mocks/clientes.handlers';
+import { ClienteListView } from '../ClienteListView';
 
 // ─── MSW Server Setup ─────────────────────────────────────────────────────────
 
@@ -58,11 +59,6 @@ function renderClienteListView() {
       },
     },
   });
-
-  // IMPORTANT: ClienteListView does not exist yet — this import will fail until
-  // the implementation is created. That is intentional (RED phase).
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { ClienteListView } = require('../ClienteListView');
 
   return render(
     <QueryClientProvider client={queryClient}>
@@ -369,7 +365,6 @@ describe('TC-E2-P1-05 — ErrorPanel on backend failure with Reintentar button',
   it('should trigger a new GET /api/v1/clientes request when "Reintentar" is clicked', async () => {
     // GIVEN: The API first fails with 500, then succeeds on retry
     const clientes = createClientes(1, { nombre: 'Recuperado SA' });
-    let callCount = 0;
 
     server.use(
       // MSW handler that fails on first call, succeeds on second
@@ -384,7 +379,6 @@ describe('TC-E2-P1-05 — ErrorPanel on backend failure with Reintentar button',
 
     // WHEN: The MSW handler is replaced to return success and "Reintentar" is clicked
     server.use(clientesHandlers.success(clientes));
-    callCount = 0;
 
     const reintentarButton = within(screen.getByTestId('error-panel')).getByRole('button', {
       name: /reintentar/i,
@@ -444,7 +438,7 @@ describe('AC5 — Clearing search restores full list without new API call', () =
   });
 
   it('should NOT issue a new API call when the search field is cleared', async () => {
-    // GIVEN: Two clients are loaded
+    // GIVEN: Two clients are loaded (use NIT to uniquely identify one for filtering)
     const clientes = createClientes(2);
     const spy = vi.fn();
 
@@ -456,8 +450,9 @@ describe('AC5 — Clearing search restores full list without new API call', () =
     renderClienteListView();
     await waitFor(() => expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(2));
 
+    // Use the unique NIT of clientes[0] to filter to exactly 1 result
     const searchInput = screen.getByTestId('search-clientes');
-    await userEvent.type(searchInput, clientes[0].nombre.slice(0, 5));
+    await userEvent.type(searchInput, clientes[0].nit);
     await waitFor(() => expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(1));
 
     // WHEN: Search is cleared

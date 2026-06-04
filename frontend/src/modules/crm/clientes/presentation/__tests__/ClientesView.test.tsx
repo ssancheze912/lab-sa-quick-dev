@@ -1,68 +1,70 @@
 /**
- * Story 1.2: Frontend Navigation Shell
- * Epic 1: Project Foundation & Application Shell
+ * Story 2.1: Client List & Search
+ * Epic 2: Client Management
  *
- * Unit Tests — ClientesView placeholder component
+ * Unit Tests — ClientesView split-panel layout
  *
- * Edge cases and boundary conditions not covered by ATDD:
- *   - Component renders in isolation (no router context required)
- *   - Correct semantic HTML structure (main element)
- *   - data-testid attribute presence for E2E selectors
- *   - No unexpected children or extra nodes
+ * Verifies:
+ *   - Component renders split-panel layout (left panel + right placeholder)
+ *   - Left panel contains ClienteListView
+ *   - Right panel is a flex-1 placeholder for Story 2.2
  */
 
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { setupServer } from 'msw/node'
+import { clientesHandlers } from '../../../../../test-support/mocks/clientes.handlers'
 import { ClientesView } from '../ClientesView'
 
-describe('ClientesView — unit', () => {
-  it('should render without crashing in isolation (no router context)', () => {
-    // GIVEN: No router context wrapping
-    // WHEN: Component is rendered directly
-    const { container } = render(<ClientesView />)
+const server = setupServer(clientesHandlers.empty())
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+
+function renderClientesView() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 0 } },
+  })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <ClientesView />
+    </QueryClientProvider>,
+  )
+}
+
+describe('ClientesView — split-panel layout', () => {
+  it('should render without crashing in isolation', () => {
+    // GIVEN: A QueryClient is provided
+    // WHEN: Component is rendered
+    const { container } = renderClientesView()
 
     // THEN: The component mounts without errors
     expect(container).toBeTruthy()
   })
 
-  it('should render a <section> element as the root node', () => {
-    // GIVEN: The component renders
-    const { container } = render(<ClientesView />)
+  it('should render the clientes-list-panel (ClienteListView) in the left slot', async () => {
+    // GIVEN: API returns empty list
+    server.use(clientesHandlers.empty())
 
-    // THEN: A <section> element is present as root (avoids nested <main> with root layout)
-    expect(container.querySelector('section[data-testid="clientes-view"]')).toBeTruthy()
+    renderClientesView()
+
+    // THEN: The list panel is present
+    await waitFor(() => {
+      expect(screen.getByTestId('clientes-list-panel')).toBeInTheDocument()
+    })
   })
 
-  it('should have the data-testid="clientes-view" attribute on root element', () => {
-    // GIVEN: The component renders
-    render(<ClientesView />)
+  it('should render the search input for client search', async () => {
+    // GIVEN: API returns empty list
+    server.use(clientesHandlers.empty())
 
-    // THEN: The root element has the expected testid for Playwright E2E selectors
-    expect(screen.getByTestId('clientes-view')).toBeInTheDocument()
-  })
+    renderClientesView()
 
-  it('should display the Spanish placeholder text', () => {
-    // GIVEN: The component renders
-    render(<ClientesView />)
-
-    // THEN: The placeholder text in Spanish is displayed
-    expect(screen.getByText('Vista de Clientes (próximamente)')).toBeInTheDocument()
-  })
-
-  it('should NOT render a <main> element (root layout owns the main landmark)', () => {
-    // GIVEN: The component renders in isolation
-    const { container } = render(<ClientesView />)
-
-    // THEN: No nested <main> landmark is created (root layout already provides one)
-    expect(container.querySelector('main')).toBeNull()
-  })
-
-  it('should contain the placeholder text inside the section element', () => {
-    // GIVEN: The component renders
-    render(<ClientesView />)
-
-    // THEN: The text is a descendant of the section element
-    const section = screen.getByTestId('clientes-view')
-    expect(section).toHaveTextContent('Vista de Clientes (próximamente)')
+    // THEN: The search input is present
+    await waitFor(() => {
+      expect(screen.getByTestId('search-clientes')).toBeInTheDocument()
+    })
   })
 })

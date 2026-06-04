@@ -1,6 +1,7 @@
 import { createRootRoute, Link, Outlet } from '@tanstack/react-router'
 import { UsersIcon, IdentificationIcon } from '@heroicons/react/24/outline'
 import { useState, useEffect, type ReactNode } from 'react'
+import { QueryProvider } from '../app/providers/QueryProvider'
 
 const DESKTOP_BREAKPOINT = 1024
 
@@ -68,6 +69,7 @@ function RootLayout() {
   const isDesktop = useIsDesktop()
 
   return (
+    <QueryProvider>
     <div className="flex h-screen">
       {isDesktop ? (
         /* Desktop — NavigationRail on left side */
@@ -94,6 +96,7 @@ function RootLayout() {
         <Outlet />
       </main>
     </div>
+    </QueryProvider>
   )
 }
 

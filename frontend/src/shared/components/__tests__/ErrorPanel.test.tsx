@@ -18,10 +18,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-
-// ErrorPanel does not exist yet — import will fail in RED phase (intentional)
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { ErrorPanel } = require('../ErrorPanel');
+import { ErrorPanel } from '../ErrorPanel';
 
 describe('ErrorPanel — component tests (RED phase)', () => {
   it('should render with data-testid="error-panel"', () => {
