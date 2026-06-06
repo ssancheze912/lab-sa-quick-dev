@@ -77,6 +77,7 @@ public class ExceptionHandlingMiddlewareDbTests
 
         // Assert
         Assert.Equal(500, context.Response.StatusCode);
+        Assert.Equal("application/problem+json", context.Response.ContentType);
 
         context.Response.Body.Seek(0, SeekOrigin.Begin);
         var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
