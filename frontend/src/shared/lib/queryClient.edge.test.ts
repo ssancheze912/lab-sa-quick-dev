@@ -74,7 +74,7 @@ describe('queryClient — edge cases', () => {
   it('[P2] should allow setting query data programmatically (used in test setup patterns)', async () => {
     // GIVEN: The shared queryClient
     const { queryClient } = await import('./queryClient')
-    const testKey = ['test', 'edge-case', Date.now()]
+    const testKey = ['test', 'edge-case', 'set-query-data-boundary']
 
     // WHEN: Manually seeding a query result
     queryClient.setQueryData(testKey, { value: 'test-data' })
