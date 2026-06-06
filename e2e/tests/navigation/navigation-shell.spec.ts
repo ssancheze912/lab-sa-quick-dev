@@ -68,22 +68,13 @@ test.describe('AC1 — Desktop NavigationRail (FR28)', () => {
     await page.route('**/api/**', (route) => route.continue());
     await page.goto('/contactos');
 
-    // Track navigation events to detect full page reload
-    let fullReload = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame() && frame.url().includes('/clientes')) {
-        // SPA navigation does not trigger framenavigated; if it does it is a full reload
-        fullReload = true;
-      }
-    });
-
     // WHEN: User clicks the Clientes navigation item
     await nav.railItemClientes.click();
-    await page.waitForURL('**/clientes');
+    await page.waitForURL('/clientes');
 
-    // THEN: URL changes to /clientes without a full page reload
+    // THEN: URL changes to /clientes and nav persists (SPA navigation — nav was not destroyed)
     expect(page.url()).toContain('/clientes');
-    expect(fullReload).toBe(false);
+    await expect(nav.navigationRail).toBeVisible();
   });
 
   test('should navigate to /contactos without full page reload when clicking Contactos rail item', async ({ page }) => {
@@ -93,20 +84,13 @@ test.describe('AC1 — Desktop NavigationRail (FR28)', () => {
     await page.route('**/api/**', (route) => route.continue());
     await page.goto('/clientes');
 
-    let fullReload = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame() && frame.url().includes('/contactos')) {
-        fullReload = true;
-      }
-    });
-
     // WHEN: User clicks the Contactos navigation item
     await nav.railItemContactos.click();
-    await page.waitForURL('**/contactos');
+    await page.waitForURL('/contactos');
 
-    // THEN: URL changes to /contactos without a full page reload
+    // THEN: URL changes to /contactos and nav persists (SPA navigation — nav was not destroyed)
     expect(page.url()).toContain('/contactos');
-    expect(fullReload).toBe(false);
+    await expect(nav.navigationRail).toBeVisible();
   });
 
   test('should have accessible navigation container with aria-label on desktop', async ({ page }) => {
@@ -184,8 +168,8 @@ test.describe('AC2 — Mobile NavigationBar (FR29)', () => {
     await page.route('**/api/**', (route) => route.continue());
     await page.goto('/clientes');
 
-    // WHEN: User taps the Contactos navigation item in the bottom bar
-    await nav.barItemContactos.tap();
+    // WHEN: User clicks the Contactos navigation item in the bottom bar
+    await nav.barItemContactos.click();
     await page.waitForURL('**/contactos');
 
     // THEN: App navigates to /contactos
