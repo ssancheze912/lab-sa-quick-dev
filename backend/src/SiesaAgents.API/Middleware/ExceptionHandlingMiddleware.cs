@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 using System.Text.Json;
 
 namespace SiesaAgents.API.Middleware;
@@ -15,6 +16,21 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         try
         {
             await next(context);
+        }
+        catch (NpgsqlException)
+        {
+            var problem = new ProblemDetails
+            {
+                Status = 503,
+                Title = "Database unavailable.",
+                Detail = null   // NEVER expose connection string details or exception message
+            };
+
+            context.Response.StatusCode = 503;
+            context.Response.ContentType = "application/problem+json";
+
+            var json = JsonSerializer.Serialize(problem, JsonOptions);
+            await context.Response.WriteAsync(json);
         }
         catch (Exception)
         {
