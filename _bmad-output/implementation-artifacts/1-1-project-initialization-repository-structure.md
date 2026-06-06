@@ -185,6 +185,8 @@ claude-sonnet-4-6
 - shadcn/ui CLI (`pnpx shadcn@latest init`) requires external network access to ui.shadcn.com which was unavailable. Resolved by installing core shadcn deps manually (`@radix-ui/react-dialog`, `@radix-ui/react-slot`, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`) and creating dialog/breadcrumb components manually.
 - .NET 10 `dotnet new sln` creates `.slnx` format by default. Added `--format sln` flag to also generate classic `.sln` for AC#5 compatibility.
 - `WriteAsJsonAsync` overrides Content-Type header. Fixed middleware to use `WriteAsync` with manual JSON serialization to preserve `application/problem+json`.
+- ATDD correction (attempt 1): `ExceptionHandlingMiddleware` only catches thrown exceptions — it does not intercept .NET routing 404s for unmatched routes. Fixed by adding `app.UseStatusCodePages()` in `Program.cs` that returns `application/problem+json` Problem Details for all HTTP error status codes including 404.
+- ATDD correction (attempt 1): `frontend/index.html` was missing `data-testid="app-root"` on the `div#root` element. Added attribute so Playwright `locator('[data-testid="app-root"]')` resolves correctly.
 
 ### Completion Notes List
 
