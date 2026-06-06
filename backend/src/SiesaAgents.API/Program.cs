@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Mvc;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +19,35 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+app.UseStatusCodePages(async statusCodeContext =>
+{
+    var context = statusCodeContext.HttpContext;
+    var statusCode = context.Response.StatusCode;
+
+    context.Response.ContentType = "application/problem+json";
+
+    var problem = new ProblemDetails
+    {
+        Status = statusCode,
+        Title = statusCode switch
+        {
+            404 => "Resource not found.",
+            400 => "Bad request.",
+            401 => "Unauthorized.",
+            403 => "Forbidden.",
+            405 => "Method not allowed.",
+            _ => "An error occurred."
+        }
+    };
+
+    var json = JsonSerializer.Serialize(problem, new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    });
+    await context.Response.WriteAsync(json);
+});
+
 app.UseCors("DevCors");
 app.MapScalarApiReference();
 
