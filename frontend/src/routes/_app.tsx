@@ -13,9 +13,8 @@ const NAV_ITEMS = [
 function AppShell() {
   const { location } = useRouterState()
 
-  const activeId = location.pathname.startsWith('/contactos')
-    ? 'contactos'
-    : 'clientes'
+  const activeId =
+    NAV_ITEMS.find(({ to }) => location.pathname.startsWith(to))?.id ?? 'clientes'
 
   return (
     <div className="flex flex-row h-screen bg-white dark:bg-slate-950">

@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: review
+Status: done
 
 ## Story
 
@@ -174,7 +174,7 @@ frontend/src/routes/__tests__/AppShell.test.tsx    ← Component tests (16 tests
 frontend/src/routes/__root.tsx                     ← Added notFoundComponent + data-testid wrapper
 frontend/src/main.tsx                              ← Added siesa-ui-kit/styles.css import
 frontend/eslint.config.js                          ← Added allowExportNames for Route (TanStack Router pattern)
-frontend/package.json                              ← Added @heroicons/react, @axe-core/react, axe-core, vitest-axe
+frontend/package.json                              ← Added @heroicons/react
 ```
 
 ### References
