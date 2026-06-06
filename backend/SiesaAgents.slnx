@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SiesaAgents.API/SiesaAgents.API.csproj" />
+    <Project Path="src/SiesaAgents.Application/SiesaAgents.Application.csproj" />
+    <Project Path="src/SiesaAgents.Domain/SiesaAgents.Domain.csproj" />
+    <Project Path="src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj" />
+  </Folder>
+</Solution>
