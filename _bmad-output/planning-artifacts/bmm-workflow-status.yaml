@@ -36,3 +36,16 @@ workflows:
   sprint_planning:
     status: not_started
     output_file: ~
+
+gate_history:
+  - epic: "1"
+    epic_title: "Project Foundation & Application Shell"
+    date: "2026-06-06"
+    decision: "PASS"
+    p0_coverage: "100%"
+    p1_coverage: "100%"
+    overall_coverage: "96%"
+    gaps: "1 P2 gap (environment-constrained PostgreSQL connectivity test)"
+    document: "_bmad-output/gate-decision-epic-1.yaml"
+    traceability: "_bmad-output/traceability-matrix.md"
+    action: "Proceed to Epic 2. Add PostgreSQL CI service container in next sprint."
