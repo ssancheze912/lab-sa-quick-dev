@@ -10,7 +10,7 @@
  *   - staleTime boundary: exactly 60 000 ms (not 59 999 or 60 001)
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { QueryClient } from '@tanstack/react-query'
 
 describe('queryClient — edge cases', () => {

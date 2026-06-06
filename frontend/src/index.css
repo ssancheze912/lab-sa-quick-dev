@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Navigation shell responsive display — isolated from Tailwind utility cascade */
+:root {
+  --nav-rail-display: none;
+  --nav-bar-display: flex;
+  --content-pb: 4rem;
+}
+@media (min-width: 1024px) {
+  :root {
+    --nav-rail-display: flex;
+    --nav-bar-display: none;
+    --content-pb: 0;
+  }
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;

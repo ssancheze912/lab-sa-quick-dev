@@ -1,98 +1,89 @@
-import { createFileRoute, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
-import { NavigationRail, NavigationBar } from 'siesa-ui-kit'
-import type { NavigationRailItemProps } from 'siesa-ui-kit'
-import type { NavigationBarItem } from 'siesa-ui-kit'
+import { createFileRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
 import { UserGroupIcon, IdentificationIcon } from '@heroicons/react/24/outline'
 
 export const Route = createFileRoute('/_app')({
   component: AppShell,
 })
 
-const NAV_ROUTES: Record<string, string> = {
-  clientes: '/clientes',
-  contactos: '/contactos',
-}
+const NAV_ITEMS = [
+  { id: 'clientes', label: 'Clientes', to: '/clientes', Icon: UserGroupIcon },
+  { id: 'contactos', label: 'Contactos', to: '/contactos', Icon: IdentificationIcon },
+] as const
 
 function AppShell() {
-  const navigate = useNavigate()
   const { location } = useRouterState()
 
   const activeId = location.pathname.startsWith('/contactos')
     ? 'contactos'
     : 'clientes'
 
-  const railItems: NavigationRailItemProps[] = [
-    {
-      id: 'clientes',
-      icon: <UserGroupIcon className="w-6 h-6" />,
-      label: 'Clientes',
-      selected: activeId === 'clientes',
-      ariaLabel: 'Clientes',
-    },
-    {
-      id: 'contactos',
-      icon: <IdentificationIcon className="w-6 h-6" />,
-      label: 'Contactos',
-      selected: activeId === 'contactos',
-      ariaLabel: 'Contactos',
-    },
-  ]
-
-  const barItems: NavigationBarItem[] = [
-    {
-      id: 'clientes',
-      icon: <UserGroupIcon className="w-6 h-6" />,
-      label: 'Clientes',
-      active: activeId === 'clientes',
-      ariaLabel: 'Clientes',
-    },
-    {
-      id: 'contactos',
-      icon: <IdentificationIcon className="w-6 h-6" />,
-      label: 'Contactos',
-      active: activeId === 'contactos',
-      ariaLabel: 'Contactos',
-    },
-  ]
-
-  const handleNavSelect = (id: string) => {
-    const route = NAV_ROUTES[id]
-    if (route) {
-      void navigate({ to: route })
-    }
-  }
-
   return (
     <div className="flex flex-row h-screen bg-white dark:bg-slate-950">
-      {/* Desktop: NavigationRail on left */}
+      {/* Desktop: NavigationRail on left — visible lg+ via inline media style */}
       <nav
+        data-testid="navigation-rail"
         aria-label="Navegación principal"
-        className="hidden lg:flex flex-col"
+        style={{ display: 'var(--nav-rail-display, none)' } as React.CSSProperties}
+        className="app-nav-rail flex-col w-20 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
       >
-        <NavigationRail
-          items={railItems}
-          selectedId={activeId}
-          onItemSelect={handleNavSelect}
-        />
+        <ul className="flex flex-col items-center gap-1 py-4">
+          {NAV_ITEMS.map(({ id, label, to, Icon }) => {
+            const isActive = activeId === id
+            return (
+              <li key={id}>
+                <Link
+                  to={to}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={[
+                    'flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                    isActive
+                      ? 'bg-blue-50 text-[#0e79fd] dark:bg-slate-800 dark:text-[#0e79fd]'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50',
+                  ].join(' ')}
+                >
+                  <Icon className="w-6 h-6" />
+                  {label}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
       </nav>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto pb-16 lg:pb-0">
+      <main className="flex-1 overflow-auto" style={{ paddingBottom: 'var(--content-pb, 4rem)' }}>
         <Outlet />
       </main>
 
-      {/* Mobile: NavigationBar at bottom */}
+      {/* Mobile: NavigationBar at bottom — visible below lg via inline media style */}
       <nav
+        data-testid="navigation-bar"
         aria-label="Navegación principal"
-        className="flex lg:hidden fixed bottom-0 w-full z-50"
+        style={{ display: 'var(--nav-bar-display, flex)' } as React.CSSProperties}
+        className="app-nav-bar fixed bottom-0 w-full z-50 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800"
       >
-        <NavigationBar
-          items={barItems}
-          activeItemId={activeId}
-          onItemClick={handleNavSelect}
-          ariaLabel="Navegación principal"
-          className="w-full"
-        />
+        <ul className="flex w-full">
+          {NAV_ITEMS.map(({ id, label, to, Icon }) => {
+            const isActive = activeId === id
+            return (
+              <li key={id} className="flex-1">
+                <Link
+                  to={to}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={[
+                    'flex flex-col items-center gap-1 py-2 px-1 text-xs font-medium w-full transition-colors',
+                    isActive
+                      ? 'text-[#0e79fd]'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50',
+                  ].join(' ')}
+                >
+                  <Icon className="w-6 h-6" />
+                  {label}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
       </nav>
     </div>
   )
