@@ -19,6 +19,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseCors("DevCors");
 
 app.UseStatusCodePages(async statusCodeContext =>
 {
@@ -47,8 +48,6 @@ app.UseStatusCodePages(async statusCodeContext =>
     });
     await context.Response.WriteAsync(json);
 });
-
-app.UseCors("DevCors");
 app.MapScalarApiReference();
 
 app.Run();
