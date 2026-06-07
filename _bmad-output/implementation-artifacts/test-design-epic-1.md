@@ -3,7 +3,7 @@ epic: 1
 title: "Project Foundation & Application Shell"
 mode: epic-level
 phase: 4
-createdAt: "2026-05-20"
+createdAt: "2026-06-07"
 stories:
   - "1.1 — Project Initialization & Repository Structure"
   - "1.2 — Frontend Navigation Shell"
@@ -32,6 +32,7 @@ Epic 1 establishes the complete technical foundation for Siesa Agents: a Vite/Re
 - Domain entity tables (`clientes`, `contactos`) — created in Epics 2 and 3
 - Authentication / authorization — explicitly deferred (MVP)
 - HTTPS configuration — non-local deployments only (NFR4)
+- Input validation of domain data (NFR5) — no user input in Epic 1
 
 ---
 
@@ -79,6 +80,7 @@ Total                                        19 tests
 - **Epic 1 is infrastructure-heavy, not domain-heavy** — most value comes from integration and build validation, not unit tests.
 - **E2E coverage is minimal** (2 tests) because there is no business logic to exercise end-to-end yet; the shell is verified via component tests which are faster and sufficient.
 - **API integration tests dominate** because CORS, middleware ordering, database connectivity, and endpoint configuration are the primary risks.
+- **Component tests** cover the SPA navigation shell (responsive layout, routing behavior) without requiring a full browser environment.
 
 ---
 
@@ -330,7 +332,7 @@ Total                                        19 tests
 
 **Level:** Component (Vitest + RTL)
 **Story:** 1.2
-**Requirement:** AC-1.2 (NavigationRail visible on desktop, siesa-ui-kit)
+**Requirement:** AC-1.2 (NavigationRail visible on desktop, siesa-ui-kit), AC-E1.1
 
 **Test Steps:**
 1. Render the root layout at viewport width 1280px.
@@ -348,7 +350,7 @@ Total                                        19 tests
 
 **Level:** Component (Vitest + RTL)
 **Story:** 1.2
-**Requirement:** AC-1.2 (mobile NavigationBar, FR29)
+**Requirement:** AC-1.2 (mobile NavigationBar, FR29), AC-E1.1
 **Risk covered:** R7
 
 **Test Steps:**
@@ -465,7 +467,7 @@ Total                                        19 tests
 |-----|-------------|------------|-------|
 | NFR4 | HTTPS in non-local deployments | Out of scope for Epic 1 (local dev only) | N/A |
 | NFR5 | Input validation / sanitization | No user input in Epic 1 — deferred to Epic 2+ | N/A |
-| NFR6 | No stack traces exposed | TC-E1-P0-05 | API Integration |
+| NFR6 | No stack traces exposed to end users | TC-E1-P0-05 | API Integration |
 
 ---
 
@@ -569,14 +571,14 @@ Phase 5 — Unit Test Suites (P3)
 
 - **P0 pass rate**: 100% (no exceptions — 5 tests must all pass)
 - **P1 pass rate**: 100% for this epic (foundation layer; no partial pass acceptable)
-- **P2/P3 pass rate**: ≥90% (informational — may be deferred with justification)
+- **P2/P3 pass rate**: >=90% (informational — may be deferred with justification)
 - **High-risk mitigations** (R1, R2, R3): 100% complete before Epic 1 closure
 
 ### Coverage Targets
 
 - **Critical paths** (CORS, middleware, TypeScript build): 100%
 - **Security scenarios** (NFR6 — no stack trace exposure): 100%
-- **Navigation shell**: ≥80% of AC covered by automated tests
+- **Navigation shell**: >=80% of AC covered by automated tests
 - **Database wiring**: 100% of AC covered
 
 ### Non-Negotiable Requirements
@@ -612,5 +614,7 @@ The following constraints must be enforced during implementation for tests to pa
 3. `app.UseSwagger()` must NOT appear anywhere — use `app.MapScalarApiReference()` only.
 4. CORS policy must explicitly allow `http://localhost:5173` as origin.
 5. TanStack Router must be configured with a catch-all `*` route pointing to a NotFound component.
-6. The index route (`/`) must redirect to `/clientes` via `<Navigate to="/clientes" />` or TanStack Router's `redirect`.
+6. The index route (`/`) must redirect to `/clientes` via TanStack Router's `redirect` or equivalent.
 7. Frontend viewport breakpoint for nav component swap is `lg: 1024px` — use Tailwind responsive classes, not JS media queries, where possible.
+8. `DateTimeOffset` must be used in all backend entities and DTOs (never `DateTime`).
+9. All user-facing text must be in Spanish (labels, errors, toasts, placeholders, ARIA labels).
