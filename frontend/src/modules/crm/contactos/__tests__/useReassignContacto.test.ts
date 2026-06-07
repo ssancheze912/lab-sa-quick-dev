@@ -119,7 +119,7 @@ describe('useReassignContacto', () => {
     result.current.mutate(NEW_CLIENTE_ID)
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
-    // THEN — invalidateQueries called with all three required keys
+    // THEN — invalidateQueries called with all four required keys
     const invalidatedKeys = invalidateSpy.mock.calls.map((call) => call[0]?.queryKey)
 
     expect(invalidatedKeys).toEqual(
@@ -127,6 +127,7 @@ describe('useReassignContacto', () => {
         ['contactos'],
         ['contactos', { clienteId: OLD_CLIENTE_ID }],
         ['contactos', { clienteId: NEW_CLIENTE_ID }],
+        ['contactos', CONTACTO_ID], // contact detail key — Risk R5
       ])
     )
   })

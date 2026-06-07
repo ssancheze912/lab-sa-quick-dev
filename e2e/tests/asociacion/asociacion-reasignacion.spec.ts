@@ -39,6 +39,7 @@ test.describe('Story 4.6 — Reassign Contact to Different Client', () => {
     page.on('pageerror', (err) => {
       // eslint-disable-next-line no-console
       console.error('Page error captured:', err.message);
+      throw err;
     });
   });
 
