@@ -1,7 +1,7 @@
 # Traceability Matrix & Gate Decision - Epic 3: Contact Management
 
 **Epic:** 3 - Contact Management (Gestión de Contactos)
-**Date:** 2026-05-21
+**Date:** 2026-06-07 (re-validated; original: 2026-05-21)
 **Evaluator:** TEA Agent (testarch-trace)
 **Scope:** Epic-level gate covering Stories 3.1, 3.2, 3.3, 3.4, 3.5
 
@@ -799,7 +799,7 @@ traceability_and_gate:
 - If CONCERNS ⚠️: Deploy to staging with standard CI gate; upgrade to PASS after successful CI run
 - All 5 stories marked `Status: done`; implementation is complete
 
-**Generated:** 2026-05-21
+**Generated:** 2026-06-07 (re-validated; original: 2026-05-21)
 **Workflow:** testarch-trace v4.0 (Enhanced with Gate Decision)
 **Agent:** TEA (testarch-trace sub-agent)
 
