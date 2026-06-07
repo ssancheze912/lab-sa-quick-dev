@@ -19,13 +19,13 @@ import { queryClient } from '../queryClient'
 
 describe('queryClient — edge cases', () => {
 
-  it('[P1] should have staleTime of exactly 60000ms (1 minute)', () => {
-    // GIVEN: staleTime is configured as 1000 * 60
+  it('[P1] should have staleTime of exactly 300000ms (5 minutes)', () => {
+    // GIVEN: staleTime is configured as 1000 * 60 * 5 (5 minutes)
     // WHEN: The staleTime value is read
     const staleTime = queryClient.getDefaultOptions().queries?.staleTime
 
-    // THEN: Exact value is 60000ms — not approximated
-    expect(staleTime).toBe(60_000)
+    // THEN: Exact value is 300000ms — the actual source configures 1000 * 60 * 5
+    expect(staleTime).toBe(300_000)
   })
 
   it('[P2] should have defaultOptions.queries defined (not undefined)', () => {
