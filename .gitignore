@@ -31,3 +31,7 @@ Thumbs.db
 # Coverage
 coverage/
 TestResults/
+
+# Test artifacts
+playwright-results/
+tmp/
