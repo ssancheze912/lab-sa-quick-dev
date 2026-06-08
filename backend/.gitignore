@@ -1,0 +1,26 @@
+## .NET
+bin/
+obj/
+out/
+*.user
+*.suo
+.vs/
+
+## NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Test results
+[Tt]est[Rr]esult*/
+TestResult.xml
+coverage.cobertura.xml
+coverage.opencover.xml
+*.coverage
+*.coveragexml
+
+## Rider / Visual Studio
+.idea/
+.vscode/
