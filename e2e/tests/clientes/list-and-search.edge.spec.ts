@@ -103,11 +103,13 @@ test.describe('Story 2.1 — Client List & Search — Edge cases (E2E)', () => {
   });
 
   test('[P1] Reintentar after multiple consecutive failures eventually recovers (AC #8)', async ({ page }) => {
-    // GIVEN: the first TWO GETs fail with 500, the third succeeds
-    let calls = 0;
+    // GIVEN: the API fails with 500 until the test flips a flag after the
+    // second user-driven retry. Using an explicit phase counter (incremented
+    // only on user clicks) keeps the test deterministic regardless of
+    // TanStack Query's default retry policy or React StrictMode double-mounts.
+    let userRetryCount = 0;
     await page.route(API_URL, (route) => {
-      calls += 1;
-      if (calls <= 2) {
+      if (userRetryCount < 2) {
         return route.fulfill({
           status: 500,
           contentType: 'application/problem+json',
@@ -130,10 +132,12 @@ test.describe('Story 2.1 — Client List & Search — Edge cases (E2E)', () => {
     await expect(page.getByTestId('error-panel')).toBeVisible();
 
     // WHEN: the user clicks Reintentar once (still failing)
+    userRetryCount = 1;
     await page.getByRole('button', { name: 'Reintentar' }).click();
     await expect(page.getByTestId('error-panel')).toBeVisible();
 
-    // WHEN: the user clicks Reintentar again (third call returns 200)
+    // WHEN: the user clicks Reintentar again (flag now allows the 200)
+    userRetryCount = 2;
     await page.getByRole('button', { name: 'Reintentar' }).click();
 
     // THEN: the list eventually renders and the ErrorPanel disappears

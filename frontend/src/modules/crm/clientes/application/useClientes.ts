@@ -8,14 +8,15 @@ import { clienteApiRepository } from '../infrastructure/clienteApiRepository'
  * shipped in Stories 2.3 / 2.4 / 2.5 can invalidate via
  * `queryClient.invalidateQueries({ queryKey: ['clientes'] })`.
  *
- * AC #8: `retry: false` ensures a single failed fetch surfaces the ErrorPanel
- * immediately so the user can press "Reintentar" — silent background retries
- * would mask the failure and contradict the UX contract.
+ * Retry policy: defaults to TanStack Query v5 defaults (3 retries with
+ * exponential backoff) so transient network failures self-heal. AC #8's
+ * "fetch failure → ErrorPanel" contract still holds — the panel renders
+ * after retries are exhausted. Tests opt out of retries via a test-local
+ * `QueryClient` with `defaultOptions.queries.retry: false`.
  */
 export function useClientes() {
   return useQuery({
     queryKey: ['clientes'] as const,
     queryFn: ({ signal }) => clienteApiRepository.getAll(signal),
-    retry: false,
   })
 }

@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import 'siesa-ui-kit/styles.css'
@@ -18,14 +19,18 @@ if (!rootElement) {
   throw new Error('Root element with id "root" was not found in index.html')
 }
 
-// NOTE: StrictMode was removed in Story 2.1 because its dev-only effect
-// double-invocation broke the AC #8 contract — a single failed fetch must
-// surface the ErrorPanel deterministically. The Playwright route handler
-// alternates 500 → 200, and the second `useQuery` mount under StrictMode
-// silently succeeded before the user could see the error. Production
-// behaviour is unchanged; effects fire once in production builds either way.
+// StrictMode is the React 18 dev-only safety harness that surfaces
+// non-idempotent effects and unsafe lifecycle behavior. Story 2.1 originally
+// removed it to work around a flaky Playwright test (AC #8), but the correct
+// remediation is to make the test's network stub deterministic — see
+// `e2e/tests/clientes/list-and-search.spec.ts` (the AC #8 route handler now
+// returns 500 unconditionally until the user clicks "Reintentar", at which
+// point a flag flips the next response to 200). Production behaviour is
+// unchanged either way — StrictMode is dev-only.
 createRoot(rootElement).render(
-  <QueryProvider>
-    <RouterProvider router={router} />
-  </QueryProvider>,
+  <StrictMode>
+    <QueryProvider>
+      <RouterProvider router={router} />
+    </QueryProvider>
+  </StrictMode>,
 )

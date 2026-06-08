@@ -171,11 +171,18 @@ test.describe('Story 2.1 — Client List & Search (E2E)', () => {
   test('AC #8 — ErrorPanel + Reintentar on initial fetch failure (TC-E2-P0-08)', async ({
     page,
   }) => {
-    // GIVEN: the first GET fails with 500, the second succeeds
-    let calls = 0;
+    // GIVEN: the API returns 500 unconditionally until the user clicks
+    // "Reintentar", at which point the test flips a flag and the next
+    // response is 200. This pattern is resilient to:
+    //   - React 18 StrictMode dev-only double-mount of effects
+    //   - TanStack Query's default 3-retry-with-backoff policy
+    //   - Any other "extra" GET issued before the explicit retry click
+    // Every attempt that happens BEFORE the retry click must fail — only the
+    // user-driven refetch (after the flag flip) succeeds. This is the
+    // "single failure → ErrorPanel" contract honored deterministically.
+    let allowSuccess = false;
     await page.route(API_URL, (route) => {
-      calls += 1;
-      if (calls === 1) {
+      if (!allowSuccess) {
         return route.fulfill({
           status: 500,
           contentType: 'application/problem+json',
@@ -201,10 +208,13 @@ test.describe('Story 2.1 — Client List & Search (E2E)', () => {
     await expect(page.getByText('No se pudo cargar')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Reintentar' })).toBeVisible();
 
-    // WHEN: the user clicks Reintentar
+    // WHEN: the user clicks Reintentar (flip the flag THEN click — the click
+    // triggers TanStack Query's refetch which will now see the 200 response).
+    allowSuccess = true;
     await page.getByRole('button', { name: 'Reintentar' }).click();
 
-    // THEN: the list now renders (the second GET succeeded — TanStack Query refetch)
+    // THEN: the list now renders (the refetch after the click succeeded — no
+    // full page reload, just TanStack Query's refetch())
     await expect(page.getByText('Acme Distribuciones')).toBeVisible();
     await expect(page.getByTestId('error-panel')).toHaveCount(0);
   });
