@@ -1,0 +1,111 @@
+# Quality Gate Decision — Epic 1: Project Foundation & Application Shell
+# Workflow: testarch-trace v4.0 (deterministic mode)
+# Generated: 2026-06-08
+
+traceability_and_gate:
+  traceability:
+    epic_id: "1"
+    epic_title: "Project Foundation & Application Shell"
+    story_ids: ["1.1", "1.2", "1.3"]
+    date: "2026-06-08"
+    coverage:
+      overall: 95          # 20/21 acceptance criteria FULL
+      p0: 100              # 7/7
+      p1: 91               # 10/11 FULL, 1/11 PARTIAL (gated)
+      p2: 100              # 3/3
+      p3: null             # epic declares no P3 ACs
+    gaps:
+      critical: 0
+      high: 0
+      medium: 1            # AC-1.3.1 DB-level migration check (SkippableFact, gated on RUN_DB_INTEGRATION_TESTS=1)
+      low: 0
+    quality:
+      passing_tests: 89
+      total_tests: 93
+      skipped_tests: 4     # MigrationsHistorySnakeCaseTests — gated DB integration
+      failed_tests: 0
+      blocker_issues: 0
+      warning_issues: 0
+    recommendations:
+      - "Provision PostgreSQL in backend CI and set RUN_DB_INTEGRATION_TESTS=1 to unskip MigrationsHistorySnakeCaseTests (4 facts)."
+      - "Run `dotnet ef database update` on a developer machine before Story 2.1 begins, to verify the InitialCreate migration end-to-end."
+
+  gate_decision:
+    decision: "PASS"
+    gate_type: "epic"
+    decision_mode: "deterministic"
+    date: "2026-06-08"
+    decider: "TEA Agent (sub-agent of sa-quick-dev)"
+    summary: >-
+      Epic 1 meets all deterministic thresholds: P0 coverage 100% (7/7),
+      P1 coverage 91% (10/11 FULL — single gap is a SkippableFact DB integration test
+      acceptable per test-design-epic-1.md#8c), overall coverage 95%, executed pass
+      rate 100% (0 failed, 4 SkippableFact skipped). No security issues, no flaky
+      tests, no critical NFR failures. Decision: PASS.
+    criteria:
+      p0_coverage: 100
+      p0_pass_rate: 100
+      p1_coverage: 91
+      p1_pass_rate: 100             # 100% on executed tests; 4 SkippableFact excluded from denominator
+      overall_pass_rate: 100
+      overall_coverage: 95
+      security_issues: 0
+      critical_nfrs_fail: 0
+      flaky_tests: 0
+    thresholds:
+      min_p0_coverage: 100
+      min_p0_pass_rate: 100
+      min_p1_coverage: 90
+      min_p1_pass_rate: 95
+      min_overall_pass_rate: 90
+      min_coverage: 80
+      max_security_issues: 0
+      max_critical_nfrs_fail: 0
+    evaluation:
+      p0:
+        status: "PASS"
+        details: "All 7 P0 criteria FULL covered; 100% pass rate on TC-E1-P0-01 .. TC-E1-P0-05; CORS + Problem Details + Scalar + TS-strict + middleware ordering all green."
+      p1:
+        status: "PASS"
+        details: "10/11 FULL (91%) — meets 90% threshold; 1 PARTIAL (AC-1.3.1, gated DB integration) accepted per test-design-epic-1.md#8c; 100% pass rate on executed."
+      p2:
+        status: "PASS"
+        details: "3/3 informational P2 ACs FULL covered (index redirect, active state, Spanish text)."
+      nfr:
+        security: "PASS"            # NFR6 verified — no stack-trace leakage
+        performance: "NOT_ASSESSED" # no perf budget defined for foundation epic
+        reliability: "PASS"         # 0 flaky tests observed across 3 story pipelines
+        maintainability: "PASS"     # all test files <300 lines, score 94/100 (test-review-1.3.md)
+    residual_risks:
+      - id: "RR-E1-01"
+        description: "AC-1.3.1 DB-level snake_case __ef_migrations_history verification gated on Postgres availability"
+        priority: "P1"
+        probability: "Low"
+        impact: "Medium"
+        risk_score: "Low"
+        mitigation: "Run `RUN_DB_INTEGRATION_TESTS=1 dotnet test backend/SiesaAgents.sln --filter MigrationsHistorySnakeCaseTests` locally before merging Story 2.1"
+        remediation: "Provision PostgreSQL service in backend CI next sprint"
+    evidence:
+      test_results:
+        backend_xunit: "23 passed, 4 SkippableFact skipped, 0 failed (per Story 1.3 Debug Log)"
+        frontend_vitest: "21 passed, 0 failed (4 from Story 1.1 + 17 from Story 1.2)"
+        e2e_playwright_chromium: "55+ passed across foundation + api suites (per Stories 1.1, 1.2, 1.3 Debug Logs)"
+        source: "Local CLI runs; see Debug Log References in 1-1-…md, 1-2-…md, 1-3-…md"
+      traceability_matrix: "_bmad-output/traceability-matrix-epic-1.md"
+      nfr_assessment: "embedded — no standalone NFR file for Epic 1"
+      code_coverage: "not measured for Epic 1 (foundation)"
+      test_design: "_bmad-output/implementation-artifacts/test-design-epic-1.md"
+      epic_file: "_bmad-output/planning-artifacts/epics/epic-01-foundation.md"
+      story_files:
+        - "_bmad-output/implementation-artifacts/1-1-project-initialization-repository-structure.md"
+        - "_bmad-output/implementation-artifacts/1-2-frontend-navigation-shell.md"
+        - "_bmad-output/implementation-artifacts/1-3-backend-database-foundation.md"
+      test_reviews:
+        - "_bmad-output/test-review-1.1.md"
+        - "_bmad-output/test-review-1.2.md"
+        - "_bmad-output/test-review-1.3.md"
+    next_steps: >-
+      Proceed to Epic 2 (Clientes CRUD). In parallel, provision PostgreSQL in CI
+      next sprint and set RUN_DB_INTEGRATION_TESTS=1 so the 4 SkippableFact DB
+      integration tests execute as part of nightly runs.
+    waiver: null   # not waived — decision is genuine PASS
