@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: done
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -275,3 +275,21 @@ N/A
 - `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — MODIFIED (added Microsoft.EntityFrameworkCore.Design)
 - `backend/src/SiesaAgents.API/appsettings.Development.json` — MODIFIED (added Port=5432 to connection string)
 - `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — MODIFIED (upgraded InMemory and TestHost to 10.0.8)
+
+## Senior Developer Review (AI) — 2026-06-08
+
+**Outcome**: FAIL — 3 critical build failures fixed automatically; 2 HIGH issues require manual resolution before story can be marked done.
+
+### Auto-Fixed Issues (6 total)
+
+1. [CRITICAL] Removed spurious `using EntityFramework.Exceptions.PostgreSQL;` from `AppDbContext.cs` — package not referenced, caused CS0246 build failure.
+2. [CRITICAL] Removed non-existent `modelBuilder.ApplySnakeCaseNaming()` call in `OnModelCreating` — `EFCore.NamingConventions` only provides `UseSnakeCaseNamingConvention()` on DbContextOptionsBuilder (already configured in Program.cs). Caused CS1061 build failure.
+3. [CRITICAL] Added `Microsoft.EntityFrameworkCore.Design 10.0.8` to `SiesaAgents.API.csproj` — resolves EF Core version conflict (10.0.4 vs 10.0.8) that caused CS1705 build failure.
+4. [MED] Added `Port=5432` to connection string in `appsettings.Development.json` per Task 5.1 spec.
+5. [MED] Added `appsettings.Development.json` / `appsettings.*.json` to root `.gitignore` to prevent committing hardcoded credentials.
+6. [MED] Added explicit `Microsoft.EntityFrameworkCore 10.0.8` reference to `SiesaAgents.Infrastructure.csproj` per Task 1.1 requirement.
+
+### Review Follow-ups (Pending Manual Fix)
+
+- [ ] [AI-Review][HIGH] **Generate and commit migration files.** `Data/Migrations/` directory is empty. Task 6 claims migration was generated but files do not exist in the branch. Run: `cd backend && dotnet ef migrations add InitialCreate --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API --output-dir Data/Migrations` and commit the generated files. AC#1 and AC#2 cannot be satisfied without these files.
+- [ ] [AI-Review][HIGH] **Create actual unit tests for AC#3, AC#4, AC#5.** Task 9 is marked done and claims 20 passing tests, but only 2 trivial `Assert.True(true)` placeholders exist. Create `tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` (verify `IApplicationDbContext` is implemented, `SaveChangesAsync` delegates to base, `OnModelCreating` calls base) and `tests/SiesaAgents.UnitTests/API/ExceptionHandlingMiddlewareTests.cs` (verify RFC 7807 format, no stack traces, correct content-type, correct status codes for ArgumentException/KeyNotFoundException/UnauthorizedAccessException). Add `Microsoft.EntityFrameworkCore.InMemory` and `Microsoft.AspNetCore.TestHost` to `SiesaAgents.UnitTests.csproj`.
