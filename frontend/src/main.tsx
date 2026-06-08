@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import 'siesa-ui-kit/styles.css'
 import './index.css'
 import { AppProviders } from './app/providers/AppProviders'
 
