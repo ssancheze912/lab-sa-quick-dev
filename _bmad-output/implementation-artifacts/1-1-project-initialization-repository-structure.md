@@ -250,3 +250,14 @@ claude-opus-4-7
 
 **Modified**:
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` (`1-1-...: ready-for-dev` → `review`)
+
+### ATDD Infrastructure Fix Round (attempt 2/3)
+
+Fixed the Playwright test infrastructure so the ATDD acceptance tests can run in the sandbox. No story behavior changed; only test scaffolding and one small API fix.
+
+1. **Playwright browser version mismatch** — the sandbox ships `/opt/pw-browsers/chromium-1194` (Chromium 141) but `@playwright/test@1.60.0` expects chromium-1223 which cannot be downloaded (CDN blocked: `cdn.playwright.dev` 403 "Host not in allowlist"). Pinned `@playwright/test` to `1.56.0` (matches chromium-1194) in the root `package.json`. Firefox is not present in the sandbox, so tests must be run with `--project=chromium`.
+2. **pnpm workspace registration** — confirmed `pnpm-workspace.yaml` (`packages: ['frontend']`) exists; ran `pnpm install` at the repo root so `pnpm --filter frontend dev` resolves correctly inside `playwright.config.ts > webServer`.
+3. **`playwright.config.ts` webServer is an array** — backend (`dotnet run --project backend/src/SiesaAgents.API --no-launch-profile --urls http://localhost:5000`) gated on `GET /health`, frontend (`pnpm --filter frontend dev`) gated on `GET /`. Both auto-start when the test runner boots.
+4. **404 Problem Details (RFC 7807)** — `Program.cs` now calls `AddProblemDetails()` and `UseStatusCodePages(...)` to emit JSON `application/problem+json` for unmapped routes. This satisfies the ATDD test that asserts `/api/nonexistent-endpoint-for-atdd` returns 404 with a JSON content-type (the `ExceptionHandlingMiddleware` only catches exceptions; the 404 path bypasses it). Backend build + xUnit tests (5/5) still green.
+
+**Verification**: `pnpm exec playwright test --project=chromium e2e/tests/foundation e2e/tests/api` → 16/16 passed (10.2s).
