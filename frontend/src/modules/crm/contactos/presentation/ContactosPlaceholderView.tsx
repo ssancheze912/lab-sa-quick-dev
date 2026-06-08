@@ -7,9 +7,9 @@
  */
 export function ContactosPlaceholderView() {
   return (
-    <main data-testid="contactos-view" className="p-6">
+    <section data-testid="contactos-view" className="p-6">
       <h1 className="text-2xl font-bold">Contactos</h1>
       <p className="text-slate-600">Próximamente: lista de contactos.</p>
-    </main>
+    </section>
   )
 }

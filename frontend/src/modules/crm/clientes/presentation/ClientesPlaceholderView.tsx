@@ -7,9 +7,9 @@
  */
 export function ClientesPlaceholderView() {
   return (
-    <main data-testid="clientes-view" className="p-6">
+    <section data-testid="clientes-view" className="p-6">
       <h1 className="text-2xl font-bold">Clientes</h1>
       <p className="text-slate-600">Próximamente: lista de clientes.</p>
-    </main>
+    </section>
   )
 }
