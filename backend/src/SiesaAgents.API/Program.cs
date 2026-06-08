@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +14,12 @@ builder.Services.AddOpenApi();
 
 // Problem Details (RFC 7807) for all error responses, including 404s for unmapped routes.
 builder.Services.AddProblemDetails();
+
+// PostgreSQL via EF Core (connection string comes from appsettings.Development.json /
+// ConnectionStrings:DefaultConnection in production env vars). Migrations are run
+// explicitly via `dotnet ef database update` — no auto-migration at startup.
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddCors(options =>
 {
@@ -54,6 +62,18 @@ app.MapScalarApiReference();
 // Health endpoint used to validate CORS + server reachability from the frontend.
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
     .WithName("Health");
+
+// Test-only endpoint that intentionally throws, used by the Story 1.3 ProblemDetailsTests
+// (TC-E1-P0-05) to verify the full ExceptionHandlingMiddleware → RFC 7807 pipeline.
+// Activated only when the host environment is "Testing" — never reachable from
+// Development or Production.
+if (app.Environment.IsEnvironment("Testing"))
+{
+    app.MapGet("/api/v1/test-error", () =>
+    {
+        throw new InvalidOperationException("internal test message — must not leak");
+    });
+}
 
 app.Run();
 

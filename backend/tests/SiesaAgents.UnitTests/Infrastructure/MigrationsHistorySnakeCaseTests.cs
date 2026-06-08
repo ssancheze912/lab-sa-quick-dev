@@ -74,7 +74,7 @@ public class MigrationsHistorySnakeCaseTests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task MigrateAsync_CreatesDatabase_WithoutThrowing()
     {
         Skip.IfNot(IsGateOpen(), $"Skipped: env var {GateEnvVar}=1 not set (no PostgreSQL available).");
@@ -89,7 +89,7 @@ public class MigrationsHistorySnakeCaseTests : IAsyncLifetime
         Assert.Null(ex);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task MigrationsHistoryTable_Exists_AfterMigrate()
     {
         Skip.IfNot(IsGateOpen(), $"Skipped: env var {GateEnvVar}=1 not set (no PostgreSQL available).");
@@ -105,7 +105,7 @@ public class MigrationsHistorySnakeCaseTests : IAsyncLifetime
         Assert.True(exists);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task MigrationsHistoryTable_MigrationIdColumn_IsSnakeCase()
     {
         Skip.IfNot(IsGateOpen(), $"Skipped: env var {GateEnvVar}=1 not set (no PostgreSQL available).");
@@ -121,7 +121,7 @@ public class MigrationsHistorySnakeCaseTests : IAsyncLifetime
         Assert.True(hasColumn);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task MigrationsHistoryTable_ProductVersionColumn_IsSnakeCase()
     {
         Skip.IfNot(IsGateOpen(), $"Skipped: env var {GateEnvVar}=1 not set (no PostgreSQL available).");
@@ -170,25 +170,3 @@ public class MigrationsHistorySnakeCaseTests : IAsyncLifetime
     }
 }
 
-/// <summary>
-/// Minimal Skip primitive (xunit.SkippableFact-style) implemented inline to avoid adding
-/// a new NuGet dependency. Throws SkipException which xUnit treats as a skipped test
-/// only when the runner is configured to recognize it; otherwise the test is marked
-/// as failed with a clear message. The condition is evaluated before any DB work so
-/// no side effects occur on skip.
-/// </summary>
-internal static class Skip
-{
-    public static void IfNot(bool condition, string reason)
-    {
-        if (!condition)
-        {
-            throw new SkipException(reason);
-        }
-    }
-}
-
-internal class SkipException : Exception
-{
-    public SkipException(string reason) : base($"SKIPPED: {reason}") { }
-}

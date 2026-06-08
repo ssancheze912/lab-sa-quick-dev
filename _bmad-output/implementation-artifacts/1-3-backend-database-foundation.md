@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -33,21 +33,21 @@ so that subsequent stories (2.1 `clientes`, 3.1 `contactos`) can define entities
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add EF Core 10 + design-time tooling NuGet packages (AC: #1, #5)
+- [x] Task 1 — Add EF Core 10 + design-time tooling NuGet packages (AC: #1, #5)
   - [ ] Add to `src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj`: `Microsoft.EntityFrameworkCore` (10.x — already pulled transitively by Npgsql provider; pin explicitly), `Microsoft.EntityFrameworkCore.Design` (10.x — needed for `dotnet ef`).
   - [ ] Add to `src/SiesaAgents.API/SiesaAgents.API.csproj`: `Microsoft.EntityFrameworkCore.Design` (10.x — required by `dotnet ef` so the startup project can be discovered).
   - [ ] Verify `dotnet tool list -g` includes `dotnet-ef` (>= 10.0); if absent, document the install command `dotnet tool install --global dotnet-ef --version 10.0.*` in the story's Completion Notes (do NOT modify a user machine's tool manifest in code).
   - [ ] Confirm `Npgsql.EntityFrameworkCore.PostgreSQL` is already at 10.0.2 in `SiesaAgents.Infrastructure.csproj` (it is, per Story 1.1).
   - [ ] Run `dotnet restore SiesaAgents.sln`; verify zero warnings.
 
-- [ ] Task 2 — Implement the `SnakeCaseNamingConvention` extension (AC: #4)
+- [x] Task 2 — Implement the `SnakeCaseNamingConvention` extension (AC: #4)
   - [ ] Create `src/SiesaAgents.Infrastructure/Data/SnakeCaseNamingConvention.cs` exposing `public static class SnakeCaseNamingConvention` with two members:
     - `public static string ToSnakeCase(string input)` — uses two regex passes per company-standards: `([a-z0-9])([A-Z])` → `$1_$2`, then `([A-Z]+)([A-Z][a-z])` → `$1_$2`, then `.ToLowerInvariant()`. Handles `ID → id`, `APIKey → api_key`, `CreatedAt → created_at` correctly.
     - `public static void ApplySnakeCaseNaming(this ModelBuilder modelBuilder)` — iterates `modelBuilder.Model.GetEntityTypes()` and rewrites: table names, column names, indexes (prefix `uk_` if unique else `ix_`, then `{table}_{columns}`), and FK constraint names (`fk_{dependent}_{principal}`). Reference implementation: `_bmad/bmm/workflows/3-solutioning/create-architecture/data/company-standards/database-conventions.md#2.1`.
   - [ ] DO NOT depend on the external NuGet package `EFCore.NamingConventions` — this story uses the company-standards implementation (in-house extension method) so naming for tables/columns/indexes/FKs is uniform and not provider-dependent.
   - [ ] Add namespace `SiesaAgents.Infrastructure.Data`.
 
-- [ ] Task 3 — Create `AppDbContext` with empty model + snake_case applied (AC: #2, #4, #5)
+- [x] Task 3 — Create `AppDbContext` with empty model + snake_case applied (AC: #2, #4, #5)
   - [ ] Create `src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`:
     ```csharp
     using Microsoft.EntityFrameworkCore;
@@ -75,7 +75,7 @@ so that subsequent stories (2.1 `clientes`, 3.1 `contactos`) can define entities
   - [ ] No `DbSet<T>` is declared in this story. The migration will be empty (only `__ef_migrations_history` is materialized when running `database update`).
   - [ ] Use the C# 12 primary-constructor `DbContext(DbContextOptions<AppDbContext> options)` form to match the company `.NET 10` style and avoid an explicit constructor body.
 
-- [ ] Task 4 — Register `AppDbContext` in DI + read connection string (AC: #5, #6)
+- [x] Task 4 — Register `AppDbContext` in DI + read connection string (AC: #5, #6)
   - [ ] Modify `src/SiesaAgents.API/Program.cs`. Insert (between `AddProblemDetails()` and `AddCors(...)`, preserving the rest of the existing pipeline verbatim):
     ```csharp
     builder.Services.AddDbContext<AppDbContext>(options =>
@@ -86,11 +86,11 @@ so that subsequent stories (2.1 `clientes`, 3.1 `contactos`) can define entities
   - [ ] Do NOT touch the order of `UseMiddleware<ExceptionHandlingMiddleware>()` → `UseCors(...)` → `UseStatusCodePages(...)` → `MapOpenApi()` → `MapScalarApiReference()` → `MapGet("/health")` → `Run()`. The `ExceptionHandlingMiddleware` MUST remain the first middleware (AC #6).
   - [ ] Confirm `src/SiesaAgents.API/appsettings.Development.json` already contains the connection string `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres` (it does, per Story 1.1 — no change needed). Add the same key to `appsettings.json` with a safe placeholder value (`""`) so `IConfiguration` does not return null in non-Development environments.
 
-- [ ] Task 5 — Verify the existing `ExceptionHandlingMiddleware` satisfies NFR6 (AC: #3, #6)
+- [x] Task 5 — Verify the existing `ExceptionHandlingMiddleware` satisfies NFR6 (AC: #3, #6)
   - [ ] Re-read `src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs`. Confirm `ProblemDetails.Detail` is NOT set (it is `null` — verified), `ex.Message` is NEVER written to the response, the logger logs the exception server-side at `Error` level, and the response uses `application/problem+json` content type via the `WriteAsJsonAsync(value, options: null, contentType)` overload.
   - [ ] Confirm `ApiSmokeTests` and `ExceptionHandlingMiddlewareTests` (Story 1.1, `tests/SiesaAgents.UnitTests/`) still pass without modification. They already cover the 500 path and content-type. This story does NOT modify the middleware code itself — Story 1.1 already implemented it. Reference: `_bmad-output/implementation-artifacts/1-1-project-initialization-repository-structure.md#File List` → `ExceptionHandlingMiddleware.cs`, `ExceptionHandlingMiddlewareTests.cs`.
 
-- [ ] Task 6 — Generate the initial empty migration (AC: #1, #2)
+- [x] Task 6 — Generate the initial empty migration (AC: #1, #2)
   - [ ] From `backend/`, run:
     ```bash
     dotnet ef migrations add InitialCreate \
@@ -102,7 +102,7 @@ so that subsequent stories (2.1 `clientes`, 3.1 `contactos`) can define entities
   - [ ] Commit the generated migration files. Do NOT manually edit them.
   - [ ] If a different timestamped migration was committed during exploratory work, delete it before generating the canonical `InitialCreate`.
 
-- [ ] Task 7 — Apply the migration and verify the database state (AC: #1)
+- [x] Task 7 — Apply the migration and verify the database state (AC: #1) — SKIPPED in sandbox (no PostgreSQL). Manual verification required when PostgreSQL is available; gated DB integration tests will validate end-to-end.
   - [ ] From `backend/`, run:
     ```bash
     dotnet ef database update \
@@ -113,7 +113,7 @@ so that subsequent stories (2.1 `clientes`, 3.1 `contactos`) can define entities
   - [ ] Run `\d __ef_migrations_history` and verify column names are snake_case (`migration_id`, `product_version`).
   - [ ] Document the verification output in the Dev Agent Record → Debug Log References.
 
-- [ ] Task 8 — Add the integration tests for AC #1, #3, #4 (AC: #7)
+- [x] Task 8 — Add the integration tests for AC #1, #3, #4 (AC: #7) — Tests authored during ATDD (RED phase); reconciled in this story so they GREEN against the implementation.
   - [ ] Decide test placement: add new tests in the existing `tests/SiesaAgents.UnitTests/` project (already wired with `WebApplicationFactory<Program>` per Story 1.1). A separate `IntegrationTests` project is NOT required for this story — the existing `Microsoft.AspNetCore.Mvc.Testing` package supports in-process integration tests.
   - [ ] Add `tests/SiesaAgents.UnitTests/Infrastructure/SnakeCaseNamingConventionTests.cs` (unit tests, no DB needed) covering:
     - `ToSnakeCase("CreatedAt") == "created_at"`
@@ -141,7 +141,7 @@ so that subsequent stories (2.1 `clientes`, 3.1 `contactos`) can define entities
     - Use a randomized DB name per test run (e.g. `siesa_agents_test_{Guid.NewGuid():N}`) and drop the DB in test cleanup (`DisposeAsync` calling `Database.EnsureDeletedAsync()`) so reruns are idempotent.
   - [ ] If the local sandbox does not have PostgreSQL, the gated integration test is skipped (acceptable per `test-design-epic-1.md#8c` — P1 tests are gated by environment availability). Document in Dev Agent Record whether PostgreSQL was available during the run.
 
-- [ ] Task 9 — Verify build + all tests pass (AC: #7)
+- [x] Task 9 — Verify build + all tests pass (AC: #7)
   - [ ] Run `dotnet build backend/SiesaAgents.sln` → 0 errors, 0 warnings.
   - [ ] Run `dotnet test backend/SiesaAgents.sln` → all pre-existing Story 1.1 tests pass + all new Story 1.3 tests pass (gated integration test may be skipped if Postgres unavailable — note this in Completion Notes).
   - [ ] Run `dotnet run --project backend/src/SiesaAgents.API` and `curl http://localhost:5000/health` → HTTP 200 `{"status":"ok"}`. Confirm startup logs do NOT include any EF Core exception (DI registration validates the provider configuration).
@@ -331,6 +331,39 @@ claude-opus-4-7
 
 ### Debug Log References
 
+- `dotnet restore SiesaAgents.sln` — initial run reproduced the pre-existing NU1605 drift (EF Core 10.0.2 ↔ 10.0.4 from Npgsql transitive). Resolved by pinning `Microsoft.EntityFrameworkCore` and `Microsoft.EntityFrameworkCore.Relational` to `10.0.4` in `SiesaAgents.Infrastructure.csproj` and `SiesaAgents.UnitTests.csproj`.
+- `dotnet build SiesaAgents.sln` after the pin → 0 warnings / 0 errors.
+- `dotnet new tool-manifest` + `dotnet tool install dotnet-ef --version 10.0.*` → installed `dotnet-ef 10.0.8` as a local tool (committed `backend/.config/dotnet-tools.json`).
+- `dotnet ef migrations add InitialCreate ...` → generated empty Up/Down migration successfully (no DB required at this step).
+- `dotnet ef migrations list ...` → migration is registered as Pending (DB connect fails because PostgreSQL is unavailable in the sandbox; pending-status warning is expected).
+- `dotnet test SiesaAgents.sln --no-build` → Passed 23, Skipped 4 (gated DB integration tests), Failed 0.
+- `npx playwright test --project=chromium e2e/tests/api/backend-database-foundation.api.spec.ts --list` → 12 tests parsed cleanly.
+
 ### Completion Notes List
 
+- AC #1, #2, #4, #5: Implemented `AppDbContext` + `SnakeCaseNamingConvention` and registered `AddDbContext<AppDbContext>(UseNpgsql(...))` between `AddProblemDetails()` and `AddCors(...)`. The middleware pipeline order from Story 1.1 is unchanged. The initial `InitialCreate` migration is empty (no `DbSet<T>` in this story — entities ship in Stories 2.1 / 3.1).
+- AC #3, #6: ExceptionHandlingMiddleware (Story 1.1) is untouched. Re-verified via `ExceptionHandlingMiddlewareTests` (unit) and the new `ProblemDetailsTests` (full pipeline integration via `WebApplicationFactory<Program>`).
+- ProblemDetailsTests fixture: To exercise the full production pipeline (instead of overriding it via `Configure`), Program.cs registers a guarded `GET /api/v1/test-error` endpoint that is active ONLY when the host environment equals `Testing`. This endpoint is unreachable from Development or Production runs. Trade-off: a tiny conditional in Program.cs versus duplicating the middleware pipeline in test code; the latter risked masking middleware-order regressions and was the root cause of an initial RED failure during this story.
+- MigrationsHistorySnakeCaseTests: Switched the inline `Skip` shim to the `Xunit.SkippableFact` package so the 4 DB-integration tests report as SKIPPED (not FAILED) when `RUN_DB_INTEGRATION_TESTS` is not set or PostgreSQL is unavailable. To run them locally: `RUN_DB_INTEGRATION_TESTS=1 dotnet test backend/SiesaAgents.sln --filter "FullyQualifiedName~MigrationsHistorySnakeCaseTests"` against a PostgreSQL listening at `localhost:5432` with user `postgres`/`postgres` and `CREATE DATABASE` privilege.
+- Task 7 (`dotnet ef database update`): Cannot be executed in the sandbox (no PostgreSQL). To verify locally once PostgreSQL is running: `cd backend && dotnet ef database update --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API`. Then connect with `psql -U postgres -d siesa_agents_db` and verify `\dt` shows only `__ef_migrations_history` with `migration_id` + `product_version` columns (lowercase snake_case). The gated `MigrationsHistorySnakeCaseTests` will automatically exercise this path when `RUN_DB_INTEGRATION_TESTS=1`.
+- Test count summary: 23 Passed, 4 SkippableFact Skipped (DB-gated), 0 Failed across the full backend solution (Story 1.1 regression + Story 1.3 new tests).
+- `dotnet-ef` installation: Installed as a LOCAL tool via the new `backend/.config/dotnet-tools.json`. CI / fresh clones must run `dotnet tool restore` from `backend/` before `dotnet ef` commands.
+
 ### File List
+
+**Modified:**
+- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` (added `Microsoft.EntityFrameworkCore.Design` 10.0.4 PrivateAssets)
+- `backend/src/SiesaAgents.API/Program.cs` (added `using Microsoft.EntityFrameworkCore;` + `using SiesaAgents.Infrastructure.Data;`; registered `AddDbContext<AppDbContext>(UseNpgsql(...))`; registered guarded `GET /api/v1/test-error` for the `Testing` environment)
+- `backend/src/SiesaAgents.API/appsettings.json` (added empty `ConnectionStrings:DefaultConnection` placeholder for non-Development environments)
+- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` (pinned `Microsoft.EntityFrameworkCore` 10.0.4 + `Microsoft.EntityFrameworkCore.Relational` 10.0.4 + `Microsoft.EntityFrameworkCore.Design` 10.0.4)
+- `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` (bumped EF Core to 10.0.4 to clear NU1605; added `Xunit.SkippableFact` 1.5.23)
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/ProblemDetailsTests.cs` (replaced the `Configure(app => ...)` override with `UseEnvironment("Testing")` so the guarded endpoint in Program.cs activates, preserving the production middleware order)
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/MigrationsHistorySnakeCaseTests.cs` (switched `[Fact]` → `[SkippableFact]` and removed the inline `Skip` / `SkipException` shim now that the `Xunit.SkippableFact` package is referenced)
+
+**Created:**
+- `backend/.config/dotnet-tools.json` (local manifest containing `dotnet-ef` 10.0.8)
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/SnakeCaseNamingConvention.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260608090509_InitialCreate.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260608090509_InitialCreate.Designer.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/AppDbContextModelSnapshot.cs`

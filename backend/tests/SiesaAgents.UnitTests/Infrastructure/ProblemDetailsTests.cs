@@ -21,13 +21,9 @@
 
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace SiesaAgents.UnitTests.Infrastructure;
 
@@ -40,24 +36,13 @@ public class ProblemDetailsTests : IClassFixture<WebApplicationFactory<Program>>
 
     public ProblemDetailsTests(WebApplicationFactory<Program> factory)
     {
+        // Program.cs registers a guarded /api/v1/test-error endpoint only when the host
+        // environment is "Testing". Switching the environment here activates that endpoint
+        // so the ExceptionHandlingMiddleware path is exercised end-to-end through the
+        // exact production pipeline (no middleware reordering, no Configure override).
         _factory = factory.WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Testing");
-            builder.ConfigureTestServices(_ => { /* placeholder for future test overrides */ });
-            builder.Configure(app =>
-            {
-                // The production pipeline is already wired via Program.cs. The test host
-                // adds an additional terminal endpoint that intentionally throws so the
-                // ExceptionHandlingMiddleware path is exercised end-to-end.
-                app.UseRouting();
-                app.UseEndpoints(endpoints =>
-                {
-                    endpoints.MapGet(TestErrorRoute, () =>
-                    {
-                        throw new InvalidOperationException(SensitiveExceptionMessage);
-                    });
-                });
-            });
         });
     }
 
