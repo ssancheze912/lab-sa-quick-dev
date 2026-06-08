@@ -254,7 +254,11 @@ test.describe('Story 2.1 — Client List & Search (E2E)', () => {
     const callsAfterLoad = calls;
 
     await page.getByPlaceholder('Buscar por nombre o NIT...').fill('Bavaria');
-    // Allow the 150 ms debounce to elapse — still no extra GET
+    // JUSTIFIED HARD WAIT (TEA Review): Verifying ABSENCE of network event.
+    // We must wait past the 150 ms debounce window to give the system the chance
+    // to (incorrectly) trigger a refetch — only then can we assert the counter
+    // did not increment. No deterministic signal exists for "no event will fire".
+    // See test-quality.md (acceptable hard-wait scenarios) and network-first.md.
     await page.waitForTimeout(500);
 
     // THEN: the GET counter did NOT increment (filter is client-side)

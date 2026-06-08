@@ -323,7 +323,11 @@ describe('ClienteListView — search filter does NOT trigger a refetch (AC #5)',
     // WHEN: the user types a query
     fireEvent.change(input, { target: { value: 'abc' } })
 
-    // AND: enough time elapses for the debounce + re-render
+    // JUSTIFIED HARD WAIT (TEA Review): Verifying ABSENCE of network event.
+    // We must wait past the 150 ms debounce window to give the system the chance
+    // to (incorrectly) trigger a refetch — only then can we assert getCount did
+    // not increment. No deterministic signal exists for "no GET will fire".
+    // See test-quality.md (acceptable hard-wait scenarios) and network-first.md.
     await new Promise((resolve) => setTimeout(resolve, 500))
 
     // THEN: still exactly one GET (client-side filter only)
