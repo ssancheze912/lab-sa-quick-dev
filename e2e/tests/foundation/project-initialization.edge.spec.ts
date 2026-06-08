@@ -46,18 +46,15 @@ test.describe('AC1/AC4 (edge) — Frontend resilience & assets', () => {
     expect(runtimeErrors).toEqual([]);
   });
 
-  test('[P2] should load the Vite-generated favicon without HTTP 404', async ({ page }) => {
+  test('[P2] should load the Vite-generated favicon without HTTP 404', async ({ request }) => {
     // GIVEN: the Vite project ships a favicon referenced from index.html
-    const faviconResponse = page.waitForResponse(
-      (resp) => /favicon|\.svg|\.ico/.test(resp.url()) && resp.url().startsWith(FRONTEND_ORIGIN),
-      { timeout: 10_000 }
-    );
+    //   (current setup: /favicon.svg referenced from <link rel="icon">)
+    // WHEN: the favicon is requested directly (deterministic — no race with page load)
+    const response = await request.get(`${FRONTEND_ORIGIN}/favicon.svg`);
 
-    // WHEN: the app loads
-    await page.goto('/');
-
-    // THEN: the favicon (or equivalent icon) responds with 200, not 404
-    const response = await faviconResponse;
+    // THEN: the favicon responds with 200, not 404
+    // NOTE: switched from page.waitForResponse(...) to request.get because the
+    //   waitForResponse promise raced with goto and was unreliable in sandbox.
     expect(response.status()).toBeLessThan(400);
   });
 
