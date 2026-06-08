@@ -8,7 +8,7 @@ export const Route = createRootRoute({
   notFoundComponent: NotFoundView,
 })
 
-function AppShell() {
+export function AppShell() {
   const router = useRouter()
   const currentPath = router.state.location.pathname
 
@@ -50,10 +50,11 @@ function AppShell() {
 
 function NotFoundView() {
   return (
-    <div role="main" aria-label="Página no encontrada" className="flex min-h-screen flex-col items-center justify-center gap-4">
+    <div data-testid="not-found-view" role="main" aria-label="Página no encontrada" className="flex min-h-screen flex-col items-center justify-center gap-4">
       <h1 className="text-2xl font-bold text-slate-900">Página no encontrada</h1>
       <p className="text-slate-600">La página que buscas no existe.</p>
       <a
+        data-testid="not-found-back-link"
         href="/clientes"
         className="text-blue-600 underline hover:text-blue-800"
       >

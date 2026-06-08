@@ -6,7 +6,7 @@ export const Route = createFileRoute('/clientes')({
 
 function ClientesPage() {
   return (
-    <main>
+    <main data-testid="clientes-view">
       <h1 className="text-2xl font-bold text-slate-900">Clientes</h1>
     </main>
   )
