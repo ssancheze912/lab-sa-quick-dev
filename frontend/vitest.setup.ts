@@ -1,5 +1,17 @@
 import '@testing-library/jest-dom/vitest'
-import { vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, vi } from 'vitest'
+import { setupServer } from 'msw/node'
+
+/**
+ * Shared MSW server for component tests (Story 2.1+). Per-test handlers are
+ * registered via `server.use(...)` inside the test, and reset automatically
+ * after each test so handlers do not leak between files.
+ */
+export const server = setupServer()
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
 /**
  * TanStack Router (v1.170) renders its matches inside React.Suspense in
