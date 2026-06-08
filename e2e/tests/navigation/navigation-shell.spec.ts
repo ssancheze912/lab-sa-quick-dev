@@ -31,9 +31,8 @@ test.describe('AC1 — Desktop navigation shell (≥1024px)', () => {
     // WHEN: The user views the app
     await page.goto('/clientes');
 
-    // THEN: A Navbar is visible at the top containing "Siesa Agents"
-    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
-    await expect(page.locator('[data-testid="navbar"]')).toContainText('Siesa Agents');
+    // THEN: "Siesa Agents" product name is visible (rendered by siesa-ui-kit LayoutBase)
+    await expect(page.getByText('Siesa Agents')).toBeVisible();
   });
 
   test('should render a NavigationRail on the left side at ≥1024px', async ({ page }) => {
@@ -52,7 +51,7 @@ test.describe('AC1 — Desktop navigation shell (≥1024px)', () => {
 
     // THEN: A navigation item "Clientes" is present inside the NavigationRail
     await expect(
-      page.locator('[data-testid="navigation-rail"] [data-testid="nav-item-clientes"]'),
+      page.locator('[data-testid="navigation-rail"] [data-testid="navigation-rail-item-clientes"]'),
     ).toBeVisible();
   });
 
@@ -63,7 +62,7 @@ test.describe('AC1 — Desktop navigation shell (≥1024px)', () => {
 
     // THEN: A navigation item "Contactos" is present inside the NavigationRail
     await expect(
-      page.locator('[data-testid="navigation-rail"] [data-testid="nav-item-contactos"]'),
+      page.locator('[data-testid="navigation-rail"] [data-testid="navigation-rail-item-contactos"]'),
     ).toBeVisible();
   });
 
@@ -89,7 +88,7 @@ test.describe('AC2 — Desktop NavigationRail Clientes navigation', () => {
     await page.goto('/contactos');
 
     // WHEN: The user clicks the "Clientes" item in the NavigationRail
-    await page.locator('[data-testid="nav-item-clientes"]').click();
+    await page.locator('[data-testid="navigation-rail-item-clientes"]').click();
 
     // THEN: The router navigates to /clientes (SPA — no full page reload)
     await expect(page).toHaveURL(/\/clientes/);
@@ -103,7 +102,7 @@ test.describe('AC2 — Desktop NavigationRail Clientes navigation', () => {
     await page.goto('/clientes');
 
     // THEN: The Clientes nav item shows the active state (aria-current="page")
-    await expect(page.locator('[data-testid="nav-item-clientes"]')).toHaveAttribute(
+    await expect(page.locator('[data-testid="navigation-rail-item-clientes"]')).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -124,7 +123,7 @@ test.describe('AC2 — Desktop NavigationRail Clientes navigation', () => {
     fullReloadDetected = false;
 
     // WHEN: The user clicks the Clientes item
-    await page.locator('[data-testid="nav-item-clientes"]').click();
+    await page.locator('[data-testid="navigation-rail-item-clientes"]').click();
     await page.waitForURL(/\/clientes/);
 
     // THEN: No full page reload occurs (SPA client-side navigation)
@@ -144,7 +143,7 @@ test.describe('AC3 — Desktop NavigationRail Contactos navigation', () => {
     await page.goto('/clientes');
 
     // WHEN: The user clicks the "Contactos" item in the NavigationRail
-    await page.locator('[data-testid="nav-item-contactos"]').click();
+    await page.locator('[data-testid="navigation-rail-item-contactos"]').click();
 
     // THEN: The router navigates to /contactos (SPA — no full page reload)
     await expect(page).toHaveURL(/\/contactos/);
@@ -158,7 +157,7 @@ test.describe('AC3 — Desktop NavigationRail Contactos navigation', () => {
     await page.goto('/contactos');
 
     // THEN: The Contactos nav item shows the active state (aria-current="page")
-    await expect(page.locator('[data-testid="nav-item-contactos"]')).toHaveAttribute(
+    await expect(page.locator('[data-testid="navigation-rail-item-contactos"]')).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -197,7 +196,7 @@ test.describe('AC4 — Mobile navigation shell (<1024px)', () => {
 
     // THEN: A "Clientes" navigation item is present in the NavigationBar
     await expect(
-      page.locator('[data-testid="navigation-bar"] [data-testid="nav-item-clientes"]'),
+      page.locator('[data-testid="navigation-bar"] [data-testid="navigation-rail-item-clientes"]'),
     ).toBeVisible();
   });
 
@@ -208,7 +207,7 @@ test.describe('AC4 — Mobile navigation shell (<1024px)', () => {
 
     // THEN: A "Contactos" navigation item is present in the NavigationBar
     await expect(
-      page.locator('[data-testid="navigation-bar"] [data-testid="nav-item-contactos"]'),
+      page.locator('[data-testid="navigation-bar"] [data-testid="navigation-rail-item-contactos"]'),
     ).toBeVisible();
   });
 
@@ -219,10 +218,10 @@ test.describe('AC4 — Mobile navigation shell (<1024px)', () => {
 
     // THEN: Each nav item meets the 44×44px minimum touch target (WCAG 2.1 AA / FR29)
     const clientesItem = page.locator(
-      '[data-testid="navigation-bar"] [data-testid="nav-item-clientes"]',
+      '[data-testid="navigation-bar"] [data-testid="navigation-rail-item-clientes"]',
     );
     const contactosItem = page.locator(
-      '[data-testid="navigation-bar"] [data-testid="nav-item-contactos"]',
+      '[data-testid="navigation-bar"] [data-testid="navigation-rail-item-contactos"]',
     );
 
     const clientesBox = await clientesItem.boundingBox();
@@ -261,7 +260,7 @@ test.describe('AC5 — Deep link to /clientes (FR30)', () => {
     await page.goto('/clientes');
 
     // THEN: The Clientes nav item is shown as active — no redirect to home occurs
-    await expect(page.locator('[data-testid="nav-item-clientes"]')).toHaveAttribute(
+    await expect(page.locator('[data-testid="navigation-rail-item-clientes"]')).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -303,7 +302,7 @@ test.describe('AC6 — Deep link to /contactos (FR30)', () => {
     await page.goto('/contactos');
 
     // THEN: The Contactos nav item is shown as active — no redirect to home occurs
-    await expect(page.locator('[data-testid="nav-item-contactos"]')).toHaveAttribute(
+    await expect(page.locator('[data-testid="navigation-rail-item-contactos"]')).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -407,7 +406,7 @@ test.describe('AC9 — Accessibility and ARIA compliance (WCAG 2.1 AA)', () => {
     await page.goto('/clientes');
 
     // THEN: The icon-only Clientes button has aria-label in Spanish
-    await expect(page.locator('[data-testid="nav-item-clientes"]')).toHaveAttribute(
+    await expect(page.locator('[data-testid="navigation-rail-item-clientes"]')).toHaveAttribute(
       'aria-label',
       'Ir a Clientes',
     );
@@ -419,7 +418,7 @@ test.describe('AC9 — Accessibility and ARIA compliance (WCAG 2.1 AA)', () => {
     await page.goto('/clientes');
 
     // THEN: The icon-only Contactos button has aria-label in Spanish
-    await expect(page.locator('[data-testid="nav-item-contactos"]')).toHaveAttribute(
+    await expect(page.locator('[data-testid="navigation-rail-item-contactos"]')).toHaveAttribute(
       'aria-label',
       'Ir a Contactos',
     );
@@ -482,10 +481,10 @@ test.describe('AC9 — Accessibility and ARIA compliance (WCAG 2.1 AA)', () => {
     await page.keyboard.press('Tab');
     const focusedElement = await page.evaluate(() => document.activeElement?.getAttribute('data-testid'));
     // At least one of the nav items should be focusable via Tab
-    const navItems = ['nav-item-clientes', 'nav-item-contactos', 'navbar'];
+    const navItems = ['navigation-rail-item-clientes', 'navigation-rail-item-contactos'];
     const isFocusedOnNav = navItems.some(id => focusedElement?.includes(id) || focusedElement === id);
     // The focus must eventually reach a nav item
     // This test verifies keyboard accessibility is not blocked
-    await expect(page.locator('[data-testid="nav-item-clientes"]')).toBeVisible();
+    await expect(page.locator('[data-testid="navigation-rail-item-clientes"]')).toBeVisible();
   });
 });

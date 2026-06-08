@@ -34,7 +34,7 @@ export function AppShell() {
   ]
 
   return (
-    <nav role="navigation" aria-label="Navegación principal">
+    <nav data-testid="navigation-rail" role="navigation" aria-label="Navegación principal">
       <LayoutBase
         productName="Siesa Agents"
         navigationItems={navigationItems}
