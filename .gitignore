@@ -34,4 +34,5 @@ TestResults/
 
 # Test artifacts
 playwright-results/
+playwright-report/
 tmp/
