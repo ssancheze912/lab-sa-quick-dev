@@ -1,0 +1,33 @@
+# Node
+node_modules/
+dist/
+.pnpm-store/
+.pnpm-debug.log
+*.log
+
+# Vite
+.vite/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# .NET
+bin/
+obj/
+*.user
+.vs/
+*.suo
+*.swp
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Coverage
+coverage/
+TestResults/
