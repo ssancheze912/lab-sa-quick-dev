@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Interfaces;
+using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +21,13 @@ builder.Services.AddCors(options =>
 
 // Problem Details support
 builder.Services.AddProblemDetails();
+
+// EF Core — PostgreSQL with snake_case naming convention
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .UseSnakeCaseNamingConvention());
+
+builder.Services.AddScoped<IApplicationDbContext, AppDbContext>();
 
 var app = builder.Build();
 
