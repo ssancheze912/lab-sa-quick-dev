@@ -49,16 +49,17 @@ public class AppDbContextTests
     }
 
     [Fact]
-    public void AppDbContext_Model_DeclaresNoEntityTypes_InThisStory()
+    public void AppDbContext_Model_DeclaresClienteEntity_AfterStory2_1()
     {
-        // GIVEN: A fresh AppDbContext (no DbSet<T> declared per scope of Story 1.3)
+        // GIVEN: A fresh AppDbContext (Story 2.1 added DbSet<ClienteEntity>)
         using var context = BuildContext();
 
         // WHEN: The EF Core model graph is materialized
-        var entityTypes = context.Model.GetEntityTypes();
+        var entityTypes = context.Model.GetEntityTypes().ToList();
 
-        // THEN: The model is empty — Stories 2.1 and 3.1 will add ClienteEntity / ContactoEntity
-        Assert.Empty(entityTypes);
+        // THEN: ClienteEntity is registered (Story 3.1 will add ContactoEntity)
+        Assert.Single(entityTypes);
+        Assert.Equal("ClienteEntity", entityTypes[0].ClrType.Name);
     }
 
     [Fact]

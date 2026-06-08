@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,8 +20,18 @@ builder.Services.AddProblemDetails();
 // PostgreSQL via EF Core (connection string comes from appsettings.Development.json /
 // ConnectionStrings:DefaultConnection in production env vars). Migrations are run
 // explicitly via `dotnet ef database update` — no auto-migration at startup.
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+//
+// SKIPPED under the "Testing" host environment so WebApplicationFactory-based
+// integration tests (Story 2.1+) can swap in EF Core InMemory without colliding
+// with Npgsql's internal service registrations.
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
+
+// CQRS-lite read-side handler for /api/v1/clientes.
+builder.Services.AddScoped<GetClientesQueryHandler>();
 
 builder.Services.AddCors(options =>
 {
@@ -62,6 +74,9 @@ app.MapScalarApiReference();
 // Health endpoint used to validate CORS + server reachability from the frontend.
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
     .WithName("Health");
+
+// Clientes domain endpoints (Story 2.1: GET; future stories add commands).
+app.MapClienteEndpoints();
 
 // Test-only endpoint that intentionally throws, used by the Story 1.3 ProblemDetailsTests
 // (TC-E1-P0-05) to verify the full ExceptionHandlingMiddleware → RFC 7807 pipeline.
