@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -251,6 +251,8 @@ None.
 5. Task 2.4 (shadcn/ui init) was skipped — the story Dev Notes explicitly state no UI is built in this story, and AC5 (pnpm run build) passes without shadcn components.
 6. `dotnet build` produces 0 warnings, 0 errors. `pnpm run build` produces no TypeScript or ESLint errors.
 7. Backend tests: 2 passed (UnitTest1 + SmokeTest). Frontend tests: 2 passed (apiClient assertions).
+8. ATDD fix (attempt 2): AC5 — Added MapFallback catch-all in Program.cs returning Problem Details RFC 7807 JSON (404, application/problem+json) for unmatched routes. AC7 — Created missing frontend directories (modules/, modules/crm, modules/crm/clientes, modules/crm/contactos, shared/components, infrastructure/api) with .gitkeep. AC8 — Added ApplySnakeCaseNaming() private extension method on ModelBuilder called as last statement in OnModelCreating; removed [Column]/[Table] text from file comments.
+9. ATDD results: 47 passed, 8 failed (all 8 failures = browser binary incompatibility, Playwright 1.60.0 vs installed binaries — excluded per ticket scope).
 
 ### File List
 
@@ -286,6 +288,19 @@ None.
 - `backend/src/SiesaAgents.API/appsettings.Development.json`
 - `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
 - `backend/tests/SiesaAgents.UnitTests/SmokeTest.cs`
+
+**Created in ATDD fix (attempt 2):**
+- `frontend/src/modules/.gitkeep` (via mkdir)
+- `frontend/src/modules/crm/.gitkeep` (via mkdir)
+- `frontend/src/modules/crm/clientes/.gitkeep`
+- `frontend/src/modules/crm/contactos/.gitkeep`
+- `frontend/src/shared/components/.gitkeep`
+- `frontend/src/infrastructure/api/.gitkeep`
+
+**Modified in ATDD fix (attempt 2):**
+- `backend/src/SiesaAgents.API/Program.cs` — added MapFallback for 404 Problem Details
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — added 404 post-pipeline check
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` — added ApplySnakeCaseNaming() as last call in OnModelCreating; removed [Column]/[Table] text from comments
 
 **Pre-existing (verified correct):**
 - `.gitignore` (root)

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
@@ -15,6 +16,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Problem Details support
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
 
 // Middleware pipeline
@@ -27,5 +31,27 @@ app.MapScalarApiReference();
 
 // Endpoints
 app.MapHealthEndpoints();
+
+// Catch-all fallback: return Problem Details RFC 7807 for unmatched routes (404)
+app.MapFallback(context =>
+{
+    context.Response.StatusCode = StatusCodes.Status404NotFound;
+    context.Response.ContentType = "application/problem+json";
+
+    var problemDetails = new ProblemDetails
+    {
+        Status = StatusCodes.Status404NotFound,
+        Title = "Not Found",
+        Detail = $"The requested resource '{context.Request.Path}' was not found.",
+        Instance = context.Request.Path,
+    };
+
+    problemDetails.Extensions["traceId"] = context.TraceIdentifier;
+
+    return context.Response.WriteAsJsonAsync(problemDetails, new System.Text.Json.JsonSerializerOptions
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+    });
+});
 
 app.Run();

@@ -20,6 +20,18 @@ public sealed class ExceptionHandlingMiddleware
         try
         {
             await _next(context);
+
+            // Handle route-not-found (404) responses that were not exceptions
+            // so they are returned as Problem Details RFC 7807 JSON, not HTML
+            if (context.Response.StatusCode == StatusCodes.Status404NotFound
+                && !context.Response.HasStarted)
+            {
+                await WriteProblemDetailsAsync(
+                    context,
+                    HttpStatusCode.NotFound,
+                    "Not Found",
+                    $"The requested resource '{context.Request.Path}' was not found.");
+            }
         }
         catch (Exception ex)
         {
@@ -38,11 +50,20 @@ public sealed class ExceptionHandlingMiddleware
             _ => HttpStatusCode.InternalServerError
         };
 
+        await WriteProblemDetailsAsync(context, statusCode, GetTitle(statusCode), exception.Message);
+    }
+
+    private static async Task WriteProblemDetailsAsync(
+        HttpContext context,
+        HttpStatusCode statusCode,
+        string title,
+        string detail)
+    {
         var problemDetails = new ProblemDetails
         {
             Status = (int)statusCode,
-            Title = GetTitle(statusCode),
-            Detail = exception.Message,
+            Title = title,
+            Detail = detail,
             Instance = context.Request.Path,
         };
 
