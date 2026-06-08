@@ -43,6 +43,7 @@ app.UseStatusCodePages(async context =>
             Status = response.StatusCode,
             Title = ReasonPhrases.GetReasonPhrase(response.StatusCode),
             Type = $"https://tools.ietf.org/html/rfc7231#section-6.5.{response.StatusCode}",
+            Instance = context.HttpContext.Request.Path,
         }, options: null, contentType: "application/problem+json");
     }
 });

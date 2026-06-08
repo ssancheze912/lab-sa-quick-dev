@@ -8,7 +8,5 @@ export const apiClient = axios.create({
   },
 })
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => Promise.reject(error),
-)
+// Real error normalization will be added in Story 1.3 (Problem Details RFC 7807
+// parsing). Until then we keep axios's default behavior (no no-op interceptor).

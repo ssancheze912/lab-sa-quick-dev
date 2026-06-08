@@ -2,6 +2,9 @@
 node_modules/
 *.log
 
+# npm lockfile (project standard: pnpm only)
+package-lock.json
+
 # Playwright
 playwright-results/
 playwright-report/
