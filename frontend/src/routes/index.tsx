@@ -1,14 +1,13 @@
-import { createFileRoute } from '@tanstack/react-router'
+/**
+ * Story 1.2 — Task 1
+ *
+ * The root URL `/` redirects to `/clientes` via `beforeLoad` (AC #5).
+ * No UI is rendered here.
+ */
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
-  component: IndexComponent,
+  beforeLoad: () => {
+    throw redirect({ to: '/clientes' })
+  },
 })
-
-function IndexComponent() {
-  return (
-    <main className="p-8">
-      <h1 className="text-2xl font-bold">Siesa Agents</h1>
-      <p>Aplicación inicializada correctamente.</p>
-    </main>
-  )
-}
