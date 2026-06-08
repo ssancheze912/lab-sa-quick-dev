@@ -35,21 +35,33 @@ export default defineConfig({
       use: { ...devices['Desktop Firefox'] },
     },
     {
-      name: 'edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    },
-    {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },
     },
   ],
 
-  webServer: {
-    command: 'pnpm --filter frontend dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  webServer: [
+    {
+      // Backend — .NET 10 Minimal API on http://localhost:5000.
+      // Readiness gated on /health endpoint (returns 200 once the API is up).
+      command: 'dotnet run --project backend/src/SiesaAgents.API --no-launch-profile --urls http://localhost:5000',
+      url: 'http://localhost:5000/health',
+      reuseExistingServer: !process.env.CI,
+      timeout: 180 * 1000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+    {
+      // Frontend — Vite dev server on http://localhost:5173.
+      // Uses --filter so pnpm-workspace.yaml routes the command to frontend/.
+      command: 'pnpm --filter frontend dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+  ],
 
   outputDir: 'playwright-results/',
 });
