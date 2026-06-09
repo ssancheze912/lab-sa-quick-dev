@@ -1,10 +1,19 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { ClienteListView } from '../../modules/crm/clientes/presentation/ClienteListView'
+import { QueryProvider } from '../../app/providers/QueryProvider'
 
 function ClientesPage() {
   return (
-    <div data-testid="clientes-view" className="p-6">
-      <h1 className="text-2xl font-bold text-slate-900">Clientes</h1>
-    </div>
+    <QueryProvider>
+      <div className="flex h-full" data-testid="clientes-view">
+        {/* Left panel: 280px client list */}
+        <ClienteListView />
+        {/* Right panel: client detail / actions */}
+        <div className="flex-1">
+          <Outlet />
+        </div>
+      </div>
+    </QueryProvider>
   )
 }
 

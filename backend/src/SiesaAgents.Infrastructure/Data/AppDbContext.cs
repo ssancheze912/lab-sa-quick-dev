@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
+using SiesaAgents.Domain.Clientes.Entities;
 
 namespace SiesaAgents.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    // No DbSet<> properties in this story — domain tables are scoped to Epics 2 and 3
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,7 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +15,9 @@ builder.Services.AddProblemDetails();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
            .UseSnakeCaseNamingConvention());
+
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<GetClientesQueryHandler>();
 
 builder.Services.AddCors(options =>
     options.AddPolicy("DevCors", policy =>
@@ -27,6 +34,11 @@ app.UseStatusCodePages();
 app.UseCors("DevCors");
 app.MapOpenApi();
 app.MapScalarApiReference();
+
+// ─── API v1 endpoints ──────────────────────────────────────────────────────
+app.MapGroup("/api/v1")
+    .MapClienteEndpoints();
+// ───────────────────────────────────────────────────────────────────────────
 
 // ─── Diagnostic endpoints (development only) ───────────────────────────────
 if (app.Environment.IsDevelopment())
@@ -71,3 +83,6 @@ if (app.Environment.IsDevelopment())
 // ───────────────────────────────────────────────────────────────────────────
 
 app.Run();
+
+// Make Program accessible for WebApplicationFactory in tests
+public partial class Program { }
