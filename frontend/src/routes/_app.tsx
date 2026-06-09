@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Outlet, Link, useRouterState } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 
 const DESKTOP_BREAKPOINT = 1024
@@ -48,9 +48,9 @@ export function AppLayout({ currentPath = '/', children }: AppLayoutProps) {
               const isActive = currentPath.startsWith(`/${item.id}`)
               return (
                 <li key={item.id}>
-                  <a
+                  <Link
                     data-testid={`nav-item-${item.id}`}
-                    href={item.href}
+                    to={item.href}
                     aria-current={isActive ? 'page' : undefined}
                     className={[
                       'flex flex-col items-center gap-1 px-3 py-2 rounded text-sm font-medium transition-colors',
@@ -60,7 +60,7 @@ export function AppLayout({ currentPath = '/', children }: AppLayoutProps) {
                     ].join(' ')}
                   >
                     <span>{item.label}</span>
-                  </a>
+                  </Link>
                 </li>
               )
             })}
@@ -88,10 +88,10 @@ export function AppLayout({ currentPath = '/', children }: AppLayoutProps) {
           NAV_ITEMS.map((item) => {
             const isActive = currentPath.startsWith(`/${item.id}`)
             return (
-              <a
+              <Link
                 key={item.id}
                 data-testid={`nav-item-${item.id}`}
-                href={item.href}
+                to={item.href}
                 aria-current={isActive ? 'page' : undefined}
                 className={[
                   'flex flex-1 flex-col items-center justify-center py-2 gap-1 text-xs font-bold transition-colors',
@@ -102,7 +102,7 @@ export function AppLayout({ currentPath = '/', children }: AppLayoutProps) {
                 ].join(' ')}
               >
                 <span>{item.label}</span>
-              </a>
+              </Link>
             )
           })}
       </nav>
@@ -111,8 +111,8 @@ export function AppLayout({ currentPath = '/', children }: AppLayoutProps) {
 }
 
 function AppShell() {
-  const currentPath =
-    typeof window !== 'undefined' ? window.location.pathname : '/'
+  const routerState = useRouterState()
+  const currentPath = routerState.location.pathname
 
   return (
     <AppLayout currentPath={currentPath}>

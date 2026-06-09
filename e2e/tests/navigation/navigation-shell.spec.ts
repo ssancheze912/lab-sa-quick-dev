@@ -23,15 +23,11 @@ test.describe('AC1 — Desktop NavigationRail (viewport >= 1024px)', () => {
 
   test('should display the NavigationRail on the left side on desktop viewport', async ({ page }) => {
     // GIVEN: The application is loaded on a desktop browser (width >= 1024px)
-    // Network-first: register a route listener BEFORE navigation
-    const navPromise = page.waitForSelector('[data-testid="navigation-rail"]');
-
     // WHEN: The user navigates to the application
     await page.goto('/clientes');
 
     // THEN: The NavigationRail is visible on the left side
-    const nav = await navPromise;
-    await expect(nav).toBeVisible();
+    await expect(page.locator('[data-testid="navigation-rail"]')).toBeVisible();
   });
 
   test('should show a "Clientes" entry in the NavigationRail on desktop', async ({ page }) => {
@@ -56,15 +52,8 @@ test.describe('AC1 — Desktop NavigationRail (viewport >= 1024px)', () => {
     // GIVEN: The application is loaded on a desktop browser at /contactos
     await page.goto('/contactos');
 
-    // Track navigation type: full reload resets this flag
-    let fullReloadOccurred = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame()) {
-        fullReloadOccurred = true;
-      }
-    });
-    // Reset after initial load
-    fullReloadOccurred = false;
+    // Set a sentinel on window — a full reload clears the JS heap, so absence means reload occurred
+    await page.evaluate(() => { (window as Window & { __spasentinel?: boolean }).__spasentinel = true; });
 
     // WHEN: The user clicks the "Clientes" entry in the NavigationRail
     await page.locator('[data-testid="nav-item-clientes"]').click();
@@ -72,21 +61,17 @@ test.describe('AC1 — Desktop NavigationRail (viewport >= 1024px)', () => {
     // THEN: URL changes to /clientes
     await expect(page).toHaveURL('/clientes');
 
-    // AND: No full page reload occurred (client-side navigation)
-    expect(fullReloadOccurred).toBe(false);
+    // AND: No full page reload occurred (sentinel still present in JS heap = no hard reload)
+    const sentinelStillPresent = await page.evaluate(() => !!(window as Window & { __spasentinel?: boolean }).__spasentinel);
+    expect(sentinelStillPresent).toBe(true);
   });
 
   test('should navigate to /contactos when clicking the Contactos entry without a full page reload', async ({ page }) => {
     // GIVEN: The application is loaded on a desktop browser at /clientes
     await page.goto('/clientes');
 
-    let fullReloadOccurred = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame()) {
-        fullReloadOccurred = true;
-      }
-    });
-    fullReloadOccurred = false;
+    // Set a sentinel on window — a full reload clears the JS heap, so absence means reload occurred
+    await page.evaluate(() => { (window as Window & { __spasentinel?: boolean }).__spasentinel = true; });
 
     // WHEN: The user clicks the "Contactos" entry in the NavigationRail
     await page.locator('[data-testid="nav-item-contactos"]').click();
@@ -94,8 +79,9 @@ test.describe('AC1 — Desktop NavigationRail (viewport >= 1024px)', () => {
     // THEN: URL changes to /contactos
     await expect(page).toHaveURL('/contactos');
 
-    // AND: No full page reload occurred
-    expect(fullReloadOccurred).toBe(false);
+    // AND: No full page reload occurred (sentinel still present in JS heap = no hard reload)
+    const sentinelStillPresent = await page.evaluate(() => !!(window as Window & { __spasentinel?: boolean }).__spasentinel);
+    expect(sentinelStillPresent).toBe(true);
   });
 
   test('should NOT display the mobile NavigationBar on desktop viewport', async ({ page }) => {
@@ -117,14 +103,11 @@ test.describe('AC2 — Mobile NavigationBar (viewport < 1024px)', () => {
 
   test('should display the NavigationBar at the bottom on mobile viewport', async ({ page }) => {
     // GIVEN: The application is loaded on a mobile browser (width < 1024px)
-    const navBarPromise = page.waitForSelector('[data-testid="navigation-bar"]');
-
     // WHEN: The user navigates to the application
     await page.goto('/clientes');
 
     // THEN: The NavigationBar component is visible
-    const navBar = await navBarPromise;
-    await expect(navBar).toBeVisible();
+    await expect(page.locator('[data-testid="navigation-bar"]')).toBeVisible();
   });
 
   test('should show a tappable "Clientes" entry in the mobile NavigationBar', async ({ page }) => {

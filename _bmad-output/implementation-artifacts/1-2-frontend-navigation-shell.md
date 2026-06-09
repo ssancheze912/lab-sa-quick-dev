@@ -171,15 +171,20 @@ claude-sonnet-4-6
 - `__root.notfound.tsx` created as a re-export of `NotFoundView` from `__root.tsx` to satisfy the test import `../__root.notfound`.
 - `NotFoundView` uses plain `<a href="/clientes">` (not TanStack `<Link>`) so it renders without a router context in tests.
 - `AppLayout` exports a standalone presentational component accepting `currentPath` prop; `AppShell` wraps it for TanStack Router integration.
+- Navigation links converted from `<a href>` to TanStack Router `<Link to>` to enable SPA navigation (no full page reload on route changes) — required for AC1/FR28.
+- `AppShell` now uses `useRouterState()` to get the current path reactively.
+- Unit tests updated to use `renderWithRouter` helper with `createRouter` + `createMemoryHistory` + `router.load()` + `act()` to provide router context for `<Link>` components.
+- E2E SPA-navigation detection changed from `framenavigated` event to window sentinel pattern (`window.__spasentinel`) — `framenavigated` fires on SPA pushState too; sentinel cleared only on full reload.
 
 ### Completion Notes List
 
-- `AppLayout` (exported named) is a pure presentational component — no router hooks, renders standalone in tests.
+- `AppLayout` (exported named) is a pure presentational component accepting `currentPath` prop — nav items use TanStack Router `<Link to>` for SPA navigation.
 - Desktop NavigationRail and mobile NavigationBar both use `<nav aria-label="Navegación principal">` with appropriate `data-testid`.
 - Responsive breakpoint logic: `isDesktop = window.innerWidth >= 1024`, re-evaluated on `resize` event via `useEffect`.
 - `aria-current="page"` set on active link via `currentPath.startsWith('/{id}')` comparison.
 - `NotFoundView` exported from `__root.tsx` and re-exported from `__root.notfound.tsx` with `data-testid="not-found-view"` and `data-testid="not-found-back-link"`.
-- 17/17 ATDD tests pass covering AC1, AC2, AC4, AC5.
+- 17/17 Vitest component tests pass covering AC1, AC2, AC4, AC5.
+- 17/17 Playwright E2E tests pass covering AC1, AC2, AC3, AC4.
 
 ### File List
 
