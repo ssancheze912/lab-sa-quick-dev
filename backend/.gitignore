@@ -1,0 +1,31 @@
+## .NET build outputs
+bin/
+obj/
+out/
+*.user
+*.suo
+
+## VS / Rider
+.vs/
+.idea/
+*.swp
+
+## NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+## Test results
+TestResults/
+coverage*/
+*.trx
+*.coverage
+*.coveragexml
+
+## Logs / runtime
+*.log
+*.pid
+
+## Environment
+appsettings.Local.json
