@@ -44,9 +44,8 @@ test.describe('Frontend HTML document structure — boundary conditions', () => 
     // WHEN: The page loads
     await page.goto('/');
 
-    // THEN: viewport meta tag is present (prerequisite for responsive design)
+    // THEN: viewport meta tag is present and declares width=device-width
     const viewport = await page.locator('meta[name="viewport"]').getAttribute('content');
-    expect(viewport).toBeTruthy();
     expect(viewport).toContain('width=device-width');
   });
 
@@ -57,7 +56,6 @@ test.describe('Frontend HTML document structure — boundary conditions', () => 
 
     // THEN: The document has a meaningful title (not empty, not "Vite App")
     const title = await page.title();
-    expect(title).toBeTruthy();
     expect(title.length).toBeGreaterThan(0);
   });
 
