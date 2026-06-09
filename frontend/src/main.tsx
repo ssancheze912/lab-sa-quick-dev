@@ -1,8 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
-import 'siesa-ui-kit/styles.css'
-import './style.css'
+import './index.css'
 
 import { routeTree } from './routeTree.gen'
 
