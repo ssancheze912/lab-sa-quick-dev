@@ -14,3 +14,6 @@ test-results/
 # Environment
 .env.local
 .env.*.local
+
+# Backend secrets (use dotnet user-secrets or env vars in production)
+backend/**/appsettings.Development.json

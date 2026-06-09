@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace SiesaAgents.API.Middleware;
 
-public class ExceptionHandlingMiddleware(RequestDelegate next)
+public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -10,8 +10,9 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         {
             await next(context);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Unhandled exception for {Method} {Path}", context.Request.Method, context.Request.Path);
             context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = 500;
             await context.Response.WriteAsJsonAsync(new ProblemDetails

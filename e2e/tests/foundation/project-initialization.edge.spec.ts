@@ -64,17 +64,12 @@ test.describe('Frontend HTML document structure — boundary conditions', () => 
   test('[P2] should mount the React root element without double-rendering artifacts', async ({ page }) => {
     // GIVEN: React 18 StrictMode in main.tsx causes effects to run twice in dev
     // WHEN: The app mounts
-    const appRootInstances = await page.locator('[data-testid="app-root"]').count();
-
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     // THEN: Exactly one app-root element exists (not duplicated)
     const count = await page.locator('[data-testid="app-root"]').count();
     expect(count).toBe(1);
-
-    // Suppress unused variable lint (necessary for GIVEN context above)
-    void appRootInstances;
   });
 });
 
@@ -160,5 +155,84 @@ test.describe('Frontend direct URL navigation — edge cases', () => {
     // THEN: Server returns the HTML shell (200) so TanStack Router can handle client-side 404
     // Note: Vite may return 200 with index.html or a proper 404 depending on historyApiFallback
     expect([200, 404]).toContain(response.status());
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Boundary: Static asset integrity — CSS, icons
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('Frontend static asset integrity — edge cases', () => {
+  test('[P1] should load TailwindCSS without producing 404 asset failures', async ({ page }) => {
+    // GIVEN: TailwindCSS v4 is configured via @tailwindcss/vite plugin and imported in index.css
+    // WHEN: The page loads and the browser requests CSS assets
+    const cssFailures: string[] = [];
+
+    page.on('requestfailed', (req) => {
+      if (req.url().endsWith('.css') || req.url().includes('tailwind')) {
+        cssFailures.push(req.url());
+      }
+    });
+
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    // THEN: No CSS assets fail to load
+    expect(cssFailures).toHaveLength(0);
+  });
+
+  test('[P2] should serve the favicon without a 404 error', async ({ request }) => {
+    // GIVEN: index.html declares <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    // WHEN: The browser requests the favicon
+    const response = await request.get('http://localhost:5173/favicon.svg');
+
+    // THEN: The favicon is served (200) — a 404 would cause browser icon errors
+    expect(response.status()).toBe(200);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Boundary: Frontend isolation — no implicit backend coupling on initial load
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('Frontend backend coupling — boundary conditions', () => {
+  test('[P2] should render the initial shell without making requests to the backend', async ({ page }) => {
+    // GIVEN: The root route (__root.tsx) is a layout placeholder with no data fetching
+    // WHEN: The app loads at /
+    const backendRequests: string[] = [];
+
+    page.on('request', (req) => {
+      if (req.url().includes('localhost:5000')) {
+        backendRequests.push(req.url());
+      }
+    });
+
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    // THEN: No requests are made to the backend API on the empty shell route
+    // This confirms the root route is a pure layout without data dependencies
+    expect(backendRequests).toHaveLength(0);
+  });
+
+  test('[P2] should not produce React key-prop warnings on initial render', async ({ page }) => {
+    // GIVEN: RouterProvider and QueryProvider are initialized in main.tsx
+    // WHEN: The app renders for the first time
+    const keyWarnings: string[] = [];
+
+    page.on('console', (msg) => {
+      if (
+        msg.type() === 'warning' &&
+        msg.text().includes('key')
+      ) {
+        keyWarnings.push(msg.text());
+      }
+    });
+
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    // THEN: No React key-prop warnings (list rendering without keys) appear
+    expect(keyWarnings).toHaveLength(0);
   });
 });

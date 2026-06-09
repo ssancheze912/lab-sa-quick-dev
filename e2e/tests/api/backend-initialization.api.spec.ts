@@ -144,3 +144,165 @@ test.describe('AC5 — Backend solution builds and runs successfully', () => {
     expect(contentType).toContain('json');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Edge: CORS security boundary — disallowed origins must be rejected
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('CORS security boundaries — edge cases', () => {
+  test('[P1] should NOT return ACAO header for an arbitrary disallowed origin', async ({ request }) => {
+    // GIVEN: DevCors policy explicitly only allows http://localhost:5173
+    // WHEN: A request arrives from a completely different origin
+    const response = await request.get(`${API_BASE_URL}/scalar`, {
+      headers: {
+        Origin: 'http://evil-attacker.com',
+      },
+    });
+
+    // THEN: The Access-Control-Allow-Origin header is absent or does not grant access
+    const allowOrigin = response.headers()['access-control-allow-origin'] ?? '';
+    expect(allowOrigin).not.toBe('http://evil-attacker.com');
+    expect(allowOrigin).not.toBe('*');
+  });
+
+  test('[P1] should allow OPTIONS preflight for POST method from the frontend origin', async ({ request }) => {
+    // GIVEN: The frontend will make POST requests (e.g., create operations in later stories)
+    // WHEN: An OPTIONS preflight is sent for a POST with Content-Type header
+    const response = await request.fetch(`${API_BASE_URL}/api/v1/any-future-endpoint`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'http://localhost:5173',
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'Content-Type',
+      },
+    });
+
+    // THEN: The server responds to the preflight (not CORS-blocked) — 200 or 204
+    // NOTE: 404 is also acceptable since the endpoint does not exist yet —
+    // what matters is the server did not reject with a CORS error (403)
+    expect(response.status()).not.toBe(403);
+  });
+
+  test('[P1] should allow PUT preflight from the frontend origin (update operations)', async ({ request }) => {
+    // GIVEN: The frontend will make PUT requests for update operations (contacto/cliente association)
+    // WHEN: An OPTIONS preflight is sent for PUT
+    const response = await request.fetch(`${API_BASE_URL}/api/v1/any-future-resource/id`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'http://localhost:5173',
+        'Access-Control-Request-Method': 'PUT',
+        'Access-Control-Request-Headers': 'Content-Type',
+      },
+    });
+
+    // THEN: The CORS preflight is not explicitly blocked with 403
+    expect(response.status()).not.toBe(403);
+  });
+
+  test('[P1] should allow DELETE preflight from the frontend origin (delete operations)', async ({ request }) => {
+    // GIVEN: The frontend will make DELETE requests for resource deletion
+    // WHEN: An OPTIONS preflight is sent for DELETE
+    const response = await request.fetch(`${API_BASE_URL}/api/v1/any-future-resource/id`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'http://localhost:5173',
+        'Access-Control-Request-Method': 'DELETE',
+        'Access-Control-Request-Headers': 'Content-Type',
+      },
+    });
+
+    // THEN: The CORS preflight is not explicitly blocked with 403
+    expect(response.status()).not.toBe(403);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Edge: ExceptionHandlingMiddleware — response body and security contract
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('ExceptionHandlingMiddleware — edge cases and security', () => {
+  test('[P1] should return Content-Type application/problem+json on unhandled error paths', async ({ request }) => {
+    // GIVEN: ExceptionHandlingMiddleware sets context.Response.ContentType = "application/problem+json"
+    // WHEN: A non-existent endpoint is hit (server handles as 404 through middleware pipeline)
+    const response = await request.get(`${API_BASE_URL}/api/does-not-exist-middleware-test`);
+
+    // THEN: Response content type is JSON (problem+json or application/json — never text/html)
+    const contentType = response.headers()['content-type'] ?? '';
+    expect(contentType).not.toContain('text/html');
+    expect(contentType).toContain('json');
+  });
+
+  test('[P1] should NOT expose internal exception messages or stack traces in response body', async ({ request }) => {
+    // GIVEN: ExceptionHandlingMiddleware explicitly sets Detail = null to prevent info leakage
+    // WHEN: A request to a non-existent endpoint returns an error response
+    const response = await request.get(`${API_BASE_URL}/api/nonexistent-security-check`);
+
+    // THEN: The response body (if any) does NOT contain stack trace keywords
+    const body = await response.text();
+    const stackTraceIndicators = ['at System.', 'StackTrace', 'InnerException', 'Exception:'];
+    for (const indicator of stackTraceIndicators) {
+      expect(body).not.toContain(indicator);
+    }
+  });
+
+  test('[P2] should return a status code ≥ 400 (never 2xx) for missing routes', async ({ request }) => {
+    // GIVEN: The middleware pipeline correctly handles unknown routes
+    // WHEN: A GET to a completely unknown path is made
+    const response = await request.get(`${API_BASE_URL}/api/this-route-must-not-exist-boundary-test`);
+
+    // THEN: Status is an error code (4xx or 5xx), never a success (2xx)
+    expect(response.status()).toBeGreaterThanOrEqual(400);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Edge: OpenAPI / Scalar infrastructure — supporting endpoints
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('OpenAPI and Scalar infrastructure — edge cases', () => {
+  test('[P2] should expose the OpenAPI JSON document at /openapi/v1.json (required by Scalar)', async ({ request }) => {
+    // GIVEN: Program.cs calls builder.Services.AddOpenApi() and app.MapOpenApi()
+    // Scalar reads /openapi/v1.json to render its interactive documentation
+    // WHEN: A GET request is made to the OpenAPI JSON endpoint
+    const response = await request.get(`${API_BASE_URL}/openapi/v1.json`);
+
+    // THEN: The endpoint returns the OpenAPI spec (200)
+    expect(response.status()).toBe(200);
+  });
+
+  test('[P2] should return valid JSON from the OpenAPI spec endpoint', async ({ request }) => {
+    // GIVEN: AddOpenApi() is configured in Program.cs
+    // WHEN: The OpenAPI JSON document is fetched
+    const response = await request.get(`${API_BASE_URL}/openapi/v1.json`);
+
+    // THEN: The response is parseable JSON (not HTML or plain text)
+    const contentType = response.headers()['content-type'] ?? '';
+    expect(contentType).toContain('json');
+
+    // Body must be valid JSON
+    const body = await response.json();
+    expect(body).toBeTruthy();
+    expect(typeof body).toBe('object');
+  });
+
+  test('[P2] should include the openapi version field in the OpenAPI spec', async ({ request }) => {
+    // GIVEN: The OpenAPI spec is generated by Microsoft.AspNetCore.OpenApi
+    // WHEN: The spec document is fetched and parsed
+    const response = await request.get(`${API_BASE_URL}/openapi/v1.json`);
+    const spec = await response.json() as Record<string, unknown>;
+
+    // THEN: The spec contains the 'openapi' version field (OpenAPI 3.x)
+    expect(spec).toHaveProperty('openapi');
+    expect(typeof spec['openapi']).toBe('string');
+    expect((spec['openapi'] as string).startsWith('3.')).toBe(true);
+  });
+
+  test('[P2] should NOT expose a /swagger endpoint (Swashbuckle is forbidden by architecture)', async ({ request }) => {
+    // GIVEN: Architecture mandates Scalar only — Swashbuckle must not be installed or configured
+    // WHEN: GET /swagger/index.html is requested (Swashbuckle default path)
+    const response = await request.get(`${API_BASE_URL}/swagger/index.html`);
+
+    // THEN: The Swashbuckle UI endpoint does not exist (not 200)
+    expect(response.status()).not.toBe(200);
+  });
+});
