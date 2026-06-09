@@ -1,227 +1,199 @@
-# Automation Summary — Story 1.3: Backend Database Foundation
+# Automation Summary — Story 2.1: Client List & Search
 
 **Date:** 2026-06-09
-**Story:** 1.3 — Backend Database Foundation
-**Epic:** 1 — Project Foundation & Application Shell
+**Story:** 2.1 — Client List & Search
+**Epic:** 2 — Client Management
 **Mode:** BMad-Integrated
-**Coverage Target:** critical-paths + edge cases + boundary conditions
+**Coverage Target:** edge cases, boundary conditions, error paths (expanding ATDD)
 
 ---
 
-## Tests Created / Expanded
+## Tests Created
 
-### Unit Tests — AppDbContext Edge Cases (P1/P2)
+### E2E Edge Tests (P1/P2)
 
-File: `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextEdgeCaseTests.cs`
+File: `e2e/tests/clientes/client-list-search-edge.spec.ts`
 
-**Pre-existing ATDD unit tests (AppDbContextTests.cs):** 6 tests (3 unit + 3 integration)
-**New unit edge tests added by this workflow:** 11 tests
+10 new E2E edge tests:
 
-New additions by edge case:
+- [P1] Case-insensitive: uppercase query matches lowercase nombre
+- [P1] Case-insensitive: lowercase query matches uppercase NIT
+- [P1] Search trims leading spaces before filtering
+- [P1] Search with no match shows EmptyState
+- [P2] Search EmptyState message references "búsqueda/criterio" (differs from no-data message)
+- [P2] Loading skeleton visible while data is fetched (delayed route)
+- [P2] Panel container has scrollable overflow with 20 clients
+- [P1] Only one ErrorPanel rendered even with repeated failures
+- [P1] Search input has non-empty aria-label
+- [P2] Mobile viewport (375x812) renders list panel and client items
+- [P1] ErrorPanel disappears and list renders after successful retry
+- [P1] Rapid type-then-clear restores full list
 
-Disposal boundary:
-- [P1] should throw ObjectDisposedException when model is accessed after context disposal
-- [P1] disposing context1 does NOT affect context2 created from shared options
-- [P1] async disposal (await using) does not throw
+**Total: 12 tests** (2 describes have 2 tests each)
 
-Instance isolation:
-- [P1] two instances created from shared DbContextOptions are independent (NotSame)
-- [P1] model is stable across multiple accesses (EF caches after first build — idempotent)
-- [P2] concurrent instantiation of 10 contexts in parallel — all succeed with zero entities
+### API Edge Tests (P1/P2)
 
-DI scope behavior:
-- [P1] scoped DI registration provides distinct instances per scope
-- [P1] same DI scope returns same instance (scoped singleton-within-scope)
+File: `e2e/tests/api/client-list-search-edge.api.spec.ts`
 
-Model/entity boundary:
-- [P1] model has zero entity types in Story 1.3 scope (empty AppDbContext)
-- [P2] Npgsql options constructor is lazy — does NOT open connection on instantiation
-- [P1] OnModelCreating with empty assembly (no IEntityTypeConfiguration) does not throw
+12 new API edge tests:
 
-Total tests in file: **11** (all passing — verified with `dotnet test --filter Category!=Integration`)
+- [P2] Accented characters in nombre preserved (Señoría & Cía. Ltda.)
+- [P2] Unicode characters in ciudad preserved (São Paulo)
+- [P2] 10 concurrent-created clients all have valid DTO shapes
+- [P1] POST with duplicate NIT returns 409 Conflict
+- [P1] DELETE removes client from subsequent GET response
+- [P2] createdAt parses as a date after 2024-01-01 (not epoch zero)
+- [P2] ClienteDto does NOT expose updatedAt (internal entity field)
+- [P2] 5 concurrent GET requests all return 200
 
-### API Tests — ExceptionHandlingMiddleware Edge Cases (Unit)
+**Total: 8 tests**
 
-File: `backend/tests/SiesaAgents.UnitTests/API/ExceptionMiddlewareEdgeCaseTests.cs`
+### Component Edge Tests (P1/P2)
 
-**Status:** Already present from a prior automation run (12 tests)
-**No new tests added** — coverage was complete
+File: `frontend/src/modules/crm/clientes/presentation/ClienteListView.edge.test.tsx`
 
-### E2E/API Tests — Backend Database Foundation Edge Cases
+14 new component edge tests (all passing - verified):
 
-File: `e2e/tests/api/backend-database-foundation.edge.api.spec.ts`
+- [P1] Loading skeleton in DOM immediately after mount (before data)
+- [P1] Uppercase query matches lowercase nombre (case-insensitive)
+- [P1] Lowercase query matches uppercase-starting nombre
+- [P1] Leading-space query trims and filters correctly
+- [P1] EmptyState shown when search has no matches
+- [P2] Search EmptyState message references búsqueda/criterio
+- [P1] Multiple Reintentar clicks do not crash or duplicate panels
+- [P1] Search input placeholder contains "nombre" and "NIT/RUC" in Spanish
+- [P1] Search input has non-empty aria-label
+- [P2] No-data EmptyState message contains "crear/primer/registrado"
+- [P1] Each client item has role=listitem
+- [P1] Panel container has data-testid="clientes-list-panel"
+- [P2] Very long nombre/NIT rendered without crash
+- [P1] Real-time keystroke filtering progressively narrows results
 
-**Pre-existing ATDD E2E tests (backend-database-foundation.api.spec.ts):** 19 tests
-**New E2E edge tests added by this workflow:** 28 tests
+**Total: 14 tests**
 
-New additions by describe group:
+### Unit Edge Tests (P1/P2)
 
-HTTP verb coverage:
-- [P1] POST to /api/v1/test-error returns 500 with application/problem+json
-- [P1] PUT to /api/v1/test-error returns 500 with application/problem+json
-- [P1] DELETE to /api/v1/test-error returns 500 with application/problem+json
-- [P1] PATCH to /api/v1/test-error returns 500 with application/problem+json
+File: `frontend/src/modules/crm/clientes/application/useClientes.edge.test.ts`
 
-Content-Type boundary conditions:
-- [P1] Content-Type charset must be utf-8 (SerializeToUtf8Bytes correctness)
-- [P1] Content-Type must NOT be application/json (WriteAsJsonAsync was replaced)
-- [P1] Content-Type must NOT be text/html (developer exception page disabled)
-- [P1] Content-Type must NOT be text/plain
+9 new unit edge tests (all passing - verified):
 
-Problem Details JSON structure:
-- [P1] status field value must be exactly 500 (integer, not string)
-- [P1] title field must be a non-empty string
-- [P1] title must NOT contain exception type names (no type fingerprinting)
-- [P2] detail field must be null or absent
-- [P1] response must NOT contain "extensions" with exception data
+- [P1] isError=true when API returns 500
+- [P1] isError=true when API returns 404
+- [P1] data=undefined while isLoading=true (initial state)
+- [P1] refetch() after success triggers another GET request
+- [P1] refetch() after error triggers another GET request
+- [P2] isSuccess=false while loading
+- [P2] QueryClient caches data under ['clientes'] key (mutation invalidation alignment)
+- [P1] data is empty array (not undefined) when API returns []
+- [P1] isError=true on network failure (connection error)
 
-Concurrent request isolation:
-- [P1] 5 concurrent error requests ALL return 500 with application/problem+json
-- [P1] concurrent error requests return independent, valid JSON bodies
-
-Diagnostic endpoint contract:
-- [P1] /api/v1/db-status returns 200 with status:ok and dbContextType fields
-- [P1] /api/v1/db-status dbContextType references "AppDbContext"
-- [P2] /api/v1/db-status returns Content-Type application/json
-- [P1] /api/v1/migrations-history returns 200 with migrations array
-- [P1] /api/v1/migrations-history lists "InitialCreate" migration
-
-Scope boundary — domain endpoints absent:
-- [P1] /api/v1/clientes returns 404 (no domain table)
-- [P1] /api/v1/contactos returns 404 (no domain table)
-- [P2] /api/v1/clientes/123 returns 404 (no sub-resource)
-- [P2] /api/v1/contactos/456 returns 404 (no sub-resource)
-
-OpenAPI spec validation:
-- [P2] OpenAPI spec must NOT list clientes or contactos paths
-- [P2] OpenAPI spec must list at least one diagnostic endpoint
-
-CORS + middleware order:
-- [P1] error response includes Problem Details even when Origin header is present
-- [P1] error response body does NOT leak exception message with Origin header
-
-Total tests in file: **28** (require running E2E against live server)
+**Total: 9 tests**
 
 ---
 
 ## Coverage Analysis
 
-**Total new tests generated:**
-- API (E2E): 28 new tests
-- Unit (C#): 11 new tests
-- Component: 0 (story has no UI component)
+**Total new tests generated: 43**
 
-**Total tests across story files:**
+| File | Type | Tests | Verified |
+|------|------|-------|----------|
+| `client-list-search-edge.spec.ts` | E2E (Playwright) | 12 | Syntax + TS check |
+| `client-list-search-edge.api.spec.ts` | API (Playwright) | 8 | Syntax + TS check |
+| `ClienteListView.edge.test.tsx` | Component (Vitest) | 14 | ✅ All passing |
+| `useClientes.edge.test.ts` | Unit (Vitest) | 9 | ✅ All passing |
+| **TOTAL** | | **43** | |
 
-| File | Type | Count |
-|------|------|-------|
-| `ExceptionMiddlewareTests.cs` | Unit (ATDD) | 7 |
-| `ExceptionMiddlewareEdgeCaseTests.cs` | Unit (Edge) | 12 |
-| `AppDbContextTests.cs` | Unit+Integration (ATDD) | 6 |
-| `AppDbContextEdgeCaseTests.cs` | Unit (Edge) | 11 |
-| `backend-database-foundation.api.spec.ts` | E2E API (ATDD) | 19 |
-| `backend-database-foundation.edge.api.spec.ts` | E2E API (Edge) | 28 |
-| **TOTAL** | | **83** |
-
-**Priority breakdown of NEW tests (39 total new):**
+**Priority breakdown:**
 - P0: 0
-- P1: 30 (verb coverage, content-type boundary, JSON structure, concurrency, DI scope, disposal, CORS order)
-- P2: 9 (detail field null, OpenAPI spec, sub-resource 404, context lazy instantiation)
+- P1: 31
+- P2: 12
 - P3: 0
+
+**Test levels:**
+- E2E: 12 (user-journey edge cases, mobile viewport, retry success)
+- API: 8 (special chars, duplicate NIT constraint, delete-then-get, concurrency)
+- Component: 14 (loading state, case-insensitive, trim, aria, role, EmptyState messages)
+- Unit: 9 (error states, empty array, refetch from error, queryKey alignment)
 
 ---
 
-## Coverage Gaps Addressed
+## Coverage Gaps Addressed (vs ATDD baseline)
 
 | Gap | Coverage Added |
 |-----|---------------|
-| POST/PUT/DELETE/PATCH verb coverage | E2E: all verbs return 500 with correct Content-Type |
-| Content-Type charset utf-8 verification | E2E: charset=utf-8 present in header value |
-| Content-Type NOT application/json (WriteAsJsonAsync replaced) | E2E: negative assertion on header value |
-| Problem Details status is integer 500 (not string) | E2E: strict equality assertion |
-| Problem Details title not empty and not exception type name | E2E: type-check + negative contains |
-| Problem Details detail is null (not just absent) | E2E: null-or-absent assertion with JSON parse |
-| Extensions not populated with exception data | E2E: negative body string assertions |
-| Concurrent requests — no cross-request contamination | E2E: 5 parallel requests with independent body checks |
-| /api/v1/db-status contract (status + dbContextType fields) | E2E: field presence and value assertions |
-| /api/v1/migrations-history lists InitialCreate | E2E: migrations array includes expected migration name |
-| /api/v1/clientes/123 and /contactos/456 sub-resource 404 | E2E: scope boundary extended to sub-paths |
-| OpenAPI spec does not list domain endpoints | E2E: spec body negative assertions |
-| CORS + middleware order under Origin header | E2E: Origin header present, still gets Problem Details |
-| AppDbContext disposal (ObjectDisposedException) | Unit: dispose then access model |
-| AppDbContext shared options — instance isolation | Unit: two instances from same options are NotSame |
-| AppDbContext disposal of one does not affect other | Unit: dispose ctx1, ctx2 still works |
-| Model stability across multiple accesses | Unit: same model reference on repeated access |
-| DI scoped registration — distinct instances per scope | Unit: two scopes, two different instances |
-| DI scoped — same instance within one scope | Unit: two resolutions same scope, same reference |
-| Zero entity types in Story 1.3 scope | Unit: model.GetEntityTypes() is empty |
-| Npgsql constructor is lazy (no I/O on new) | Unit: bad connection string, no throw on constructor |
-| ApplyConfigurationsFromAssembly with empty assembly | Unit: OnModelCreating with no configs does not throw |
-| Async disposal (await using) | Unit: IAsyncDisposable works without exception |
-| Concurrent instantiation thread safety | Unit: 10 concurrent Task.Run contexts all succeed |
+| Case-insensitive search not tested at E2E or Component | Both levels now covered |
+| Leading/trailing whitespace trim | E2E + Component |
+| Search-specific EmptyState message vs no-data message | E2E + Component |
+| Loading skeleton visibility | E2E (delayed route) + Component (sync mount check) |
+| Scrollable overflow for long lists | E2E |
+| Duplicate ErrorPanel render protection | E2E |
+| Search input aria-label accessibility | E2E + Component |
+| Mobile viewport rendering | E2E |
+| Retry success — ErrorPanel disappears, list appears | E2E |
+| Rapid type-then-clear (not covered in AC#5 E2E test) | E2E |
+| Unicode/accented chars preserved in DTO | API |
+| Bulk DTO shape validation (10 clients) | API |
+| Duplicate NIT returns 409 | API |
+| DELETE removes from GET response | API |
+| createdAt is a valid recent date (not epoch 0) | API |
+| updatedAt not exposed in ClienteDto | API |
+| Concurrent GET requests all return 200 | API |
+| isError=true on 500 and 404 | Unit |
+| isError=true on network failure | Unit |
+| data=undefined during loading | Unit |
+| refetch works from both success and error states | Unit |
+| queryKey=['clientes'] alignment with mutation invalidation | Unit |
+| Empty array from API returns [] not undefined | Unit |
 
 ---
 
 ## Tests Marked as fixme
 
-None — all 39 new tests are valid for the implemented codebase.
-
----
-
-## Infrastructure
-
-No new fixtures or page objects required.
-All C# unit tests use xUnit + Microsoft.EntityFrameworkCore.InMemory for isolation.
-All E2E tests use Playwright `request` fixture with `API_BASE_URL` environment variable.
+None — all 43 new tests are valid for the implemented codebase.
+23 tests (Component + Unit) were verified with actual `vitest run` execution.
 
 ---
 
 ## Definition of Done
 
 - [x] All tests follow Given-When-Then format
-- [x] All new tests have priority tags [P1] / [P2]
-- [x] Tests use deterministic assertions (no hard waits, no flaky patterns)
-- [x] No duplicate coverage across ATDD and edge spec files
-- [x] HTTP verb boundary conditions explicitly tested (POST, PUT, DELETE, PATCH)
-- [x] Content-Type charset boundary tested
-- [x] Concurrent request isolation tested (E2E + unit)
-- [x] DI scope behavior tested (per-scope and within-scope)
-- [x] AppDbContext disposal lifecycle tested
-- [x] All 34 non-integration unit tests pass (verified: dotnet test --filter Category!=Integration)
-- [x] C# build: 0 errors, 0 warnings
-- [x] E2E spec parses correctly (Playwright --list shows 28 tests)
-- [x] No test.fixme() markers needed
+- [x] All tests have priority tags [P1] or [P2] in test name
+- [x] Deterministic assertions — no hard waits, no conditional flow
+- [x] No duplicate coverage with ATDD tests
+- [x] Component + Unit tests: 23/23 passing (vitest run)
+- [x] TypeScript: 0 errors, 0 warnings (tsc --noEmit)
+- [x] E2E + API tests: TypeScript-valid (no compilation errors)
+- [x] No test.fixme() markers
 
 ---
 
 ## Test Execution
 
 ```bash
-# Run all Story 1.3 unit tests (non-integration)
-cd backend && dotnet test tests/SiesaAgents.UnitTests/ --filter "Category!=Integration"
+# Run all new unit edge tests
+cd frontend && npx vitest run src/modules/crm/clientes/application/useClientes.edge.test.ts
 
-# Run only new AppDbContext edge tests
-cd backend && dotnet test tests/SiesaAgents.UnitTests/ --filter "FullyQualifiedName~AppDbContextEdgeCaseTests"
+# Run all new component edge tests
+cd frontend && npx vitest run src/modules/crm/clientes/presentation/ClienteListView.edge.test.tsx
 
-# Run only new ExceptionMiddleware edge tests
-cd backend && dotnet test tests/SiesaAgents.UnitTests/ --filter "FullyQualifiedName~ExceptionMiddlewareEdgeCaseTests"
+# Run all unit + component tests for Story 2.1 (ATDD + edge)
+cd frontend && npx vitest run src/modules/crm/clientes/
 
-# Run integration tests (requires live PostgreSQL)
-cd backend && dotnet test tests/SiesaAgents.UnitTests/ --filter "Category=Integration"
+# Run E2E edge tests (requires frontend on :5173 + backend on :5000)
+npx playwright test e2e/tests/clientes/client-list-search-edge.spec.ts
 
-# Run all Story 1.3 E2E API tests (requires backend running on localhost:5000)
-npx playwright test e2e/tests/api/backend-database-foundation.api.spec.ts e2e/tests/api/backend-database-foundation.edge.api.spec.ts
+# Run API edge tests (requires backend on :5000)
+npx playwright test e2e/tests/api/client-list-search-edge.api.spec.ts
 
-# Run only new E2E edge tests
-npx playwright test e2e/tests/api/backend-database-foundation.edge.api.spec.ts
-
-# Run by priority (P1 critical)
-npx playwright test --grep "\[P1\]" e2e/tests/api/
+# Run only P1 tests across all edge specs
+npx playwright test --grep "\[P1\]" e2e/tests/clientes/ e2e/tests/api/
 ```
 
 ---
 
-## Files Modified / Created
+## Files Created
 
-- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextEdgeCaseTests.cs` — 11 new unit edge tests (NEW)
-- `e2e/tests/api/backend-database-foundation.edge.api.spec.ts` — 28 new E2E API edge tests (NEW)
+- `e2e/tests/clientes/client-list-search-edge.spec.ts` — 12 E2E edge tests (NEW)
+- `e2e/tests/api/client-list-search-edge.api.spec.ts` — 8 API edge tests (NEW)
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.edge.test.tsx` — 14 component edge tests (NEW)
+- `frontend/src/modules/crm/clientes/application/useClientes.edge.test.ts` — 9 unit edge tests (NEW)
