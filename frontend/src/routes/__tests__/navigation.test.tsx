@@ -14,7 +14,6 @@
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { act } from 'react';
@@ -30,7 +29,6 @@ import {
  * Provides the router context required by TanStack Router's <Link> component.
  * Uses router.load() + act to ensure routes are resolved before assertions.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function renderWithRouter(ui: React.ReactElement, { initialPath = '/' } = {}) {
   const rootRoute = createRootRoute({ component: () => ui });
   const router = createRouter({
@@ -56,26 +54,18 @@ function setViewportWidth(width: number) {
   window.dispatchEvent(new Event('resize'));
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// These imports will fail (RED) until the implementation files are created:
-//   frontend/src/routes/_app.tsx
-//   frontend/src/routes/__root.tsx  (updated with notFoundComponent)
-// ─────────────────────────────────────────────────────────────────────────────
+import type { AppLayout as AppLayoutType } from '../_app';
+import type { NotFoundView as NotFoundViewType } from '../__root';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let AppLayout: React.ComponentType<any>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let NotFoundView: React.ComponentType<any>;
+let AppLayout: typeof AppLayoutType;
+let NotFoundView: typeof NotFoundViewType;
 
 beforeEach(async () => {
-  // Dynamic imports will throw MODULE_NOT_FOUND until implementation exists (RED phase)
-  // @ts-expect-error – file does not exist yet (RED phase)
   const appModule = await import('../_app');
-  AppLayout = appModule.AppLayout ?? appModule.default;
+  AppLayout = appModule.AppLayout;
 
-  // @ts-expect-error – notFoundComponent not exported yet (RED phase)
   const rootModule = await import('../__root.notfound');
-  NotFoundView = rootModule.NotFoundView ?? rootModule.default;
+  NotFoundView = rootModule.NotFoundView;
 });
 
 afterEach(() => {

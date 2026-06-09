@@ -16,7 +16,7 @@
  */
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { act } from 'react';
@@ -27,12 +27,12 @@ import {
   createRootRoute,
 } from '@tanstack/react-router';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let AppLayout: React.ComponentType<any>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let NotFoundView: React.ComponentType<any>;
+import type { AppLayout as AppLayoutType } from '../_app';
+import type { NotFoundView as NotFoundViewType } from '../__root';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let AppLayout: typeof AppLayoutType;
+let NotFoundView: typeof NotFoundViewType;
+
 async function renderWithRouter(ui: React.ReactElement, { initialPath = '/' } = {}) {
   const rootRoute = createRootRoute({ component: () => ui });
   const router = createRouter({
@@ -55,13 +55,11 @@ function setViewportWidth(width: number) {
 }
 
 beforeEach(async () => {
-  // @ts-expect-error – dynamic import for test isolation
   const appModule = await import('../_app');
-  AppLayout = appModule.AppLayout ?? appModule.default;
+  AppLayout = appModule.AppLayout;
 
-  // @ts-expect-error – notfound re-export
   const rootModule = await import('../__root.notfound');
-  NotFoundView = rootModule.NotFoundView ?? rootModule.default;
+  NotFoundView = rootModule.NotFoundView;
 });
 
 afterEach(() => {
