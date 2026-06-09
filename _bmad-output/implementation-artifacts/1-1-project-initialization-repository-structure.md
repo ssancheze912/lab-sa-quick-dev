@@ -34,6 +34,7 @@ so that the team has a working development environment with both servers running
   - [x] Create `src/shared/lib/apiClient.ts` — Axios instance with `baseURL: import.meta.env.VITE_API_URL` and JSON interceptors
   - [x] Create `.env.development` with `VITE_API_URL=http://localhost:5000`
   - [x] Create `src/routes/__root.tsx` as the TanStack Router root route (shell layout placeholder)
+  - [x] Add `data-testid="app-root"` to `<div id="root">` in `frontend/index.html` (required by AC1 ATDD test)
   - [x] Create `src/main.tsx` wiring `RouterProvider` inside `QueryProvider`
   - [x] Verify TypeScript compiles with zero errors (tsc --noEmit passes; pnpm build succeeds)
 
