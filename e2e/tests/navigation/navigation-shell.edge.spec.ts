@@ -306,7 +306,6 @@ test.describe('Navigation error-free transitions — console error boundary', ()
 
     // WHEN: The user navigates to an unknown route
     await page.goto('/some-unknown-page-xyz');
-    await page.waitForLoadState('networkidle');
 
     // THEN: The 404 view renders without console errors
     await expect(page.locator('[data-testid="not-found-view"]')).toBeVisible();
