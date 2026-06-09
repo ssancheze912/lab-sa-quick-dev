@@ -5,16 +5,8 @@ import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 
 export default defineConfig({
   plugins: [
-    TanStackRouterVite({ routesDirectory: './src/routes' }),
+    TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
     react(),
     tailwindcss(),
   ],
-  server: {
-    port: 5173,
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: [],
-  },
 })
