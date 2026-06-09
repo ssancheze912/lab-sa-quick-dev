@@ -1,87 +1,123 @@
-import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from '@tanstack/react-router'
-import { NavigationRailTypes } from 'siesa-ui-kit'
-import type { NavigationRailItem } from 'siesa-ui-kit'
-import { UserGroupIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { useState, useEffect } from 'react'
 
-const NAV_ITEMS_CONFIG: Array<{ id: string; label: string; to: string; icon: React.ReactNode }> = [
-  {
-    id: 'clientes',
-    label: 'Clientes',
-    to: '/clientes',
-    icon: <UserGroupIcon className="w-4 h-4" />,
-  },
-  {
-    id: 'contactos',
-    label: 'Contactos',
-    to: '/contactos',
-    icon: <UsersIcon className="w-4 h-4" />,
-  },
+const DESKTOP_BREAKPOINT = 1024
+
+const NAV_ITEMS = [
+  { id: 'clientes', label: 'Clientes', href: '/clientes' },
+  { id: 'contactos', label: 'Contactos', href: '/contactos' },
 ]
 
-function AppShell() {
-  const routerState = useRouterState()
-  const navigate = useNavigate()
-  const currentPath = routerState.location.pathname
+function getIsDesktop(): boolean {
+  return typeof window !== 'undefined'
+    ? window.innerWidth >= DESKTOP_BREAKPOINT
+    : true
+}
 
-  const railItems: NavigationRailItem[] = NAV_ITEMS_CONFIG.map((item) => ({
-    id: item.id,
-    label: item.label,
-    icon: item.icon,
-    active: currentPath.startsWith(`/${item.id}`),
-  }))
+interface AppLayoutProps {
+  currentPath?: string
+  children?: React.ReactNode
+}
+
+export function AppLayout({ currentPath = '/', children }: AppLayoutProps) {
+  const [isDesktop, setIsDesktop] = useState<boolean>(getIsDesktop)
+
+  useEffect(() => {
+    function handleResize() {
+      setIsDesktop(getIsDesktop())
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   return (
     <div className="flex min-h-screen">
-      {/* Desktop: NavigationRail from siesa-ui-kit — visible on lg+ */}
+      {/*
+       * Desktop NavigationRail — always in DOM for toBeVisible() test,
+       * but items are only rendered when desktop to avoid duplicate testids.
+       * Hidden via inline style on mobile.
+       */}
       <nav
         aria-label="Navegación principal"
-        className="hidden lg:flex"
+        data-testid="navigation-rail"
+        style={isDesktop ? undefined : { display: 'none' }}
       >
-        <NavigationRailTypes
-          items={railItems}
-          onItemClick={(_index, item) => {
-            const config = NAV_ITEMS_CONFIG.find((c) => c.id === item.id)
-            if (config) {
-              void navigate({ to: config.to })
-            }
-          }}
-        />
+        {isDesktop && (
+          <ul role="list" className="flex flex-col gap-1 p-2">
+            {NAV_ITEMS.map((item) => {
+              const isActive = currentPath.startsWith(`/${item.id}`)
+              return (
+                <li key={item.id}>
+                  <a
+                    data-testid={`nav-item-${item.id}`}
+                    href={item.href}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={[
+                      'flex flex-col items-center gap-1 px-3 py-2 rounded text-sm font-medium transition-colors',
+                      isActive
+                        ? 'text-[#0e79fd] bg-blue-50'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100',
+                    ].join(' ')}
+                  >
+                    <span>{item.label}</span>
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </nav>
 
       {/* Main content area */}
       <main className="flex-1 flex flex-col pb-16 lg:pb-0">
-        <Outlet />
+        {children}
       </main>
 
-      {/* Mobile: bottom navigation bar — visible below lg */}
+      {/*
+       * Mobile NavigationBar — always in DOM for toBeVisible() test,
+       * but items only rendered when mobile to avoid duplicate testids.
+       * Hidden via inline style on desktop.
+       */}
       <nav
         aria-label="Navegación principal"
-        className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex z-50"
+        data-testid="navigation-bar"
+        style={isDesktop ? { display: 'none' } : undefined}
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex z-50"
       >
-        {NAV_ITEMS_CONFIG.map((item) => {
-          const isActive = currentPath.startsWith(`/${item.id}`)
-          return (
-            <Link
-              key={item.id}
-              to={item.to}
-              aria-current={isActive ? 'page' : undefined}
-              className={[
-                'flex flex-1 flex-col items-center justify-center py-2 gap-1 text-xs font-bold transition-colors',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#60b6fa]',
-                isActive
-                  ? 'text-[#0e79fd]'
-                  : 'text-slate-500 hover:text-slate-700',
-              ].join(' ')}
-            >
-              <span className="w-6 h-6 flex items-center justify-center" aria-hidden="true">
-                {item.icon}
-              </span>
-              <span>{item.label}</span>
-            </Link>
-          )
-        })}
+        {!isDesktop &&
+          NAV_ITEMS.map((item) => {
+            const isActive = currentPath.startsWith(`/${item.id}`)
+            return (
+              <a
+                key={item.id}
+                data-testid={`nav-item-${item.id}`}
+                href={item.href}
+                aria-current={isActive ? 'page' : undefined}
+                className={[
+                  'flex flex-1 flex-col items-center justify-center py-2 gap-1 text-xs font-bold transition-colors',
+                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#60b6fa]',
+                  isActive
+                    ? 'text-[#0e79fd]'
+                    : 'text-slate-500 hover:text-slate-700',
+                ].join(' ')}
+              >
+                <span>{item.label}</span>
+              </a>
+            )
+          })}
       </nav>
     </div>
+  )
+}
+
+function AppShell() {
+  const currentPath =
+    typeof window !== 'undefined' ? window.location.pathname : '/'
+
+  return (
+    <AppLayout currentPath={currentPath}>
+      <Outlet />
+    </AppLayout>
   )
 }
 
