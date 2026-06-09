@@ -9,6 +9,7 @@ frontend/dist/
 
 # Test results
 playwright-results/
+playwright-report/
 test-results/
 
 # Environment
