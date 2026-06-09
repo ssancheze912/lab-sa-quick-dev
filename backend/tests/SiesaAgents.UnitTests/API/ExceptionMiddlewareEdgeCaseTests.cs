@@ -45,10 +45,10 @@ public class ExceptionMiddlewareEdgeCaseTests
                     app.UseRouting();
                     app.UseEndpoints(endpoints =>
                     {
-                        endpoints.MapGet("/api/v1/test-error", () => throw exception);
-                        endpoints.MapPost("/api/v1/test-error", () => throw exception);
-                        endpoints.MapPut("/api/v1/test-error", () => throw exception);
-                        endpoints.MapDelete("/api/v1/test-error", () => throw exception);
+                        endpoints.MapGet("/api/v1/test-error", (HttpContext _) => throw exception);
+                        endpoints.MapPost("/api/v1/test-error", (HttpContext _) => throw exception);
+                        endpoints.MapPut("/api/v1/test-error", (HttpContext _) => throw exception);
+                        endpoints.MapDelete("/api/v1/test-error", (HttpContext _) => throw exception);
                     });
                 });
             });

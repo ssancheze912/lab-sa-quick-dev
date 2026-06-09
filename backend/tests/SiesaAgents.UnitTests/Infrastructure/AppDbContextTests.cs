@@ -117,13 +117,16 @@ public class AppDbContextTests
         using var context = new AppDbContext(options);
         await context.Database.MigrateAsync();
 
-        // THEN: The __ef_migrations_history table exists
-        await using var connection = context.Database.GetDbConnection();
-        await connection.OpenAsync();
-        await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(1) FROM information_schema.tables WHERE table_name = '__EFMigrationsHistory'";
-        var result = await command.ExecuteScalarAsync();
-        var tableExists = Convert.ToInt64(result) > 0;
+        // THEN: The __ef_migrations_history table exists (use separate connection to avoid NpgsqlOperationInProgressException)
+        var tableExists = false;
+        await using (var connection = new Npgsql.NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(1) FROM information_schema.tables WHERE table_name = '__EFMigrationsHistory'";
+            var result = await command.ExecuteScalarAsync();
+            tableExists = Convert.ToInt64(result) > 0;
+        }
         Assert.True(tableExists, "The __ef_migrations_history table should exist after applying migrations.");
 
         // Cleanup
