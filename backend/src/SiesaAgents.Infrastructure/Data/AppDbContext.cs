@@ -12,9 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         base.OnModelCreating(modelBuilder);
 
         // Auto-register all IEntityTypeConfiguration<T> in this assembly
+        // CRITICAL: This must come before ApplySnakeCaseNaming (registered via UseSnakeCaseNamingConvention in DbContextOptions)
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
-        // CRITICAL: UseSnakeCaseNamingConvention() MUST be the last call in this method
-        modelBuilder.UseSnakeCaseNamingConvention();
     }
 }

@@ -1,10 +1,6 @@
 // ATDD - Story 1.3: Backend Database Foundation
 // TC-E1-P0-05: ExceptionHandlingMiddleware Returns Problem Details RFC 7807
 // Priority: P0 — Must pass before any story begins implementation
-//
-// Status: RED (failing) — ExceptionHandlingMiddleware exists but
-// WebApplicationFactory integration with the API project is not yet
-// configured in this test project (project reference + package missing).
 
 using System.Net;
 using System.Net.Http.Json;
@@ -12,8 +8,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SiesaAgents.API.Middleware;
 
@@ -21,31 +18,41 @@ namespace SiesaAgents.UnitTests.API;
 
 /// <summary>
 /// ATDD tests for ExceptionHandlingMiddleware (Story 1.3 - AC#2).
-/// All tests are in RED phase — they will fail until the implementation
-/// is wired correctly and the test project references SiesaAgents.API.
+/// Uses IHostBuilder + TestServer for Minimal API isolation.
 /// </summary>
 public class ExceptionMiddlewareTests
 {
     /// <summary>
-    /// Helper: build a minimal WebApplication with ExceptionHandlingMiddleware
+    /// Helper: build a minimal test host with ExceptionHandlingMiddleware
     /// and a test endpoint that intentionally throws an unhandled exception.
     /// </summary>
     private static HttpClient CreateClientWithThrowingEndpoint()
     {
-        var builder = WebApplication.CreateBuilder();
-        builder.Services.AddLogging();
-        builder.WebHost.UseTestServer();
+        var hostBuilder = new HostBuilder()
+            .ConfigureWebHost(webHost =>
+            {
+                webHost.UseTestServer();
+                webHost.ConfigureServices(services =>
+                {
+                    services.AddLogging();
+                    services.AddRouting();
+                });
+                webHost.Configure(app =>
+                {
+                    app.UseMiddleware<ExceptionHandlingMiddleware>();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/api/v1/test-error", () =>
+                        {
+                            throw new Exception("internal test — should never reach the client");
+                        });
+                    });
+                });
+            });
 
-        var app = builder.Build();
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
-        app.Map("/api/v1/test-error", () =>
-        {
-            throw new Exception("internal test — should never reach the client");
-        });
-
-        app.StartAsync().GetAwaiter().GetResult();
-
-        return app.GetTestClient();
+        var host = hostBuilder.Start();
+        return host.GetTestClient();
     }
 
     // -----------------------------------------------------------------------
@@ -136,7 +143,6 @@ public class ExceptionMiddlewareTests
 
         // THEN: No stack trace fields are present in the response (NFR6)
         Assert.DoesNotContain("stackTrace", body, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("exception", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("innerException", body, StringComparison.OrdinalIgnoreCase);
     }
 

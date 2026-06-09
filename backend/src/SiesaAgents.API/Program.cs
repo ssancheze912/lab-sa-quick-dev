@@ -9,7 +9,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .UseSnakeCaseNamingConvention());
 
 builder.Services.AddCors(options =>
     options.AddPolicy("DevCors", policy =>

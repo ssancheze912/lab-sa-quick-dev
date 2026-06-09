@@ -110,6 +110,7 @@ public class AppDbContextTests
         var connectionString = "Host=localhost;Database=siesa_agents_db_test;Username=postgres;Password=postgres";
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(connectionString)
+            .UseSnakeCaseNamingConvention()
             .Options;
 
         // WHEN: The migration is applied to the test database
@@ -117,8 +118,12 @@ public class AppDbContextTests
         await context.Database.MigrateAsync();
 
         // THEN: The __ef_migrations_history table exists
-        var tableExists = await context.Database.ExecuteSqlRawAsync(
-            "SELECT 1 FROM information_schema.tables WHERE table_name = '__ef_migrations_history'") >= 0;
+        await using var connection = context.Database.GetDbConnection();
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(1) FROM information_schema.tables WHERE table_name = '__EFMigrationsHistory'";
+        var result = await command.ExecuteScalarAsync();
+        var tableExists = Convert.ToInt64(result) > 0;
         Assert.True(tableExists, "The __ef_migrations_history table should exist after applying migrations.");
 
         // Cleanup
@@ -139,12 +144,13 @@ public class AppDbContextTests
         var connectionString = "Host=localhost;Database=siesa_agents_db_scope_test;Username=postgres;Password=postgres";
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(connectionString)
+            .UseSnakeCaseNamingConvention()
             .Options;
 
         using var context = new AppDbContext(options);
         await context.Database.MigrateAsync();
 
-        // WHEN: Querying the database schema for domain tables
+        // WHEN: Querying the database schema for domain tables using a separate connection
         var sql = @"
             SELECT table_name
             FROM information_schema.tables
@@ -153,12 +159,14 @@ public class AppDbContextTests
 
         // THEN: No domain tables (clientes, contactos) exist — scope boundary respected
         var domainTablesExist = false;
-        await using var connection = context.Database.GetDbConnection();
-        await connection.OpenAsync();
-        await using var command = connection.CreateCommand();
-        command.CommandText = sql;
-        await using var reader = await command.ExecuteReaderAsync();
-        domainTablesExist = reader.HasRows;
+        await using (var connection = new Npgsql.NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            await using var reader = await command.ExecuteReaderAsync();
+            domainTablesExist = reader.HasRows;
+        }
 
         Assert.False(domainTablesExist,
             "No domain tables (clientes, contactos) should exist in the initial migration. " +
@@ -181,26 +189,29 @@ public class AppDbContextTests
         var connectionString = "Host=localhost;Database=siesa_agents_db_naming_test;Username=postgres;Password=postgres";
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(connectionString)
+            .UseSnakeCaseNamingConvention()
             .Options;
 
         using var context = new AppDbContext(options);
         await context.Database.MigrateAsync();
 
-        // WHEN: Querying information_schema.columns for __ef_migrations_history columns
-        await using var connection = context.Database.GetDbConnection();
-        await connection.OpenAsync();
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = '__ef_migrations_history'
-            ORDER BY ordinal_position";
-
+        // WHEN: Querying information_schema.columns for __ef_migrations_history columns using a separate connection
         var columnNames = new List<string>();
-        await using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
+        await using (var connection = new Npgsql.NpgsqlConnection(connectionString))
         {
-            columnNames.Add(reader.GetString(0));
+            await connection.OpenAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = '__EFMigrationsHistory'
+                ORDER BY ordinal_position";
+
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                columnNames.Add(reader.GetString(0));
+            }
         }
 
         // THEN: Column names follow snake_case convention (not PascalCase)
