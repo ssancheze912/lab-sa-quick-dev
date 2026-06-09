@@ -1,126 +1,133 @@
-# Automation Summary — Story 1.2: Frontend Navigation Shell
+# Automation Summary — Story 1.3: Backend Database Foundation
 
 **Date:** 2026-06-09
-**Story:** 1.2 — Frontend Navigation Shell
+**Story:** 1.3 — Backend Database Foundation
 **Epic:** 1 — Project Foundation & Application Shell
 **Mode:** BMad-Integrated
-**Coverage Target:** critical-paths + edge cases
+**Coverage Target:** critical-paths + edge cases + boundary conditions
 
 ---
 
 ## Tests Created / Expanded
 
-### Component Tests — Unit Edge Cases (P1/P2)
+### Unit Tests — AppDbContext Edge Cases (P1/P2)
 
-File: `frontend/src/routes/__tests__/navigation.edge.test.tsx`
+File: `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextEdgeCaseTests.cs`
 
-**Pre-existing ATDD tests (navigation.test.tsx):** 17 tests
-**New tests added by this workflow:** 23 tests
+**Pre-existing ATDD unit tests (AppDbContextTests.cs):** 6 tests (3 unit + 3 integration)
+**New unit edge tests added by this workflow:** 11 tests
 
-New additions by describe group:
+New additions by edge case:
 
-Breakpoint boundary:
-- [P1] should show NavigationRail at exactly 1024px (desktop breakpoint inclusive)
-- [P1] should show NavigationBar at 1023px (one pixel below breakpoint)
+Disposal boundary:
+- [P1] should throw ObjectDisposedException when model is accessed after context disposal
+- [P1] disposing context1 does NOT affect context2 created from shared options
+- [P1] async disposal (await using) does not throw
 
-Responsive resize transitions:
-- [P2] should switch from NavigationRail to NavigationBar on resize from desktop to mobile
-- [P2] should switch from NavigationBar to NavigationRail on resize from mobile to desktop
+Instance isolation:
+- [P1] two instances created from shared DbContextOptions are independent (NotSame)
+- [P1] model is stable across multiple accesses (EF caches after first build — idempotent)
+- [P2] concurrent instantiation of 10 contexts in parallel — all succeed with zero entities
 
-Active nav item — path edge cases:
-- [P1] should mark "Clientes" as active for a nested path /clientes/123
-- [P1] should mark "Contactos" as active for a nested path /contactos/456
-- [P1] should NOT mark any nav item as active when currentPath is root "/"
-- [P1] should NOT mark any nav item as active for an unknown path /unknown
-- [P2] should handle empty string currentPath without crashing
+DI scope behavior:
+- [P1] scoped DI registration provides distinct instances per scope
+- [P1] same DI scope returns same instance (scoped singleton-within-scope)
 
-ARIA landmark uniqueness:
-- [P1] should render exactly two nav elements (rail + bar) — no unintended duplicates
-- [P1] mobile NavigationBar nav should carry the same aria-label as the desktop rail
+Model/entity boundary:
+- [P1] model has zero entity types in Story 1.3 scope (empty AppDbContext)
+- [P2] Npgsql options constructor is lazy — does NOT open connection on instantiation
+- [P1] OnModelCreating with empty assembly (no IEntityTypeConfiguration) does not throw
 
-NotFoundView isolation and content edge cases:
-- [P1] should render without crashing when no router context is provided
-- [P1] back link href should be exactly "/clientes" — not a relative or full URL
-- [P1] should display "404" numeric code visually
-- [P1] back link text should be in Spanish (case-insensitive match for "volver")
-- [P1] should have an h1 element (document outline) inside the 404 view
+Total tests in file: **11** (all passing — verified with `dotnet test --filter Category!=Integration`)
 
-Navigation link targets:
-- [P1] "Clientes" nav item link href should point to /clientes
-- [P1] "Contactos" nav item link href should point to /contactos
-- [P1] nav items should not open in a new tab (no target="_blank")
-- [P2] mobile nav items should have the correct labels in Spanish
+### API Tests — ExceptionHandlingMiddleware Edge Cases (Unit)
 
-AppLayout default props:
-- [P2] should render without exploding when no props are passed at all
-- [P2] should render nav items even when children prop is undefined
-- [P2] should render children inside the main element when provided
+File: `backend/tests/SiesaAgents.UnitTests/API/ExceptionMiddlewareEdgeCaseTests.cs`
 
-Total tests in file: **23** (all passing)
+**Status:** Already present from a prior automation run (12 tests)
+**No new tests added** — coverage was complete
 
-### E2E Tests — Navigation Edge Cases (P1/P2)
+### E2E/API Tests — Backend Database Foundation Edge Cases
 
-File: `e2e/tests/navigation/navigation-shell.edge.spec.ts`
+File: `e2e/tests/api/backend-database-foundation.edge.api.spec.ts`
 
-**Pre-existing ATDD E2E tests (navigation-shell.spec.ts):** 17 tests
-**New E2E edge tests added by this workflow:** 25 tests
+**Pre-existing ATDD E2E tests (backend-database-foundation.api.spec.ts):** 19 tests
+**New E2E edge tests added by this workflow:** 28 tests
 
 New additions by describe group:
 
-Responsive breakpoint boundary conditions:
-- [P1] should display NavigationBar (not Rail) at exactly 1023px viewport width
-- [P1] should display NavigationRail (not Bar) at exactly 1024px viewport width
+HTTP verb coverage:
+- [P1] POST to /api/v1/test-error returns 500 with application/problem+json
+- [P1] PUT to /api/v1/test-error returns 500 with application/problem+json
+- [P1] DELETE to /api/v1/test-error returns 500 with application/problem+json
+- [P1] PATCH to /api/v1/test-error returns 500 with application/problem+json
 
-Viewport resize mid-session:
-- [P2] should switch from NavigationRail to NavigationBar when resizing below breakpoint
-- [P2] should switch from NavigationBar to NavigationRail when resizing above breakpoint
+Content-Type boundary conditions:
+- [P1] Content-Type charset must be utf-8 (SerializeToUtf8Bytes correctness)
+- [P1] Content-Type must NOT be application/json (WriteAsJsonAsync was replaced)
+- [P1] Content-Type must NOT be text/html (developer exception page disabled)
+- [P1] Content-Type must NOT be text/plain
 
-Browser history — back/forward after SPA navigation:
-- [P1] should navigate back to previous route via browser back button
-- [P1] should navigate forward after going back
-- [P2] should retain navigation shell during back/forward navigation (no full page reload)
+Problem Details JSON structure:
+- [P1] status field value must be exactly 500 (integer, not string)
+- [P1] title field must be a non-empty string
+- [P1] title must NOT contain exception type names (no type fingerprinting)
+- [P2] detail field must be null or absent
+- [P1] response must NOT contain "extensions" with exception data
 
-Active navigation state — aria-current reflects URL:
-- [P1] should mark "Clientes" nav item with aria-current="page" when on /clientes
-- [P1] should mark "Contactos" nav item with aria-current="page" when on /contactos
-- [P1] should update aria-current when navigating from Clientes to Contactos
+Concurrent request isolation:
+- [P1] 5 concurrent error requests ALL return 500 with application/problem+json
+- [P1] concurrent error requests return independent, valid JSON bodies
 
-404 not-found view from mobile viewport:
-- [P2] should display the 404 view on unknown routes in mobile viewport
-- [P2] should provide a working back-to-clientes link on the mobile 404 view
+Diagnostic endpoint contract:
+- [P1] /api/v1/db-status returns 200 with status:ok and dbContextType fields
+- [P1] /api/v1/db-status dbContextType references "AppDbContext"
+- [P2] /api/v1/db-status returns Content-Type application/json
+- [P1] /api/v1/migrations-history returns 200 with migrations array
+- [P1] /api/v1/migrations-history lists "InitialCreate" migration
 
-Multi-hop SPA navigation:
-- [P2] should navigate clientes → contactos → clientes without stale state
-- [P2] should navigate contactos → clientes → contactos correctly
+Scope boundary — domain endpoints absent:
+- [P1] /api/v1/clientes returns 404 (no domain table)
+- [P1] /api/v1/contactos returns 404 (no domain table)
+- [P2] /api/v1/clientes/123 returns 404 (no sub-resource)
+- [P2] /api/v1/contactos/456 returns 404 (no sub-resource)
 
-Navigation error-free transitions:
-- [P1] should produce no console errors when navigating from /clientes to /contactos
-- [P1] should produce no console errors when loading the 404 view
+OpenAPI spec validation:
+- [P2] OpenAPI spec must NOT list clientes or contactos paths
+- [P2] OpenAPI spec must list at least one diagnostic endpoint
 
-Navigation shell accessibility — browser-level checks:
-- [P1] should have a nav landmark with accessible name "Navegación principal" on desktop
-- [P2] should have focusable navigation links reachable via keyboard Tab on desktop
-- [P1] should have nav items with descriptive Spanish text labels on desktop
+CORS + middleware order:
+- [P1] error response includes Problem Details even when Origin header is present
+- [P1] error response body does NOT leak exception message with Origin header
 
-Total tests in file: **25** (requires running E2E against live server)
+Total tests in file: **28** (require running E2E against live server)
 
 ---
 
 ## Coverage Analysis
 
-**Total new tests generated:** 48 (23 Component/Unit + 25 E2E)
-**Total tests across story files:** 65 (17 ATDD component + 23 edge component + 17 ATDD E2E + 25 edge E2E)
+**Total new tests generated:**
+- API (E2E): 28 new tests
+- Unit (C#): 11 new tests
+- Component: 0 (story has no UI component)
 
-**Priority breakdown of NEW tests:**
+**Total tests across story files:**
+
+| File | Type | Count |
+|------|------|-------|
+| `ExceptionMiddlewareTests.cs` | Unit (ATDD) | 7 |
+| `ExceptionMiddlewareEdgeCaseTests.cs` | Unit (Edge) | 12 |
+| `AppDbContextTests.cs` | Unit+Integration (ATDD) | 6 |
+| `AppDbContextEdgeCaseTests.cs` | Unit (Edge) | 11 |
+| `backend-database-foundation.api.spec.ts` | E2E API (ATDD) | 19 |
+| `backend-database-foundation.edge.api.spec.ts` | E2E API (Edge) | 28 |
+| **TOTAL** | | **83** |
+
+**Priority breakdown of NEW tests (39 total new):**
 - P0: 0
-- P1: 32 (breakpoint boundary, SPA navigation, aria-current, link structure, 404 accessibility)
-- P2: 16 (resize transitions, multi-hop routing, error-free navigation, default props)
+- P1: 30 (verb coverage, content-type boundary, JSON structure, concurrency, DI scope, disposal, CORS order)
+- P2: 9 (detail field null, OpenAPI spec, sub-resource 404, context lazy instantiation)
 - P3: 0
-
-**Test levels:**
-- E2E: 25 new tests (breakpoint boundary in browser, SPA back/forward, aria-current in DOM, console errors)
-- Component/Unit: 23 new tests (breakpoint arithmetic, resize events, path edge cases, DOM structure, NotFoundView isolation)
-- API: 0 (Story 1.2 is frontend-only)
 
 ---
 
@@ -128,38 +135,44 @@ Total tests in file: **25** (requires running E2E against live server)
 
 | Gap | Coverage Added |
 |-----|---------------|
-| Breakpoint at exactly 1024px vs 1023px | Unit + E2E: both boundary values verified |
-| Resize event triggering nav switch mid-session | Unit + E2E: desktop→mobile and mobile→desktop |
-| Browser back/forward after SPA navigation | E2E: goBack/goForward with URL and content assertions |
-| aria-current updates when navigating between routes | E2E + Unit: active state switching verified |
-| aria-current for nested sub-paths (/clientes/123) | Unit: startsWith logic confirmed |
-| aria-current absent for root "/" and unknown paths | Unit: negative assertion on both nav items |
-| currentPath="" edge case (no crash) | Unit: resolves without throw |
-| 404 view accessible from mobile viewport | E2E: mobile viewport + back link |
-| Multi-hop navigation (clientes→contactos→clientes) | E2E: state integrity across multiple nav clicks |
-| Console errors during navigation transitions | E2E: error listener on page.console |
-| NotFoundView renders without router context | Unit: plain render() without RouterProvider |
-| Back link href is exactly "/clientes" | Unit + E2E: attribute value assertion |
-| Nav items never open in new tab | Unit: target attribute absent |
-| Both nav containers always in DOM | Unit: queryBy on both at all viewports |
-| AppLayout renders children correctly | Unit: child slot content assertion |
-| Nav item link hrefs point to correct routes | Unit: href attribute validation |
-| ARIA: exactly two nav landmarks, both labelled | Unit + E2E: querySelectorAll count |
-| Keyboard Tab reachability in browser | E2E: keyboard.press('Tab') focus check |
+| POST/PUT/DELETE/PATCH verb coverage | E2E: all verbs return 500 with correct Content-Type |
+| Content-Type charset utf-8 verification | E2E: charset=utf-8 present in header value |
+| Content-Type NOT application/json (WriteAsJsonAsync replaced) | E2E: negative assertion on header value |
+| Problem Details status is integer 500 (not string) | E2E: strict equality assertion |
+| Problem Details title not empty and not exception type name | E2E: type-check + negative contains |
+| Problem Details detail is null (not just absent) | E2E: null-or-absent assertion with JSON parse |
+| Extensions not populated with exception data | E2E: negative body string assertions |
+| Concurrent requests — no cross-request contamination | E2E: 5 parallel requests with independent body checks |
+| /api/v1/db-status contract (status + dbContextType fields) | E2E: field presence and value assertions |
+| /api/v1/migrations-history lists InitialCreate | E2E: migrations array includes expected migration name |
+| /api/v1/clientes/123 and /contactos/456 sub-resource 404 | E2E: scope boundary extended to sub-paths |
+| OpenAPI spec does not list domain endpoints | E2E: spec body negative assertions |
+| CORS + middleware order under Origin header | E2E: Origin header present, still gets Problem Details |
+| AppDbContext disposal (ObjectDisposedException) | Unit: dispose then access model |
+| AppDbContext shared options — instance isolation | Unit: two instances from same options are NotSame |
+| AppDbContext disposal of one does not affect other | Unit: dispose ctx1, ctx2 still works |
+| Model stability across multiple accesses | Unit: same model reference on repeated access |
+| DI scoped registration — distinct instances per scope | Unit: two scopes, two different instances |
+| DI scoped — same instance within one scope | Unit: two resolutions same scope, same reference |
+| Zero entity types in Story 1.3 scope | Unit: model.GetEntityTypes() is empty |
+| Npgsql constructor is lazy (no I/O on new) | Unit: bad connection string, no throw on constructor |
+| ApplyConfigurationsFromAssembly with empty assembly | Unit: OnModelCreating with no configs does not throw |
+| Async disposal (await using) | Unit: IAsyncDisposable works without exception |
+| Concurrent instantiation thread safety | Unit: 10 concurrent Task.Run contexts all succeed |
 
 ---
 
 ## Tests Marked as fixme
 
-None — all generated tests are valid for the implemented codebase.
+None — all 39 new tests are valid for the implemented codebase.
 
 ---
 
 ## Infrastructure
 
-No new fixtures or page objects were required for Story 1.2 edge tests.
-All unit tests use the existing `renderWithRouter` helper pattern from `navigation.test.tsx`.
-E2E tests use the built-in Playwright `page` fixture directly.
+No new fixtures or page objects required.
+All C# unit tests use xUnit + Microsoft.EntityFrameworkCore.InMemory for isolation.
+All E2E tests use Playwright `request` fixture with `API_BASE_URL` environment variable.
 
 ---
 
@@ -167,14 +180,16 @@ E2E tests use the built-in Playwright `page` fixture directly.
 
 - [x] All tests follow Given-When-Then format
 - [x] All new tests have priority tags [P1] / [P2]
-- [x] Tests use deterministic assertions (no hard waits)
+- [x] Tests use deterministic assertions (no hard waits, no flaky patterns)
 - [x] No duplicate coverage across ATDD and edge spec files
-- [x] Breakpoint boundary conditions explicitly tested (1023px vs 1024px)
-- [x] Resize event transitions tested (both directions)
-- [x] Browser back/forward history tested in E2E
-- [x] aria-current accuracy tested (positive and negative)
-- [x] Console error-free navigation transitions verified
-- [x] All 23 component edge tests passing (verified: vitest run)
+- [x] HTTP verb boundary conditions explicitly tested (POST, PUT, DELETE, PATCH)
+- [x] Content-Type charset boundary tested
+- [x] Concurrent request isolation tested (E2E + unit)
+- [x] DI scope behavior tested (per-scope and within-scope)
+- [x] AppDbContext disposal lifecycle tested
+- [x] All 34 non-integration unit tests pass (verified: dotnet test --filter Category!=Integration)
+- [x] C# build: 0 errors, 0 warnings
+- [x] E2E spec parses correctly (Playwright --list shows 28 tests)
 - [x] No test.fixme() markers needed
 
 ---
@@ -182,25 +197,31 @@ E2E tests use the built-in Playwright `page` fixture directly.
 ## Test Execution
 
 ```bash
-# Run all Story 1.2 component tests (unit + edge)
-cd frontend && npx vitest run src/routes/__tests__/
+# Run all Story 1.3 unit tests (non-integration)
+cd backend && dotnet test tests/SiesaAgents.UnitTests/ --filter "Category!=Integration"
 
-# Run only new edge tests
-cd frontend && npx vitest run src/routes/__tests__/navigation.edge.test.tsx
+# Run only new AppDbContext edge tests
+cd backend && dotnet test tests/SiesaAgents.UnitTests/ --filter "FullyQualifiedName~AppDbContextEdgeCaseTests"
 
-# Run all Story 1.2 E2E tests
-npx playwright test e2e/tests/navigation/
+# Run only new ExceptionMiddleware edge tests
+cd backend && dotnet test tests/SiesaAgents.UnitTests/ --filter "FullyQualifiedName~ExceptionMiddlewareEdgeCaseTests"
 
-# Run only E2E edge cases
-npx playwright test e2e/tests/navigation/navigation-shell.edge.spec.ts
+# Run integration tests (requires live PostgreSQL)
+cd backend && dotnet test tests/SiesaAgents.UnitTests/ --filter "Category=Integration"
+
+# Run all Story 1.3 E2E API tests (requires backend running on localhost:5000)
+npx playwright test e2e/tests/api/backend-database-foundation.api.spec.ts e2e/tests/api/backend-database-foundation.edge.api.spec.ts
+
+# Run only new E2E edge tests
+npx playwright test e2e/tests/api/backend-database-foundation.edge.api.spec.ts
 
 # Run by priority (P1 critical)
-npx playwright test --grep "\[P1\]"
+npx playwright test --grep "\[P1\]" e2e/tests/api/
 ```
 
 ---
 
 ## Files Modified / Created
 
-- `frontend/src/routes/__tests__/navigation.edge.test.tsx` — 23 new component/unit edge tests (NEW)
-- `e2e/tests/navigation/navigation-shell.edge.spec.ts` — 25 new E2E edge tests (NEW)
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextEdgeCaseTests.cs` — 11 new unit edge tests (NEW)
+- `e2e/tests/api/backend-database-foundation.edge.api.spec.ts` — 28 new E2E API edge tests (NEW)
