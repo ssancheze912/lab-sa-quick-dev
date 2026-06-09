@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -340,8 +340,9 @@ None.
 2. `ExceptionHandlingMiddleware` was hardened: replaced `WriteAsJsonAsync` (which overrides Content-Type to `application/json`) with `JsonSerializer.SerializeToUtf8Bytes` to preserve `application/problem+json; charset=utf-8`.
 3. Integration tests use separate `NpgsqlConnection` instances (not `context.Database.GetDbConnection()`) to avoid `NpgsqlOperationInProgressException` after `MigrateAsync()`.
 4. Test packages upgraded: `Microsoft.AspNetCore.Mvc.Testing` 10.0.8, `Microsoft.EntityFrameworkCore.InMemory` 10.0.8, added `Microsoft.AspNetCore.TestHost` 10.0.8.
-5. All 14 tests pass: 11 unit + 3 integration (with live PostgreSQL). Build: 0 errors, 1 warning (transitive EFCore version conflict from EFCore.NamingConventions upstream — non-blocking).
+5. All 14 xUnit tests pass: 11 unit + 3 integration (with live PostgreSQL). Build: 0 errors, 1 warning (transitive EFCore version conflict from EFCore.NamingConventions upstream — non-blocking).
 6. `siesa_agents_db` created with only `__EFMigrationsHistory` (columns: `migration_id`, `product_version` — snake_case confirmed).
+7. Correction attempt 2: All 19 Playwright E2E tests in `backend-database-foundation.api.spec.ts` pass. Root cause was stale server binary — restarted with correct content root pointing to the API project directory so `appsettings.Development.json` is loaded and connection string is available. The 3 diagnostic endpoints (`/api/v1/test-exception`, `/api/v1/db-status`, `/api/v1/migrations-history`) were already in Program.cs from the first implementation; they simply required the server to be restarted with the correct working directory.
 
 ### File List
 
