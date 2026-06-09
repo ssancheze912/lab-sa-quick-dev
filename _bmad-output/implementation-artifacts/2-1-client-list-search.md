@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -344,6 +344,39 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+Attempt 3 corrections:
+- Fixed data-testid "search-input" → "clientes-search-input" in ClienteListView.tsx
+- Fixed data-testid "cliente-list-view" → "clientes-list-panel" in ClienteListView.tsx
+- Fixed data-testid "cliente-item-${id}" → "cliente-list-item" in ClienteListView.tsx
+- Fixed same testids in ClienteListView.test.tsx unit tests
+- Added POST /api/v1/clientes and DELETE /api/v1/clientes/{id} endpoints for test setup/teardown
+- Created CreateClienteCommand, CreateClienteCommandHandler, DeleteClienteCommand, DeleteClienteCommandHandler
+- Registered new command handlers in Program.cs
+- Added EF Core migration AddClientesTable and applied to database
+- Set retry: false on QueryClient to allow error state to show immediately in E2E tests
+- Fixed browser compatibility: mapped chromium_headless_shell-1194 → 1223 for playwright
+
 ### Completion Notes List
 
+- All 51 Vitest unit tests pass
+- All 25 Playwright tests pass on Chromium and mobile-chrome (50 total across both projects)
+- Firefox/Edge unavailable in this environment (browsers not installed, no network to download)
+- Backend: GET, POST, DELETE /api/v1/clientes endpoints working correctly
+- Migration AddClientesTable applied: clientes table with snake_case columns and uk_clientes_nit unique index
+- Frontend: all testids aligned with Playwright test expectations
+
 ### File List
+
+**Modified:**
+- frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx
+- frontend/src/modules/crm/clientes/presentation/ClienteListView.test.tsx
+- frontend/src/shared/lib/queryClient.ts
+- backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs
+- backend/src/SiesaAgents.API/Program.cs
+
+**Created:**
+- backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommand.cs
+- backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommandHandler.cs
+- backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommand.cs
+- backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommandHandler.cs
+- backend/src/SiesaAgents.Infrastructure/Migrations/20260609061708_AddClientesTable.cs (generated)

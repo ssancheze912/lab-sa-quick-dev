@@ -92,7 +92,7 @@ describe('ClienteListView', () => {
     })
 
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
-    const input = screen.getByTestId('search-input')
+    const input = screen.getByTestId('clientes-search-input')
     await user.type(input, 'Acme')
 
     expect(screen.getByText('Acme Corp')).toBeInTheDocument()
@@ -113,7 +113,7 @@ describe('ClienteListView', () => {
       expect(screen.getByText('Acme Corp')).toBeInTheDocument()
     })
 
-    const input = screen.getByTestId('search-input')
+    const input = screen.getByTestId('clientes-search-input')
     await user.type(input, '800222')
 
     expect(screen.getByText('Beta SA')).toBeInTheDocument()
@@ -130,7 +130,7 @@ describe('ClienteListView', () => {
       expect(screen.getByText('Acme Corp')).toBeInTheDocument()
     })
 
-    const input = screen.getByTestId('search-input')
+    const input = screen.getByTestId('clientes-search-input')
     await user.type(input, 'Acme')
     expect(screen.queryByText('Beta SA')).not.toBeInTheDocument()
 
@@ -222,7 +222,7 @@ describe('ClienteListView', () => {
       expect(screen.getAllByRole('listitem').length).toBe(500)
     })
 
-    const input = screen.getByTestId('search-input')
+    const input = screen.getByTestId('clientes-search-input')
 
     const start = performance.now()
     await user.type(input, 'Acme')

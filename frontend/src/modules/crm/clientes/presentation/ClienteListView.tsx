@@ -23,7 +23,7 @@ export function ClienteListView() {
   return (
     <div
       className="w-[280px] flex-shrink-0 border-r border-slate-200 flex flex-col h-full overflow-hidden"
-      data-testid="cliente-list-view"
+      data-testid="clientes-list-panel"
     >
       {/* Search input */}
       <div className="p-3 border-b border-slate-100">
@@ -34,7 +34,7 @@ export function ClienteListView() {
           placeholder="Buscar por nombre o NIT/RUC..."
           aria-label="Buscar clientes por nombre o NIT/RUC"
           className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-[#0e79fd] focus:border-transparent placeholder:text-slate-400"
-          data-testid="search-input"
+          data-testid="clientes-search-input"
         />
       </div>
 
@@ -66,7 +66,7 @@ export function ClienteListView() {
               key={cliente.id}
               role="listitem"
               className="flex flex-col px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
-              data-testid={`cliente-item-${cliente.id}`}
+              data-testid="cliente-list-item"
             >
               <span className="text-sm font-medium text-slate-900 truncate">
                 {cliente.nombre}
