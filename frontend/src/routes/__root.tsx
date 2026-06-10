@@ -1,6 +1,5 @@
 import { createRootRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
-import { LayoutBase, NavigationBar } from 'siesa-ui-kit'
-import type { NavigationRailGroupMenuItem, NavigationBarItem } from 'siesa-ui-kit'
+import { NavigationRailItem } from 'siesa-ui-kit'
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'
 
@@ -27,78 +26,113 @@ function useIsDesktop(): boolean {
   return isDesktop
 }
 
-function useNavigationRailItems(): NavigationRailGroupMenuItem[] {
-  const { location } = useRouterState()
-  const navigate = useNavigate()
-
-  return [
-    {
-      id: 'clientes',
-      label: 'Clientes',
-      icon: <UsersIcon className="w-5 h-5" aria-hidden="true" />,
-      active: location.pathname.startsWith('/clientes'),
-      onClick: () => void navigate({ to: '/clientes' }),
-    },
-    {
-      id: 'contactos',
-      label: 'Contactos',
-      icon: <UserIcon className="w-5 h-5" aria-hidden="true" />,
-      active: location.pathname.startsWith('/contactos'),
-      onClick: () => void navigate({ to: '/contactos' }),
-    },
-  ]
+interface NavItem {
+  id: string
+  label: string
+  to: string
+  ariaLabel: string
+  testId: string
+  icon: React.ReactNode
 }
 
-function MobileNavigationBar(): JSX.Element {
+const NAV_ITEMS: NavItem[] = [
+  {
+    id: 'clientes',
+    label: 'Clientes',
+    to: '/clientes',
+    ariaLabel: 'Ir a Clientes',
+    testId: 'nav-item-clientes',
+    icon: <UsersIcon className="w-4 h-4" aria-hidden="true" />,
+  },
+  {
+    id: 'contactos',
+    label: 'Contactos',
+    to: '/contactos',
+    ariaLabel: 'Ir a Contactos',
+    testId: 'nav-item-contactos',
+    icon: <UserIcon className="w-4 h-4" aria-hidden="true" />,
+  },
+]
+
+function DesktopNavigationSidebar(): JSX.Element {
   const { location } = useRouterState()
   const navigate = useNavigate()
 
-  const activeId = location.pathname.startsWith('/contactos') ? 'contactos' : 'clientes'
+  return (
+    <nav
+      data-testid="navigation-rail"
+      aria-label="Navegación principal"
+      className="flex flex-col items-center w-[72px] min-h-screen bg-white border-r border-slate-200 pt-4 gap-1"
+    >
+      {NAV_ITEMS.map((item) => {
+        const isActive = location.pathname.startsWith(item.to)
+        return (
+          <div
+            key={item.id}
+            data-testid={item.testId}
+            aria-label={item.ariaLabel}
+            aria-current={isActive ? 'page' : undefined}
+          >
+            <NavigationRailItem
+              id={item.id}
+              icon={item.icon}
+              label={item.label}
+              selected={isActive}
+              ariaLabel={item.ariaLabel}
+              onClick={() => void navigate({ to: item.to as '/clientes' | '/contactos' })}
+            />
+          </div>
+        )
+      })}
+    </nav>
+  )
+}
 
-  const items: NavigationBarItem[] = [
-    {
-      id: 'clientes',
-      label: 'Clientes',
-      icon: <UsersIcon className="w-5 h-5" aria-hidden="true" />,
-      active: location.pathname.startsWith('/clientes'),
-      ariaLabel: 'Ir a Clientes',
-    },
-    {
-      id: 'contactos',
-      label: 'Contactos',
-      icon: <UserIcon className="w-5 h-5" aria-hidden="true" />,
-      active: location.pathname.startsWith('/contactos'),
-      ariaLabel: 'Ir a Contactos',
-    },
-  ]
+function MobileNavigationBarCustom(): JSX.Element {
+  const { location } = useRouterState()
+  const navigate = useNavigate()
 
   return (
-    <NavigationBar
-      items={items}
-      activeItemId={activeId}
-      onItemClick={(id) => void navigate({ to: `/${id}` as '/clientes' | '/contactos' })}
-      ariaLabel="Navegación principal"
-    />
+    <nav
+      data-testid="navigation-bar"
+      aria-label="Navegación principal"
+      className="fixed bottom-0 left-0 right-0 z-50 flex flex-row items-center justify-around bg-white border-t border-slate-200 h-16"
+    >
+      {NAV_ITEMS.map((item) => {
+        const isActive = location.pathname.startsWith(item.to)
+        return (
+          <div
+            key={item.id}
+            data-testid={item.testId}
+            aria-label={item.ariaLabel}
+            aria-current={isActive ? 'page' : undefined}
+            className="flex-1 flex items-center justify-center min-h-[44px]"
+          >
+            <NavigationRailItem
+              id={item.id}
+              icon={item.icon}
+              label={item.label}
+              selected={isActive}
+              ariaLabel={item.ariaLabel}
+              onClick={() => void navigate({ to: item.to as '/clientes' | '/contactos' })}
+            />
+          </div>
+        )
+      })}
+    </nav>
   )
 }
 
 function RootLayout(): JSX.Element {
-  const navigationItems = useNavigationRailItems()
   const isDesktop = useIsDesktop()
 
   if (isDesktop) {
     return (
-      <div id="single-spa-application">
-        <div data-testid="navigation-rail">
-          <LayoutBase
-            productName="Siesa Agents"
-            navigationItems={navigationItems}
-            navigationRailProps={{ state: 'collapsed' }}
-            contentClassName="p-0"
-          >
-            <Outlet />
-          </LayoutBase>
-        </div>
+      <div id="single-spa-application" className="flex min-h-screen">
+        <DesktopNavigationSidebar />
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
       </div>
     )
   }
@@ -108,12 +142,7 @@ function RootLayout(): JSX.Element {
       <main className="flex-1 pb-16">
         <Outlet />
       </main>
-      <div
-        data-testid="navigation-bar"
-        className="fixed bottom-0 left-0 right-0 z-50"
-      >
-        <MobileNavigationBar />
-      </div>
+      <MobileNavigationBarCustom />
     </div>
   )
 }
