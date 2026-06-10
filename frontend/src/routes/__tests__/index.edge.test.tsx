@@ -12,8 +12,30 @@
 
 import { render, screen, waitFor } from '@testing-library/react'
 import { RouterProvider, createRouter, createMemoryHistory } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { routeTree } from '../../routeTree.gen'
-import { describe, test, expect, beforeEach, vi } from 'vitest'
+import { describe, test, expect, beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest'
+import { setupServer } from 'msw/node'
+import { clienteHandlers } from '../../test/handlers/clientes'
+
+// MSW server to handle /api/v1/clientes calls made by ClienteListPanel
+const server = setupServer(...clienteHandlers)
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: 0, staleTime: 0 } } })
+}
+
+function renderWithQueryProvider(router: ReturnType<typeof createRouter>) {
+  const queryClient = createTestQueryClient()
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  )
+}
 
 function mockDesktop() {
   Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1280 })
@@ -42,7 +64,7 @@ describe('Index redirect — navigation shell integrity', () => {
       routeTree,
       history: createMemoryHistory({ initialEntries: ['/'] }),
     })
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: Redirect to /clientes occurs
     await screen.findByTestId('clientes-view')
@@ -57,7 +79,7 @@ describe('Index redirect — navigation shell integrity', () => {
       routeTree,
       history: createMemoryHistory({ initialEntries: ['/'] }),
     })
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: Redirect settles
     await screen.findByTestId('clientes-view')
@@ -73,7 +95,7 @@ describe('Index redirect — navigation shell integrity', () => {
       routeTree,
       history: createMemoryHistory({ initialEntries: ['/'] }),
     })
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: Redirect occurs
     await screen.findByTestId('clientes-view')
@@ -106,7 +128,7 @@ describe('Index redirect — no errors during redirect', () => {
       routeTree,
       history: createMemoryHistory({ initialEntries: ['/'] }),
     })
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: Redirect completes
     await screen.findByTestId('clientes-view')
@@ -131,13 +153,22 @@ describe('Index redirect — stability', () => {
       routeTree,
       history: createMemoryHistory({ initialEntries: ['/'] }),
     })
+    const queryClient = createTestQueryClient()
 
     // WHEN: First render
-    const { rerender } = render(<RouterProvider router={router} />)
+    const { rerender } = render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    )
     await screen.findByTestId('clientes-view')
 
     // AND: Re-render occurs (e.g. parent state change)
-    rerender(<RouterProvider router={router} />)
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    )
 
     // THEN: Still at /clientes
     await waitFor(() => {

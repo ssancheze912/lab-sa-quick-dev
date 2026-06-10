@@ -15,14 +15,36 @@
 
 import { render, screen, waitFor } from '@testing-library/react'
 import { RouterProvider, createRouter, createMemoryHistory } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { routeTree } from '../../routeTree.gen'
-import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, test, expect, beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest'
+import { setupServer } from 'msw/node'
+import { clienteHandlers } from '../../test/handlers/clientes'
+
+// MSW server to handle /api/v1/clientes calls made by ClienteListPanel
+const server = setupServer(...clienteHandlers)
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: 0, staleTime: 0 } } })
+}
 
 function createTestRouter(initialPath: string) {
   return createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [initialPath] }),
   })
+}
+
+function renderWithQueryProvider(router: ReturnType<typeof createTestRouter>) {
+  const queryClient = createTestQueryClient()
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  )
 }
 
 function mockDesktop() {
@@ -65,7 +87,7 @@ describe('Breakpoint boundary — innerWidth exactly 1024px', () => {
   test('[P2] renders navigation-rail (desktop) at exactly 1024px wide', async () => {
     // GIVEN: Viewport is exactly at the breakpoint boundary (1024px)
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: App renders
     // THEN: Desktop rail is shown (>= 1024 → desktop)
@@ -100,7 +122,7 @@ describe('Breakpoint boundary — innerWidth 1023px (one below threshold)', () =
   test('[P2] renders navigation-bar (mobile) at 1023px wide', async () => {
     // GIVEN: Viewport is one pixel below the desktop threshold (1023px → mobile)
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: App renders
     // THEN: Mobile bar is shown (< 1024 → mobile)
@@ -119,22 +141,20 @@ describe('Route views — content integrity', () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 })
   })
 
-  test('[P2] clientes-view contains text "Clientes"', async () => {
+  test('[P2] clientes-view is present when navigating to /clientes', async () => {
     // GIVEN: User is on /clientes
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: ClientesView renders
-    const view = await screen.findByTestId('clientes-view')
-
-    // THEN: It contains the placeholder text
-    expect(view).toHaveTextContent('Clientes')
+    // THEN: The clientes-view container is in the DOM
+    expect(await screen.findByTestId('clientes-view')).toBeInTheDocument()
   })
 
   test('[P2] contactos-view contains text "Contactos"', async () => {
     // GIVEN: User is on /contactos
     const router = createTestRouter('/contactos')
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: ContactosView renders
     const view = await screen.findByTestId('contactos-view')
@@ -169,7 +189,7 @@ describe('useIsDesktop hook — event listener lifecycle', () => {
     }))
 
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: App renders
     await screen.findByTestId('navigation-rail')
@@ -194,7 +214,7 @@ describe('useIsDesktop hook — event listener lifecycle', () => {
     window.matchMedia = matchMediaMock
 
     const router = createTestRouter('/clientes')
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: App renders
     await screen.findByTestId('navigation-rail')
@@ -217,7 +237,7 @@ describe('Root redirect — navigation shell preserved after redirect', () => {
   test('[P1] navigation-rail is visible after redirect from / to /clientes', async () => {
     // GIVEN: User accesses root /
     const router = createTestRouter('/')
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: Redirect to /clientes occurs
     await screen.findByTestId('clientes-view')
@@ -230,7 +250,7 @@ describe('Root redirect — navigation shell preserved after redirect', () => {
   test('[P1] both nav items rendered after redirect from / to /clientes', async () => {
     // GIVEN: User accesses root /
     const router = createTestRouter('/')
-    render(<RouterProvider router={router} />)
+    renderWithQueryProvider(router)
 
     // WHEN: Redirect occurs and clientes-view appears
     await screen.findByTestId('clientes-view')

@@ -1,7 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,17 +29,26 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection"))
            .UseSnakeCaseNamingConvention());
 
+// Repositories
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+
+// Query handlers
+builder.Services.AddScoped<GetClientesQueryHandler>();
+
 var app = builder.Build();
 
-// Exception handling must be first — AC #implicit for Story 1.3 prep
+// Exception handling must be first
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// CORS before endpoint mappings — AC #3
+// CORS before endpoint mappings
 app.UseCors("DevCors");
 
-// Scalar API documentation — NEVER UseSwagger — AC #2
+// Scalar API documentation — NEVER UseSwagger
 app.MapOpenApi();
 app.MapScalarApiReference();
+
+// Business endpoints
+app.MapClienteEndpoints();
 
 app.Run();
 
