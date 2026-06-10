@@ -1,16 +1,6 @@
 /**
  * Component Tests — ClienteListPanel edge cases
  * Story 2.1: Client List & Search (edge-case expansion)
- *
- * Covers scenarios NOT in the original ATDD suite:
- *  - Search with no matching results shows "no results" EmptyState (not the "no clients" state)
- *  - Clicking "Reintentar" calls refetch (retry callback wired to query)
- *  - After successful retry, list renders correctly
- *  - Search input is accessible (has role textbox, label or placeholder)
- *  - Single client in list renders correctly
- *  - All 3 clients deselected when none matches URL param
- *  - Whitespace-only search shows the full list
- *
  * Stack: Vitest + React Testing Library + MSW
  */
 
