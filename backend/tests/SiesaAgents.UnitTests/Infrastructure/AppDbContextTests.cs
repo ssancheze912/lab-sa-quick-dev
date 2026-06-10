@@ -161,9 +161,8 @@ public class AppDbContextTests
         // WHEN: EnsureCreated is called (in-memory equivalent of applying migrations)
         var created = context.Database.EnsureCreated();
 
-        // THEN: Creation completes without error — empty schema (no domain tables)
-        // Returns true for new DB (created) or false if already exists — both are valid
-        Assert.True(created || !created); // Verifies the call itself doesn't throw
+        // THEN: Creation succeeds for a new in-memory database (always true on first call)
+        Assert.True(created);
 
         // The model has no entity types → no tables produced
         var entityTypes = context.Model.GetEntityTypes();
