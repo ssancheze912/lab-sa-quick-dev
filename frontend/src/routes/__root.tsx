@@ -1,7 +1,7 @@
 import { createRootRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import { NavigationRailItem } from 'siesa-ui-kit'
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -29,10 +29,10 @@ function useIsDesktop(): boolean {
 interface NavItem {
   id: string
   label: string
-  to: string
+  to: '/clientes' | '/contactos'
   ariaLabel: string
   testId: string
-  icon: React.ReactNode
+  icon: ReactNode
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -79,7 +79,7 @@ function DesktopNavigationSidebar(): JSX.Element {
               label={item.label}
               selected={isActive}
               ariaLabel={item.ariaLabel}
-              onClick={() => void navigate({ to: item.to as '/clientes' | '/contactos' })}
+              onClick={() => void navigate({ to: item.to })}
             />
           </div>
         )
@@ -114,7 +114,7 @@ function MobileNavigationBarCustom(): JSX.Element {
               label={item.label}
               selected={isActive}
               ariaLabel={item.ariaLabel}
-              onClick={() => void navigate({ to: item.to as '/clientes' | '/contactos' })}
+              onClick={() => void navigate({ to: item.to })}
             />
           </div>
         )
