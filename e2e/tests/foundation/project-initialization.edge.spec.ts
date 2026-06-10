@@ -48,12 +48,13 @@ test.describe('AC1 — Frontend document metadata and layout', () => {
   });
 
   test('[P2] should render the home page heading "Siesa Agents"', async ({ page }) => {
-    // GIVEN: index.tsx renders a branded h1
+    // GIVEN: index.tsx renders a branded h1 with data-testid="home-heading"
     // WHEN: The root route loads
     await page.goto('/');
 
     // THEN: The Siesa Agents heading is visible
-    await expect(page.locator('h1')).toContainText('Siesa Agents');
+    // Implementation must add data-testid="home-heading" to the h1 in src/routes/index.tsx
+    await expect(page.locator('[data-testid="home-heading"]')).toContainText('Siesa Agents');
   });
 
   test('[P1] should load the root index.html with a #root div as the React mount point', async ({ page }) => {
@@ -88,7 +89,18 @@ test.describe('AC1 — Client-side router — unknown route handling', () => {
     expect(runtimeErrors).toHaveLength(0);
   });
 
-  test('[P2] should return from an unknown route back to root without errors', async ({ page }) => {
+  test('[P2] should render root layout heading after navigating back from an unknown route', async ({ page }) => {
+    // GIVEN: User landed on an unknown route
+    await page.goto('/nonexistent-path-12345');
+
+    // WHEN: User navigates back to root
+    await page.goto('/');
+
+    // THEN: Root renders the main heading (layout persists)
+    await expect(page.locator('[data-testid="home-heading"]')).toBeVisible();
+  });
+
+  test('[P2] should not produce runtime errors when navigating back to root from an unknown route', async ({ page }) => {
     // GIVEN: User landed on an unknown route
     await page.goto('/nonexistent-path-12345');
 
@@ -97,8 +109,7 @@ test.describe('AC1 — Client-side router — unknown route handling', () => {
     page.on('pageerror', (err) => navErrors.push(err.message));
     await page.goto('/');
 
-    // THEN: Root loads without errors
-    await expect(page.locator('h1')).toBeVisible();
+    // THEN: No runtime errors are thrown during re-navigation
     expect(navErrors).toHaveLength(0);
   });
 });
