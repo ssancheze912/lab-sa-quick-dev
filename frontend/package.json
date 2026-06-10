@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.9.1",
     "@tanstack/react-query": "^5.62.7",
     "@tanstack/react-router": "^1.95.0",
@@ -20,6 +21,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.54.2",
     "react-loading-skeleton": "^3.5.0",
+    "siesa-ui-kit": "^1.0.211",
     "zod": "^3.24.1",
     "zustand": "^5.0.2"
   },
