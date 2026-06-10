@@ -1,18 +1,17 @@
 /**
  * Story 1.2: Frontend Navigation Shell
- * Edge Case & Boundary Tests — Unit/Component level
+ * Edge Case & Boundary Tests — ARIA & Active State (Unit/Component level)
  *
- * Expands ATDD coverage in root.test.tsx with:
- *   - useIsDesktop hook: SSR fallback and matchMedia listener propagation
+ * Covers:
  *   - ARIA attributes: exact aria-label values on desktop and mobile nav items
  *   - Active state: aria-current on both nav items simultaneously (mutual exclusion)
- *   - Breakpoint boundary: innerWidth exactly at 1024px (the threshold)
- *   - Active state updates when navigating between routes
- *   - NotFoundView secondary description text
- *   - Exact partial-path matching boundary for active state
+ *   - ARIA landmark role and label for navigation elements
+ *   - Mobile ARIA labels and active-state parity
+ *
+ * Breakpoint boundary and hook lifecycle tests are in root.breakpoint.test.tsx.
  */
 
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { RouterProvider, createRouter, createMemoryHistory } from '@tanstack/react-router'
 import { routeTree } from '../../routeTree.gen'
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
