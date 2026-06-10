@@ -11,7 +11,7 @@
  * Breakpoint boundary and hook lifecycle tests are in root.breakpoint.test.tsx.
  */
 
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { RouterProvider, createRouter, createMemoryHistory } from '@tanstack/react-router'
 import { routeTree } from '../../routeTree.gen'
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
