@@ -143,7 +143,7 @@ test.describe('AC4 — TypeScript strict mode active on frontend', () => {
     // GIVEN: tsconfig.app.json has strict:true, noImplicitAny:true, strictNullChecks:true
     // WHEN: The Vite dev server compiles and serves the app
 
-    // Network-first: intercept BEFORE navigation
+    // Wait for load state: promise set up before navigation so we don't miss the event
     const appLoad = page.waitForLoadState('networkidle');
     await page.goto('/');
     await appLoad;
