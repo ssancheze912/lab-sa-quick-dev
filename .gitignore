@@ -1,2 +1,10 @@
 # Git worktrees
 wt-*/
+
+# Dependencies
+node_modules/
+
+# Test output
+playwright-results/
+playwright-report/
+test-results/
