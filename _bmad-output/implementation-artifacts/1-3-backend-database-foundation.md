@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: draft
+Status: review
 
 ## Story
 
@@ -22,37 +22,26 @@ so that subsequent stories can define entities and run migrations against a work
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Create `AppDbContext` in `SiesaAgents.Infrastructure` (AC: #3, #4)
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
-  - [ ] Inherit from `DbContext`; constructor accepts `DbContextOptions<AppDbContext>`
-  - [ ] Override `OnModelCreating`: call `modelBuilder.ApplySnakeCaseNaming()` as the **last** call in the method
-  - [ ] Do NOT add any `DbSet<>` properties for domain entities — those are added in Epics 2 and 3
-  - [ ] Add `using EFCore.NamingConventions` reference (provided by `EFCore.NamingConventions` NuGet package)
+- [x] Task 1 — Create `AppDbContext` in `SiesaAgents.Infrastructure` (AC: #3, #4)
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
+  - [x] Inherit from `DbContext`; constructor accepts `DbContextOptions<AppDbContext>`
+  - [x] Override `OnModelCreating`: call `modelBuilder.UseSnakeCaseNamingConvention()` as the **last** call in the method
+  - [x] Do NOT add any `DbSet<>` properties for domain entities — those are added in Epics 2 and 3
+  - [x] Add `using EFCore.NamingConventions` reference (provided by `EFCore.NamingConventions` NuGet package)
 
-- [ ] Task 2 — Add required NuGet packages to `SiesaAgents.Infrastructure` (AC: #1, #3)
-  - [ ] `Npgsql.EntityFrameworkCore.PostgreSQL` is already in the `.csproj` — verify version is `10.0.0-preview.2` or later
-  - [ ] Add `EFCore.NamingConventions` package to `SiesaAgents.Infrastructure.csproj` for `ApplySnakeCaseNaming()` support
-  - [ ] Add `Microsoft.EntityFrameworkCore.Design` package to `SiesaAgents.Infrastructure.csproj` (required for `dotnet ef` tooling)
+- [x] Task 2 — Add required NuGet packages to `SiesaAgents.Infrastructure` (AC: #1, #3)
+  - [x] `Npgsql.EntityFrameworkCore.PostgreSQL` is already in the `.csproj` — version is `10.0.0-preview.2`
+  - [x] Add `EFCore.NamingConventions` version `8.0.3` to `SiesaAgents.Infrastructure.csproj`
+  - [x] Add `Microsoft.EntityFrameworkCore.Design` version `10.0.0-preview.2` to `SiesaAgents.Infrastructure.csproj`
 
-- [ ] Task 3 — Register `AppDbContext` in `Program.cs` (AC: #4)
-  - [ ] In `backend/src/SiesaAgents.API/Program.cs`, add `using SiesaAgents.Infrastructure.Data;`
-  - [ ] Register DbContext before `var app = builder.Build()`:
-    ```csharp
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-               .UseSnakeCaseNamingConvention());
-    ```
-  - [ ] Add `using Npgsql.EntityFrameworkCore.PostgreSQL;` (or use `UseNpgsql` extension from the Npgsql package)
+- [x] Task 3 — Register `AppDbContext` in `Program.cs` (AC: #4)
+  - [x] In `backend/src/SiesaAgents.API/Program.cs`, add `using SiesaAgents.Infrastructure.Data;`
+  - [x] Register DbContext before `var app = builder.Build()` using `UseNpgsql` + `UseSnakeCaseNamingConvention()`
+  - [x] `using Microsoft.EntityFrameworkCore;` added for `UseNpgsql` extension
 
-- [ ] Task 4 — Verify `appsettings.Development.json` has correct connection string (AC: #4)
-  - [ ] Confirm `backend/src/SiesaAgents.API/appsettings.Development.json` has:
-    ```json
-    "ConnectionStrings": {
-      "DefaultConnection": "Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres"
-    }
-    ```
-  - [ ] This was added in Story 1.1 as a placeholder — verify it is present and correct format
-  - [ ] Confirm `appsettings.json` also has the key as empty string `""` for explicit declaration in non-Development environments
+- [x] Task 4 — Verify `appsettings.Development.json` has correct connection string (AC: #4)
+  - [x] Confirmed `appsettings.Development.json` has `ConnectionStrings:DefaultConnection` = `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres`
+  - [x] Added `ConnectionStrings:DefaultConnection` as empty string `""` in `appsettings.json`
 
 - [ ] Task 5 — Create and run the initial empty migration (AC: #1, #5)
   - [ ] From `backend/src/SiesaAgents.Infrastructure/`, run:
@@ -63,25 +52,26 @@ so that subsequent stories can define entities and run migrations against a work
   - [ ] Inspect the generated migration — `Up()` and `Down()` methods should be empty (no domain tables)
   - [ ] Run `dotnet ef database update --startup-project ../SiesaAgents.API/` to apply migration
   - [ ] Confirm `siesa_agents_db` is created and `__ef_migrations_history` table exists
+  - **NOTE:** .NET SDK not available in CI agent environment. Developer must run these commands manually with a local .NET SDK + PostgreSQL.
 
-- [ ] Task 6 — Write xUnit integration test for Problem Details middleware (AC: #2)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Infrastructure/ExceptionMiddlewareTests.cs`
-  - [ ] Use `WebApplicationFactory<Program>` to spin up the test host in-process
-  - [ ] Register a test-only endpoint `GET /api/v1/test-error` that throws `new Exception("internal test")` — add only in test host configuration, not in production `Program.cs`
-  - [ ] Assert: HTTP 500, `Content-Type` contains `application/problem+json`
-  - [ ] Assert: Response JSON has `status` = 500, `title` is not null, no `stackTrace` key
-  - [ ] Use `System.Text.Json.JsonDocument` to parse response for assertions
+- [x] Task 6 — Write xUnit integration test for Problem Details middleware (AC: #2)
+  - [x] `backend/tests/SiesaAgents.UnitTests/Infrastructure/ExceptionMiddlewareTests.cs` already existed with full coverage
+  - [x] Uses `WebApplicationFactory<Program>` with test-only pipeline
+  - [x] Asserts: HTTP 500, `Content-Type: application/problem+json`, `status` field, `title` field, no `stackTrace`/`exception`/`innerException` keys
 
-- [ ] Task 7 — Write xUnit integration test for database connectivity and snake_case (AC: #1, #3, #5)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs`
-  - [ ] Test: `AppDbContext` resolves from DI container without throwing
-  - [ ] Test: `modelBuilder.GetTableName(typeof(object))` — or verify via model introspection that `ApplySnakeCaseNaming` is present as the last `ModelBuilder` configuration
-  - [ ] Note: Full database migration test (TC-E1-P1-05) requires a live PostgreSQL instance — document as integration test requiring TestContainers or local DB
-  - [ ] Unit test: verify `AppDbContext` constructor accepts `DbContextOptions<AppDbContext>` and initializes without connecting
+- [x] Task 7 — Write xUnit integration test for database connectivity and snake_case (AC: #1, #3, #5)
+  - [x] `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` already existed with full coverage
+  - [x] Tests: instantiation, typed options constructor, snake_case model build, no DbSet properties, EnsureCreated empty schema
+  - [x] Full DB migration test (TC-E1-P1-05) documented as requiring TestContainers or local DB
 
-- [ ] Task 8 — Update `SiesaAgents.API.csproj` to reference Infrastructure (if not already) (AC: #4)
-  - [ ] Confirm `SiesaAgents.API.csproj` already has `<ProjectReference Include="..\SiesaAgents.Infrastructure\...">` — it does (created in Story 1.1)
-  - [ ] No changes needed if reference exists
+- [x] Task 8 — Update `SiesaAgents.API.csproj` to reference Infrastructure (if not already) (AC: #4)
+  - [x] `SiesaAgents.API.csproj` already has `<ProjectReference>` to `SiesaAgents.Infrastructure` — confirmed, no change needed
+
+- [x] Task 9 (additional) — Update `SiesaAgents.UnitTests.csproj` to support new test dependencies
+  - [x] Added `TreatWarningsAsErrors` (flagged from Story 1.1 review)
+  - [x] Added `Microsoft.AspNetCore.Mvc.Testing` v10 preview for `WebApplicationFactory<Program>`
+  - [x] Added `Microsoft.EntityFrameworkCore.InMemory` v10 preview for in-memory DB tests
+  - [x] Added project references to `SiesaAgents.API` and `SiesaAgents.Infrastructure`
 
 ## Dev Notes
 
