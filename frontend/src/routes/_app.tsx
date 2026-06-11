@@ -1,6 +1,7 @@
 import React from 'react'
 import { createFileRoute, Outlet, Link, useRouterState } from '@tanstack/react-router'
 import { UserGroupIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { useIsMobile } from '../shared/hooks/useIsMobile'
 
 export const Route = createFileRoute('/_app')({
   component: AppLayout,
@@ -27,17 +28,6 @@ const navItems: NavItem[] = [
     icon: <UsersIcon className="h-5 w-5" />,
   },
 ]
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState(() => window.matchMedia('(max-width: 1023px)').matches)
-  React.useEffect(() => {
-    const mq = window.matchMedia('(max-width: 1023px)')
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-  return isMobile
-}
 
 function AppLayout() {
   const routerState = useRouterState()
