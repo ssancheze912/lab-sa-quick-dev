@@ -121,25 +121,20 @@ test.describe('Trailing slash URL handling', () => {
     // WHEN: The page loads
     await page.goto('/clientes/');
 
-    // THEN: The page renders the Clientes view or redirects to /clientes (no 404)
-    // Either outcome is acceptable — no error page should be shown
-    const url = page.url();
-    const hasClientsContent =
-      url.includes('/clientes') &&
-      !(await page.locator('[data-testid="not-found-view"]').isVisible());
-    expect(hasClientsContent).toBe(true);
+    // THEN: The URL contains /clientes (redirect or direct render — either is acceptable)
+    await expect(page).toHaveURL(/\/clientes/);
+    // AND: The 404 view is NOT shown
+    await expect(page.locator('[data-testid="not-found-view"]')).toBeHidden();
   });
 
   test('should handle /contactos/ with trailing slash gracefully', async ({ page }) => {
     // GIVEN: The user navigates to /contactos/ with a trailing slash
     await page.goto('/contactos/');
 
-    // THEN: The page renders the Contactos view or redirects (no 404)
-    const url = page.url();
-    const hasContactsContent =
-      url.includes('/contactos') &&
-      !(await page.locator('[data-testid="not-found-view"]').isVisible());
-    expect(hasContactsContent).toBe(true);
+    // THEN: The URL contains /contactos (redirect or direct render — either is acceptable)
+    await expect(page).toHaveURL(/\/contactos/);
+    // AND: The 404 view is NOT shown
+    await expect(page.locator('[data-testid="not-found-view"]')).toBeHidden();
   });
 });
 
@@ -378,5 +373,128 @@ test.describe('Mobile NavigationBar tap interactions', () => {
       'data-active',
       'false',
     );
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 404 page architectural boundary: navigation shell is absent on unknown routes
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('404 page has no navigation shell (root-level not-found)', () => {
+  test('should NOT render the NavigationRail on a 404 page', async ({ page }) => {
+    // GIVEN: The notFoundComponent is registered on __root.tsx (outside _app layout)
+    // WHEN: The user navigates to an unknown route
+    await page.goto('/ruta-inexistente-xyz');
+
+    // THEN: The 404 view is shown but the NavigationRail is absent
+    await expect(page.locator('[data-testid="not-found-view"]')).toBeVisible();
+    await expect(page.locator('[data-testid="navigation-rail"]')).toHaveCount(0);
+  });
+
+  test('should NOT render the NavigationBar on a 404 page (mobile)', async ({ page }) => {
+    // GIVEN: Mobile viewport on an unknown route
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/ruta-inexistente-xyz');
+
+    // THEN: The 404 view is shown but the NavigationBar is absent
+    await expect(page.locator('[data-testid="not-found-view"]')).toBeVisible();
+    await expect(page.locator('[data-testid="navigation-bar"]')).toHaveCount(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// startsWith active state: sub-path highlighting (implementation uses startsWith)
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('Active state with sub-path routes (startsWith detection)', () => {
+  test.use({ viewport: { width: 1280, height: 720 } });
+
+  test('should highlight Clientes as active when URL begins with /clientes', async ({ page }) => {
+    // GIVEN: The implementation uses currentPath.startsWith(item.to) for active detection
+    // AND: The user is on /clientes
+    await page.goto('/clientes');
+
+    // THEN: The Clientes nav item is active
+    await expect(page.locator('[data-testid="nav-item-clientes"]')).toHaveAttribute(
+      'data-active',
+      'true',
+    );
+    // AND: Contactos is inactive
+    await expect(page.locator('[data-testid="nav-item-contactos"]')).toHaveAttribute(
+      'data-active',
+      'false',
+    );
+  });
+
+  test('should have exactly one active nav item at a time on /contactos', async ({ page }) => {
+    // GIVEN: The user navigates to /contactos
+    await page.goto('/contactos');
+
+    // THEN: Exactly one nav item is marked active
+    const activeItems = page.locator('[data-testid^="nav-item-"][data-active="true"]');
+    await expect(activeItems).toHaveCount(1);
+
+    // AND: It is the Contactos item
+    await expect(page.locator('[data-testid="nav-item-contactos"]')).toHaveAttribute(
+      'data-active',
+      'true',
+    );
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NavigationBar bottom positioning (mobile layout integrity)
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('NavigationBar pinned to bottom on mobile', () => {
+  test.use({ viewport: { width: 375, height: 812 } });
+
+  test('should position the NavigationBar at the bottom of the viewport', async ({ page }) => {
+    // GIVEN: The app is loaded on mobile
+    await page.goto('/clientes');
+    const navBar = page.locator('[data-testid="navigation-bar"]');
+    await expect(navBar).toBeVisible();
+
+    // WHEN: We check the bounding box of the NavigationBar
+    const box = await navBar.boundingBox();
+    const viewportSize = page.viewportSize();
+
+    // THEN: The bottom of the NavigationBar touches the bottom of the viewport
+    expect(box).not.toBeNull();
+    expect(viewportSize).not.toBeNull();
+    // Assert unconditionally — if box or viewportSize is null the test should fail explicitly
+    const navBarBottom = Math.round(box!.y + box!.height);
+    // Allow a small tolerance (1px) for sub-pixel rendering
+    expect(navBarBottom).toBeGreaterThanOrEqual(viewportSize!.height - 1);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page title / head metadata consistency (no crash on route change)
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('Application does not crash on repeated route changes', () => {
+  test.use({ viewport: { width: 1280, height: 720 } });
+
+  test('should remain functional after 5 consecutive route changes', async ({ page }) => {
+    // GIVEN: The app is loaded
+    await page.goto('/clientes');
+
+    // WHEN: The user navigates back and forth 5 times
+    const routes = ['/contactos', '/clientes', '/contactos', '/clientes', '/contactos'];
+    for (const route of routes) {
+      const itemId = route.replace('/', '');
+      await page.locator(`[data-testid="nav-item-${itemId}"]`).click();
+      await expect(page).toHaveURL(route);
+    }
+
+    // THEN: The app is still functional — both nav items are present and the final
+    // route is correctly reflected
+    await expect(page.locator('[data-testid="navigation-rail"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-item-contactos"]')).toHaveAttribute(
+      'data-active',
+      'true',
+    );
+    await expect(page.locator('[data-testid="contactos-view"]')).toBeVisible();
   });
 });
