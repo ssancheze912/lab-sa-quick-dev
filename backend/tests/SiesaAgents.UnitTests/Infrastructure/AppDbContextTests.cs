@@ -5,11 +5,8 @@ using Xunit;
 namespace SiesaAgents.UnitTests.Infrastructure;
 
 /// <summary>
-/// ATDD tests for AppDbContext (Story 1.3, AC3 + AC4).
-/// Tests are in RED state: they define the contract for AppDbContext
-/// which must apply snake_case naming convention and resolve via DI.
-/// All tests must FAIL until AppDbContext is implemented in
-/// SiesaAgents.Infrastructure/Data/AppDbContext.cs.
+/// Unit tests for AppDbContext (Story 1.3, AC3 + AC4).
+/// Verifies snake_case naming convention is applied and DI resolution works.
 /// </summary>
 public class AppDbContextTests
 {

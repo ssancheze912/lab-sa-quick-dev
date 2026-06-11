@@ -9,10 +9,8 @@ using Xunit;
 namespace SiesaAgents.UnitTests.Middleware;
 
 /// <summary>
-/// ATDD tests for ExceptionHandlingMiddleware (Story 1.3, AC2).
-/// Tests are in RED state: they define the expected contract for the middleware
-/// which must return Problem Details RFC 7807 format without exposing stack traces.
-/// All tests must FAIL until the middleware is correctly implemented.
+/// Unit tests for ExceptionHandlingMiddleware (Story 1.3, AC2).
+/// Verifies Problem Details RFC 7807 format is returned without exposing stack traces.
 /// </summary>
 public class ExceptionHandlingMiddlewareTests
 {

@@ -1,9 +1,14 @@
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];
