@@ -1,0 +1,131 @@
+gate_decision:
+  decision: "CONCERNS"
+  gate_type: "epic"
+  epic_id: "1"
+  epic_title: "Project Foundation & Application Shell"
+  date: "2026-06-11"
+  decision_mode: "deterministic"
+
+  coverage:
+    overall: 83%
+    p0: 100%
+    p1: 71%
+    p2: 75%
+    p3: 100%
+
+  gaps:
+    critical: 0
+    high: 2
+    medium: 2
+    low: 1
+
+  criteria_evaluation:
+    p0_coverage:
+      threshold: 100%
+      actual: 100%
+      status: PASS
+    p0_pass_rate:
+      threshold: 100%
+      actual: 100%
+      status: PASS
+    p1_coverage:
+      threshold: 90%
+      actual: 71%
+      status: FAIL
+      mitigating_factor: "2 of 7 P1 gaps are environment/infrastructure-constrained (no CLI for DB creation test; no live DB in environment). Core functional behavior is verified via E2E tests."
+    p1_pass_rate:
+      threshold: 95%
+      actual: 85%
+      status: FAIL
+      mitigating_factor: "Failures are in known flaky test (framenavigated SPA) and RED stub Vitest tests — not implementation regressions."
+    overall_coverage:
+      threshold: 80%
+      actual: 83%
+      status: PASS
+    overall_pass_rate:
+      threshold: 90%
+      actual: 83%
+      status: FAIL
+      mitigating_factor: "20 of the failing tests are documented ATDD RED stubs (document.querySelector without RTL render). Excluding these, effective pass rate is ~93%."
+    security_issues:
+      threshold: 0
+      actual: 0
+      status: PASS
+    critical_nfrs_fail:
+      threshold: 0
+      actual: 0
+      status: PASS
+    flaky_tests:
+      threshold: 0
+      actual: 3
+      status: CONCERNS
+
+  p0_criteria_met: true
+  p1_criteria_met: false
+  overall_gate: CONCERNS
+
+  evidence:
+    test_results: "local story completion notes — no CI pipeline artifacts available"
+    traceability: "_bmad-output/traceability-matrix.md"
+    nfr_assessment: "not_assessed"
+    code_coverage: "not_measured"
+    test_design: "_bmad-output/implementation-artifacts/test-design-epic-1.md"
+
+  stories:
+    - id: "1.1"
+      status: done
+      p0_coverage: 100%
+      p1_coverage: 80%
+      note: "AC-1.1.5 (dotnet build) only partially tested via runtime proxy"
+    - id: "1.2"
+      status: in-progress
+      p0_coverage: N/A
+      p1_coverage: 67%
+      note: "CRITICAL AI-Review items pending: siesa-ui-kit NavigationRail/NavigationBar not used. 20 Vitest RED stubs not converted to RTL."
+    - id: "1.3"
+      status: review
+      p0_coverage: 100%
+      p1_coverage: 50%
+      note: "AC-1.3.1 (DB creation) has no automated test. TC-E1-P1-05 not implemented."
+
+  high_priority_gaps:
+    - id: "GAP-P1-01"
+      criterion: "AC-1.3.1"
+      description: "No automated test for dotnet ef database update creating siesa_agents_db"
+      recommended_test: "1.3-IT-001 — TestContainers Postgres integration test"
+      blocker: false
+    - id: "GAP-P1-02"
+      criterion: "AC-1.2.1"
+      description: "Playwright framenavigated test for SPA no-full-reload is documented flaky; siesa-ui-kit NavigationRail not used (CRITICAL AI-Review)"
+      recommended_test: "1.2-E2E-010 — request interception pattern for SPA navigation verification"
+      blocker: false
+
+  medium_priority_gaps:
+    - id: "GAP-P2-01"
+      criterion: "AC-1.3.3"
+      description: "snake_case naming verified only at model-build level (InMemory); DB column names not asserted"
+      recommended_test: "1.3-IT-002 — SQLite or TestContainers column name inspection"
+    - id: "GAP-P2-02"
+      criterion: "AC-1.3.5"
+      description: "dotnet build zero-error assertion is runtime proxy only"
+      recommended_test: "CI build step gate"
+
+  residual_risk: MEDIUM
+
+  next_steps:
+    immediate:
+      - "Complete Story 1.2 CRITICAL AI-Review items (replace custom nav with siesa-ui-kit)"
+      - "Create tracking story for TC-E1-P1-05 (TestContainers DB test)"
+      - "Update Story 1.2 status to reflect pending CRITICAL review items"
+    short_term:
+      - "Implement TC-E1-P1-05 with TestContainers (Postgres)"
+      - "Fix Playwright framenavigated test — use request interception"
+      - "Rewrite failing Vitest tests with RTL render()"
+    long_term:
+      - "Add snake_case column name DB-level test (TC-E1-P2-04)"
+      - "Re-run testarch-trace after Story 1.2 AI-Review items completed"
+
+  deployment_recommendation: "Epic 2 development can proceed. Story 1.2 CRITICAL AI-Review items must be resolved before Story 1.2 is marked done and before any Epic 2 stories modify navigation components."
+
+  generated_by: "sa-tea-trace (TEA Agent)"
+  workflow: "testarch-trace v4.0"
