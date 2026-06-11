@@ -117,24 +117,23 @@ public class AppDbContextTests
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Test 5 (AC3): The AppDbContext must NOT have any DbSet<> properties
-    // in Story 1.3 scope. Domain entities belong to Epics 2 and 3.
-    // Verify the entity count is zero at this baseline state.
+    // Test 5 (Story 2.1): The AppDbContext must have the Clientes DbSet<> after
+    // ClienteEntity was added in Epic 2. Verify the entity type is registered.
     //
-    // Given: Story 1.3 creates an empty initial migration (no domain tables)
+    // Given: ClienteEntity is added to AppDbContext (Story 2.1)
     // When:  the EF Core model is built
-    // Then:  the model contains zero entity types (no DbSet<T> defined)
+    // Then:  the model contains the ClienteEntity type
     // ─────────────────────────────────────────────────────────────────────────
     [Fact]
-    public void AppDbContext_Model_HasNoEntityTypes_InBaselineStory()
+    public void AppDbContext_Model_HasClienteEntityType_AfterStory21()
     {
         // Arrange
-        using var ctx = CreateInMemoryContext("NoEntitiesTest");
+        using var ctx = CreateInMemoryContext("ClienteEntityTest");
 
         // Act
-        var entityTypes = ctx.Model.GetEntityTypes().ToList();
+        var entityTypes = ctx.Model.GetEntityTypes().Select(e => e.ClrType.Name).ToList();
 
-        // Assert — Story 1.3 is an empty baseline; no domain entities defined yet
-        Assert.Empty(entityTypes);
+        // Assert — Story 2.1 adds ClienteEntity
+        Assert.Contains("ClienteEntity", entityTypes);
     }
 }
