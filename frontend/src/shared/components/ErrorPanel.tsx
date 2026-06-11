@@ -8,6 +8,7 @@ export function ErrorPanel({ message = 'Error al cargar los clientes', onRetry }
     <div
       className="flex flex-col items-center justify-center gap-3 py-12 px-6 text-center"
       role="alert"
+      data-testid="error-panel"
     >
       <p className="text-sm font-medium text-red-600">{message}</p>
       {onRetry && (

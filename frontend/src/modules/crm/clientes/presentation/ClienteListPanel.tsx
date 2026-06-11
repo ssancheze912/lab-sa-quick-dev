@@ -34,6 +34,7 @@ export function ClienteListPanel() {
           startIcon={<MagnifyingGlassIcon className="h-4 w-4 text-slate-400" />}
           inputSize="sm"
           aria-label="Buscar clientes"
+          data-testid="search-input"
         />
       </div>
 
@@ -64,7 +65,7 @@ export function ClienteListPanel() {
         )}
 
         {!isLoading && !isError && filtered.length > 0 && (
-          <ul role="list" aria-label="Clientes">
+          <ul role="list" aria-label="Clientes" data-testid="cliente-list">
             {filtered.map((cliente) => (
               <li key={cliente.id}>
                 <ClientListItem cliente={cliente} />

@@ -12,6 +12,7 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
       className="flex flex-col items-center justify-center gap-3 py-12 px-6 text-center"
       role="status"
       aria-label={title}
+      data-testid="empty-state"
     >
       <p className="text-sm font-medium text-slate-700">{title}</p>
       {description && (
