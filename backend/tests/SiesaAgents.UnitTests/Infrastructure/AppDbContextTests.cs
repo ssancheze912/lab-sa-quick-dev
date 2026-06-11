@@ -40,9 +40,12 @@ public class AppDbContextTests
         // Arrange + Act (exception = test failure)
         using var ctx = CreateInMemoryContext("ModelBuildsTest");
 
-        // Assert — EnsureCreated() triggers OnModelCreating
+        // Assert — EnsureCreated() triggers OnModelCreating; confirms no throw during model building.
+        // EnsureCreated() returns true when the database was created, false if it already existed.
+        // Either outcome is valid; the key assertion is that no exception was thrown above.
         var canCreate = ctx.Database.EnsureCreated();
-        Assert.True(canCreate || true); // database may already exist in EF InMemory; just confirm no throw
+        // Record the result to satisfy the compiler; the real assertion is "no exception thrown"
+        _ = canCreate;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
