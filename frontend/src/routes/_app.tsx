@@ -1,5 +1,5 @@
 import React from 'react'
-import { createFileRoute, Outlet, useRouterState, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Outlet, Link, useRouterState } from '@tanstack/react-router'
 import { UserGroupIcon, UsersIcon } from '@heroicons/react/24/outline'
 
 export const Route = createFileRoute('/_app')({
@@ -41,16 +41,10 @@ function useIsMobile() {
 
 function AppLayout() {
   const routerState = useRouterState()
-  const navigate = useNavigate()
   const currentPath = routerState.location.pathname
   const isMobile = useIsMobile()
 
   const activeId = navItems.find((item) => currentPath.startsWith(item.to))?.id ?? ''
-
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, to: string) => {
-    e.preventDefault()
-    navigate({ to })
-  }
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -70,12 +64,11 @@ function AppLayout() {
               {navItems.map((item) => {
                 const isActive = item.id === activeId
                 return (
-                  <a
+                  <Link
                     key={item.id}
+                    to={item.to}
                     data-testid={`nav-item-${item.id}`}
                     data-active={isActive ? 'true' : 'false'}
-                    href={item.to}
-                    onClick={(e) => handleNavClick(e, item.to)}
                     aria-current={isActive ? 'page' : undefined}
                     className={[
                       'flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium transition-colors',
@@ -86,7 +79,7 @@ function AppLayout() {
                   >
                     {item.icon}
                     <span>{item.label}</span>
-                  </a>
+                  </Link>
                 )
               })}
             </div>
@@ -103,12 +96,11 @@ function AppLayout() {
             {navItems.map((item) => {
               const isActive = item.id === activeId
               return (
-                <a
+                <Link
                   key={item.id}
+                  to={item.to}
                   data-testid={`nav-item-${item.id}`}
                   data-active={isActive ? 'true' : 'false'}
-                  href={item.to}
-                  onClick={(e) => handleNavClick(e, item.to)}
                   aria-current={isActive ? 'page' : undefined}
                   className={[
                     'flex flex-col items-center gap-1 p-2 rounded-lg w-16 text-xs font-medium transition-colors',
@@ -119,7 +111,7 @@ function AppLayout() {
                 >
                   {item.icon}
                   <span>{item.label}</span>
-                </a>
+                </Link>
               )
             })}
           </nav>
