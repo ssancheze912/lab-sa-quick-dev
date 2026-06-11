@@ -17,7 +17,7 @@ development_status:
 
   # Epic 1 — Project Foundation & Application Shell
   1-1-project-initialization-repository-structure: done
-  1-2-frontend-navigation-shell: in-progress
+  1-2-frontend-navigation-shell: in-progress  # code-review: FAIL — siesa-ui-kit NavigationRail/NavigationBar not used; Vitest tests broken (20/25 fail); test file naming issue (auto-fixed)
   1-3-backend-database-foundation: pending
 
   # Epic 2 — Client Management
