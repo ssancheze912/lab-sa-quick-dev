@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { Input } from 'siesa-ui-kit';
 import { ClientListItem } from '../../../../shared/components/ClientListItem';
 import { EmptyState } from '../../../../shared/components/EmptyState';
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel';
@@ -13,9 +12,10 @@ export function ClienteListPanel() {
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return data ?? [];
+    const clients = Array.isArray(data) ? data : [];
+    if (!search.trim()) return clients;
     const q = search.toLowerCase();
-    return (data ?? []).filter(
+    return clients.filter(
       (c) => c.nombre.toLowerCase().includes(q) || c.nit.toLowerCase().includes(q)
     );
   }, [data, search]);
@@ -26,16 +26,18 @@ export function ClienteListPanel() {
       aria-label="Lista de clientes"
     >
       <div className="p-3 border-b border-slate-200">
-        <Input
-          type="search"
-          placeholder="Buscar por nombre o NIT/RUC…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          startIcon={<MagnifyingGlassIcon className="h-4 w-4 text-slate-400" />}
-          inputSize="sm"
-          aria-label="Buscar clientes"
-          data-testid="search-input"
-        />
+        <div className="relative flex items-center">
+          <MagnifyingGlassIcon className="absolute left-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+          <input
+            type="search"
+            placeholder="Buscar por nombre o NIT/RUC…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Buscar clientes"
+            data-testid="search-input"
+            className="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-8 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0e79fd] focus:border-transparent"
+          />
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
