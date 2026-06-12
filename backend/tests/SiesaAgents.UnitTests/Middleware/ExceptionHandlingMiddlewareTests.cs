@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Hosting;
 using System.Net;
 using System.Text.Json;
 using Xunit;
@@ -8,11 +9,19 @@ namespace SiesaAgents.UnitTests.Middleware;
 /// <summary>
 /// TC-E1-P0-05: ExceptionHandlingMiddleware returns Problem Details RFC 7807 on unhandled exception.
 /// Uses WebApplicationFactory to test the full middleware pipeline.
+/// WebApplicationFactory defaults to "Production" environment — must override to "Development"
+/// so that the /api/v1/test-error endpoint (guarded by IsDevelopment()) is registered.
 /// </summary>
-public class ExceptionHandlingMiddlewareTests(WebApplicationFactory<Program> factory)
+public class ExceptionHandlingMiddlewareTests
     : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private readonly HttpClient _client;
+
+    public ExceptionHandlingMiddlewareTests(WebApplicationFactory<Program> factory)
+    {
+        _client = factory.WithWebHostBuilder(builder =>
+            builder.UseEnvironment("Development")).CreateClient();
+    }
 
     /// <summary>
     /// TC-E1-P0-05: Register a test endpoint that throws, call via WebApplicationFactory,

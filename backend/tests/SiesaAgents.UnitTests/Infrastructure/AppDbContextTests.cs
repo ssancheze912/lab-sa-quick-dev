@@ -26,8 +26,11 @@ public class AppDbContextTests
         using var context = new AppDbContext(options);
         var model = context.Model;
 
-        // Assert — the context creates successfully with snake_case naming applied
-        // If ApplySnakeCaseNaming() was missing, the model would not apply the convention
+        // Assert — the model is not null and was built without throwing.
+        // Note: InMemory provider does not apply relational naming conventions so we cannot
+        // inspect column names directly here. The integration test (TC-E1-P1-05) with
+        // PostgreSQL TestContainers is the authoritative check for snake_case column names.
+        // This unit test confirms OnModelCreating completes without exceptions.
         Assert.NotNull(model);
     }
 
