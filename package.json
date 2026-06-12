@@ -1,0 +1,12 @@
+{
+  "name": "siesa-agents",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:api:1-3": "playwright test e2e/tests/api/backend-database-foundation.api.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}
