@@ -12,8 +12,8 @@
  */
 
 import React from 'react';
-import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, test, expect, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRouter, RouterProvider, createMemoryHistory } from '@tanstack/react-router';
 
