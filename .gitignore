@@ -1,3 +1,6 @@
 node_modules/
 playwright-results/
 playwright-report/
+
+# Backend secrets
+backend/src/SiesaAgents.API/appsettings.Development.json
