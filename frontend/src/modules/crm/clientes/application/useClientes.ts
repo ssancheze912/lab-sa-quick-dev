@@ -6,6 +6,7 @@ export function useClientes() {
   return useQuery<Cliente[]>({
     queryKey: ['clientes'],
     queryFn: () => clienteRepository.getAll(),
-    staleTime: 60_000,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 }
