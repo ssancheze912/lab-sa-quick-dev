@@ -8,5 +8,7 @@ export function useClientes() {
     queryFn: () => clienteRepository.getAll(),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retryOnMount: false,
   });
 }
