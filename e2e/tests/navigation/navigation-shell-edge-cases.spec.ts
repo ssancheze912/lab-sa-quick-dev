@@ -82,8 +82,9 @@ test.describe('[P1] Mobile client-side navigation', () => {
 
     // Network-first: track full-page document requests
     let fullPageReloadOccurred = false;
+    const baseUrl = new URL(page.url()).origin;
     page.on('request', (req) => {
-      if (req.resourceType() === 'document' && req.url().includes('localhost:5173')) {
+      if (req.resourceType() === 'document' && req.url().startsWith(baseUrl)) {
         fullPageReloadOccurred = true;
       }
     });
@@ -104,8 +105,9 @@ test.describe('[P1] Mobile client-side navigation', () => {
     await page.goto('/contactos');
 
     let fullPageReloadOccurred = false;
+    const baseUrl = new URL(page.url()).origin;
     page.on('request', (req) => {
-      if (req.resourceType() === 'document' && req.url().includes('localhost:5173')) {
+      if (req.resourceType() === 'document' && req.url().startsWith(baseUrl)) {
         fullPageReloadOccurred = true;
       }
     });

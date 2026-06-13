@@ -58,8 +58,9 @@ test.describe('AC1 — Desktop NavigationRail (viewport ≥1024px)', () => {
 
     // Network-first: track full-page navigation (document requests) — must NOT happen on SPA nav
     let fullPageReloadOccurred = false;
+    const baseUrl = new URL(page.url()).origin;
     page.on('request', (req) => {
-      if (req.resourceType() === 'document' && req.url().includes('localhost:5173')) {
+      if (req.resourceType() === 'document' && req.url().startsWith(baseUrl)) {
         fullPageReloadOccurred = true;
       }
     });
@@ -83,8 +84,9 @@ test.describe('AC1 — Desktop NavigationRail (viewport ≥1024px)', () => {
 
     // Network-first: track full-page navigation (document requests)
     let fullPageReloadOccurred = false;
+    const baseUrl = new URL(page.url()).origin;
     page.on('request', (req) => {
-      if (req.resourceType() === 'document' && req.url().includes('localhost:5173')) {
+      if (req.resourceType() === 'document' && req.url().startsWith(baseUrl)) {
         fullPageReloadOccurred = true;
       }
     });
