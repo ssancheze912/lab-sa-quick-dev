@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
+import { createRootRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
 import { NotFoundPage } from '../shared/components/NotFoundPage'
 
