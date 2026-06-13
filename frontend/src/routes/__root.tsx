@@ -77,7 +77,7 @@ function NavigationBar({ items }: { items: NavItem[] }) {
           data-active={item.isActive ? 'true' : undefined}
           aria-label={item.ariaLabel}
           className={[
-            'flex flex-col items-center justify-center flex-1 gap-1 text-xs min-h-[44px] min-w-[44px] transition-colors',
+            'flex flex-col items-center justify-center flex-1 h-full gap-1 text-xs min-h-[44px] min-w-[44px] transition-colors',
             item.isActive ? 'text-blue-700' : 'text-slate-400 hover:text-slate-600',
           ].join(' ')}
         >
