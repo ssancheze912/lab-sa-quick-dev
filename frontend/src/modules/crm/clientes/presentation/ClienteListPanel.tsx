@@ -56,7 +56,6 @@ export function ClienteListPanel() {
         {!isLoading && !isError && filteredClientes.length === 0 && (
           <EmptyState
             message="No hay clientes registrados. Crea el primero."
-            ctaLabel="Crear cliente"
           />
         )}
 
