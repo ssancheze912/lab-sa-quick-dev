@@ -6,6 +6,10 @@ import { afterEach } from 'vitest'
 // @ts-expect-error - globalThis type
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
+// Suppress JSDOM "Not implemented: Window's scrollTo()" warnings emitted by
+// TanStack Router during test navigation — the method is a no-op in jsdom.
+window.scrollTo = () => {}
+
 afterEach(() => {
   cleanup()
 })
