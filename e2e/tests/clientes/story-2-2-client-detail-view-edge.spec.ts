@@ -46,10 +46,12 @@ test.describe('Story 2.2 — E2E Edge Cases', () => {
     const cliente = await apiHelper.createCliente(data);
     createdIds.push(cliente.id);
 
-    // AND: the detail API endpoint is intercepted to add a delay
-    await page.route(`**/api/v1/clientes/${cliente.id}`, async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await route.continue();
+    // AND: the detail API endpoint is intercepted — response never fulfills, keeping request in-flight
+    // This avoids a hard wait (setTimeout) by using a non-resolving abort signal pattern.
+    // Playwright will auto-clean the route when the page is torn down.
+    await page.route(`**/api/v1/clientes/${cliente.id}`, async (_route) => {
+      // Intentionally never calling route.continue() or route.fulfill()
+      // so the request stays pending indefinitely, keeping the skeleton visible.
     });
 
     // WHEN: user navigates directly to /clientes/:id
