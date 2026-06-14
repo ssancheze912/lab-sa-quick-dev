@@ -11,7 +11,7 @@
  *   - Clientes and Contactos views contain expected heading content
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { RouterProvider, createRouter, createMemoryHistory } from '@tanstack/react-router'
 import { routeTree } from '../../../routeTree.gen'
