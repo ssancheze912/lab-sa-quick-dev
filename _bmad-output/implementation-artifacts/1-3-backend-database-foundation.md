@@ -229,7 +229,9 @@ N/A — .NET SDK not available in this environment; migration files created manu
 - `backend/src/SiesaAgents.API/Program.cs` — MODIFIED: added `AddDbContext<AppDbContext>` registration + usings
 - `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — MODIFIED: added `Microsoft.EntityFrameworkCore.Design v10.*`
 - `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — MODIFIED: added `Microsoft.EntityFrameworkCore.Tools v10.*`
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` — MODIFIED: added `UseSnakeCaseNamingConvention()` call (was missing from Story 1.1 implementation)
 - `backend/src/SiesaAgents.Infrastructure/Data/Configurations/` — CREATED: empty directory placeholder
-- `backend/src/SiesaAgents.Infrastructure/Migrations/20260614043239_InitialCreate.cs` — CREATED: empty migration
-- `backend/src/SiesaAgents.Infrastructure/Migrations/20260614043239_InitialCreate.Designer.cs` — CREATED: migration metadata
-- `backend/src/SiesaAgents.Infrastructure/Migrations/AppDbContextModelSnapshot.cs` — CREATED: EF Core model snapshot
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260614043239_InitialCreate.cs` — CREATED: empty migration
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260614043239_InitialCreate.Designer.cs` — CREATED: migration metadata
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/AppDbContextModelSnapshot.cs` — CREATED: EF Core model snapshot
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` — CREATED: unit tests for AppDbContext
