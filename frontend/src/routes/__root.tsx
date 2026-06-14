@@ -1,6 +1,5 @@
 import { createRootRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
-import { Navbar, NavigationBar } from 'siesa-ui-kit'
-import type { NavigationBarItem } from 'siesa-ui-kit'
+import { Navbar } from 'siesa-ui-kit'
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
 
 export const Route = createRootRoute({
@@ -14,25 +13,6 @@ function RootLayout() {
 
   const isClientesActive = currentPath.startsWith('/clientes')
   const isContactosActive = currentPath.startsWith('/contactos')
-
-  const barItems: NavigationBarItem[] = [
-    {
-      id: 'clientes',
-      label: 'Clientes',
-      icon: <UsersIcon className="h-5 w-5" />,
-      active: isClientesActive,
-      ariaLabel: 'Clientes',
-    },
-    {
-      id: 'contactos',
-      label: 'Contactos',
-      icon: <UserIcon className="h-5 w-5" />,
-      active: isContactosActive,
-      ariaLabel: 'Contactos',
-    },
-  ]
-
-  const activeItemId = isContactosActive ? 'contactos' : 'clientes'
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -87,17 +67,46 @@ function RootLayout() {
         </main>
       </div>
 
-      {/* Mobile NavigationBar — visible only on mobile (lg:hidden block) */}
-      <div
+      {/* Mobile NavigationBar — visible only on mobile (lg:hidden) */}
+      <nav
         data-testid="navigation-bar"
-        className="lg:hidden"
+        aria-label="Navegación principal"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex bg-white border-t border-slate-200"
       >
-        <NavigationBar
-          items={barItems}
-          activeItemId={activeItemId}
-          ariaLabel="Navegación principal"
-        />
-      </div>
+        <Link
+          to="/clientes"
+          data-testid="nav-bar-item-clientes"
+          data-active={isClientesActive ? 'true' : 'false'}
+          aria-label="Clientes"
+          aria-current={isClientesActive ? 'page' : undefined}
+          className={[
+            'flex flex-1 flex-col items-center justify-center gap-1 min-h-[56px] py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd] focus-visible:ring-inset',
+            isClientesActive
+              ? 'text-[#0e79fd]'
+              : 'text-slate-600 hover:text-slate-900',
+          ].join(' ')}
+        >
+          <UsersIcon className="h-5 w-5" />
+          <span className="text-[10px] font-bold leading-3">Clientes</span>
+        </Link>
+
+        <Link
+          to="/contactos"
+          data-testid="nav-bar-item-contactos"
+          data-active={isContactosActive ? 'true' : 'false'}
+          aria-label="Contactos"
+          aria-current={isContactosActive ? 'page' : undefined}
+          className={[
+            'flex flex-1 flex-col items-center justify-center gap-1 min-h-[56px] py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd] focus-visible:ring-inset',
+            isContactosActive
+              ? 'text-[#0e79fd]'
+              : 'text-slate-600 hover:text-slate-900',
+          ].join(' ')}
+        >
+          <UserIcon className="h-5 w-5" />
+          <span className="text-[10px] font-bold leading-3">Contactos</span>
+        </Link>
+      </nav>
     </div>
   )
 }
