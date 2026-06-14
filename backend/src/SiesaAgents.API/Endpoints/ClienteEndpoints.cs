@@ -14,6 +14,18 @@ public static class ClienteEndpoints
             return Results.Ok(dtos);
         });
 
+        app.MapGet("/api/v1/clientes/{id:guid}", async (Guid id, GetClienteByIdQueryHandler handler, CancellationToken ct) =>
+        {
+            var dto = await handler.HandleAsync(new GetClienteByIdQuery(id), ct);
+            if (dto is null)
+                return Results.Problem(
+                    detail: "El cliente solicitado no existe.",
+                    statusCode: 404,
+                    title: "Cliente no encontrado."
+                );
+            return Results.Ok(dto);
+        });
+
         return app;
     }
 }
