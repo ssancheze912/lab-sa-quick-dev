@@ -7,20 +7,18 @@
  * - EmptyState component does not exist yet
  * - ErrorPanel component does not exist yet
  *
- * Acceptance Criteria covered:
+ * Acceptance Criteria covered (this file):
  *   AC#1 — Left panel renders scrollable list with Nombre and NIT/RUC per item
  *   AC#2 — Real-time search filters by Nombre or NIT/RUC (case-insensitive)
  *   AC#3 — Clearing search restores full list without a new API call
- *   AC#4 — EmptyState shown when API returns []
- *   AC#5 — ErrorPanel with "Reintentar" shown when fetch fails
  *   AC#6 — Skeleton placeholder shown during initial load
+ *
+ * AC#4 (EmptyState) and AC#5 (ErrorPanel) tests: ClienteListViewStates.test.tsx
+ * NFR1 performance tests: ClienteListViewPerf.test.tsx
  *
  * Test cases from test-design-epic-2.md:
  *   TC-E2-P1-06: List renders Nombre + NIT (AC#1)
  *   TC-E2-P1-07: Real-time search filter (AC#2)
- *   TC-E2-P0-05: Search perf 500 records ≤150ms (AC#2 / NFR1)
- *   TC-E2-P2-01: EmptyState on empty list (AC#4)
- *   TC-E2-P2-02: ErrorPanel + Reintentar refetch (AC#5)
  */
 
 import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
@@ -85,8 +83,8 @@ describe('ClienteListView — AC#6: Loading state', () => {
     // GIVEN: network response is delayed (data not yet arrived)
     server.use(
       http.get(`${API_BASE}/api/v1/clientes`, async () => {
-        // Deliberately slow response — never resolves within test assertion window
-        await new Promise((resolve) => setTimeout(resolve, 5000))
+        // Never-resolving promise keeps loading state active during synchronous assertion
+        await new Promise(() => undefined)
         return HttpResponse.json([])
       })
     )
@@ -263,48 +261,6 @@ describe('ClienteListView — AC#2: Real-time search filter (TC-E2-P1-07)', () =
   })
 })
 
-// ─── AC#2 / NFR1: Search Performance with 500 Records ─────────────────────────
-
-describe('ClienteListView — AC#2 / NFR1: Search performance (TC-E2-P0-05)', () => {
-  it('should filter 500 records in under 150ms (NFR1 requirement)', async () => {
-    // GIVEN: 500 clients loaded via MSW
-    const clientes500 = [
-      ...Array.from({ length: 50 }, (_, i) =>
-        createCliente({ nombre: `Empresa Siesa ${i}`, nit: `900${i.toString().padStart(6, '0')}-1` })
-      ),
-      ...Array.from({ length: 450 }, (_, i) =>
-        createCliente({ nombre: `Otro Proveedor ${i}`, nit: `800${i.toString().padStart(6, '0')}-2` })
-      ),
-    ]
-
-    server.use(
-      http.get(`${API_BASE}/api/v1/clientes`, () => HttpResponse.json(clientes500))
-    )
-
-    const user = userEvent.setup()
-
-    renderWithProviders(
-      <ClienteListView selectedClienteId={null} onClienteSelect={noop} />
-    )
-
-    await waitFor(() => {
-      expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(500)
-    })
-
-    // WHEN: user types a search term — measure elapsed time
-    const t0 = performance.now()
-    await user.type(screen.getByRole('searchbox', { name: 'Buscar cliente' }), 'Siesa')
-    const elapsed = performance.now() - t0
-
-    // THEN: filter completes in under 150ms (well within NFR1 1s limit)
-    expect(elapsed).toBeLessThan(150)
-
-    // AND: only "Empresa Siesa" clients are shown
-    const visibleItems = screen.getAllByTestId('cliente-list-item')
-    expect(visibleItems.length).toBe(50)
-  })
-})
-
 // ─── AC#3: Clear Search Restores Full List ────────────────────────────────────
 
 describe('ClienteListView — AC#3: Clear search restores full list', () => {
@@ -333,147 +289,4 @@ describe('ClienteListView — AC#3: Clear search restores full list', () => {
   })
 })
 
-// ─── AC#4: EmptyState When API Returns [] ────────────────────────────────────
-
-describe('ClienteListView — AC#4: EmptyState on empty list (TC-E2-P2-01)', () => {
-  it('should render EmptyState component when API returns empty array', async () => {
-    // GIVEN: MSW returns [] (no clients)
-    server.use(
-      http.get(`${API_BASE}/api/v1/clientes`, () => HttpResponse.json([]))
-    )
-
-    // WHEN: component is rendered
-    renderWithProviders(
-      <ClienteListView selectedClienteId={null} onClienteSelect={noop} />
-    )
-
-    // THEN: EmptyState component is rendered with the correct message
-    await waitFor(() => {
-      expect(
-        screen.getByText('No hay clientes registrados. Crea el primero.')
-      ).toBeInTheDocument()
-    })
-  })
-
-  it('should NOT render list items when API returns empty array (AC#4)', async () => {
-    // GIVEN: MSW returns []
-    server.use(
-      http.get(`${API_BASE}/api/v1/clientes`, () => HttpResponse.json([]))
-    )
-
-    // WHEN: component renders
-    renderWithProviders(
-      <ClienteListView selectedClienteId={null} onClienteSelect={noop} />
-    )
-
-    // THEN: no list items rendered (no role="option" elements)
-    await waitFor(() => {
-      expect(screen.queryAllByTestId('cliente-list-item')).toHaveLength(0)
-    })
-  })
-
-  it('should NOT show skeleton when API returns empty array (AC#4)', async () => {
-    // GIVEN: MSW returns [] (data has arrived, just empty)
-    server.use(
-      http.get(`${API_BASE}/api/v1/clientes`, () => HttpResponse.json([]))
-    )
-
-    // WHEN: component renders and data resolves
-    renderWithProviders(
-      <ClienteListView selectedClienteId={null} onClienteSelect={noop} />
-    )
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('No hay clientes registrados. Crea el primero.')
-      ).toBeInTheDocument()
-    })
-
-    // THEN: skeleton is NOT visible
-    expect(screen.queryByTestId('clientes-list-skeleton')).not.toBeInTheDocument()
-  })
-})
-
-// ─── AC#5: ErrorPanel with Reintentar Button ──────────────────────────────────
-
-describe('ClienteListView — AC#5: ErrorPanel on fetch failure (TC-E2-P2-02)', () => {
-  it('should render ErrorPanel when backend is unavailable (AC#5)', async () => {
-    // GIVEN: MSW simulates backend error
-    server.use(
-      http.get(`${API_BASE}/api/v1/clientes`, () =>
-        HttpResponse.json({ error: 'Internal Server Error' }, { status: 500 })
-      )
-    )
-
-    // WHEN: component renders and fetch fails
-    renderWithProviders(
-      <ClienteListView selectedClienteId={null} onClienteSelect={noop} />
-    )
-
-    // THEN: ErrorPanel renders with the expected message
-    await waitFor(() => {
-      expect(
-        screen.getByText('Error al cargar los clientes.')
-      ).toBeInTheDocument()
-    })
-  })
-
-  it('should render a "Reintentar" button in ErrorPanel (AC#5)', async () => {
-    // GIVEN: MSW returns 500 error
-    server.use(
-      http.get(`${API_BASE}/api/v1/clientes`, () =>
-        HttpResponse.json({ error: 'Internal Server Error' }, { status: 500 })
-      )
-    )
-
-    // WHEN: component renders
-    renderWithProviders(
-      <ClienteListView selectedClienteId={null} onClienteSelect={noop} />
-    )
-
-    // THEN: "Reintentar" button is visible
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: 'Reintentar' })
-      ).toBeInTheDocument()
-    })
-  })
-
-  it('should trigger refetch when "Reintentar" button is clicked (AC#5 / TC-E2-P2-02)', async () => {
-    // GIVEN: first request fails; second request succeeds
-    let requestCount = 0
-    server.use(
-      http.get(`${API_BASE}/api/v1/clientes`, () => {
-        requestCount++
-        if (requestCount === 1) {
-          return HttpResponse.json({ error: 'Server Error' }, { status: 500 })
-        }
-        return HttpResponse.json([
-          createCliente({ nombre: 'Cliente Recuperado', nit: '900999888-1' }),
-        ])
-      })
-    )
-
-    const user = userEvent.setup()
-
-    // WHEN: component renders (first fetch fails)
-    renderWithProviders(
-      <ClienteListView selectedClienteId={null} onClienteSelect={noop} />
-    )
-
-    await waitFor(() => {
-      expect(screen.getByText('Error al cargar los clientes.')).toBeInTheDocument()
-    })
-
-    // AND: user clicks "Reintentar"
-    await user.click(screen.getByRole('button', { name: 'Reintentar' }))
-
-    // THEN: list renders successfully (second fetch succeeded)
-    await waitFor(() => {
-      expect(screen.getByText('Cliente Recuperado')).toBeInTheDocument()
-    })
-
-    // AND: ErrorPanel is no longer visible
-    expect(screen.queryByText('Error al cargar los clientes.')).not.toBeInTheDocument()
-  })
-})
+// NOTE: AC#4 (EmptyState) and AC#5 (ErrorPanel) tests are in ClienteListViewStates.test.tsx

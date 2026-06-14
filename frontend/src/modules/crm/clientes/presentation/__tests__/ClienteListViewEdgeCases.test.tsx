@@ -281,7 +281,8 @@ describe('ClienteListView — loading state exclusivity', () => {
     // GIVEN: very delayed response (loading state persists during assertion)
     server.use(
       http.get(`${API_BASE}/api/v1/clientes`, async () => {
-        await new Promise((resolve) => setTimeout(resolve, 5000))
+        // Never-resolving promise keeps loading state active during synchronous assertion
+        await new Promise(() => undefined)
         return HttpResponse.json([])
       })
     )
