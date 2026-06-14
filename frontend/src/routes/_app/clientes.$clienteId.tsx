@@ -2,7 +2,12 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ClienteListView } from '../../modules/crm/clientes/presentation/ClienteListView'
 import { ClienteDetailView } from '../../modules/crm/clientes/presentation/ClienteDetailView'
 
-function ClientesPage() {
+export const Route = createFileRoute('/_app/clientes/$clienteId')({
+  component: ClienteDetailPage,
+})
+
+function ClienteDetailPage() {
+  const { clienteId } = Route.useParams()
   const navigate = useNavigate()
 
   const handleClienteSelect = (id: string) => {
@@ -10,16 +15,12 @@ function ClientesPage() {
   }
 
   return (
-    <div data-testid="clientes-view" className="flex h-full">
+    <div className="flex h-full">
       <ClienteListView
-        selectedClienteId={null}
+        selectedClienteId={clienteId}
         onClienteSelect={handleClienteSelect}
       />
-      <ClienteDetailView clienteId={null} />
+      <ClienteDetailView clienteId={clienteId} />
     </div>
   )
 }
-
-export const Route = createFileRoute('/_app/clientes')({
-  component: ClientesPage,
-})
