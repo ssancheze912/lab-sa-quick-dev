@@ -1,6 +1,6 @@
 # Story 2.2: Client Detail View
 
-Status: draft
+Status: review
 
 ## Story
 
@@ -24,74 +24,52 @@ So that I can review all their information without navigating away from the clie
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add `getById` method to `IClienteRepository` interface (AC: #3)
-  - [ ] Update `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — add `getById(id: string): Promise<Cliente | null>`
-  - [ ] Update `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implement `getById` calling `GET /api/v1/clientes/:id` via `apiClient`; return `null` on 404
+- [x] Task 1 — Add `getById` method to `IClienteRepository` interface (AC: #3)
+  - [x] Update `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — add `getById(id: string): Promise<Cliente | null>`
+  - [x] Update `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implement `getById` calling `GET /api/v1/clientes/:id` via `apiClient`; return `null` on 404
 
-- [ ] Task 2 — Implement `useCliente` application hook (AC: #3, #4, #5)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCliente.ts` — TanStack Query hook with `queryKey: ['clientes', id]`, calling `clienteApiRepository.getById(id)`, `staleTime: 1000 * 60`, `enabled: !!id`
-  - [ ] Hook exposes: `{ data: Cliente | null | undefined, isLoading, isError, refetch }`
+- [x] Task 2 — Implement `useCliente` application hook (AC: #3, #4, #5)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useCliente.ts` — TanStack Query hook with `queryKey: ['clientes', id]`, calling `clienteApiRepository.getById(id)`, `staleTime: 1000 * 60`, `enabled: !!id`
+  - [x] Hook exposes: `{ data: Cliente | null | undefined, isLoading, isError, refetch }`
 
-- [ ] Task 3 — Create `ClienteDetailView` presentation component (AC: #1, #2, #4, #5, #6)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
-  - [ ] Props: `clienteId: string | null`
-  - [ ] Layout: `flex-1 flex flex-col h-full bg-white overflow-y-auto p-6`
-  - [ ] No client selected state (`clienteId === null`): render placeholder `<div>` with message "Selecciona un cliente para ver sus detalles." centered, `text-slate-400`, `role="status"`
-  - [ ] Loading state (`isLoading`): render skeleton placeholder (`react-loading-skeleton`) for the detail fields
-  - [ ] Not-found state (`data === null && !isLoading`): render `<div role="status">` with message "Cliente no encontrado." — centered, `text-slate-500`
-  - [ ] Detail state (`data` is a `Cliente`): render all 4 fields (Nombre, NIT/RUC, Teléfono, Ciudad) with labels in Spanish
-  - [ ] Detail field layout: label (`text-xs font-medium text-slate-500 uppercase tracking-wide`) above value (`text-base text-slate-800`)
-  - [ ] Apply WCAG 2.1 AA: `<article aria-label={`Detalle del cliente ${data.nombre}`}` wrapping the detail content; each field group uses `<dl>/<dt>/<dd>` semantics
-  - [ ] All user-facing text in Spanish
+- [x] Task 3 — Create `ClienteDetailView` presentation component (AC: #1, #2, #4, #5, #6)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+  - [x] Props: `clienteId: string | null`
+  - [x] Layout: `flex-1 flex flex-col h-full bg-white overflow-y-auto p-6`
+  - [x] No client selected state (`clienteId === null`): render placeholder `<div>` with message "Selecciona un cliente para ver sus detalles." centered, `text-slate-400`, `role="status"`
+  - [x] Loading state (`isLoading`): render skeleton placeholder (`react-loading-skeleton`) for the detail fields
+  - [x] Not-found state (`data === null && !isLoading`): render `<div role="status">` with message "Cliente no encontrado." — centered, `text-slate-500`
+  - [x] Detail state (`data` is a `Cliente`): render all 4 fields (Nombre, NIT/RUC, Teléfono, Ciudad) with labels in Spanish
+  - [x] Detail field layout: label (`text-xs font-medium text-slate-500 uppercase tracking-wide`) above value (`text-base text-slate-800`)
+  - [x] Apply WCAG 2.1 AA: `<article aria-label={`Detalle del cliente ${data.nombre}`}` wrapping the detail content; each field group uses `<dl>/<dt>/<dd>` semantics
+  - [x] All user-facing text in Spanish
 
-- [ ] Task 4 — Create TanStack Router route for `/clientes/:clienteId` (AC: #1, #3)
-  - [ ] Create `frontend/src/routes/_app/clientes.$clienteId.tsx` — TanStack Router file-based route (dynamic segment `$clienteId`)
-  - [ ] Route component reads `clienteId` from `useParams()` (TanStack Router: `const { clienteId } = Route.useParams()`)
-  - [ ] Render the master-detail layout: left panel `<ClienteListView>` (280px) + right panel `<ClienteDetailView clienteId={clienteId} />`
-  - [ ] `onClienteSelect` on `<ClienteListView>` calls `navigate({ to: '/clientes/$clienteId', params: { clienteId: selectedId } })`
-  - [ ] `selectedClienteId` prop passed to `<ClienteListView>` is `clienteId` from route params
+- [x] Task 4 — Create TanStack Router route for `/clientes/:clienteId` (AC: #1, #3)
+  - [x] Create `frontend/src/routes/_app/clientes.$clienteId.tsx` — TanStack Router file-based route (dynamic segment `$clienteId`)
+  - [x] Route component reads `clienteId` from `useParams()` (TanStack Router: `const { clienteId } = Route.useParams()`)
+  - [x] Render the master-detail layout: left panel `<ClienteListView>` (280px) + right panel `<ClienteDetailView clienteId={clienteId} />`
+  - [x] `onClienteSelect` on `<ClienteListView>` calls `navigate({ to: '/clientes/$clienteId', params: { clienteId: selectedId } })`
+  - [x] `selectedClienteId` prop passed to `<ClienteListView>` is `clienteId` from route params
 
-- [ ] Task 5 — Update `/clientes` route to wire client selection navigation (AC: #1, #2)
-  - [ ] Update `frontend/src/routes/_app/clientes.tsx` — `onClienteSelect` stub replaced with `navigate({ to: '/clientes/$clienteId', params: { clienteId: id } })`
-  - [ ] Right panel now renders `<ClienteDetailView clienteId={null} />` (placeholder state — no client selected)
-  - [ ] `selectedClienteId` passed to `<ClienteListView>` as `null` when on `/clientes` base route
+- [x] Task 5 — Update `/clientes` route to wire client selection navigation (AC: #1, #2)
+  - [x] Update `frontend/src/routes/_app/clientes.tsx` — `onClienteSelect` stub replaced with `navigate({ to: '/clientes/$clienteId', params: { clienteId: id } })`
+  - [x] Right panel now renders `<ClienteDetailView clienteId={null} />` (placeholder state — no client selected)
+  - [x] `selectedClienteId` passed to `<ClienteListView>` as `null` when on `/clientes` base route
 
-- [ ] Task 6 — Backend: `GET /api/v1/clientes/{id}` endpoint (AC: #3, #4)
-  - [ ] Add `GetClienteByIdQuery.cs` to `backend/src/SiesaAgents.Application/Clientes/Queries/` — record `GetClienteByIdQuery(Guid Id)`
-  - [ ] Add `GetClienteByIdQueryHandler.cs` — calls `IClienteRepository.GetByIdAsync(id, ct)`; returns `ClienteDto?`
-  - [ ] Add endpoint to `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`:
-    ```csharp
-    app.MapGet("/api/v1/clientes/{id:guid}", async (Guid id, IClienteRepository repo, CancellationToken ct) => {
-        var entity = await repo.GetByIdAsync(id, ct);
-        return entity is null
-            ? Results.NotFound(new { title = "Cliente no encontrado.", status = 404 })
-            : Results.Ok(new ClienteDto(entity.Id, entity.Nombre, entity.Nit, entity.Telefono, entity.Ciudad, entity.CreatedAt, entity.UpdatedAt));
-    });
-    ```
-  - [ ] `IClienteRepository.GetByIdAsync(Guid id, CancellationToken ct)` is already declared in Story 2.1 — verify implementation in `ClienteRepository.cs`: `return await _context.Clientes.FirstOrDefaultAsync(c => c.Id == id, ct)`
+- [x] Task 6 — Backend: `GET /api/v1/clientes/{id}` endpoint (AC: #3, #4)
+  - [x] Add `GetClienteByIdQuery.cs` to `backend/src/SiesaAgents.Application/Clientes/Queries/` — record `GetClienteByIdQuery(Guid Id)`
+  - [x] Add `GetClienteByIdQueryHandler.cs` — calls `IClienteRepository.GetByIdAsync(id, ct)`; returns `ClienteDto?`
+  - [x] Add endpoint to `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` with `Results.Problem` 404 response
+  - [x] Register `GetClienteByIdQueryHandler` in DI in `Program.cs`
+  - [x] `IClienteRepository.GetByIdAsync(Guid id, CancellationToken ct)` implemented in `ClienteRepository.cs` using `FindAsync`
 
-- [ ] Task 7 — Unit tests: frontend (AC: #1, #2, #3, #4, #5)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/__tests__/useCliente.test.ts` — Vitest + MSW:
-    - Mock `GET /api/v1/clientes/:id` returning a client object → assert hook returns the correct `Cliente` with `isLoading: false`
-    - Mock `GET /api/v1/clientes/:id` returning 404 → assert `data` is `null`
-    - Mock 500 response → assert `isError` is `true`
-    - Assert `queryKey` is `['clientes', id]`
-    - Assert `enabled: false` when `id` is falsy (no fetch)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/__tests__/ClienteDetailView.test.tsx` — Vitest + RTL + MSW:
-    - No selection (`clienteId={null}`): assert placeholder "Selecciona un cliente para ver sus detalles." is rendered with `role="status"`
-    - Loading state: assert skeleton is rendered while loading
-    - Not-found state: MSW returns 404 → assert "Cliente no encontrado." message rendered without crash
-    - Detail rendered: MSW returns a client → assert Nombre, NIT/RUC, Teléfono, Ciudad all visible
-    - Switching clients: render with clienteId A → re-render with clienteId B → assert new client fields displayed
-    - WCAG: assert `role="article"` or `aria-label` containing client name on detail container
+- [x] Task 7 — Unit tests: frontend (AC: #1, #2, #3, #4, #5)
+  - [x] Create `frontend/src/modules/crm/clientes/application/__tests__/useCliente.test.ts` — Vitest + MSW: all cases covered (success, 404, 500, null id, refetch)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/__tests__/ClienteDetailView.test.tsx` — Vitest + RTL + MSW: all states covered (placeholder, skeleton, not-found, detail, switching clients, WCAG)
 
-- [ ] Task 8 — Unit tests: backend (AC: #3, #4)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs` — xUnit:
-    - `GetById_ExistingId_ReturnsClienteDto` — mock `IClienteRepository.GetByIdAsync` returning entity → assert DTO fields match
-    - `GetById_NonExistentId_ReturnsNull` — mock returns `null` → assert handler returns `null`
-  - [ ] Extend `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs` (or create if not exists):
-    - `GET_ClienteById_ExistingId_Returns200WithClienteDto` — seed client → GET `/api/v1/clientes/{id}` → assert 200 + correct body
-    - `GET_ClienteById_NonExistentId_Returns404ProblemDetails` — GET `/api/v1/clientes/00000000-0000-0000-0000-000000000000` → assert 404 + `Content-Type: application/problem+json`
+- [x] Task 8 — Unit tests: backend (AC: #3, #4)
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs` — xUnit: existing id returns DTO, non-existent id returns null, other id returns null
+  - [ ] Extend `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs` — deferred: no IntegrationTests project exists and dotnet not available in environment
 
 ## Dev Notes
 
