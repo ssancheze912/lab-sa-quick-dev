@@ -6,7 +6,10 @@ import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    TanStackRouterVite({ routesDirectory: './src/routes' }),
+    TanStackRouterVite({
+      routesDirectory: './src/routes',
+      routeFileIgnorePattern: '(__tests__|.test.|.spec.)',
+    }),
     react(),
     tailwindcss(),
   ],
