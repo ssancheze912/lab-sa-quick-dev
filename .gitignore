@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Test results
+playwright-results/
+playwright-report/
+test-results/
+
+# Frontend build
+frontend/dist/
+frontend/node_modules/
+
+# Backend build
+backend/**/bin/
+backend/**/obj/
+
+# Env files
+.env.local
+.env*.local
+
+# IDE
+.idea/
+.vscode/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
