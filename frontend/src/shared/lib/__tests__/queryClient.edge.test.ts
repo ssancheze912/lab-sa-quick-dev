@@ -58,16 +58,19 @@ describe('queryClient — edge cases', () => {
   it('should allow setDefaultOptions to be called without throwing', () => {
     // GIVEN: queryClient is a mutable QueryClient instance
     // WHEN: We update the default options (typical pattern in test setup)
-    expect(() => {
+    // Use try/finally to guarantee restoration even if the assertion throws
+    try {
+      expect(() => {
+        queryClient.setDefaultOptions({
+          queries: { staleTime: 60_000, retry: false },
+        })
+      }).not.toThrow()
+    } finally {
+      // Restore original options unconditionally after test
       queryClient.setDefaultOptions({
-        queries: { staleTime: 60_000, retry: false },
+        queries: { staleTime: 60_000 },
       })
-    }).not.toThrow()
-
-    // Restore original options after test
-    queryClient.setDefaultOptions({
-      queries: { staleTime: 60_000 },
-    })
+    }
   })
 
   it('should start with an empty query cache (no pre-fetched queries)', () => {
