@@ -3,13 +3,14 @@ using Microsoft.EntityFrameworkCore;
 namespace SiesaAgents.Infrastructure.Data;
 
 /// <summary>
-/// Application database context. Uses snake_case naming convention via EF Core.
+/// Application database context. Uses snake_case naming convention via EF Core (Npgsql).
 /// </summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.UseSnakeCaseNamingConvention();
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 }
