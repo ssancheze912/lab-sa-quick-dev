@@ -102,10 +102,11 @@ describe('ClienteDetailView — AC#2: No selection placeholder', () => {
 describe('ClienteDetailView — AC#5: Skeleton loading state (TC-E2-P2-04)', () => {
   it('should render skeleton while data is loading', async () => {
     server.use(
-      http.get(`${API_BASE}/api/v1/clientes/${CLIENT_ID_A}`, async () => {
-        await new Promise((resolve) => setTimeout(resolve, 5000))
-        return HttpResponse.json(clienteA)
-      })
+      // Never-resolving promise keeps the request in-flight so skeleton stays visible.
+      // Using a non-resolving promise avoids any hard wait (no setTimeout dependency).
+      http.get(`${API_BASE}/api/v1/clientes/${CLIENT_ID_A}`, () =>
+        new Promise<Response>(() => {})
+      )
     )
 
     renderWithProviders(<ClienteDetailView clienteId={CLIENT_ID_A} />)
