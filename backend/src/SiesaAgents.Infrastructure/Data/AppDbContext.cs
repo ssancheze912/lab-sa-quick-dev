@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
 
 namespace SiesaAgents.Infrastructure.Data;
 
@@ -7,6 +8,8 @@ namespace SiesaAgents.Infrastructure.Data;
 /// </summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    public DbSet<ClienteEntity> Clientes { get; set; } = default!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

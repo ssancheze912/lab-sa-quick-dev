@@ -14,8 +14,8 @@ describe('apiClient', () => {
     // Arrange / Act
     const baseURL = apiClient.defaults.baseURL
 
-    // Assert — in test env VITE_API_URL is undefined, so baseURL will be undefined
+    // Assert — baseURL is set from VITE_API_URL (http://localhost:5000 in test env)
     // This verifies the apiClient correctly reads from env
-    expect(baseURL).toBeUndefined()
+    expect(baseURL).toBe('http://localhost:5000')
   })
 })

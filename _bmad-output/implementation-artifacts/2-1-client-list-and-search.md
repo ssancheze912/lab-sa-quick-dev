@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: ready
+Status: review
 
 ## Story
 
@@ -24,112 +24,112 @@ So that I can quickly find the client I'm looking for.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Define domain entity and repository interface (AC: #1)
-  - [ ] Create `frontend/src/modules/crm/clientes/domain/Cliente.ts` — TypeScript interface with fields: `id: string`, `nombre: string`, `nit: string`, `telefono: string`, `ciudad: string`, `createdAt: string`, `updatedAt: string`
-  - [ ] Create `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — interface with `getAll(): Promise<Cliente[]>`
+- [x] Task 1 — Define domain entity and repository interface (AC: #1)
+  - [x] Create `frontend/src/modules/crm/clientes/domain/Cliente.ts` — TypeScript interface with fields: `id: string`, `nombre: string`, `nit: string`, `telefono: string`, `ciudad: string`, `createdAt: string`, `updatedAt: string`
+  - [x] Create `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — interface with `getAll(): Promise<Cliente[]>`
 
-- [ ] Task 2 — Implement infrastructure API repository (AC: #1)
-  - [ ] Create `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implements `IClienteRepository` using `apiClient` (Axios singleton from `src/shared/lib/apiClient.ts`) calling `GET /api/v1/clientes`
-  - [ ] Export a singleton instance `clienteApiRepository` for use by hooks
+- [x] Task 2 — Implement infrastructure API repository (AC: #1)
+  - [x] Create `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implements `IClienteRepository` using `apiClient` (Axios singleton from `src/shared/lib/apiClient.ts`) calling `GET /api/v1/clientes`
+  - [x] Export a singleton instance `clienteApiRepository` for use by hooks
 
-- [ ] Task 3 — Implement `useClientes` application hook (AC: #1, #2, #4, #5, #6)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useClientes.ts` — TanStack Query hook with `queryKey: ['clientes']`, calling `clienteApiRepository.getAll()`, `staleTime: 1000 * 60`
-  - [ ] Hook exposes: `{ data: Cliente[] | undefined, isLoading, isError, refetch }`
+- [x] Task 3 — Implement `useClientes` application hook (AC: #1, #2, #4, #5, #6)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useClientes.ts` — TanStack Query hook with `queryKey: ['clientes']`, calling `clienteApiRepository.getAll()`, `staleTime: 1000 * 60`
+  - [x] Hook exposes: `{ data: Cliente[] | undefined, isLoading, isError, refetch }`
 
-- [ ] Task 4 — Create shared `EmptyState` component (AC: #4)
-  - [ ] Create `frontend/src/shared/components/EmptyState.tsx` — accepts props: `message: string`, optional `action?: React.ReactNode`
-  - [ ] Renders a centered layout with a Heroicons `InboxIcon` (or `FolderOpenIcon`), the message text in Spanish, and optionally an action button
-  - [ ] Apply WCAG 2.1 AA: `role="status"` and `aria-label` matching message text
-  - [ ] All text in Spanish
+- [x] Task 4 — Create shared `EmptyState` component (AC: #4)
+  - [x] Create `frontend/src/shared/components/EmptyState.tsx` — accepts props: `message: string`, optional `action?: React.ReactNode`
+  - [x] Renders a centered layout with a Heroicons `InboxIcon` (or `FolderOpenIcon`), the message text in Spanish, and optionally an action button
+  - [x] Apply WCAG 2.1 AA: `role="status"` and `aria-label` matching message text
+  - [x] All text in Spanish
 
-- [ ] Task 5 — Create shared `ErrorPanel` component (AC: #5)
-  - [ ] Create `frontend/src/shared/components/ErrorPanel.tsx` — accepts props: `message: string`, `onRetry: () => void`
-  - [ ] Renders a centered layout with a Heroicons `ExclamationTriangleIcon`, the message text, and a "Reintentar" button wired to `onRetry`
-  - [ ] Apply WCAG 2.1 AA: `role="alert"` on the container, button has accessible text
+- [x] Task 5 — Create shared `ErrorPanel` component (AC: #5)
+  - [x] Create `frontend/src/shared/components/ErrorPanel.tsx` — accepts props: `message: string`, `onRetry: () => void`
+  - [x] Renders a centered layout with a Heroicons `ExclamationTriangleIcon`, the message text, and a "Reintentar" button wired to `onRetry`
+  - [x] Apply WCAG 2.1 AA: `role="alert"` on the container, button has accessible text
 
-- [ ] Task 6 — Create `ClienteListItem` component (AC: #1)
-  - [ ] Create `frontend/src/shared/components/ClienteListItem.tsx` — accepts props: `cliente: Cliente`, `isSelected: boolean`, `onClick: () => void`
-  - [ ] Renders Nombre (bold, truncated with `truncate`) and NIT/RUC (smaller, slate-500) per item
-  - [ ] Apply active/selected styling: `bg-blue-50 border-l-4 border-[#0e79fd]` when `isSelected`, `hover:bg-slate-50` otherwise
-  - [ ] Apply WCAG 2.1 AA: `role="option"`, `aria-selected={isSelected}`, keyboard accessible via `tabIndex` and `onKeyDown` Enter handler
+- [x] Task 6 — Create `ClienteListItem` component (AC: #1)
+  - [x] Create `frontend/src/shared/components/ClienteListItem.tsx` — accepts props: `cliente: Cliente`, `isSelected: boolean`, `onClick: () => void`
+  - [x] Renders Nombre (bold, truncated with `truncate`) and NIT/RUC (smaller, slate-500) per item
+  - [x] Apply active/selected styling: `bg-blue-50 border-l-4 border-[#0e79fd]` when `isSelected`, `hover:bg-slate-50` otherwise
+  - [x] Apply WCAG 2.1 AA: `role="option"`, `aria-selected={isSelected}`, keyboard accessible via `tabIndex` and `onKeyDown` Enter handler
 
-- [ ] Task 7 — Implement `ClienteListView` presentation component (AC: #1, #2, #3, #4, #5, #6)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`
-  - [ ] Layout: fixed 280px left panel with `overflow-y-auto`, `border-r border-slate-200`, `bg-white`
-  - [ ] Header: panel title "Clientes" (h2) and search input (`<input type="search">`) with placeholder "Buscar por nombre o NIT..."
-  - [ ] Search input uses `onChange` to update local `searchQuery` state (`useState<string>('')`)
-  - [ ] Filtered list computed via `useMemo`: filters `data` array where `nombre` or `nit` includes `searchQuery` (case-insensitive via `.toLowerCase()`)
-  - [ ] Loading state: render `<Skeleton count={8} height={56} />` from `react-loading-skeleton` when `isLoading`
-  - [ ] Error state: render `<ErrorPanel message="Error al cargar los clientes." onRetry={refetch} />` when `isError`
-  - [ ] Empty state (no data): render `<EmptyState message="No hay clientes registrados. Crea el primero." />` when `!isLoading && !isError && data?.length === 0`
-  - [ ] Empty search result: render a message "Sin resultados para '{searchQuery}'" when filtered array is empty but `data.length > 0`
-  - [ ] List renders `<ClienteListItem>` for each filtered client, passing `isSelected` (based on `selectedClienteId` prop) and `onClick`
-  - [ ] Accepts props: `selectedClienteId: string | null`, `onClienteSelect: (id: string) => void`
-  - [ ] Search input has `aria-label="Buscar cliente"` and the list container has `role="listbox"` and `aria-label="Lista de clientes"`
+- [x] Task 7 — Implement `ClienteListView` presentation component (AC: #1, #2, #3, #4, #5, #6)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`
+  - [x] Layout: fixed 280px left panel with `overflow-y-auto`, `border-r border-slate-200`, `bg-white`
+  - [x] Header: panel title "Clientes" (h2) and search input (`<input type="search">`) with placeholder "Buscar por nombre o NIT..."
+  - [x] Search input uses `onChange` to update local `searchQuery` state (`useState<string>('')`)
+  - [x] Filtered list computed via `useMemo`: filters `data` array where `nombre` or `nit` includes `searchQuery` (case-insensitive via `.toLowerCase()`)
+  - [x] Loading state: render `<Skeleton count={8} height={56} />` from `react-loading-skeleton` when `isLoading`
+  - [x] Error state: render `<ErrorPanel message="Error al cargar los clientes." onRetry={refetch} />` when `isError`
+  - [x] Empty state (no data): render `<EmptyState message="No hay clientes registrados. Crea el primero." />` when `!isLoading && !isError && data?.length === 0`
+  - [x] Empty search result: render a message "Sin resultados para '{searchQuery}'" when filtered array is empty but `data.length > 0`
+  - [x] List renders `<ClienteListItem>` for each filtered client, passing `isSelected` (based on `selectedClienteId` prop) and `onClick`
+  - [x] Accepts props: `selectedClienteId: string | null`, `onClienteSelect: (id: string) => void`
+  - [x] Search input has `aria-label="Buscar cliente"` and the list container has `role="listbox"` and `aria-label="Lista de clientes"`
 
-- [ ] Task 8 — Wire `ClienteListView` into the `/clientes` route (AC: #1–#6)
-  - [ ] Update `frontend/src/routes/_app/clientes.tsx` — replace `ClientesPlaceholder` with a layout that renders `<ClienteListView>` on the left panel (280px) and a right panel placeholder (`<div>`) filling the remaining space
-  - [ ] Layout: `flex h-full` — left: `w-[280px] flex-shrink-0`, right: `flex-1`
-  - [ ] `selectedClienteId` is read from the current URL (no TanStack Router param at this story level — use `null` for now as detail view is Story 2.2)
-  - [ ] `onClienteSelect` is a no-op stub for now (navigation to detail will be wired in Story 2.2)
+- [x] Task 8 — Wire `ClienteListView` into the `/clientes` route (AC: #1–#6)
+  - [x] Update `frontend/src/routes/_app/clientes.tsx` — replace `ClientesPlaceholder` with a layout that renders `<ClienteListView>` on the left panel (280px) and a right panel placeholder (`<div>`) filling the remaining space
+  - [x] Layout: `flex h-full` — left: `w-[280px] flex-shrink-0`, right: `flex-1`
+  - [x] `selectedClienteId` is read from the current URL (no TanStack Router param at this story level — use `null` for now as detail view is Story 2.2)
+  - [x] `onClienteSelect` is a no-op stub for now (navigation to detail will be wired in Story 2.2)
 
-- [ ] Task 9 — Backend: `ClienteEntity` domain entity (AC: #1)
-  - [ ] Create `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs` — `public class ClienteEntity` with private constructor + static `Create()` factory
-  - [ ] Fields: `public Guid Id { get; private set; } = Guid.NewGuid()`, `public string Nombre { get; private set; }`, `public string Nit { get; private set; }`, `public string Telefono { get; private set; }`, `public string Ciudad { get; private set; }`, `public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow`, `public DateTimeOffset UpdatedAt { get; private set; } = DateTimeOffset.UtcNow`
-  - [ ] Static `Create(string nombre, string nit, string telefono, string ciudad)` factory validates no field is null/empty before constructing; throws `ArgumentException` if validation fails
-  - [ ] Add `Update(string nombre, string nit, string telefono, string ciudad)` method for edits (sets `UpdatedAt = DateTimeOffset.UtcNow`)
+- [x] Task 9 — Backend: `ClienteEntity` domain entity (AC: #1)
+  - [x] Create `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs` — `public class ClienteEntity` with private constructor + static `Create()` factory
+  - [x] Fields: `public Guid Id { get; private set; } = Guid.NewGuid()`, `public string Nombre { get; private set; }`, `public string Nit { get; private set; }`, `public string Telefono { get; private set; }`, `public string Ciudad { get; private set; }`, `public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow`, `public DateTimeOffset UpdatedAt { get; private set; } = DateTimeOffset.UtcNow`
+  - [x] Static `Create(string nombre, string nit, string telefono, string ciudad)` factory validates no field is null/empty before constructing; throws `ArgumentException` if validation fails
+  - [x] Add `Update(string nombre, string nit, string telefono, string ciudad)` method for edits (sets `UpdatedAt = DateTimeOffset.UtcNow`)
 
-- [ ] Task 10 — Backend: `IClienteRepository` interface (AC: #1)
-  - [ ] Create `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
-  - [ ] Methods: `Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken ct)`, `Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)`, `Task AddAsync(ClienteEntity entity, CancellationToken ct)`, `Task UpdateAsync(ClienteEntity entity, CancellationToken ct)`, `Task DeleteAsync(Guid id, CancellationToken ct)`, `Task<bool> NitExistsAsync(string nit, CancellationToken ct)`
+- [x] Task 10 — Backend: `IClienteRepository` interface (AC: #1)
+  - [x] Create `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
+  - [x] Methods: `Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken ct)`, `Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)`, `Task AddAsync(ClienteEntity entity, CancellationToken ct)`, `Task UpdateAsync(ClienteEntity entity, CancellationToken ct)`, `Task DeleteAsync(Guid id, CancellationToken ct)`, `Task<bool> NitExistsAsync(string nit, CancellationToken ct)`
 
-- [ ] Task 11 — Backend: EF Core `ClienteConfiguration` and migration (AC: #1)
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs` — implements `IEntityTypeConfiguration<ClienteEntity>`
-  - [ ] Configure: `ToTable("clientes")`, `HasKey(x => x.Id)`, all required string columns (Nombre, Nit, Telefono, Ciudad) as `IsRequired()`, unique index `uk_clientes_nit` on `Nit`, standard index `ix_clientes_nombre` on `Nombre`
-  - [ ] Add `DbSet<ClienteEntity> Clientes { get; set; }` to `AppDbContext`
-  - [ ] Create EF Core migration `20260614000000_AddClienteEntity` (or generate via `dotnet ef migrations add AddClienteEntity`)
+- [x] Task 11 — Backend: EF Core `ClienteConfiguration` and migration (AC: #1)
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs` — implements `IEntityTypeConfiguration<ClienteEntity>`
+  - [x] Configure: `ToTable("clientes")`, `HasKey(x => x.Id)`, all required string columns (Nombre, Nit, Telefono, Ciudad) as `IsRequired()`, unique index `uk_clientes_nit` on `Nit`, standard index `ix_clientes_nombre` on `Nombre`
+  - [x] Add `DbSet<ClienteEntity> Clientes { get; set; }` to `AppDbContext`
+  - [x] Create EF Core migration `20260614000000_AddClienteEntity` (or generate via `dotnet ef migrations add AddClienteEntity`)
 
-- [ ] Task 12 — Backend: `ClienteRepository` infrastructure implementation (AC: #1)
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implements `IClienteRepository`
-  - [ ] `GetAllAsync`: `return await _context.Clientes.OrderByDescending(c => c.CreatedAt).ToListAsync(ct)`
-  - [ ] `NitExistsAsync`: `return await _context.Clientes.AnyAsync(c => c.Nit == nit, ct)`
-  - [ ] All other CRUD methods wired to `AppDbContext`
+- [x] Task 12 — Backend: `ClienteRepository` infrastructure implementation (AC: #1)
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implements `IClienteRepository`
+  - [x] `GetAllAsync`: `return await _context.Clientes.OrderByDescending(c => c.CreatedAt).ToListAsync(ct)`
+  - [x] `NitExistsAsync`: `return await _context.Clientes.AnyAsync(c => c.Nit == nit, ct)`
+  - [x] All other CRUD methods wired to `AppDbContext`
 
-- [ ] Task 13 — Backend: `GetClientesQuery` and handler (AC: #1)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQuery.cs` — record `GetClientesQuery`
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQueryHandler.cs` — calls `IClienteRepository.GetAllAsync()` and maps to `IEnumerable<ClienteDto>`
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs` — record with `Guid Id`, `string Nombre`, `string Nit`, `string Telefono`, `string Ciudad`, `DateTimeOffset CreatedAt`, `DateTimeOffset UpdatedAt`
+- [x] Task 13 — Backend: `GetClientesQuery` and handler (AC: #1)
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQuery.cs` — record `GetClientesQuery`
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQueryHandler.cs` — calls `IClienteRepository.GetAllAsync()` and maps to `IEnumerable<ClienteDto>`
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs` — record with `Guid Id`, `string Nombre`, `string Nit`, `string Telefono`, `string Ciudad`, `DateTimeOffset CreatedAt`, `DateTimeOffset UpdatedAt`
 
-- [ ] Task 14 — Backend: `GET /api/v1/clientes` endpoint (AC: #1, #5)
-  - [ ] Create `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` with static class `ClienteEndpoints`
-  - [ ] `MapClienteEndpoints(this WebApplication app)` extension method
-  - [ ] Wire endpoint: `app.MapGet("/api/v1/clientes", async (IClienteRepository repo, CancellationToken ct) => Results.Ok(await repo.GetAllAsync(ct)))` — returns `200 OK` with `ClienteDto[]`
-  - [ ] Register `IClienteRepository` → `ClienteRepository` in `Program.cs` DI: `builder.Services.AddScoped<IClienteRepository, ClienteRepository>()`
-  - [ ] Call `app.MapClienteEndpoints()` in `Program.cs` after middleware registration
+- [x] Task 14 — Backend: `GET /api/v1/clientes` endpoint (AC: #1, #5)
+  - [x] Create `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` with static class `ClienteEndpoints`
+  - [x] `MapClienteEndpoints(this WebApplication app)` extension method
+  - [x] Wire endpoint: `app.MapGet("/api/v1/clientes", async (IClienteRepository repo, CancellationToken ct) => Results.Ok(await repo.GetAllAsync(ct)))` — returns `200 OK` with `ClienteDto[]`
+  - [x] Register `IClienteRepository` → `ClienteRepository` in `Program.cs` DI: `builder.Services.AddScoped<IClienteRepository, ClienteRepository>()`
+  - [x] Call `app.MapClienteEndpoints()` in `Program.cs` after middleware registration
 
-- [ ] Task 15 — Unit tests: frontend (AC: #1, #2, #3, #4, #5)
-  - [ ] Create `frontend/src/modules/crm/clientes/domain/__tests__/Cliente.test.ts` — validates TypeScript interface shape (type-level, compile check)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/__tests__/useClientes.test.ts` — Vitest + MSW: mock `GET /api/v1/clientes` returning 3 clients → assert hook returns array of 3; mock 500 response → assert `isError` is true
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/__tests__/ClienteListView.test.tsx` — Vitest + RTL + MSW:
+- [x] Task 15 — Unit tests: frontend (AC: #1, #2, #3, #4, #5)
+  - [x] Create `frontend/src/modules/crm/clientes/domain/__tests__/Cliente.test.ts` — validates TypeScript interface shape (type-level, compile check)
+  - [x] Create `frontend/src/modules/crm/clientes/application/__tests__/useClientes.test.ts` — Vitest + MSW: mock `GET /api/v1/clientes` returning 3 clients → assert hook returns array of 3; mock 500 response → assert `isError` is true
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/__tests__/ClienteListView.test.tsx` — Vitest + RTL + MSW:
     - Loading state: assert skeleton is rendered while loading
     - Populated list: MSW returns 3 clients → assert 3 `ClienteListItem` rendered
     - Real-time search: render with 5 clients → type "Garcia" → assert only matching items visible
     - Empty state: MSW returns `[]` → assert `EmptyState` rendered with correct message
     - Error state: MSW returns 500 → assert `ErrorPanel` rendered with "Reintentar" button
     - Retry: click "Reintentar" → assert `refetch` triggered (spy)
-  - [ ] Create `frontend/src/shared/components/__tests__/EmptyState.test.tsx` — RTL: renders message, renders action slot, has `role="status"`
-  - [ ] Create `frontend/src/shared/components/__tests__/ErrorPanel.test.tsx` — RTL: renders message, renders button "Reintentar", calls `onRetry` on click, has `role="alert"`
-  - [ ] Create `frontend/src/shared/components/__tests__/ClienteListItem.test.tsx` — RTL: renders Nombre and NIT, applies selected class when `isSelected`, calls `onClick` on click and Enter key
+  - [x] Create `frontend/src/shared/components/__tests__/EmptyState.test.tsx` — RTL: renders message, renders action slot, has `role="status"`
+  - [x] Create `frontend/src/shared/components/__tests__/ErrorPanel.test.tsx` — RTL: renders message, renders button "Reintentar", calls `onRetry` on click, has `role="alert"`
+  - [x] Create `frontend/src/shared/components/__tests__/ClienteListItem.test.tsx` — RTL: renders Nombre and NIT, applies selected class when `isSelected`, calls `onClick` on click and Enter key
 
-- [ ] Task 16 — Unit tests: backend (AC: #1)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Domain/ClienteEntityTests.cs` — xUnit:
+- [x] Task 16 — Unit tests: backend (AC: #1)
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Domain/ClienteEntityTests.cs` — xUnit:
     - `Create_WithValidParams_SetsAllProperties`
     - `Create_WithEmptyNombre_ThrowsArgumentException`
     - `Create_WithEmptyNit_ThrowsArgumentException`
     - `Create_WithEmptyTelefono_ThrowsArgumentException`
     - `Create_WithEmptyCiudad_ThrowsArgumentException`
     - `Update_ChangesFieldsAndUpdatesTimestamp`
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs` — xUnit with mock `IClienteRepository`: returns 2 entities → handler returns 2 DTOs with correct field mapping
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs` — xUnit with mock `IClienteRepository`: returns 2 entities → handler returns 2 DTOs with correct field mapping
 
 ## Dev Notes
 

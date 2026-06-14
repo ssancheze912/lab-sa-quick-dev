@@ -1,6 +1,8 @@
 import { createRootRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
 import { Navbar } from 'siesa-ui-kit'
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from '../shared/lib/queryClient'
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -15,6 +17,7 @@ function RootLayout() {
   const isContactosActive = currentPath.startsWith('/contactos')
 
   return (
+    <QueryClientProvider client={queryClient}>
     <div className="flex flex-col min-h-screen">
       {/* Top Navbar */}
       <Navbar productName="Siesa Agents" />
@@ -108,6 +111,7 @@ function RootLayout() {
         </Link>
       </nav>
     </div>
+    </QueryClientProvider>
   )
 }
 
