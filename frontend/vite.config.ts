@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     TanStackRouterVite({
       routesDirectory: './src/routes',
-      routeFileIgnorePattern: '(__tests__|.test.|.spec.)',
+      routeFileIgnorePattern: '(__tests__|\\.test\\.|\\.spec\\.)',
     }),
     react(),
     tailwindcss(),
