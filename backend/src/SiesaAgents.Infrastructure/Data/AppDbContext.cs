@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
 using SiesaAgents.Infrastructure.Data.Extensions;
 
 namespace SiesaAgents.Infrastructure.Data;
 
 /// <summary>
-/// Root EF Core context for the Siesa Agents service. Entities are added in
-/// later stories (Story 2.1 — Clientes, Story 3.1 — Contactos); this story
-/// only wires the context, applies the snake_case naming convention, and
-/// supports the empty <c>InitialCreate</c> migration.
+/// Root EF Core context for the Siesa Agents service. Story 2.1 introduces
+/// the <c>clientes</c> aggregate; future stories will append additional
+/// <c>DbSet</c>s (Contactos, etc.).
 /// </summary>
 public class AppDbContext : DbContext
 {
@@ -15,7 +15,7 @@ public class AppDbContext : DbContext
     {
     }
 
-    // NO DbSet<T> declarations in this story — entities arrive in Stories 2.1 / 3.1.
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

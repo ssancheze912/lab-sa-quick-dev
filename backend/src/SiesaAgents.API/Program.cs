@@ -3,8 +3,12 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 // Shared JSON options for RFC 7807 Problem Details bodies: drop null members so
 // only status/title/type/instance reach the wire (matches architecture standard).
@@ -55,6 +59,11 @@ builder.Services.AddProblemDetails();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Clientes — repository + CQRS handler. Story 2.1 wires the read side only;
+// commands land in stories 2.3 / 2.4 / 2.5.
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<GetClientesQueryHandler>();
+
 var app = builder.Build();
 
 // Global exception handler — emits RFC 7807 Problem Details responses.
@@ -71,6 +80,10 @@ app.MapScalarApiReference();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
     .WithName("Health")
     .Produces<object>(StatusCodes.Status200OK);
+
+// Clientes endpoints — MUST be registered BEFORE the fallback handler below,
+// otherwise `MapFallback` would mask the route and return 404.
+app.MapClienteEndpoints();
 
 // Test-only endpoint used by integration tests to exercise the global
 // exception middleware. Registered ONLY when ASPNETCORE_ENVIRONMENT=Testing

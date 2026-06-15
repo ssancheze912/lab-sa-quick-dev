@@ -82,13 +82,13 @@ public class MigrationStructureTests
     }
 
     /// <summary>
-    /// AC #3 — <c>AppDbContextModelSnapshot.cs</c> contains NO entity-type
-    /// metadata because no <c>DbSet&lt;T&gt;</c> is declared in Story 1.3.
-    /// A non-empty snapshot would mean we accidentally registered an entity
-    /// (which would force Stories 2.1 / 3.1 to scaffold a "Drop" first).
+    /// AC #3 (Story 1.3) — guarded that the initial <c>AppDbContextModelSnapshot</c>
+    /// contained NO entity types. Story 2.1 legitimately introduces
+    /// <c>ClienteEntity</c>, so the snapshot now MUST register exactly that
+    /// entity (and nothing else for this story).
     /// </summary>
     [Fact]
-    public void ModelSnapshot_DoesNotDeclareAnyEntityType()
+    public void ModelSnapshot_RegistersClienteEntityOnly()
     {
         // GIVEN
         var migrationsDir = MigrationsDir();
@@ -98,10 +98,9 @@ public class MigrationStructureTests
 
         var source = File.ReadAllText(snapshotPath);
 
-        // WHEN / THEN — no entity-type registration calls
-        Assert.DoesNotContain(".Entity(", source);
-        Assert.DoesNotContain("HasAnnotation(\"Relational:Schema\"", source);
-        Assert.DoesNotContain("modelBuilder.HasDefaultSchema", source);
+        // WHEN / THEN — Story 2.1 registers ClienteEntity and only ClienteEntity.
+        Assert.Contains("\"SiesaAgents.Domain.Clientes.Entities.ClienteEntity\"", source);
+        Assert.DoesNotContain("ContactoEntity", source);
     }
 
     /// <summary>

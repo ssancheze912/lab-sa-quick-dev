@@ -21,6 +21,7 @@ import {
   createRouter,
   createMemoryHistory,
 } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 function setDesktopViewport() {
   Object.defineProperty(window, 'innerWidth', {
@@ -54,6 +55,15 @@ describe('Index route redirect (AC #6, TC-E1-P2-03)', () => {
     cleanup()
   })
 
+  function makeQueryClient() {
+    return new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, gcTime: 0, staleTime: 0 },
+        mutations: { retry: false },
+      },
+    })
+  }
+
   test('GIVEN user lands on `/` WHEN the router loads THEN the URL changes to `/clientes`', async () => {
     // GIVEN: A router whose initial history is the root path
     const router = createRouter({
@@ -61,8 +71,13 @@ describe('Index route redirect (AC #6, TC-E1-P2-03)', () => {
       history: createMemoryHistory({ initialEntries: ['/'] }),
     })
 
-    // WHEN: The application is rendered
-    render(<RouterProvider router={router} />)
+    // WHEN: The application is rendered (QueryClient wrapper required because
+    // the Clientes view now consumes `useClientes` from Story 2.1).
+    render(
+      <QueryClientProvider client={makeQueryClient()}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    )
 
     // THEN: The router state resolves to /clientes (redirect occurred)
     await waitFor(() => {
@@ -76,11 +91,16 @@ describe('Index route redirect (AC #6, TC-E1-P2-03)', () => {
       history: createMemoryHistory({ initialEntries: ['/'] }),
     })
 
-    render(<RouterProvider router={router} />)
+    render(
+      <QueryClientProvider client={makeQueryClient()}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    )
 
-    // THEN: The Clientes heading is present (proves the Clientes view rendered, not a blank index)
+    // THEN: the clientes list panel (Story 2.1) is present — proves the
+    // Clientes view rendered after the redirect, not a blank index.
     expect(
-      await screen.findByRole('heading', { name: /^clientes$/i }),
+      await screen.findByTestId('clientes-list-panel'),
     ).toBeInTheDocument()
   })
 })

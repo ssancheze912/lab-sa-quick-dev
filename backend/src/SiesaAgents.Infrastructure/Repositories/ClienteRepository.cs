@@ -1,0 +1,37 @@
+using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
+using SiesaAgents.Domain.Clientes.Interfaces;
+using SiesaAgents.Infrastructure.Data;
+
+namespace SiesaAgents.Infrastructure.Repositories;
+
+/// <summary>
+/// EF Core implementation of <see cref="IClienteRepository"/>. The default
+/// sort in <see cref="GetAllAsync"/> is "Más reciente" (newest first) per
+/// Story 2.6 default — locking the order here means the frontend doesn't need
+/// to sort on initial load.
+/// </summary>
+public class ClienteRepository : IClienteRepository
+{
+    private readonly AppDbContext _db;
+
+    public ClienteRepository(AppDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<ClienteEntity>> GetAllAsync(CancellationToken ct)
+        => await _db.Clientes
+            .AsNoTracking()
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync(ct);
+
+    public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+        => _db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, ct);
+
+    public Task<bool> ExistsByNitAsync(string nit, CancellationToken ct)
+        => _db.Clientes.AsNoTracking().AnyAsync(c => c.Nit == nit, ct);
+
+    public async Task AddAsync(ClienteEntity entity, CancellationToken ct)
+        => await _db.Clientes.AddAsync(entity, ct);
+
+    public Task SaveChangesAsync(CancellationToken ct)
+        => _db.SaveChangesAsync(ct);
+}

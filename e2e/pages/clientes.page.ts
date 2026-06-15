@@ -20,6 +20,12 @@ export class ClientesPage {
   readonly detailPanel: Locator;
   readonly emptyState: Locator;
 
+  // List-state panels (Story 2.1 additions)
+  readonly errorPanel: Locator;
+  readonly emptyStatePanel: Locator;
+  readonly searchEmptyPanel: Locator;
+  readonly btnReintentar: Locator;
+
   // Form (dialog/drawer)
   readonly form: Locator;
   readonly inputNombre: Locator;
@@ -43,6 +49,12 @@ export class ClientesPage {
 
     this.detailPanel = page.getByTestId('cliente-detail-panel');
     this.emptyState = page.getByTestId('empty-state');
+
+    // Story 2.1 — list-state panels
+    this.errorPanel = page.getByTestId('clientes-error-panel');
+    this.emptyStatePanel = page.getByTestId('clientes-empty-state');
+    this.searchEmptyPanel = page.getByTestId('clientes-search-empty');
+    this.btnReintentar = page.getByRole('button', { name: /reintentar/i });
 
     this.form = page.getByRole('dialog');
     this.inputNombre = page.getByLabel(/nombre/i);
