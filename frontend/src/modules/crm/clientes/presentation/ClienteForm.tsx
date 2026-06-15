@@ -1,4 +1,4 @@
-import { forwardRef } from 'react'
+import { forwardRef, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import axios from 'axios'
@@ -12,10 +12,20 @@ import {
 } from '@/shared/components/ui/dialog'
 import { clienteFormSchema, type ClienteFormValues } from '../application/clienteSchema'
 import { useCreateCliente } from '../application/useCreateCliente'
+import { useUpdateCliente } from '../application/useUpdateCliente'
+import type { Cliente } from '../domain/Cliente'
 
 interface ClienteFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /**
+   * Defaults to `'create'` (back-compatible with Story 2.3). In `'edit'` mode
+   * the dialog title becomes `Editar cliente` and the form is pre-filled from
+   * the `cliente` prop.
+   */
+  mode?: 'create' | 'edit'
+  /** Required when `mode === 'edit'`. */
+  cliente?: Cliente
 }
 
 interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -67,16 +77,35 @@ const Field = forwardRef<HTMLInputElement, FieldProps>(
 Field.displayName = 'ClienteFormField'
 
 /**
- * "Nuevo cliente" modal form. Story 2.3.
+ * Cliente form modal. Story 2.3 (create) + Story 2.4 (edit).
  *
  * - All four fields required at the form layer (Zod).
- * - Submit calls POST /api/v1/clientes via `useCreateCliente`.
- * - On success: success toast + reset + close dialog.
+ * - Create mode: POST /api/v1/clientes via `useCreateCliente`.
+ * - Edit mode: PUT /api/v1/clientes/{id} via `useUpdateCliente`.
+ * - On success: success toast (Spanish copy) + close dialog.
  * - On 409 (duplicate NIT): inline error on the `nit` field, modal stays open.
- * - On 400 (FluentValidation): inline errors mapped per field.
+ * - On 400 (FluentValidation): inline errors mapped per field, modal stays open.
+ * - On 404 (edit only): red toast, modal closes (record vanished).
  * - On 5xx / network: red toast, modal stays open with values intact.
  */
-export function ClienteForm({ open, onOpenChange }: ClienteFormProps) {
+export function ClienteForm({
+  open,
+  onOpenChange,
+  mode = 'create',
+  cliente,
+}: ClienteFormProps) {
+  const defaultValues = useMemo<ClienteFormValues>(() => {
+    if (mode === 'edit' && cliente) {
+      return {
+        nombre: cliente.nombre,
+        nit: cliente.nit,
+        telefono: cliente.telefono ?? '',
+        ciudad: cliente.ciudad ?? '',
+      }
+    }
+    return { nombre: '', nit: '', telefono: '', ciudad: '' }
+  }, [mode, cliente])
+
   const {
     register,
     handleSubmit,
@@ -87,56 +116,89 @@ export function ClienteForm({ open, onOpenChange }: ClienteFormProps) {
     resolver: zodResolver(clienteFormSchema),
     mode: 'onSubmit',
     reValidateMode: 'onChange',
-    defaultValues: { nombre: '', nit: '', telefono: '', ciudad: '' },
+    defaultValues,
   })
 
-  const mutation = useCreateCliente()
+  // CRITICAL — reset on open transition (AC #6). Forces the form back to the
+  // latest pristine `cliente` prop values whenever the dialog re-opens so
+  // "open → mutate field → Cancelar → re-open" shows the ORIGINAL values, not
+  // a stale draft (R-006 mitigation).
+  useEffect(() => {
+    if (open) reset(defaultValues)
+  }, [open, defaultValues, reset])
+
+  const createMutation = useCreateCliente()
+  const updateMutation = useUpdateCliente()
+  const isPending =
+    mode === 'edit' ? updateMutation.isPending : createMutation.isPending
 
   function handleCancel() {
-    reset()
+    reset(defaultValues)
     onOpenChange(false)
   }
 
+  function handleMutationError(err: unknown, closeOnNotFound: boolean) {
+    if (axios.isAxiosError(err)) {
+      if (err.response?.status === 409) {
+        setError('nit', { message: 'El NIT/RUC ya está registrado' })
+        return
+      }
+
+      if (err.response?.status === 400) {
+        const data = err.response.data as
+          | { errors?: Record<string, string[]> }
+          | undefined
+        const fieldErrors = data?.errors
+        if (fieldErrors) {
+          let mapped = false
+          for (const [field, msgs] of Object.entries(fieldErrors)) {
+            const key = field.toLowerCase() as keyof ClienteFormValues
+            if (
+              key === 'nombre' ||
+              key === 'nit' ||
+              key === 'telefono' ||
+              key === 'ciudad'
+            ) {
+              setError(key, { message: msgs[0] ?? 'Valor inválido' })
+              mapped = true
+            }
+          }
+          if (mapped) return
+        }
+      }
+
+      if (closeOnNotFound && err.response?.status === 404) {
+        toast.error('No se pudo guardar. Intenta de nuevo.', { duration: 5000 })
+        onOpenChange(false)
+        return
+      }
+    }
+
+    toast.error('No se pudo guardar. Intenta de nuevo.', { duration: 5000 })
+  }
+
   function onSubmit(values: ClienteFormValues) {
-    mutation.mutate(values, {
+    if (mode === 'edit' && cliente) {
+      updateMutation.mutate(
+        { id: cliente.id, input: values },
+        {
+          onSuccess: () => {
+            toast.success('Cliente actualizado correctamente', { duration: 3000 })
+            onOpenChange(false)
+          },
+          onError: (err) => handleMutationError(err, /* closeOnNotFound */ true),
+        },
+      )
+      return
+    }
+
+    createMutation.mutate(values, {
       onSuccess: () => {
         toast.success('Cliente creado correctamente', { duration: 3000 })
         reset()
         onOpenChange(false)
       },
-      onError: (err) => {
-        if (axios.isAxiosError(err)) {
-          if (err.response?.status === 409) {
-            setError('nit', { message: 'El NIT/RUC ya está registrado' })
-            return
-          }
-
-          if (err.response?.status === 400) {
-            const data = err.response.data as
-              | { errors?: Record<string, string[]> }
-              | undefined
-            const fieldErrors = data?.errors
-            if (fieldErrors) {
-              let mapped = false
-              for (const [field, msgs] of Object.entries(fieldErrors)) {
-                const key = field.toLowerCase() as keyof ClienteFormValues
-                if (
-                  key === 'nombre' ||
-                  key === 'nit' ||
-                  key === 'telefono' ||
-                  key === 'ciudad'
-                ) {
-                  setError(key, { message: msgs[0] ?? 'Valor inválido' })
-                  mapped = true
-                }
-              }
-              if (mapped) return
-            }
-          }
-        }
-
-        toast.error('No se pudo guardar. Intenta de nuevo.', { duration: 5000 })
-      },
+      onError: (err) => handleMutationError(err, /* closeOnNotFound */ false),
     })
   }
 
@@ -153,7 +215,9 @@ export function ClienteForm({ open, onOpenChange }: ClienteFormProps) {
         className="max-w-md"
       >
         <DialogHeader>
-          <DialogTitle>Nuevo cliente</DialogTitle>
+          <DialogTitle>
+            {mode === 'edit' ? 'Editar cliente' : 'Nuevo cliente'}
+          </DialogTitle>
         </DialogHeader>
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -200,10 +264,10 @@ export function ClienteForm({ open, onOpenChange }: ClienteFormProps) {
             </button>
             <button
               type="submit"
-              disabled={mutation.isPending}
+              disabled={isPending}
               className="rounded-md bg-[#0e79fd] px-4 py-2 text-sm font-semibold text-white hover:bg-[#154ca9] disabled:opacity-60"
             >
-              {mutation.isPending ? 'Guardando…' : 'Guardar'}
+              {isPending ? 'Guardando…' : 'Guardar'}
             </button>
           </DialogFooter>
         </form>

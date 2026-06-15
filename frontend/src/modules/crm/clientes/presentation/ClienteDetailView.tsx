@@ -1,9 +1,10 @@
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import { useRouter } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
 import { useCliente } from '../application/useCliente'
+import { ClienteForm } from './ClienteForm'
 
 interface ClienteDetailViewProps {
   clienteId: string
@@ -19,6 +20,7 @@ interface ClienteDetailViewProps {
 export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   const { data, isLoading, isError, refetch } = useCliente(clienteId)
   const router = useRouter()
+  const [isEditOpen, setIsEditOpen] = useState(false)
 
   if (isLoading) {
     return (
@@ -79,6 +81,17 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
       data-testid="cliente-detail-panel"
       aria-label="Detalle del cliente"
     >
+      <div className="flex items-center justify-end p-6 pb-0">
+        <button
+          type="button"
+          data-testid="btn-editar-cliente"
+          onClick={() => setIsEditOpen(true)}
+          aria-label="Editar cliente"
+          className="rounded-md bg-[#0e79fd] px-4 py-2 text-sm font-semibold text-white hover:bg-[#154ca9] focus:outline-none focus:ring-2 focus:ring-[#0e79fd]/40"
+        >
+          Editar
+        </button>
+      </div>
       <dl className="grid grid-cols-[120px_1fr] gap-x-6 gap-y-3 p-6">
         <dt className="text-sm font-medium text-slate-500">Nombre</dt>
         <dd data-testid="cliente-detail-nombre" className="text-slate-900">
@@ -97,6 +110,12 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
           {data.ciudad ?? '—'}
         </dd>
       </dl>
+      <ClienteForm
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        mode="edit"
+        cliente={data}
+      />
     </section>
   )
 }

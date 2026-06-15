@@ -5,7 +5,16 @@
  * Component tests for `ClienteDetailView`. Covers AC #10 — six sub-cases.
  */
 
-import { describe, expect, test, beforeAll, afterEach, afterAll } from 'vitest'
+import { describe, expect, test, beforeAll, afterEach, afterAll, vi } from 'vitest'
+
+vi.mock('siesa-ui-kit', () => ({
+  ToastProvider: ({ children }: { children?: React.ReactNode }) => children,
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}))
+
 import type { ReactElement } from 'react'
 import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
@@ -248,5 +257,90 @@ describe('ClienteDetailView — Story 2.2', () => {
     const nombre = await screen.findByTestId('cliente-detail-nombre')
     expect(nombre).toHaveTextContent('Acme Industrial S.A.S.')
     expect(callCount).toBeGreaterThanOrEqual(2)
+  })
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Story 2.4 — btn-editar-cliente assertions.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  test('ClienteDetailView_renders_btn_editar_cliente', async () => {
+    renderWithRouterAndClient(<ClienteDetailView clienteId={CLIENTE_ID} />)
+
+    expect(await screen.findByTestId('cliente-detail-nombre')).toBeInTheDocument()
+    const btn = screen.getByTestId('btn-editar-cliente')
+    expect(btn).toBeVisible()
+    expect(btn).toHaveAttribute('aria-label', 'Editar cliente')
+  })
+
+  test('ClienteDetailView_opens_edit_dialog_on_btn_click', async () => {
+    renderWithRouterAndClient(<ClienteDetailView clienteId={CLIENTE_ID} />)
+
+    await screen.findByTestId('cliente-detail-nombre')
+    fireEvent.click(screen.getByTestId('btn-editar-cliente'))
+
+    expect(await screen.findByTestId('cliente-form-dialog')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /editar cliente/i }),
+    ).toBeInTheDocument()
+
+    // Pre-filled with the cliente's nombre.
+    expect((screen.getByLabelText(/^nombre \*$/i) as HTMLInputElement).value).toBe(
+      'Acme Industrial S.A.S.',
+    )
+  })
+
+  test('ClienteDetailView_does_not_render_btn_editar_when_loading_or_error_or_not_found', async () => {
+    // Sub-case 1: loading — keep the request open.
+    let release: () => void = () => {}
+    const pending = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    server.use(
+      http.get(`*/api/v1/clientes/${CLIENTE_ID}`, async () => {
+        await pending
+        return HttpResponse.json(FULL_CLIENTE)
+      }),
+    )
+
+    const r1 = renderWithRouterAndClient(<ClienteDetailView clienteId={CLIENTE_ID} />)
+    await screen.findByTestId('cliente-detail-panel')
+    expect(screen.queryByTestId('btn-editar-cliente')).not.toBeInTheDocument()
+    release()
+    r1.unmount()
+    cleanup()
+
+    // Sub-case 2: 5xx error.
+    server.use(
+      http.get(`*/api/v1/clientes/${CLIENTE_ID}`, () =>
+        new HttpResponse(
+          JSON.stringify({ status: 500, title: 'Internal Server Error' }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/problem+json' },
+          },
+        ),
+      ),
+    )
+    const r2 = renderWithRouterAndClient(<ClienteDetailView clienteId={CLIENTE_ID} />)
+    await screen.findByTestId('cliente-detail-error')
+    expect(screen.queryByTestId('btn-editar-cliente')).not.toBeInTheDocument()
+    r2.unmount()
+    cleanup()
+
+    // Sub-case 3: not-found (404 → data === null).
+    server.use(
+      http.get(`*/api/v1/clientes/${CLIENTE_ID}`, () =>
+        new HttpResponse(
+          JSON.stringify({ status: 404, title: 'Cliente no encontrado.' }),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/problem+json' },
+          },
+        ),
+      ),
+    )
+    renderWithRouterAndClient(<ClienteDetailView clienteId={CLIENTE_ID} />)
+    await screen.findByTestId('cliente-not-found')
+    expect(screen.queryByTestId('btn-editar-cliente')).not.toBeInTheDocument()
   })
 })

@@ -80,6 +80,58 @@ public static class ClienteEndpoints
         .Produces<ClienteDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
+        // PUT /api/v1/clientes/{id:guid} — Story 2.4. FluentValidation guards
+        // the body shape (400 Problem Details on failure). Duplicate NIT against
+        // ANOTHER cliente triggers `DuplicateNitException` (409 Problem Details).
+        // Unknown id returns 404 Problem Details. The route id ALWAYS wins over
+        // the body's Id field as a defense-in-depth measure.
+        group.MapPut("/{id:guid}", async (
+            Guid id,
+            UpdateClienteCommand body,
+            IValidator<UpdateClienteCommand> validator,
+            UpdateClienteCommandHandler handler,
+            CancellationToken ct) =>
+        {
+            // Route id is the source of truth — overwrite the body's Id field
+            // so a malformed body cannot redirect the update to a different cliente.
+            var command = body with { Id = id };
+
+            var validation = await validator.ValidateAsync(command, ct);
+            if (!validation.IsValid)
+            {
+                var errors = validation.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+                return Results.ValidationProblem(errors);
+            }
+
+            try
+            {
+                var dto = await handler.Handle(command, ct);
+                return dto is null
+                    ? Results.Problem(
+                        title: "Cliente no encontrado.",
+                        statusCode: StatusCodes.Status404NotFound,
+                        type: "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+                        instance: $"/api/v1/clientes/{id}")
+                    : Results.Ok(dto);
+            }
+            catch (DuplicateNitException)
+            {
+                return Results.Problem(
+                    title: "El NIT/RUC ya está registrado.",
+                    statusCode: StatusCodes.Status409Conflict,
+                    type: "https://tools.ietf.org/html/rfc7231#section-6.5.8",
+                    instance: $"/api/v1/clientes/{id}");
+            }
+        })
+        .WithName("UpdateCliente")
+        .Accepts<UpdateClienteCommand>("application/json")
+        .Produces<ClienteDto>(StatusCodes.Status200OK)
+        .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict);
+
         // Catch-all for non-UUID segments inside the clientes group so AC #8 is
         // honored: invalid UUIDs return 400 Problem Details, NOT a 404 from the
         // global fallback. Registered AFTER the `{id:guid}` route so the
@@ -92,6 +144,19 @@ public static class ClienteEndpoints
                 type: "https://tools.ietf.org/html/rfc7231#section-6.5.1",
                 instance: $"/api/v1/clientes/{id}"))
             .WithName("GetClienteByIdInvalid")
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ExcludeFromDescription();
+
+        // Sibling catch-all for PUT — Story 2.4 AC #13. Non-UUID segments to PUT
+        // must return 400 Problem Details (otherwise MapFallback would 404 them).
+        group.MapPut("/{id}", (string id) =>
+            Results.Problem(
+                title: "Identificador de cliente inválido.",
+                detail: "El identificador debe ser un UUID válido.",
+                statusCode: StatusCodes.Status400BadRequest,
+                type: "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+                instance: $"/api/v1/clientes/{id}"))
+            .WithName("UpdateClienteInvalid")
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ExcludeFromDescription();
     }

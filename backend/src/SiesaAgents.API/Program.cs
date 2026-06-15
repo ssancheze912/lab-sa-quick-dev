@@ -69,6 +69,8 @@ builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 builder.Services.AddScoped<CreateClienteCommandHandler>();
 builder.Services.AddScoped<IValidator<CreateClienteCommand>, CreateClienteCommandValidator>();
+builder.Services.AddScoped<UpdateClienteCommandHandler>();
+builder.Services.AddScoped<IValidator<UpdateClienteCommand>, UpdateClienteCommandValidator>();
 
 var app = builder.Build();
 

@@ -45,6 +45,14 @@ export class ClientesPage {
   readonly btnEliminar: Locator;
   readonly btnConfirmarEliminar: Locator;
 
+  // Story 2.4 — Edit cliente
+  readonly btnEditarCliente: Locator;
+  readonly toastUpdateSuccess: Locator;
+  readonly formErrorNombre: Locator;
+  readonly formErrorNit: Locator;
+  readonly formErrorTelefono: Locator;
+  readonly formErrorCiudad: Locator;
+
   constructor(page: Page) {
     this.page = page;
 
@@ -81,6 +89,14 @@ export class ClientesPage {
     this.btnCancelar = page.getByRole('button', { name: /cancelar/i });
     this.btnEliminar = page.getByRole('button', { name: /eliminar/i });
     this.btnConfirmarEliminar = page.getByRole('button', { name: /confirmar/i });
+
+    // Story 2.4 — Edit cliente
+    this.btnEditarCliente = page.getByTestId('btn-editar-cliente');
+    this.toastUpdateSuccess = page.getByText('Cliente actualizado correctamente');
+    this.formErrorNombre = page.getByTestId('cliente-form-error-nombre');
+    this.formErrorNit = page.getByTestId('cliente-form-error-nit');
+    this.formErrorTelefono = page.getByTestId('cliente-form-error-telefono');
+    this.formErrorCiudad = page.getByTestId('cliente-form-error-ciudad');
   }
 
   async goto() {

@@ -35,4 +35,17 @@ export const clienteApiRepository: IClienteRepository = {
     const r = await apiClient.post<Cliente>('/api/v1/clientes', input)
     return r.data
   },
+
+  /**
+   * PUT /api/v1/clientes/{id}. Story 2.4.
+   *
+   * Propagates axios errors verbatim — the consuming hook + form's `onError`
+   * handler branch on `err.response?.status` to surface 409 inline (duplicate
+   * NIT) / 400 (FluentValidation field errors) / 404 (closed-modal red toast,
+   * unique to the update path) / 5xx + network (red toast, modal stays open).
+   */
+  update: async (id, input) => {
+    const r = await apiClient.put<Cliente>(`/api/v1/clientes/${id}`, input)
+    return r.data
+  },
 }

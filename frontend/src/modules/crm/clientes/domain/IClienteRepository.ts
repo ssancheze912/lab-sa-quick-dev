@@ -13,11 +13,25 @@ export interface CreateClienteInput {
 }
 
 /**
+ * Payload for updating a cliente. Story 2.4 — same shape as
+ * {@link CreateClienteInput} but intentionally a separate type so future stories
+ * can diverge without breaking the create contract.
+ */
+export interface UpdateClienteInput {
+  nombre: string
+  nit: string
+  telefono: string
+  ciudad: string
+}
+
+/**
  * Repository contract for clientes. Story 2.1 wires `getAll`; Story 2.2 adds
- * `getById` (returns `null` on 404). Story 2.3 adds `create`.
+ * `getById` (returns `null` on 404). Story 2.3 adds `create`. Story 2.4 adds
+ * `update`.
  */
 export interface IClienteRepository {
   getAll(): Promise<Cliente[]>
   getById(id: string): Promise<Cliente | null>
   create(input: CreateClienteInput): Promise<Cliente>
+  update(id: string, input: UpdateClienteInput): Promise<Cliente>
 }

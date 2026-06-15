@@ -26,8 +26,15 @@ public class ClienteRepository : IClienteRepository
     public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
         => _db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, ct);
 
+    public Task<ClienteEntity?> GetByIdForUpdateAsync(Guid id, CancellationToken ct)
+        => _db.Clientes.FirstOrDefaultAsync(c => c.Id == id, ct);
+
     public Task<bool> ExistsByNitAsync(string nit, CancellationToken ct)
         => _db.Clientes.AsNoTracking().AnyAsync(c => c.Nit == nit, ct);
+
+    public Task<bool> ExistsByNitExceptIdAsync(string nit, Guid exceptId, CancellationToken ct)
+        => _db.Clientes.AsNoTracking()
+            .AnyAsync(c => c.Nit == nit && c.Id != exceptId, ct);
 
     public async Task AddAsync(ClienteEntity entity, CancellationToken ct)
         => await _db.Clientes.AddAsync(entity, ct);

@@ -46,6 +46,7 @@ import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ClienteForm } from '../ClienteForm'
+import type { Cliente } from '../../domain/Cliente'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MSW server.
@@ -62,17 +63,46 @@ const CREATED = {
 }
 
 let lastRequestBody: unknown = null
+let lastPutBody: unknown = null
+let lastPutUrl: string | null = null
+
+const CLIENTE_EDIT_ID = '00000000-0000-0000-0000-000000000222'
+
+const EXISTING_CLIENTE: Cliente = {
+  id: CLIENTE_EDIT_ID,
+  nombre: 'Cliente Original',
+  nit: '900.111.222-3',
+  telefono: '3001110000',
+  ciudad: 'Bogotá',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+}
 
 const server = setupServer(
   http.post('*/api/v1/clientes', async ({ request }) => {
     lastRequestBody = await request.json()
     return HttpResponse.json(CREATED, { status: 201 })
   }),
+  http.put('*/api/v1/clientes/:id', async ({ request, params }) => {
+    lastPutBody = await request.json()
+    lastPutUrl = request.url
+    return HttpResponse.json(
+      {
+        ...EXISTING_CLIENTE,
+        ...(lastPutBody as Record<string, unknown>),
+        id: params.id as string,
+        updatedAt: '2026-01-02T00:00:00.000Z',
+      },
+      { status: 200 },
+    )
+  }),
 )
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 beforeEach(() => {
   lastRequestBody = null
+  lastPutBody = null
+  lastPutUrl = null
   toastSuccessMock.mockClear()
   toastErrorMock.mockClear()
 })
@@ -309,5 +339,210 @@ describe('ClienteForm — Story 2.3', () => {
 
     // No POST was fired.
     expect(lastRequestBody).toBeNull()
+  })
+
+  test('ClienteForm_renders_with_create_mode_when_no_cliente_prop', async () => {
+    renderForm()
+
+    expect(await screen.findByTestId('cliente-form-dialog')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /nuevo cliente/i }),
+    ).toBeInTheDocument()
+
+    expect((screen.getByLabelText(/^nombre \*$/i) as HTMLInputElement).value).toBe('')
+    expect((screen.getByLabelText(/^nit\/ruc \*$/i) as HTMLInputElement).value).toBe('')
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+function EditHarness({
+  initialOpen = true,
+  cliente = EXISTING_CLIENTE,
+}: {
+  initialOpen?: boolean
+  cliente?: Cliente
+}) {
+  const [open, setOpen] = useState(initialOpen)
+  return (
+    <>
+      <button data-testid="reopen-form" onClick={() => setOpen(true)}>
+        reopen
+      </button>
+      <ClienteForm
+        open={open}
+        onOpenChange={setOpen}
+        mode="edit"
+        cliente={cliente}
+      />
+    </>
+  )
+}
+
+function renderEditForm(
+  ui: ReactElement = <EditHarness />,
+) {
+  const client = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0, staleTime: 0 },
+      mutations: { retry: false },
+    },
+  })
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>)
+}
+
+describe('ClienteForm — edit mode (Story 2.4)', () => {
+  test('ClienteForm_renders_with_edit_mode_when_cliente_prop_passed', async () => {
+    renderEditForm()
+
+    expect(await screen.findByTestId('cliente-form-dialog')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /editar cliente/i }),
+    ).toBeInTheDocument()
+
+    // All four inputs pre-filled from the cliente prop.
+    expect((screen.getByLabelText(/^nombre \*$/i) as HTMLInputElement).value).toBe(
+      'Cliente Original',
+    )
+    expect((screen.getByLabelText(/^nit\/ruc \*$/i) as HTMLInputElement).value).toBe(
+      '900.111.222-3',
+    )
+    expect((screen.getByLabelText(/^teléfono \*$/i) as HTMLInputElement).value).toBe(
+      '3001110000',
+    )
+    expect((screen.getByLabelText(/^ciudad \*$/i) as HTMLInputElement).value).toBe(
+      'Bogotá',
+    )
+
+    // Footer buttons unchanged.
+    expect(screen.getByRole('button', { name: /cancelar/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /guardar/i })).toBeInTheDocument()
+  })
+
+  test('ClienteForm_submits_PUT_when_in_edit_mode', async () => {
+    renderEditForm()
+    await screen.findByTestId('cliente-form-dialog')
+
+    await fillField(/^nombre \*$/i, 'Cliente Editado')
+
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    await waitFor(() => {
+      expect(toastSuccessMock).toHaveBeenCalledWith(
+        'Cliente actualizado correctamente',
+        expect.objectContaining({ duration: 3000 }),
+      )
+    })
+
+    expect(lastPutBody).toEqual({
+      nombre: 'Cliente Editado',
+      nit: '900.111.222-3',
+      telefono: '3001110000',
+      ciudad: 'Bogotá',
+    })
+    expect(lastPutUrl).toMatch(new RegExp(`/api/v1/clientes/${CLIENTE_EDIT_ID}$`))
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('cliente-form-dialog')).not.toBeInTheDocument()
+    })
+  })
+
+  test('ClienteForm_handles_409_duplicate_nit_in_edit_mode', async () => {
+    server.use(
+      http.put('*/api/v1/clientes/:id', () =>
+        new HttpResponse(
+          JSON.stringify({
+            status: 409,
+            title: 'El NIT/RUC ya está registrado.',
+          }),
+          { status: 409, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    )
+
+    renderEditForm()
+    await screen.findByTestId('cliente-form-dialog')
+
+    await fillField(/^nit\/ruc \*$/i, '900.999.999-9')
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    expect(await screen.findByTestId('cliente-form-error-nit')).toHaveTextContent(
+      'El NIT/RUC ya está registrado',
+    )
+
+    // Modal stays open. No red toast.
+    expect(screen.getByTestId('cliente-form-dialog')).toBeInTheDocument()
+    expect(toastErrorMock).not.toHaveBeenCalled()
+  })
+
+  test('ClienteForm_handles_404_in_edit_mode_with_red_toast_and_close', async () => {
+    server.use(
+      http.put('*/api/v1/clientes/:id', () =>
+        new HttpResponse(
+          JSON.stringify({
+            status: 404,
+            title: 'Cliente no encontrado.',
+          }),
+          { status: 404, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    )
+
+    renderEditForm()
+    await screen.findByTestId('cliente-form-dialog')
+
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith(
+        'No se pudo guardar. Intenta de nuevo.',
+        expect.objectContaining({ duration: 5000 }),
+      )
+    })
+
+    // Dialog closes on 404 in edit mode (AC #11).
+    await waitFor(() => {
+      expect(screen.queryByTestId('cliente-form-dialog')).not.toBeInTheDocument()
+    })
+  })
+
+  test('ClienteForm_cancel_in_edit_mode_keeps_original_data', async () => {
+    renderEditForm()
+    await screen.findByTestId('cliente-form-dialog')
+
+    // Mutate nombre.
+    await fillField(/^nombre \*$/i, 'Borrador Garbage')
+
+    fireEvent.click(screen.getByRole('button', { name: /cancelar/i }))
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('cliente-form-dialog')).not.toBeInTheDocument()
+    })
+
+    // NO PUT was fired.
+    expect(lastPutBody).toBeNull()
+
+    // Re-open the dialog — should reset to the ORIGINAL pristine values.
+    fireEvent.click(screen.getByTestId('reopen-form'))
+
+    const dialog = await screen.findByTestId('cliente-form-dialog')
+    const nombre = within(dialog).getByLabelText(/^nombre \*$/i) as HTMLInputElement
+    expect(nombre.value).toBe('Cliente Original')
+  })
+
+  test('ClienteForm_blocks_submit_when_required_field_cleared_in_edit_mode', async () => {
+    renderEditForm()
+    await screen.findByTestId('cliente-form-dialog')
+
+    // Clear nombre.
+    const nombre = screen.getByLabelText(/^nombre \*$/i) as HTMLInputElement
+    fireEvent.change(nombre, { target: { value: '' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    expect(await screen.findByTestId('cliente-form-error-nombre')).toBeInTheDocument()
+
+    // NO PUT fired.
+    expect(lastPutBody).toBeNull()
   })
 })
