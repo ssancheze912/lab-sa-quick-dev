@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SiesaAgents.API.Middleware;
@@ -8,6 +10,15 @@ namespace SiesaAgents.API.Middleware;
 /// </summary>
 public class ExceptionHandlingMiddleware
 {
+    private static readonly JsonSerializerOptions ProblemJsonOptions = new()
+    {
+        // Suppress null/empty ProblemDetails members (Detail, Extensions) so the
+        // wire response contains only status/title/type/instance — matching the
+        // architecture standard. Per NFR6, no extra metadata reaches the client.
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
@@ -42,9 +53,12 @@ public class ExceptionHandlingMiddleware
                 Title = "An unexpected error occurred.",
                 Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1",
                 Instance = context.Request.Path,
+                // Detail intentionally left null — NFR6 forbids leaking raw exception text.
             };
 
-            await context.Response.WriteAsJsonAsync(problem);
+            // Serialize manually so the response keeps the application/problem+json
+            // content-type (WriteAsJsonAsync would overwrite it with application/json).
+            await JsonSerializer.SerializeAsync(context.Response.Body, problem, ProblemJsonOptions);
         }
     }
 }

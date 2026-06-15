@@ -1,6 +1,18 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
+
+// Shared JSON options for RFC 7807 Problem Details bodies: drop null members so
+// only status/title/type/instance reach the wire (matches architecture standard).
+var problemJsonOptions = new JsonSerializerOptions
+{
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+};
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,9 +49,17 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddProblemDetails();
 
+// EF Core — register AppDbContext with Npgsql. Connection string comes from
+// configuration; appsettings.json keeps ConnectionStrings empty so non-Development
+// environments must supply it explicitly.
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 var app = builder.Build();
 
 // Global exception handler — emits RFC 7807 Problem Details responses.
+// MUST be the FIRST middleware so it captures exceptions from every downstream
+// component (per AC #4 / NFR6).
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseCors("DevCors");
@@ -52,7 +72,21 @@ app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
     .WithName("Health")
     .Produces<object>(StatusCodes.Status200OK);
 
+// Test-only endpoint used by integration tests to exercise the global
+// exception middleware. Registered ONLY when ASPNETCORE_ENVIRONMENT=Testing
+// so production / development never expose it.
+if (app.Environment.IsEnvironment("Testing"))
+{
+    app.MapGet("/__test/throw", (HttpContext _) =>
+    {
+        throw new InvalidOperationException("forced");
+    });
+}
+
 // Fallback for unmatched routes — emits RFC 7807 Problem Details (application/problem+json).
+// We serialize manually so the response keeps the application/problem+json content type
+// (WriteAsJsonAsync would overwrite it with application/json — same fix pattern as
+// ExceptionHandlingMiddleware).
 app.MapFallback(async (HttpContext context) =>
 {
     context.Response.StatusCode = StatusCodes.Status404NotFound;
@@ -66,7 +100,10 @@ app.MapFallback(async (HttpContext context) =>
         Instance = context.Request.Path,
     };
 
-    await context.Response.WriteAsJsonAsync(problem);
+    await JsonSerializer.SerializeAsync(context.Response.Body, problem, problemJsonOptions);
 });
 
 app.Run();
+
+// Exposed for WebApplicationFactory<Program> in integration tests.
+public partial class Program;
