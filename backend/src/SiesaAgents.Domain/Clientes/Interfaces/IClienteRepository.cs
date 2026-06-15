@@ -30,5 +30,12 @@ public interface IClienteRepository
     Task<bool> ExistsByNitExceptIdAsync(string nit, Guid exceptId, CancellationToken ct);
 
     Task AddAsync(ClienteEntity entity, CancellationToken ct);
+
+    /// <summary>
+    /// Marks the entity for deletion. The deletion is committed when
+    /// <see cref="SaveChangesAsync"/> is awaited. Story 2.5.
+    /// </summary>
+    Task RemoveAsync(ClienteEntity entity, CancellationToken ct);
+
     Task SaveChangesAsync(CancellationToken ct);
 }

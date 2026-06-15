@@ -25,13 +25,24 @@ export interface UpdateClienteInput {
 }
 
 /**
+ * Result of a `DELETE /api/v1/clientes/{id}` call. Returned by the
+ * infrastructure layer so the application hook can branch on the
+ * `X-Contactos-Orphaned` header without inspecting raw Axios responses
+ * from the consumer side. Story 2.5.
+ */
+export interface DeleteClienteResult {
+  contactosOrphaned: number
+}
+
+/**
  * Repository contract for clientes. Story 2.1 wires `getAll`; Story 2.2 adds
  * `getById` (returns `null` on 404). Story 2.3 adds `create`. Story 2.4 adds
- * `update`.
+ * `update`. Story 2.5 adds `delete`.
  */
 export interface IClienteRepository {
   getAll(): Promise<Cliente[]>
   getById(id: string): Promise<Cliente | null>
   create(input: CreateClienteInput): Promise<Cliente>
   update(id: string, input: UpdateClienteInput): Promise<Cliente>
+  delete(id: string): Promise<DeleteClienteResult>
 }

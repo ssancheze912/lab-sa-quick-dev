@@ -5,6 +5,7 @@ import 'react-loading-skeleton/dist/skeleton.css'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
 import { useCliente } from '../application/useCliente'
 import { ClienteForm } from './ClienteForm'
+import { ClienteDeleteDialog } from './ClienteDeleteDialog'
 
 interface ClienteDetailViewProps {
   clienteId: string
@@ -21,6 +22,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   const { data, isLoading, isError, refetch } = useCliente(clienteId)
   const router = useRouter()
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
   if (isLoading) {
     return (
@@ -81,7 +83,16 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
       data-testid="cliente-detail-panel"
       aria-label="Detalle del cliente"
     >
-      <div className="flex items-center justify-end p-6 pb-0">
+      <div className="flex items-center justify-end gap-2 p-6 pb-0">
+        <button
+          type="button"
+          data-testid="btn-eliminar-cliente"
+          onClick={() => setIsDeleteOpen(true)}
+          aria-label="Eliminar cliente"
+          className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600/40"
+        >
+          Eliminar
+        </button>
         <button
           type="button"
           data-testid="btn-editar-cliente"
@@ -115,6 +126,11 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
         onOpenChange={setIsEditOpen}
         mode="edit"
         cliente={data}
+      />
+      <ClienteDeleteDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        clienteId={data.id}
       />
     </section>
   )

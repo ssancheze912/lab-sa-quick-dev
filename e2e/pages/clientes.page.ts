@@ -53,6 +53,16 @@ export class ClientesPage {
   readonly formErrorTelefono: Locator;
   readonly formErrorCiudad: Locator;
 
+  // Story 2.5 — Delete cliente
+  readonly btnEliminarCliente: Locator;
+  readonly deleteDialog: Locator;
+  readonly btnConfirmarEliminarTestid: Locator;
+  readonly btnCancelarEliminarTestid: Locator;
+  readonly toastDeleteSuccess: Locator;
+  readonly toastDeleteOrphan: Locator;
+  readonly toastDeleteNotFound: Locator;
+  readonly toastDeleteError: Locator;
+
   constructor(page: Page) {
     this.page = page;
 
@@ -87,8 +97,23 @@ export class ClientesPage {
     this.inputCiudad = page.getByLabel(/ciudad/i);
     this.btnGuardar = page.getByRole('button', { name: /guardar/i });
     this.btnCancelar = page.getByRole('button', { name: /cancelar/i });
-    this.btnEliminar = page.getByRole('button', { name: /eliminar/i });
-    this.btnConfirmarEliminar = page.getByRole('button', { name: /confirmar/i });
+
+    // Story 2.5 — Delete cliente. testid-based locators avoid the ambiguity
+    // introduced by having both an `Eliminar` trigger and a `Confirmar`
+    // button inside the confirmation dialog. The legacy `btnEliminar` /
+    // `btnConfirmarEliminar` aliases point at the new testid locators to
+    // keep any existing references compiling.
+    this.btnEliminarCliente = page.getByTestId('btn-eliminar-cliente');
+    this.deleteDialog = page.getByTestId('cliente-delete-dialog');
+    this.btnConfirmarEliminarTestid = page.getByTestId('btn-confirmar-eliminar');
+    this.btnCancelarEliminarTestid = page.getByTestId('btn-cancelar-eliminar');
+    this.toastDeleteSuccess = page.getByText('Cliente eliminado correctamente');
+    this.toastDeleteOrphan = page.getByText('Sus contactos asociados quedaron sin cliente asignado.');
+    this.toastDeleteNotFound = page.getByText('Cliente no encontrado. La lista se actualizó.');
+    this.toastDeleteError = page.getByText('No se pudo eliminar. Intenta de nuevo.');
+
+    this.btnEliminar = this.btnEliminarCliente;
+    this.btnConfirmarEliminar = this.btnConfirmarEliminarTestid;
 
     // Story 2.4 — Edit cliente
     this.btnEditarCliente = page.getByTestId('btn-editar-cliente');

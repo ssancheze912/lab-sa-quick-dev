@@ -71,6 +71,7 @@ builder.Services.AddScoped<CreateClienteCommandHandler>();
 builder.Services.AddScoped<IValidator<CreateClienteCommand>, CreateClienteCommandValidator>();
 builder.Services.AddScoped<UpdateClienteCommandHandler>();
 builder.Services.AddScoped<IValidator<UpdateClienteCommand>, UpdateClienteCommandValidator>();
+builder.Services.AddScoped<DeleteClienteCommandHandler>();
 
 var app = builder.Build();
 

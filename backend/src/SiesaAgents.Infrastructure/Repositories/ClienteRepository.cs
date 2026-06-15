@@ -39,6 +39,16 @@ public class ClienteRepository : IClienteRepository
     public async Task AddAsync(ClienteEntity entity, CancellationToken ct)
         => await _db.Clientes.AddAsync(entity, ct);
 
+    public Task RemoveAsync(ClienteEntity entity, CancellationToken ct)
+    {
+        // `_db.Clientes.Remove(entity)` is synchronous; wrapping in
+        // `Task.CompletedTask` keeps the interface async-shaped without forcing
+        // a needless `Task.Run`. The actual DB round-trip happens in
+        // SaveChangesAsync(ct). Story 2.5.
+        _db.Clientes.Remove(entity);
+        return Task.CompletedTask;
+    }
+
     public Task SaveChangesAsync(CancellationToken ct)
         => _db.SaveChangesAsync(ct);
 }

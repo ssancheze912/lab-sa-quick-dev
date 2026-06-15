@@ -48,4 +48,24 @@ export const clienteApiRepository: IClienteRepository = {
     const r = await apiClient.put<Cliente>(`/api/v1/clientes/${id}`, input)
     return r.data
   },
+
+  /**
+   * DELETE /api/v1/clientes/{id}. Story 2.5.
+   *
+   * Reads the `X-Contactos-Orphaned` header (always 0 / absent in Story 2.5
+   * until the contactos table lands in Story 3.x). When the header is absent
+   * or non-numeric, `contactosOrphaned` defaults to 0. The consuming hook
+   * surfaces the value so the dialog can switch the success toast copy.
+   *
+   * DO NOT catch axios errors here — propagate them so the application layer
+   * can branch on 404 (informational toast) vs 5xx / network (red toast).
+   */
+  delete: async (id) => {
+    const r = await apiClient.delete<void>(`/api/v1/clientes/${id}`)
+    const headerValue = r.headers['x-contactos-orphaned']
+    const parsed = headerValue ? Number.parseInt(headerValue, 10) : 0
+    return {
+      contactosOrphaned: Number.isFinite(parsed) ? parsed : 0,
+    }
+  },
 }

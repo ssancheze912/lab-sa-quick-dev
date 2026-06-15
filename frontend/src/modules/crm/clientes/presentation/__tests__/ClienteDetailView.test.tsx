@@ -12,6 +12,7 @@ vi.mock('siesa-ui-kit', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
+    info: vi.fn(),
   },
 }))
 
@@ -342,5 +343,89 @@ describe('ClienteDetailView — Story 2.2', () => {
     renderWithRouterAndClient(<ClienteDetailView clienteId={CLIENTE_ID} />)
     await screen.findByTestId('cliente-not-found')
     expect(screen.queryByTestId('btn-editar-cliente')).not.toBeInTheDocument()
+  })
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Story 2.5 — btn-eliminar-cliente assertions.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  test('ClienteDetailView_renders_btn_eliminar_cliente_when_data_loaded', async () => {
+    renderWithRouterAndClient(<ClienteDetailView clienteId={CLIENTE_ID} />)
+
+    expect(await screen.findByTestId('cliente-detail-nombre')).toBeInTheDocument()
+    const btn = screen.getByTestId('btn-eliminar-cliente')
+    expect(btn).toBeVisible()
+    expect(btn).toHaveAttribute('aria-label', 'Eliminar cliente')
+    // Red destructive styling per UX spec.
+    expect(btn.className).toContain('bg-red-600')
+  })
+
+  test('ClienteDetailView_does_not_render_btn_eliminar_when_loading_or_error_or_not_found', async () => {
+    // Sub-case 1: loading — keep the request open.
+    let release: () => void = () => {}
+    const pending = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    server.use(
+      http.get(`*/api/v1/clientes/${CLIENTE_ID}`, async () => {
+        await pending
+        return HttpResponse.json(FULL_CLIENTE)
+      }),
+    )
+
+    const r1 = renderWithRouterAndClient(<ClienteDetailView clienteId={CLIENTE_ID} />)
+    await screen.findByTestId('cliente-detail-panel')
+    expect(screen.queryByTestId('btn-eliminar-cliente')).not.toBeInTheDocument()
+    release()
+    r1.unmount()
+    cleanup()
+
+    // Sub-case 2: 5xx error.
+    server.use(
+      http.get(`*/api/v1/clientes/${CLIENTE_ID}`, () =>
+        new HttpResponse(
+          JSON.stringify({ status: 500, title: 'Internal Server Error' }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/problem+json' },
+          },
+        ),
+      ),
+    )
+    const r2 = renderWithRouterAndClient(<ClienteDetailView clienteId={CLIENTE_ID} />)
+    await screen.findByTestId('cliente-detail-error')
+    expect(screen.queryByTestId('btn-eliminar-cliente')).not.toBeInTheDocument()
+    r2.unmount()
+    cleanup()
+
+    // Sub-case 3: not-found (404 → data === null).
+    server.use(
+      http.get(`*/api/v1/clientes/${CLIENTE_ID}`, () =>
+        new HttpResponse(
+          JSON.stringify({ status: 404, title: 'Cliente no encontrado.' }),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/problem+json' },
+          },
+        ),
+      ),
+    )
+    renderWithRouterAndClient(<ClienteDetailView clienteId={CLIENTE_ID} />)
+    await screen.findByTestId('cliente-not-found')
+    expect(screen.queryByTestId('btn-eliminar-cliente')).not.toBeInTheDocument()
+  })
+
+  test('ClienteDetailView_btn_eliminar_opens_delete_dialog', async () => {
+    renderWithRouterAndClient(<ClienteDetailView clienteId={CLIENTE_ID} />)
+
+    await screen.findByTestId('cliente-detail-nombre')
+    fireEvent.click(screen.getByTestId('btn-eliminar-cliente'))
+
+    expect(await screen.findByTestId('cliente-delete-dialog')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /¿eliminar este cliente\?/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByTestId('btn-cancelar-eliminar')).toBeInTheDocument()
+    expect(screen.getByTestId('btn-confirmar-eliminar')).toBeInTheDocument()
   })
 })

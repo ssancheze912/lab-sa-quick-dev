@@ -132,6 +132,42 @@ public static class ClienteEndpoints
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
+        // DELETE /api/v1/clientes/{id:guid} — Story 2.5. 204 No Content on success;
+        // 404 Problem Details if the cliente does not exist. Sets the
+        // X-Contactos-Orphaned header to the count of contactos whose FK was
+        // nulled by the cascade-SET-NULL behavior (always 0 in Story 2.5 until
+        // the contactos table lands in Story 3.x; the header is OMITTED when
+        // the count is 0 so frontend defaults to the standard success toast).
+        group.MapDelete("/{id:guid}", async (
+            Guid id,
+            DeleteClienteCommandHandler handler,
+            HttpContext httpContext,
+            CancellationToken ct) =>
+        {
+            var result = await handler.Handle(new DeleteClienteCommand(id), ct);
+
+            if (!result.Deleted)
+            {
+                return Results.Problem(
+                    title: "Cliente no encontrado.",
+                    statusCode: StatusCodes.Status404NotFound,
+                    type: "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+                    instance: $"/api/v1/clientes/{id}");
+            }
+
+            if (result.ContactosOrphaned > 0)
+            {
+                httpContext.Response.Headers.Append(
+                    "X-Contactos-Orphaned",
+                    result.ContactosOrphaned.ToString());
+            }
+
+            return Results.NoContent();
+        })
+        .WithName("DeleteCliente")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
         // Catch-all for non-UUID segments inside the clientes group so AC #8 is
         // honored: invalid UUIDs return 400 Problem Details, NOT a 404 from the
         // global fallback. Registered AFTER the `{id:guid}` route so the
@@ -157,6 +193,20 @@ public static class ClienteEndpoints
                 type: "https://tools.ietf.org/html/rfc7231#section-6.5.1",
                 instance: $"/api/v1/clientes/{id}"))
             .WithName("UpdateClienteInvalid")
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ExcludeFromDescription();
+
+        // Sibling catch-all for DELETE — Story 2.5 AC #8. Non-UUID segments to
+        // DELETE must return 400 Problem Details (otherwise MapFallback would
+        // 404 them).
+        group.MapDelete("/{id}", (string id) =>
+            Results.Problem(
+                title: "Identificador de cliente inválido.",
+                detail: "El identificador debe ser un UUID válido.",
+                statusCode: StatusCodes.Status400BadRequest,
+                type: "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+                instance: $"/api/v1/clientes/{id}"))
+            .WithName("DeleteClienteInvalid")
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ExcludeFromDescription();
     }
