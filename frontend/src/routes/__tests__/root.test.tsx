@@ -68,56 +68,8 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 // The real implementation must render these testids; mocks verify wiring only.
 
 vi.mock('siesa-ui-kit', () => ({
-  LayoutBase: ({
-    children,
-    navbar,
-    navigationItems,
-  }: {
-    children?: React.ReactNode
-    navbar?: React.ReactNode
-    navigationItems?: Array<{ label: string; to: string; icon?: React.ReactNode }>
-  }) => (
-    <div data-testid="layout-base">
-      <div data-testid="navbar-slot">{navbar}</div>
-      <nav aria-label="Navegación principal" data-testid="navigation-rail">
-        {navigationItems?.map((item) => (
-          <a
-            key={item.to}
-            href={item.to}
-            data-testid={`nav-item-${item.label.toLowerCase()}`}
-            aria-label={`Ir a ${item.label}`}
-          >
-            {item.label}
-          </a>
-        ))}
-      </nav>
-      <main>{children}</main>
-    </div>
-  ),
   Navbar: ({ productName }: { productName?: string }) => (
-    <header data-testid="navbar">{productName}</header>
-  ),
-  NavigationRail: ({
-    children,
-    'aria-label': ariaLabel,
-  }: {
-    children?: React.ReactNode
-    'aria-label'?: string
-  }) => (
-    <nav data-testid="navigation-rail" aria-label={ariaLabel ?? 'Navegación principal'}>
-      {children}
-    </nav>
-  ),
-  NavigationBar: ({
-    children,
-    'aria-label': ariaLabel,
-  }: {
-    children?: React.ReactNode
-    'aria-label'?: string
-  }) => (
-    <nav data-testid="navigation-bar" aria-label={ariaLabel ?? 'Navegación principal'}>
-      {children}
-    </nav>
+    <header>{productName}</header>
   ),
 }))
 

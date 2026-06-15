@@ -5,5 +5,5 @@ export const Route = createFileRoute('/_app/clientes')({
 })
 
 function ClientesPage() {
-  return <div>Clientes</div>
+  return <div data-testid="clientes-view">Clientes</div>
 }

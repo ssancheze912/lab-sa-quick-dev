@@ -1,6 +1,5 @@
-import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
-import { LayoutBase, Navbar, NavigationBar } from 'siesa-ui-kit'
-import type { NavigationBarItem, NavigationRailGroupMenuItem } from 'siesa-ui-kit'
+import { createRootRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
+import { Navbar } from 'siesa-ui-kit'
 import { UsersIcon, UserIcon } from '@heroicons/react/24/outline'
 import { useState, useEffect } from 'react'
 
@@ -31,85 +30,120 @@ interface NavItemConfig {
   label: string
   to: string
   icon: React.ReactNode
+  ariaLabel: string
 }
 
 const NAV_ITEMS_CONFIG: NavItemConfig[] = [
-  { id: 'clientes', label: 'Clientes', to: '/clientes', icon: <UsersIcon className="h-6 w-6" /> },
-  { id: 'contactos', label: 'Contactos', to: '/contactos', icon: <UserIcon className="h-6 w-6" /> },
+  {
+    id: 'clientes',
+    label: 'Clientes',
+    to: '/clientes',
+    icon: <UsersIcon className="h-6 w-6" />,
+    ariaLabel: 'Ir a Clientes',
+  },
+  {
+    id: 'contactos',
+    label: 'Contactos',
+    to: '/contactos',
+    icon: <UserIcon className="h-6 w-6" />,
+    ariaLabel: 'Ir a Contactos',
+  },
 ]
 
-function buildRailItems(
-  config: NavItemConfig[],
-  currentPath: string,
-): NavigationRailGroupMenuItem[] {
-  return config.map((item) => ({
-    id: item.id,
-    label: item.label,
-    icon: item.icon,
-    to: item.to,
-    active: currentPath.startsWith(item.to),
-    onClick: undefined,
-  })) as unknown as NavigationRailGroupMenuItem[]
-}
+function NavItemLink({
+  item,
+  currentPath,
+  variant,
+}: {
+  item: NavItemConfig
+  currentPath: string
+  variant: 'rail' | 'bar'
+}) {
+  const isActive = currentPath.startsWith(item.to)
 
-function buildMobileItems(config: NavItemConfig[], currentPath: string): NavigationBarItem[] {
-  return config.map((item) => ({
-    id: item.id,
-    label: item.label,
-    icon: item.icon,
-    active: currentPath.startsWith(item.to),
-    ariaLabel: `Ir a ${item.label}`,
-  }))
-}
+  if (variant === 'rail') {
+    return (
+      <Link
+        to={item.to}
+        data-testid={`nav-item-${item.id}`}
+        aria-label={item.ariaLabel}
+        aria-current={isActive ? 'page' : undefined}
+        className={[
+          'flex flex-col items-center justify-center gap-1 w-full py-3 rounded-lg transition-colors',
+          isActive
+            ? 'text-[#0e79fd] bg-blue-50'
+            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100',
+        ].join(' ')}
+      >
+        {item.icon}
+        <span className="text-xs font-medium">{item.label}</span>
+      </Link>
+    )
+  }
 
-// Extended LayoutBase props interface to support navbar slot used by siesa-ui-kit mock in tests
-interface LayoutBaseWithNavbarProps {
-  productName?: string
-  navigationItems?: NavigationRailGroupMenuItem[]
-  navbar?: React.ReactNode
-  children?: React.ReactNode
+  return (
+    <Link
+      to={item.to}
+      data-testid={`nav-item-${item.id}`}
+      aria-label={item.ariaLabel}
+      aria-current={isActive ? 'page' : undefined}
+      className={[
+        'flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors',
+        isActive ? 'text-[#0e79fd]' : 'text-slate-500 hover:text-slate-700',
+      ].join(' ')}
+    >
+      {item.icon}
+      <span className="text-xs font-medium">{item.label}</span>
+    </Link>
+  )
 }
-
-const LayoutBaseShell = LayoutBase as unknown as React.FC<LayoutBaseWithNavbarProps>
 
 function RootLayout() {
   const isMobile = useIsMobile()
   const routerState = useRouterState()
   const currentPath = routerState.location.pathname
 
-  const railItems = buildRailItems(NAV_ITEMS_CONFIG, currentPath)
-  const mobileItems = buildMobileItems(NAV_ITEMS_CONFIG, currentPath)
-  const activeItemId = NAV_ITEMS_CONFIG.find((item) => currentPath.startsWith(item.to))?.id
-
   if (isMobile) {
     return (
       <div id="app">
-        <Navbar productName="Siesa Agents" />
+        <div data-testid="navbar">
+          <Navbar productName="Siesa Agents" />
+        </div>
         <main className="pb-14">
           <Outlet />
         </main>
-        <NavigationBar
-          items={mobileItems}
-          activeItemId={activeItemId}
-          ariaLabel="Navegación principal"
-          onItemClick={(id) => {
-            const item = NAV_ITEMS_CONFIG.find((i) => i.id === id)
-            if (item) {
-              window.location.href = item.to
-            }
-          }}
-        />
+        <nav
+          data-testid="navigation-bar"
+          aria-label="Navegación principal"
+          className="fixed bottom-0 left-0 right-0 z-50 flex h-14 bg-white border-t border-slate-200"
+        >
+          {NAV_ITEMS_CONFIG.map((item) => (
+            <NavItemLink key={item.id} item={item} currentPath={currentPath} variant="bar" />
+          ))}
+        </nav>
       </div>
     )
   }
 
   return (
-    <LayoutBaseShell
-      productName="Siesa Agents"
-      navigationItems={railItems}
-      navbar={<Navbar productName="Siesa Agents" />}
-    >
-      <Outlet />
-    </LayoutBaseShell>
+    <div id="app" className="flex flex-col min-h-screen">
+      <div data-testid="navbar">
+        <Navbar productName="Siesa Agents" />
+      </div>
+      <div className="flex flex-1">
+        <nav
+          data-testid="navigation-rail"
+          aria-label="Navegación principal"
+          className="w-[72px] flex flex-col items-center py-4 bg-white border-r border-slate-200 min-h-full gap-1"
+        >
+          {NAV_ITEMS_CONFIG.map((item) => (
+            <NavItemLink key={item.id} item={item} currentPath={currentPath} variant="rail" />
+          ))}
+        </nav>
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   )
 }

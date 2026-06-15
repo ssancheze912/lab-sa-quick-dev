@@ -5,5 +5,5 @@ export const Route = createFileRoute('/_app/contactos')({
 })
 
 function ContactosPage() {
-  return <div>Contactos</div>
+  return <div data-testid="contactos-view">Contactos</div>
 }
