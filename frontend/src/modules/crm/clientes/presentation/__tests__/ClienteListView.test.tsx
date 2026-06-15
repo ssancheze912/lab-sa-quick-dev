@@ -297,3 +297,40 @@ describe('ClienteListView — Story 2.2', () => {
     expect(items[2]).toHaveAttribute('data-active', 'false')
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Story 2.3 — "Nuevo cliente" button opens the form dialog
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('ClienteListView — Story 2.3', () => {
+  test('ClienteListView_renders_nuevo_cliente_button — button visible above search input', async () => {
+    renderWithClient(<ClienteListView />)
+
+    const panel = await screen.findByTestId('clientes-list-panel')
+    const button = await screen.findByTestId('btn-nuevo-cliente')
+
+    expect(button).toBeInTheDocument()
+    expect(panel).toContainElement(button)
+    expect(button).toHaveTextContent(/nuevo cliente/i)
+    expect(button.className).toMatch(/bg-\[#0e79fd\]/)
+    expect(button.className).toMatch(/font-semibold/)
+    expect(button.className).toMatch(/text-white/)
+
+    // Button is ABOVE the search input in the DOM order.
+    const search = screen.getByTestId('clientes-search-input')
+    expect(
+      button.compareDocumentPosition(search) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  test('clicking "Nuevo cliente" opens the cliente-form-dialog', async () => {
+    renderWithClient(<ClienteListView />)
+
+    const button = await screen.findByTestId('btn-nuevo-cliente')
+    expect(screen.queryByTestId('cliente-form-dialog')).not.toBeInTheDocument()
+
+    fireEvent.click(button)
+
+    expect(await screen.findByTestId('cliente-form-dialog')).toBeInTheDocument()
+  })
+})

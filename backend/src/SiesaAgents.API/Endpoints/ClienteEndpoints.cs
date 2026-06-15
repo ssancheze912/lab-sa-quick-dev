@@ -1,4 +1,7 @@
+using FluentValidation;
+using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.DTOs;
+using SiesaAgents.Application.Clientes.Exceptions;
 using SiesaAgents.Application.Clientes.Queries;
 
 namespace SiesaAgents.API.Endpoints;
@@ -18,6 +21,45 @@ public static class ClienteEndpoints
                 Results.Ok(await handler.Handle(new GetClientesQuery(), ct)))
             .WithName("GetClientes")
             .Produces<IReadOnlyList<ClienteDto>>(StatusCodes.Status200OK);
+
+        // POST /api/v1/clientes — Story 2.3. FluentValidation guards the body
+        // shape (returns 400 Problem Details with `errors` member on failure).
+        // Duplicate NIT triggers `DuplicateNitException` from the handler which
+        // is caught inline and translated to a 409 Problem Details body.
+        group.MapPost("/", async (
+            CreateClienteCommand command,
+            IValidator<CreateClienteCommand> validator,
+            CreateClienteCommandHandler handler,
+            CancellationToken ct) =>
+        {
+            var validation = await validator.ValidateAsync(command, ct);
+            if (!validation.IsValid)
+            {
+                var errors = validation.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+                return Results.ValidationProblem(errors);
+            }
+
+            try
+            {
+                var dto = await handler.Handle(command, ct);
+                return Results.Created($"/api/v1/clientes/{dto.Id}", dto);
+            }
+            catch (DuplicateNitException)
+            {
+                return Results.Problem(
+                    title: "El NIT/RUC ya está registrado.",
+                    statusCode: StatusCodes.Status409Conflict,
+                    type: "https://tools.ietf.org/html/rfc7231#section-6.5.8",
+                    instance: "/api/v1/clientes");
+            }
+        })
+        .WithName("CreateCliente")
+        .Accepts<CreateClienteCommand>("application/json")
+        .Produces<ClienteDto>(StatusCodes.Status201Created)
+        .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status409Conflict);
 
         // GET /api/v1/clientes/{id:guid} — Story 2.2. The route constraint
         // `{id:guid}` ensures the handler only runs for syntactically valid

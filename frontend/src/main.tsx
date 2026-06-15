@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { ToastProvider } from 'siesa-ui-kit'
 import '@fontsource/inter/300.css'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/700.css'
@@ -24,7 +25,9 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <QueryProvider>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </QueryProvider>
   </StrictMode>,
 )
