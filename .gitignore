@@ -1,0 +1,29 @@
+# Node / Frontend
+node_modules/
+dist/
+build/
+.vite/
+*.log
+.DS_Store
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# .NET / Backend
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
