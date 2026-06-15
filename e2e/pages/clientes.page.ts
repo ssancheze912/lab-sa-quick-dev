@@ -18,7 +18,15 @@ export class ClientesPage {
 
   // Detail panel
   readonly detailPanel: Locator;
-  readonly emptyState: Locator;
+
+  // Story 2.2 — detail panel locators
+  readonly detailNotFound: Locator;
+  readonly detailErrorPanel: Locator;
+  readonly btnVolverALaLista: Locator;
+  readonly detailNombre: Locator;
+  readonly detailNit: Locator;
+  readonly detailTelefono: Locator;
+  readonly detailCiudad: Locator;
 
   // List-state panels (Story 2.1 additions)
   readonly errorPanel: Locator;
@@ -48,7 +56,15 @@ export class ClientesPage {
     this.btnNuevoCliente = page.getByRole('button', { name: /nuevo cliente/i });
 
     this.detailPanel = page.getByTestId('cliente-detail-panel');
-    this.emptyState = page.getByTestId('empty-state');
+
+    // Story 2.2 — detail panel locators
+    this.detailNotFound = page.getByTestId('cliente-not-found');
+    this.detailErrorPanel = page.getByTestId('cliente-detail-error');
+    this.btnVolverALaLista = page.getByRole('button', { name: /volver a la lista/i });
+    this.detailNombre = page.getByTestId('cliente-detail-nombre');
+    this.detailNit = page.getByTestId('cliente-detail-nit');
+    this.detailTelefono = page.getByTestId('cliente-detail-telefono');
+    this.detailCiudad = page.getByTestId('cliente-detail-ciudad');
 
     // Story 2.1 — list-state panels
     this.errorPanel = page.getByTestId('clientes-error-panel');

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useClientes } from '../application/useClientes'
@@ -8,13 +9,27 @@ import { ErrorPanel } from '@/shared/components/ErrorPanel'
 
 const normalize = (s: string) => s.toLowerCase().trim()
 
+interface ClienteListViewProps {
+  /**
+   * UUID of the currently routed cliente — used to mark the active item
+   * via `data-active="true"`. Passed by the `clientes.$clienteId.tsx` route;
+   * the bare `/clientes` route passes nothing.
+   */
+  selectedClienteId?: string
+}
+
 /**
  * Left panel of the `/clientes` split-panel layout. 280px wide, scrollable
  * in the y axis. Renders one of: skeleton loaders, error panel, empty state,
  * search-empty state, or the filtered list of `ClientListItem`s.
+ *
+ * Story 2.2 adds:
+ *   - `selectedClienteId` prop → drives the active-item indicator.
+ *   - click handler navigates to `/clientes/$clienteId`.
  */
-export function ClienteListView() {
+export function ClienteListView({ selectedClienteId }: ClienteListViewProps = {}) {
   const { data, isLoading, isError, refetch } = useClientes()
+  const router = useRouter()
   const [searchInput, setSearchInput] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -106,9 +121,12 @@ export function ClienteListView() {
               <li key={c.id}>
                 <ClientListItem
                   cliente={c}
+                  isSelected={c.id === selectedClienteId}
                   onClick={(id) =>
-                    // eslint-disable-next-line no-console
-                    console.debug('[clientes] item clicked', id)
+                    router.navigate({
+                      to: '/clientes/$clienteId',
+                      params: { clienteId: id },
+                    })
                   }
                 />
               </li>

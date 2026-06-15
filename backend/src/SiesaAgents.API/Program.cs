@@ -63,6 +63,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // commands land in stories 2.3 / 2.4 / 2.5.
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<GetClientesQueryHandler>();
+builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 
 var app = builder.Build();
 
