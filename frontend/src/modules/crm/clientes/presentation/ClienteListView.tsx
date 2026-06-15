@@ -3,10 +3,16 @@ import { useRouter } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useClientes } from '../application/useClientes'
+import {
+  DEFAULT_SORT,
+  sortClientes,
+  type SortOption,
+} from '../application/sortClientes'
 import { ClienteForm } from './ClienteForm'
 import { ClientListItem } from '@/shared/components/ClientListItem'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
+import { SortControl } from '@/shared/components/SortControl'
 
 const normalize = (s: string) => s.toLowerCase().trim()
 
@@ -34,6 +40,7 @@ export function ClienteListView({ selectedClienteId }: ClienteListViewProps = {}
   const [searchInput, setSearchInput] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [sortOption, setSortOption] = useState<SortOption>(DEFAULT_SORT)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 150ms debounce — keeps rapid keystrokes from triggering a re-render storm
@@ -54,17 +61,19 @@ export function ClienteListView({ selectedClienteId }: ClienteListViewProps = {}
 
   const clientes = data ?? []
 
-  const filtered = useMemo(() => {
+  const filteredAndSorted = useMemo(() => {
     const q = normalize(debouncedQuery)
-    if (!q) return clientes
-    return clientes.filter(
-      (c) => normalize(c.nombre).includes(q) || normalize(c.nit).includes(q),
-    )
-  }, [clientes, debouncedQuery])
+    const filtered = q
+      ? clientes.filter(
+          (c) => normalize(c.nombre).includes(q) || normalize(c.nit).includes(q),
+        )
+      : clientes
+    return sortClientes(filtered, sortOption)
+  }, [clientes, debouncedQuery, sortOption])
 
   const hasClientes = clientes.length > 0
   const hasSearch = debouncedQuery.trim().length > 0
-  const noResults = hasClientes && hasSearch && filtered.length === 0
+  const noResults = hasClientes && hasSearch && filteredAndSorted.length === 0
 
   return (
     <aside
@@ -92,6 +101,9 @@ export function ClienteListView({ selectedClienteId }: ClienteListViewProps = {}
           disabled={isError}
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0e79fd]/40 disabled:bg-slate-100 disabled:text-slate-400"
         />
+        {hasClientes && !isLoading && !isError && (
+          <SortControl value={sortOption} onChange={setSortOption} />
+        )}
       </div>
 
       <ClienteForm open={isFormOpen} onOpenChange={setIsFormOpen} />
@@ -129,7 +141,7 @@ export function ClienteListView({ selectedClienteId }: ClienteListViewProps = {}
           />
         ) : (
           <ul className="flex flex-col">
-            {filtered.map((c) => (
+            {filteredAndSorted.map((c) => (
               <li key={c.id}>
                 <ClientListItem
                   cliente={c}

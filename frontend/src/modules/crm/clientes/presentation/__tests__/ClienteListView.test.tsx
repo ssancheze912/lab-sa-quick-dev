@@ -334,3 +334,185 @@ describe('ClienteListView — Story 2.3', () => {
     expect(await screen.findByTestId('cliente-form-dialog')).toBeInTheDocument()
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Story 2.6 — Sort Client List (component-local sort, no network calls)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('ClienteListView — Story 2.6 (sort)', () => {
+  // SAMPLE fixture already orders id=1 (Jan 1), id=2 (Jan 2), id=3 (Jan 3) by
+  // createdAt. Default sort `fecha-desc` should render id=3, id=2, id=1.
+
+  test('ClienteListView_renders_sort_control_when_clientes_loaded', async () => {
+    renderWithClient(<ClienteListView />)
+    await screen.findAllByTestId('cliente-list-item')
+
+    expect(screen.getByTestId('clientes-sort-control')).toBeInTheDocument()
+  })
+
+  test('ClienteListView_hides_sort_control_when_loading', async () => {
+    // Hold the response open so the component stays in `isLoading: true`.
+    let resolveResponse: (value: typeof SAMPLE) => void = () => {}
+    const pending = new Promise<typeof SAMPLE>((res) => {
+      resolveResponse = res
+    })
+    server.use(
+      http.get('*/api/v1/clientes', async () => {
+        const data = await pending
+        return HttpResponse.json(data)
+      }),
+    )
+
+    renderWithClient(<ClienteListView />)
+
+    // While still loading, the sort control must NOT appear.
+    expect(screen.queryByTestId('clientes-sort-control')).not.toBeInTheDocument()
+
+    resolveResponse(SAMPLE)
+    await screen.findAllByTestId('cliente-list-item')
+  })
+
+  test('ClienteListView_hides_sort_control_when_error', async () => {
+    server.use(
+      http.get('*/api/v1/clientes', () =>
+        new HttpResponse(
+          JSON.stringify({ status: 500, title: 'Internal Server Error' }),
+          { status: 500, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    )
+
+    renderWithClient(<ClienteListView />)
+    await screen.findByTestId('clientes-error-panel')
+
+    expect(screen.queryByTestId('clientes-sort-control')).not.toBeInTheDocument()
+  })
+
+  test('ClienteListView_hides_sort_control_when_empty', async () => {
+    server.use(http.get('*/api/v1/clientes', () => HttpResponse.json([])))
+
+    renderWithClient(<ClienteListView />)
+    await screen.findByTestId('clientes-empty-state')
+
+    expect(screen.queryByTestId('clientes-sort-control')).not.toBeInTheDocument()
+  })
+
+  test('ClienteListView_shows_sort_control_when_search_returns_zero', async () => {
+    renderWithClient(<ClienteListView />)
+    await screen.findAllByTestId('cliente-list-item')
+
+    const search = screen.getByTestId('clientes-search-input') as HTMLInputElement
+    fireEvent.change(search, { target: { value: 'zzz-no-match' } })
+
+    await screen.findByTestId('clientes-search-empty')
+
+    expect(screen.getByTestId('clientes-sort-control')).toBeInTheDocument()
+  })
+
+  test('ClienteListView_default_sort_is_fecha_desc_on_first_render', async () => {
+    renderWithClient(<ClienteListView />)
+
+    const items = await screen.findAllByTestId('cliente-list-item')
+    expect(items).toHaveLength(3)
+
+    // SAMPLE: id=1 (Jan 1), id=2 (Jan 2), id=3 (Jan 3).
+    // fecha-desc: newest first → id=3, id=2, id=1.
+    expect(within(items[0]).getByText(/distribuciones del pacífico/i)).toBeInTheDocument()
+    expect(within(items[1]).getByText(/comercializadora andina/i)).toBeInTheDocument()
+    expect(within(items[2]).getByText(/acme industrial/i)).toBeInTheDocument()
+
+    const sortControl = screen.getByTestId('clientes-sort-control') as HTMLSelectElement
+    expect(sortControl.value).toBe('fecha-desc')
+  })
+
+  test('ClienteListView_changing_sort_reorders_list_without_request', async () => {
+    let requestCount = 0
+    server.use(
+      http.get('*/api/v1/clientes', () => {
+        requestCount += 1
+        return HttpResponse.json(SAMPLE)
+      }),
+    )
+
+    renderWithClient(<ClienteListView />)
+    await screen.findAllByTestId('cliente-list-item')
+
+    const initialCount = requestCount
+    expect(initialCount).toBeGreaterThan(0)
+
+    const sortControl = screen.getByTestId('clientes-sort-control') as HTMLSelectElement
+    fireEvent.change(sortControl, { target: { value: 'nombre-asc' } })
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId('cliente-list-item')
+      // Alphabetical ASC: Acme Industrial, Comercializadora Andina, Distribuciones del Pacífico.
+      expect(within(items[0]).getByText(/acme industrial/i)).toBeInTheDocument()
+      expect(within(items[1]).getByText(/comercializadora andina/i)).toBeInTheDocument()
+      expect(within(items[2]).getByText(/distribuciones del pacífico/i)).toBeInTheDocument()
+    })
+
+    // No additional request fired since the initial mount fetch.
+    expect(requestCount).toBe(initialCount)
+  })
+
+  test('ClienteListView_sort_preserves_active_search_filter', async () => {
+    // Seed 3 clientes whose nombres all start with "Acm" so the search "Acm"
+    // returns multiple items we can re-order.
+    const acmeSet = [
+      { ...SAMPLE[0], id: 'aaa', nombre: 'Acme Norte', createdAt: '2026-01-01T00:00:00.000Z' },
+      { ...SAMPLE[1], id: 'bbb', nombre: 'Acme Sur', createdAt: '2026-01-02T00:00:00.000Z' },
+      { ...SAMPLE[2], id: 'ccc', nombre: 'Berkeley', createdAt: '2026-01-03T00:00:00.000Z' },
+    ]
+    server.use(http.get('*/api/v1/clientes', () => HttpResponse.json(acmeSet)))
+
+    renderWithClient(<ClienteListView />)
+    await screen.findAllByTestId('cliente-list-item')
+
+    const search = screen.getByTestId('clientes-search-input') as HTMLInputElement
+    fireEvent.change(search, { target: { value: 'Acm' } })
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId('cliente-list-item')
+      expect(items).toHaveLength(2)
+    })
+
+    const sortControl = screen.getByTestId('clientes-sort-control') as HTMLSelectElement
+    fireEvent.change(sortControl, { target: { value: 'nombre-desc' } })
+
+    // (a) search input preserved exactly.
+    expect(search.value).toBe('Acm')
+
+    // (b) rendered items are the same N (=2), reordered descending.
+    await waitFor(() => {
+      const items = screen.getAllByTestId('cliente-list-item')
+      expect(items).toHaveLength(2)
+      expect(within(items[0]).getByText(/acme sur/i)).toBeInTheDocument()
+      expect(within(items[1]).getByText(/acme norte/i)).toBeInTheDocument()
+    })
+
+    // Berkeley is filtered out.
+    expect(screen.queryByText(/berkeley/i)).not.toBeInTheDocument()
+  })
+
+  test('ClienteListView_search_after_sort_preserves_sort_option', async () => {
+    renderWithClient(<ClienteListView />)
+    await screen.findAllByTestId('cliente-list-item')
+
+    const sortControl = screen.getByTestId('clientes-sort-control') as HTMLSelectElement
+    fireEvent.change(sortControl, { target: { value: 'nombre-asc' } })
+
+    const search = screen.getByTestId('clientes-search-input') as HTMLInputElement
+    fireEvent.change(search, { target: { value: 'a' } })
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId('cliente-list-item')
+      // All 3 SAMPLE clientes contain "a" (case-insensitive). Asc by nombre:
+      //   Acme Industrial, Comercializadora Andina, Distribuciones del Pacífico.
+      expect(items.length).toBeGreaterThan(0)
+      expect(within(items[0]).getByText(/acme industrial/i)).toBeInTheDocument()
+    })
+
+    // SortControl still shows `nombre-asc`.
+    expect(sortControl.value).toBe('nombre-asc')
+  })
+})
