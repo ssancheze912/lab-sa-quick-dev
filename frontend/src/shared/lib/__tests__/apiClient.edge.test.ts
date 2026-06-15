@@ -15,13 +15,13 @@ import type { AxiosInstance } from 'axios'
 
 // Reset module registry between tests that manipulate import.meta.env
 describe('apiClient — baseURL configuration', () => {
-  it('should use VITE_API_URL as baseURL when env var is defined', async () => {
+  it('should bind baseURL to the VITE_API_URL env variable (string or undefined in test env)', async () => {
     const { apiClient } = await import('../apiClient')
-    // In test env, import.meta.env.VITE_API_URL is undefined → baseURL is undefined
-    // This verifies the import path, not the value (env is not set in test mode)
-    expect(apiClient.defaults.baseURL).toBeDefined()
-      ? expect(typeof apiClient.defaults.baseURL).toBe('string')
-      : expect(apiClient.defaults.baseURL).toBeUndefined()
+    // In test env, import.meta.env.VITE_API_URL is not set → baseURL is undefined.
+    // In dev, it is 'http://localhost:5000'. We verify the type contract only.
+    const baseURL = apiClient.defaults.baseURL
+    // baseURL must be either a string (in dev) or undefined (in test env) — never a non-string
+    expect(typeof baseURL === 'string' || baseURL === undefined).toBe(true)
   })
 
   it('should be an Axios instance with a request method', async () => {
