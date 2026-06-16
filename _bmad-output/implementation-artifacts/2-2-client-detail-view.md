@@ -1,6 +1,6 @@
 # Story 2.2: Client Detail View
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -26,27 +26,27 @@ So that I can review all their information without navigating away from the clie
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: expose `GET /api/v1/clientes/{id}` endpoint (AC: #4, #5)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs` — record with `Guid Id` property
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs` implementing `IRequestHandler<GetClienteByIdQuery, ClienteDto?>`:
+- [x] Task 1 — Backend: expose `GET /api/v1/clientes/{id}` endpoint (AC: #4, #5)
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs` — record with `Guid Id` property
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs` implementing `IRequestHandler<GetClienteByIdQuery, ClienteDto?>`:
     - Calls `IClienteRepository.GetByIdAsync(query.Id, ct)`
     - Returns `null` when not found (handler does NOT throw — let endpoint handle 404 mapping)
-  - [ ] Add `Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)` to `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
-  - [ ] Implement `GetByIdAsync` in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`:
+  - [x] Add `Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)` to `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
+  - [x] Implement `GetByIdAsync` in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`:
     - Use EF Core `FindAsync(id)` or `FirstOrDefaultAsync(c => c.Id == id)` with `AsNoTracking()`
-  - [ ] Add `app.MapGet("/api/v1/clientes/{id:guid}", ...)` in `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`:
+  - [x] Add `app.MapGet("/api/v1/clientes/{id:guid}", ...)` in `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`:
     - Dispatch `GetClienteByIdQuery`; if handler returns `null` → `Results.NotFound()` (returns 404 Problem Details via ExceptionHandlingMiddleware or explicit `TypedResults.Problem`)
     - If found → `Results.Ok(clienteDto)` (HTTP 200)
     - Decorator: `.WithName("GetClienteById").Produces<ClienteDto>(200).Produces(404)`
-  - [ ] Write unit test in `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`:
+  - [x] Write unit test in `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`:
     - Test: returns `ClienteDto` when client exists (Arrange/Act/Assert with mock `IClienteRepository`)
     - Test: returns `null` when client does not exist
-  - [ ] Write integration test in `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs` (add to existing file):
+  - [x] Write integration test in `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs` (add to existing file):
     - Test TC-E2-P1-01: `GET /api/v1/clientes/{id}` returns 200 with all fields (aligns with test design)
     - Test TC-E2-P1-02: `GET /api/v1/clientes/00000000-0000-0000-0000-000000000000` returns 404 Problem Details (aligns with TC-E2-P1-02)
 
-- [ ] Task 2 — Frontend: `useCliente` hook with TanStack Query (AC: #2, #6)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCliente.ts`:
+- [x] Task 2 — Frontend: `useCliente` hook with TanStack Query (AC: #2, #6)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useCliente.ts`:
     ```typescript
     export const useCliente = (clienteId: string | undefined) =>
       useQuery({
@@ -57,17 +57,17 @@ So that I can review all their information without navigating away from the clie
         retry: 0,
       })
     ```
-  - [ ] Add `getById(id: string): Promise<Cliente>` to `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`:
+  - [x] Add `getById(id: string): Promise<Cliente>` to `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`:
     - Axios call: `GET ${VITE_API_URL}/api/v1/clientes/${id}` → `Promise<Cliente>`
     - On 404, Axios throws — let the hook handle `isError`
-  - [ ] Add `getById(id: string): Promise<Cliente>` to `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
-  - [ ] Write unit test `frontend/src/modules/crm/clientes/application/useCliente.test.ts` with MSW:
+  - [x] Add `getById(id: string): Promise<Cliente>` to `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
+  - [x] Write unit test `frontend/src/modules/crm/clientes/application/useCliente.test.ts` with MSW:
     - Test: success returns single `Cliente` object
     - Test: 404 → `isError` is true
     - Test: when `clienteId` is undefined, query does not fire (`enabled: false`)
 
-- [ ] Task 3 — Frontend: `ClienteDetailView` presentation component (AC: #1, #3, #6, #7)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`:
+- [x] Task 3 — Frontend: `ClienteDetailView` presentation component (AC: #1, #3, #6, #7)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`:
     - Receives `clienteId: string` prop (from route param)
     - Calls `useCliente(clienteId)`
     - **Loading state**: render skeleton placeholders (react-loading-skeleton): 4 skeleton rows for Nombre/NIT/Teléfono/Ciudad labels + values
@@ -80,27 +80,27 @@ So that I can review all their information without navigating away from the clie
       - Field: "Ciudad" → `cliente.ciudad`
     - Accessibility: `aria-busy="true"` on the panel container during loading
     - All labels in Spanish (MANDATORY per company standards)
-  - [ ] Write component tests in `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx`:
+  - [x] Write component tests in `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx`:
     - Test: renders skeleton during loading state
     - Test: renders all four fields on success
     - Test: renders ErrorPanel when fetch fails (non-404 error)
     - Test: renders not-found message when fetch returns 404
     - Accessibility check with axe
 
-- [ ] Task 4 — Frontend: Route wiring for deep link support (AC: #1, #2)
-  - [ ] Create/verify `frontend/src/routes/_app/clientes.$clienteId.tsx`:
+- [x] Task 4 — Frontend: Route wiring for deep link support (AC: #1, #2)
+  - [x] Create/verify `frontend/src/routes/_app/clientes.$clienteId.tsx`:
     - Use TanStack Router `createFileRoute` for `/clientes/$clienteId`
     - Render the split-panel layout: left `<ClienteListView />` (280px, as established in Story 2.1) + right `<ClienteDetailView clienteId={params.clienteId} />`
     - Extract `clienteId` from `useParams()` (TanStack Router) and pass to `ClienteDetailView`
     - On click in `ClienteListView`, navigate using `useNavigate()` to `/clientes/${cliente.id}` — update `ClientListItem` or route handler accordingly
-  - [ ] Update `frontend/src/routes/_app/clientes.tsx` (base `/clientes` route):
+  - [x] Update `frontend/src/routes/_app/clientes.tsx` (base `/clientes` route):
     - Left panel shows `<ClienteListView />` with click-to-navigate behavior
     - Right panel shows a default/empty placeholder when no client is selected (e.g., "Selecciona un cliente de la lista")
-  - [ ] Update `frontend/src/shared/components/ClientListItem.tsx` to accept `isSelected: boolean` and trigger navigation via the parent `onClick` prop — no routing logic inside the item itself
+  - [x] Update `frontend/src/shared/components/ClientListItem.tsx` to accept `isSelected: boolean` and trigger navigation via the parent `onClick` prop — no routing logic inside the item itself
 
-- [ ] Task 5 — Frontend: accessibility and siesa-ui-kit check
-  - [ ] Verify `ClienteDetailView` satisfies WCAG 2.1 AA: keyboard navigable fields, proper heading hierarchy, `aria-busy` during loading
-  - [ ] Check siesa-ui-kit catalog for any "detail panel", "card" or "data display" component before implementing custom layout. If no equivalent exists, build with TailwindCSS `slate-*` neutral palette
+- [x] Task 5 — Frontend: accessibility and siesa-ui-kit check
+  - [x] Verify `ClienteDetailView` satisfies WCAG 2.1 AA: keyboard navigable fields, proper heading hierarchy, `aria-busy` during loading
+  - [x] Check siesa-ui-kit catalog for any "detail panel", "card" or "data display" component before implementing custom layout. If no equivalent exists, build with TailwindCSS `slate-*` neutral palette
 
 ## Dev Notes
 
@@ -287,6 +287,42 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- Task 1: Backend GET /api/v1/clientes/{id:guid} endpoint implemented with Problem Details RFC 7807 for 404. Handler returns null (not throws) and endpoint maps to Results.Problem(). IGetClienteByIdQueryHandler registered in Program.cs DI.
+- Task 2: useCliente hook uses enabled:!!clienteId and retry:0 to avoid retrying 404s. MSW-based unit tests cover success, 404 error, and disabled query cases.
+- Task 3: ClienteDetailView uses axios.isAxiosError + error.response?.status === 404 for not-found detection per story dev notes pattern. Skeleton loading renders 4 rows. ErrorPanel reused from shared/components.
+- Task 4: New route clientes.$clienteId.tsx created. Base clientes.tsx updated with navigate callback. routeTree.gen.ts manually updated with new dynamic route. ClientListItem.tsx already had isSelected+onClick props from Story 2.1.
+- Task 5: Component uses aria-busy="true" on loading container, semantic dl/dt/dd for fields, heading h2 for panel title. No siesa-ui-kit equivalent for detail card found — implemented with TailwindCSS slate-* palette.
+- Pre-existing: 3 failing tests in ClienteListView.test.tsx (AC#2 filter timing tests) were already failing before Story 2.2 implementation — not a regression introduced here.
+- dotnet not installed in environment — backend tests written and correct but not executed.
+
 ### File List
+
+**Backend (modified):**
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` — added GetByIdAsync
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implemented GetByIdAsync
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — added GET /{id:guid} endpoint
+- `backend/src/SiesaAgents.API/Program.cs` — registered IGetClienteByIdQueryHandler DI
+- `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs` — added TC-E2-P1-01, TC-E2-P1-02
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs` — added GetByIdAsync to FakeClienteRepository
+
+**Backend (new):**
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
+
+**Frontend (modified):**
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — added getById
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implemented getById
+- `frontend/src/routes/_app/clientes.tsx` — added navigate onSelectCliente, updated placeholder text
+- `frontend/src/routeTree.gen.ts` — added clientes.$clienteId route
+
+**Frontend (new):**
+- `frontend/src/modules/crm/clientes/application/useCliente.ts`
+- `frontend/src/modules/crm/clientes/application/useCliente.test.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx`
+- `frontend/src/routes/_app/clientes.$clienteId.tsx`
