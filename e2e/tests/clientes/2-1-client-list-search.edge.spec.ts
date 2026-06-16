@@ -18,6 +18,8 @@ import { buildCliente } from '../../helpers/data.helper';
 
 const API_PATTERN = '**/api/v1/clientes';
 
+let edgeCounter = 0;
+
 function mockCliente(overrides: Partial<{
   id: string;
   nombre: string;
@@ -29,7 +31,7 @@ function mockCliente(overrides: Partial<{
 }> = {}) {
   const ts = new Date().toISOString();
   return {
-    id: `uuid-edge-${Math.random().toString(36).slice(2)}`,
+    id: `uuid-edge-${String(++edgeCounter).padStart(4, '0')}`,
     nombre: 'Empresa Mock',
     nit: '900000001',
     telefono: '3001234567',
