@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,37 +26,37 @@ so that I can move between sections without full page reloads from any device.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Create root layout with siesa-ui-kit navigation shell (AC: #1, #2, #5)
-  - [ ] Install/verify `siesa-ui-kit` is available in `frontend/package.json` (already installed in Story 1.1)
-  - [ ] Update `frontend/src/routes/__root.tsx` to implement the full layout shell using `NavigationRail` (siesa-ui-kit) for desktop (>= 1024px breakpoint) and `NavigationBar` (siesa-ui-kit) for mobile (< 1024px)
-  - [ ] Add responsive detection using CSS breakpoints (`lg:` Tailwind class) or `useMediaQuery` hook — prefer CSS-only approach (no JS resize listener) via Tailwind `hidden lg:flex` / `flex lg:hidden` to toggle rail vs bar
-  - [ ] Define navigation items array: `[{ label: 'Clientes', to: '/clientes', icon: UsersIcon }, { label: 'Contactos', to: '/contactos', icon: UserIcon }]` using Heroicons
-  - [ ] Wire active state: use TanStack Router `useRouterState` or `<Link>` `activeProps` to highlight the current section
+- [x] Task 1 — Create root layout with siesa-ui-kit navigation shell (AC: #1, #2, #5)
+  - [x] Install/verify `siesa-ui-kit` is available in `frontend/package.json` (already installed in Story 1.1)
+  - [x] Update `frontend/src/routes/__root.tsx` to implement the full layout shell using `NavigationRail` (siesa-ui-kit) for desktop (>= 1024px breakpoint) and `NavigationBar` (siesa-ui-kit) for mobile (< 1024px)
+  - [x] Add responsive detection using CSS breakpoints (`lg:` Tailwind class) or `useMediaQuery` hook — prefer CSS-only approach (no JS resize listener) via Tailwind `hidden lg:flex` / `flex lg:hidden` to toggle rail vs bar
+  - [x] Define navigation items array: `[{ label: 'Clientes', to: '/clientes', icon: UsersIcon }, { label: 'Contactos', to: '/contactos', icon: UserIcon }]` using Heroicons
+  - [x] Wire active state: use TanStack Router `useRouterState` or `<Link>` `activeProps` to highlight the current section
 
-- [ ] Task 2 — Create TanStack Router file-based routes (AC: #3, #4)
-  - [ ] Create `frontend/src/routes/_app.tsx` — pathless layout route that wraps child routes with the navigation shell layout
-  - [ ] Create `frontend/src/routes/_app/` directory
-  - [ ] Create `frontend/src/routes/_app/clientes.tsx` — route component for `/clientes`; renders a placeholder `ClientesView` (empty `<div>` with "Clientes" heading — full implementation deferred to Epic 2)
-  - [ ] Create `frontend/src/routes/_app/contactos.tsx` — route component for `/contactos`; renders a placeholder `ContactosView` (empty `<div>` with "Contactos" heading — full implementation deferred to Epic 3)
-  - [ ] Update `frontend/src/routes/index.tsx` — redirect `/` → `/clientes` using TanStack Router `redirect`
-  - [ ] Create `frontend/src/routes/$404.tsx` or `frontend/src/routes/not-found.tsx` — 404 not-found view with Spanish text and back-to-home link
+- [x] Task 2 — Create TanStack Router file-based routes (AC: #3, #4)
+  - [x] Create `frontend/src/routes/_app.tsx` — pathless layout route that wraps child routes with the navigation shell layout
+  - [x] Create `frontend/src/routes/_app/` directory
+  - [x] Create `frontend/src/routes/_app/clientes.tsx` — route component for `/clientes`; renders a placeholder `ClientesView` (empty `<div>` with "Clientes" heading — full implementation deferred to Epic 2)
+  - [x] Create `frontend/src/routes/_app/contactos.tsx` — route component for `/contactos`; renders a placeholder `ContactosView` (empty `<div>` with "Contactos" heading — full implementation deferred to Epic 3)
+  - [x] Update `frontend/src/routes/index.tsx` — redirect `/` → `/clientes` using TanStack Router `redirect`
+  - [x] Create 404 not-found view as `notFoundComponent` in `__root.tsx` — with Spanish text and back-to-home link
 
-- [ ] Task 3 — Verify auto-generated routeTree and router bootstrap (AC: #3, #5)
-  - [ ] Verify `frontend/src/routeTree.gen.ts` auto-regenerates correctly with the new routes (run `pnpm run dev` and confirm no router errors)
-  - [ ] Confirm `frontend/src/main.tsx` has `RouterProvider` at root level with the generated router
-  - [ ] Add `<Outlet />` in `__root.tsx` to render child routes properly
+- [x] Task 3 — Verify auto-generated routeTree and router bootstrap (AC: #3, #5)
+  - [x] Verify `frontend/src/routeTree.gen.ts` auto-regenerates correctly with the new routes (run `pnpm run dev` and confirm no router errors)
+  - [x] Confirm `frontend/src/main.tsx` has `RouterProvider` at root level with the generated router
+  - [x] Add `<Outlet />` in `__root.tsx` to render child routes properly
 
-- [ ] Task 4 — Accessibility compliance (AC: #6)
-  - [ ] Add `aria-label="Navegación principal"` to the `<nav>` wrapper element
-  - [ ] Ensure each navigation link has a visible focus ring (`focus-visible:ring-2` Tailwind class)
-  - [ ] Confirm all navigation text labels are in Spanish: "Clientes", "Contactos"
-  - [ ] Add `aria-current="page"` on the active navigation link
+- [x] Task 4 — Accessibility compliance (AC: #6)
+  - [x] Add `aria-label="Navegación principal"` to the `<nav>` wrapper element
+  - [x] Ensure each navigation link has a visible focus ring (`focus-visible:ring-2` Tailwind class)
+  - [x] Confirm all navigation text labels are in Spanish: "Clientes", "Contactos"
+  - [x] Add `aria-current="page"` on the active navigation link
 
-- [ ] Task 5 — Unit tests (AC: #1–#6)
-  - [ ] Create `frontend/src/routes/__tests__/root-layout.test.tsx` — test that NavigationRail renders on desktop viewport and NavigationBar renders on mobile viewport
-  - [ ] Test that navigating to `/clientes` highlights the Clientes link as active
-  - [ ] Test that an unknown route renders the 404 view
-  - [ ] Use Vitest + React Testing Library + `MemoryRouter` from TanStack Router test utils
+- [x] Task 5 — Unit tests (AC: #1–#6)
+  - [x] Create `frontend/src/routes/__tests__/-root-layout.test.tsx` — test that NavigationRail renders on desktop viewport and NavigationBar renders on mobile viewport
+  - [x] Test that navigating to `/clientes` highlights the Clientes link as active
+  - [x] Test that an unknown route renders the 404 view
+  - [x] Use Vitest + React Testing Library + TanStack Router `createMemoryHistory`
 
 ## Dev Notes
 
@@ -233,6 +233,29 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- Implemented full navigation shell in `__root.tsx` using `NavigationRail` (desktop, hidden lg:flex) and `NavigationBar` (mobile, flex lg:hidden) from siesa-ui-kit.
+- 404 not-found view implemented as `notFoundComponent` in `createRootRoute` — covers AC #4 without an extra route file.
+- Test file renamed with `-` prefix (`-root-layout.test.tsx`) so TanStack Router CLI ignores it as a route file.
+- `@heroicons/react` installed via pnpm as it was not present in the worktree dependencies.
+- `siesa-ui-kit/dist/style.css` import added to `main.tsx`.
+- All 12 tests pass (3 test files); TypeScript compiles with 0 errors.
+
 ### File List
+
+**Created:**
+- `frontend/src/routes/index.tsx` — redirect `/` → `/clientes`
+- `frontend/src/routes/_app.tsx` — pathless layout route (wraps child routes)
+- `frontend/src/routes/_app/clientes.tsx` — `/clientes` placeholder view
+- `frontend/src/routes/_app/contactos.tsx` — `/contactos` placeholder view
+- `frontend/src/routes/__tests__/-root-layout.test.tsx` — unit tests (12 tests)
+
+**Modified:**
+- `frontend/src/routes/__root.tsx` — full navigation shell with NavigationRail + NavigationBar + NotFoundView
+- `frontend/src/main.tsx` — added `siesa-ui-kit/dist/style.css` import
+- `frontend/src/routeTree.gen.ts` — auto-regenerated with all new routes
+- `frontend/package.json` — added `@heroicons/react ^2.2.0`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — status updated to `review`
