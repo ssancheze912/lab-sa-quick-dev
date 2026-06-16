@@ -146,16 +146,14 @@ test.describe('AC2 — ExceptionHandlingMiddleware returns Problem Details RFC 7
     const response = await request.get(`${API_BASE_URL}/api/v1/nonexistent-db-endpoint`);
 
     // THEN: Response body contains at minimum a numeric status field (RFC 7807 requirement)
-    try {
-      const body = await response.json();
-      expect(typeof body).toBe('object');
-      // RFC 7807 Problem Details MUST include status (integer matching HTTP status code)
-      expect(body).toHaveProperty('status');
-      expect(typeof body.status).toBe('number');
-    } catch {
-      // If JSON parsing fails, the response is not Problem Details format — test fails
-      expect.fail('Response body is not valid JSON — ExceptionHandlingMiddleware is not producing Problem Details');
-    }
+    // Assert JSON content-type first so parse errors are surfaced by Playwright directly
+    const contentType = response.headers()['content-type'] ?? '';
+    expect(contentType).toContain('json');
+    const body = await response.json();
+    expect(typeof body).toBe('object');
+    // RFC 7807 Problem Details MUST include status (integer matching HTTP status code)
+    expect(body).toHaveProperty('status');
+    expect(typeof body.status).toBe('number');
   });
 
   test('should NOT expose the Detail field for unhandled exceptions (NFR6 — no internal leakage)', async ({
@@ -169,17 +167,12 @@ test.describe('AC2 — ExceptionHandlingMiddleware returns Problem Details RFC 7
 
     // THEN: The detail field in the response body is either absent or null
     //       It must never contain internal error messages (ex.Message) or connection strings
-    try {
-      const body = await response.json();
-      if ('detail' in body) {
-        // If present, detail must be null (not an internal error message)
-        expect(body.detail).toBeNull();
-      }
-      // If absent — acceptable, constraint satisfied
-    } catch {
-      // Non-JSON response violates Problem Details requirement
-      expect.fail('Response body is not valid JSON — cannot verify detail field');
-    }
+    const contentType = response.headers()['content-type'] ?? '';
+    expect(contentType).toContain('json');
+    const body = await response.json();
+    // If detail is present, it must be null — never an internal error message or connection string
+    // Using nullish coalescing: absent field evaluates to null, present field must be null
+    expect(body.detail ?? null).toBeNull();
   });
 
   test('should have ExceptionHandlingMiddleware registered BEFORE routing (first in pipeline)', async ({

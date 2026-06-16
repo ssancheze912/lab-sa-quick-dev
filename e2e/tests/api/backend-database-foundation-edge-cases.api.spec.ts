@@ -57,10 +57,8 @@ test.describe('AC2 — Problem Details RFC 7807 field completeness', () => {
     const body = await response.json();
 
     // THEN: 'detail' is absent or explicitly null (never a connection string or ex.Message)
-    if ('detail' in body) {
-      expect(body.detail).toBeNull();
-    }
-    // If absent — constraint satisfied
+    // Using nullish coalescing: absent field evaluates to null, present field must be null
+    expect(body.detail ?? null).toBeNull();
   });
 
   test('[P1] should return application/problem+json content-type for 404 errors', async ({
