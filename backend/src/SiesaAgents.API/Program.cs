@@ -27,6 +27,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// DI — Repositories and Query Handlers
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<GetClientesQueryHandler>();
+
 var app = builder.Build();
 
 // Middleware pipeline (order matters)
@@ -36,5 +40,8 @@ app.UseCors("DevCors");
 // API documentation via Scalar (NEVER app.UseSwagger())
 app.MapOpenApi();
 app.MapScalarApiReference();
+
+// Endpoints
+app.MapClienteEndpoints();
 
 app.Run();

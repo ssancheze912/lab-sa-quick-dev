@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ClienteListView } from '../../modules/crm/clientes/presentation/ClienteListView'
 
 export const Route = createFileRoute('/_app/clientes')({
   component: ClientesView,
@@ -6,9 +7,9 @@ export const Route = createFileRoute('/_app/clientes')({
 
 function ClientesView() {
   return (
-    <div data-testid="clientes-view" className="p-6">
-      <h1 className="text-2xl font-bold text-slate-800">Clientes</h1>
-      {/* Implementación completa en Épica 2 */}
+    <div data-testid="clientes-view" className="flex h-full">
+      <ClienteListView />
+      <main className="flex-1 overflow-auto bg-slate-50" />
     </div>
   )
 }
