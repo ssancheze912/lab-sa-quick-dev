@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
+using SiesaAgents.Domain.Clientes.Entities;
 
 namespace SiesaAgents.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    // No DbSet<> properties in this story.
-    // ClienteEntity and ContactoEntity DbSets are added in Epics 2 and 3.
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
+    // ContactoEntity DbSet is added in Epic 3.
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

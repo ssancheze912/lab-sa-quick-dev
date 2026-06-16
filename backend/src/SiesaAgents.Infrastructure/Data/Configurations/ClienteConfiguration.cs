@@ -1,0 +1,19 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SiesaAgents.Domain.Clientes.Entities;
+
+namespace SiesaAgents.Infrastructure.Data.Configurations;
+
+public sealed class ClienteConfiguration : IEntityTypeConfiguration<ClienteEntity>
+{
+    public void Configure(EntityTypeBuilder<ClienteEntity> builder)
+    {
+        builder.ToTable("clientes");
+        builder.HasKey(c => c.Id);
+        builder.HasIndex(c => c.NIT).IsUnique().HasDatabaseName("uk_clientes_nit");
+        builder.Property(c => c.Nombre).IsRequired().HasMaxLength(200);
+        builder.Property(c => c.NIT).IsRequired().HasMaxLength(50);
+        builder.Property(c => c.Telefono).IsRequired().HasMaxLength(50);
+        builder.Property(c => c.Ciudad).IsRequired().HasMaxLength(100);
+    }
+}
