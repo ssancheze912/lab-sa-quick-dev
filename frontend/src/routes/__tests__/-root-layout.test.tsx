@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { routeTree } from '../../routeTree.gen'
 
 // Mock siesa-ui-kit components used in __root.tsx
@@ -52,11 +53,20 @@ function createTestRouter(initialPath: string) {
   return createRouter({ routeTree, history })
 }
 
+function renderWithProviders(router: ReturnType<typeof createTestRouter>) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  )
+}
+
 describe('RootLayout Navigation Shell', () => {
   describe('NavigationRail (desktop)', () => {
     it('renders desktop rail wrapper with Clientes and Contactos items', async () => {
       const router = createTestRouter('/clientes')
-      render(<RouterProvider router={router} />)
+      renderWithProviders(router)
       await router.load()
 
       const rail = screen.getByTestId('navigation-rail')
@@ -71,7 +81,7 @@ describe('RootLayout Navigation Shell', () => {
 
     it('sets aria-current="page" on Clientes wrapper when on /clientes route', async () => {
       const router = createTestRouter('/clientes')
-      render(<RouterProvider router={router} />)
+      renderWithProviders(router)
       await router.load()
 
       const clientesItem = screen.getByTestId('nav-item-clientes')
@@ -83,7 +93,7 @@ describe('RootLayout Navigation Shell', () => {
 
     it('sets aria-current="page" on Contactos wrapper when on /contactos route', async () => {
       const router = createTestRouter('/contactos')
-      render(<RouterProvider router={router} />)
+      renderWithProviders(router)
       await router.load()
 
       const contactosItem = screen.getByTestId('nav-item-contactos')
@@ -97,7 +107,7 @@ describe('RootLayout Navigation Shell', () => {
   describe('NavigationBar (mobile)', () => {
     it('renders mobile nav wrapper with navigation-bar testid', async () => {
       const router = createTestRouter('/clientes')
-      render(<RouterProvider router={router} />)
+      renderWithProviders(router)
       await router.load()
 
       const bar = screen.getByTestId('navigation-bar')
@@ -106,7 +116,7 @@ describe('RootLayout Navigation Shell', () => {
 
     it('renders tappable items with nav-bar-item testid', async () => {
       const router = createTestRouter('/clientes')
-      render(<RouterProvider router={router} />)
+      renderWithProviders(router)
       await router.load()
 
       const clientesItem = screen.getByTestId('nav-bar-item-clientes')
@@ -120,7 +130,7 @@ describe('RootLayout Navigation Shell', () => {
   describe('404 Not Found route', () => {
     it('renders 404 view with not-found-view testid for unknown routes', async () => {
       const router = createTestRouter('/ruta-desconocida')
-      render(<RouterProvider router={router} />)
+      renderWithProviders(router)
       await router.load()
 
       const notFoundView = screen.getByTestId('not-found-view')
@@ -132,7 +142,7 @@ describe('RootLayout Navigation Shell', () => {
 
     it('renders a back-to-home link with not-found-home-link testid in 404 view', async () => {
       const router = createTestRouter('/pagina-que-no-existe')
-      render(<RouterProvider router={router} />)
+      renderWithProviders(router)
       await router.load()
 
       const homeLink = screen.getByTestId('not-found-home-link')
@@ -144,7 +154,7 @@ describe('RootLayout Navigation Shell', () => {
   describe('Redirect from root', () => {
     it('redirects / to /clientes', async () => {
       const router = createTestRouter('/')
-      render(<RouterProvider router={router} />)
+      renderWithProviders(router)
       await router.load()
 
       expect(router.state.location.pathname).toBe('/clientes')
@@ -154,7 +164,7 @@ describe('RootLayout Navigation Shell', () => {
   describe('View routes', () => {
     it('renders clientes-view when on /clientes', async () => {
       const router = createTestRouter('/clientes')
-      render(<RouterProvider router={router} />)
+      renderWithProviders(router)
       await router.load()
 
       const view = screen.getByTestId('clientes-view')
@@ -163,7 +173,7 @@ describe('RootLayout Navigation Shell', () => {
 
     it('renders contactos-view when on /contactos', async () => {
       const router = createTestRouter('/contactos')
-      render(<RouterProvider router={router} />)
+      renderWithProviders(router)
       await router.load()
 
       const view = screen.getByTestId('contactos-view')
@@ -174,7 +184,7 @@ describe('RootLayout Navigation Shell', () => {
   describe('Accessibility', () => {
     it('desktop nav element has aria-label "Navegación principal"', async () => {
       const router = createTestRouter('/clientes')
-      render(<RouterProvider router={router} />)
+      renderWithProviders(router)
       await router.load()
 
       const navElements = screen.getAllByRole('navigation')

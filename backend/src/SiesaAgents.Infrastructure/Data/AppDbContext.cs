@@ -1,18 +1,19 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
 using System.Text.RegularExpressions;
 
 namespace SiesaAgents.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    // No DbSet<> properties in this story.
-    // ClienteEntity and ContactoEntity DbSets are added in Epics 2 and 3.
+    // Epic 2: ClienteEntity
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Apply entity type configurations (currently none — added per epic)
+        // Apply entity type configurations from Infrastructure assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
         // MUST be LAST: automatic snake_case naming for all tables and columns
