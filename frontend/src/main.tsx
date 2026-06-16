@@ -4,6 +4,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { QueryProvider } from './app/providers/QueryProvider'
 import { routeTree } from './routeTree.gen'
 import './index.css'
+import 'siesa-ui-kit/dist/style.css'
 
 const router = createRouter({ routeTree })
 
