@@ -237,12 +237,14 @@ None.
 
 ### Completion Notes List
 
-- Implemented full navigation shell in `__root.tsx` using `NavigationRail` (desktop, hidden lg:flex) and `NavigationBar` (mobile, flex lg:hidden) from siesa-ui-kit.
-- 404 not-found view implemented as `notFoundComponent` in `createRootRoute` — covers AC #4 without an extra route file.
-- Test file renamed with `-` prefix (`-root-layout.test.tsx`) so TanStack Router CLI ignores it as a route file.
-- `@heroicons/react` installed via pnpm as it was not present in the worktree dependencies.
-- `siesa-ui-kit/dist/style.css` import added to `main.tsx`.
-- All 12 tests pass (3 test files); TypeScript compiles with 0 errors.
+- Implemented full navigation shell in `__root.tsx` using `NavigationRailItem` (desktop, via wrapper divs with data-testid) and custom mobile nav buttons (mobile, flex lg:hidden) from siesa-ui-kit.
+- Desktop nav uses individual `NavigationRailItem` components wrapped in `div[data-testid="nav-item-{id}"]` with `aria-current` for testability and accessibility.
+- Mobile nav uses custom `button[data-testid="nav-bar-item-{id}"]` elements styled as a bottom navigation bar for direct testability.
+- 404 not-found view has `data-testid="not-found-view"` and home link uses TanStack Router `<Link>` with `data-testid="not-found-home-link"`.
+- Clientes and Contactos views have `data-testid="clientes-view"` and `data-testid="contactos-view"` respectively.
+- Mobile nav uses `aria-label="Navegación inferior"` to avoid duplicate `aria-label="Navegación principal"` at desktop (which causes Playwright strict mode violation).
+- `@testing-library/user-event` added to devDependencies.
+- All 31 tests pass (4 test files); TypeScript compiles with 0 errors.
 
 ### File List
 
@@ -251,11 +253,14 @@ None.
 - `frontend/src/routes/_app.tsx` — pathless layout route (wraps child routes)
 - `frontend/src/routes/_app/clientes.tsx` — `/clientes` placeholder view
 - `frontend/src/routes/_app/contactos.tsx` — `/contactos` placeholder view
-- `frontend/src/routes/__tests__/-root-layout.test.tsx` — unit tests (12 tests)
+- `frontend/src/routes/__tests__/-root-layout.test.tsx` — unit tests (legacy)
+- `frontend/src/routes/__tests__/root-layout.test.tsx` — ATDD component tests (31 tests)
 
 **Modified:**
-- `frontend/src/routes/__root.tsx` — full navigation shell with NavigationRail + NavigationBar + NotFoundView
+- `frontend/src/routes/__root.tsx` — navigation shell with NavigationRailItem (desktop) + custom mobile buttons + NotFoundView with correct data-testid
+- `frontend/src/routes/_app/clientes.tsx` — added data-testid="clientes-view"
+- `frontend/src/routes/_app/contactos.tsx` — added data-testid="contactos-view"
+- `frontend/src/routes/__tests__/-root-layout.test.tsx` — updated mocks for NavigationRailItem + new data-testid assertions
 - `frontend/src/main.tsx` — added `siesa-ui-kit/dist/style.css` import
 - `frontend/src/routeTree.gen.ts` — auto-regenerated with all new routes
-- `frontend/package.json` — added `@heroicons/react ^2.2.0`
-- `_bmad-output/implementation-artifacts/sprint-status.yaml` — status updated to `review`
+- `frontend/package.json` — added `@heroicons/react ^2.2.0`, `@testing-library/user-event ^14.6.1`

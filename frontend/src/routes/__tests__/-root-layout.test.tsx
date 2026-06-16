@@ -1,37 +1,43 @@
-import { describe, it, expect, vi, beforeAll } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
 import { routeTree } from '../../routeTree.gen'
 
-// Mock siesa-ui-kit components
+// Mock siesa-ui-kit components used in __root.tsx
 vi.mock('siesa-ui-kit', () => ({
-  NavigationRail: ({ items, selectedId }: { items: Array<{ id: string; label: string; selected?: boolean }>; selectedId?: string }) => (
-    <nav data-testid="navigation-rail" data-selected={selectedId}>
-      {items.map((item) => (
-        <a
-          key={item.id}
-          href={`/${item.id}`}
-          data-testid={`rail-item-${item.id}`}
-          aria-current={item.id === selectedId ? 'page' : undefined}
-        >
-          {item.label}
-        </a>
-      ))}
-    </nav>
+  NavigationRailItem: ({
+    id,
+    label,
+    selected,
+    onClick,
+  }: {
+    id?: string
+    label: string
+    selected?: boolean
+    onClick?: () => void
+  }) => (
+    <button
+      data-testid={`rail-internal-item-${id ?? label.toLowerCase()}`}
+      data-selected={selected}
+      onClick={onClick}
+    >
+      {label}
+    </button>
   ),
-  NavigationBar: ({ items, activeItemId }: { items: Array<{ id: string; label: string; active?: boolean }>; activeItemId?: string }) => (
-    <nav data-testid="navigation-bar" data-active={activeItemId}>
+  NavigationBar: ({
+    items,
+    activeItemId,
+  }: {
+    items: Array<{ id: string; label: string; active?: boolean }>
+    activeItemId?: string
+  }) => (
+    <div data-testid="navigation-bar-inner" data-active={activeItemId}>
       {items.map((item) => (
-        <a
-          key={item.id}
-          href={`/${item.id}`}
-          data-testid={`bar-item-${item.id}`}
-          aria-current={item.id === activeItemId ? 'page' : undefined}
-        >
+        <span key={item.id} data-testid={`bar-item-${item.id}`}>
           {item.label}
-        </a>
+        </span>
       ))}
-    </nav>
+    </div>
   ),
 }))
 
@@ -48,7 +54,7 @@ function createTestRouter(initialPath: string) {
 
 describe('RootLayout Navigation Shell', () => {
   describe('NavigationRail (desktop)', () => {
-    it('renders NavigationRail with Clientes and Contactos items', async () => {
+    it('renders desktop rail wrapper with Clientes and Contactos items', async () => {
       const router = createTestRouter('/clientes')
       render(<RouterProvider router={router} />)
       await router.load()
@@ -56,42 +62,40 @@ describe('RootLayout Navigation Shell', () => {
       const rail = screen.getByTestId('navigation-rail')
       expect(rail).toBeTruthy()
 
-      const clientesItem = screen.getByTestId('rail-item-clientes')
+      const clientesItem = screen.getByTestId('nav-item-clientes')
       expect(clientesItem).toBeTruthy()
-      expect(clientesItem.textContent).toBe('Clientes')
 
-      const contactosItem = screen.getByTestId('rail-item-contactos')
+      const contactosItem = screen.getByTestId('nav-item-contactos')
       expect(contactosItem).toBeTruthy()
-      expect(contactosItem.textContent).toBe('Contactos')
     })
 
-    it('highlights Clientes link as active when on /clientes route', async () => {
+    it('sets aria-current="page" on Clientes wrapper when on /clientes route', async () => {
       const router = createTestRouter('/clientes')
       render(<RouterProvider router={router} />)
       await router.load()
 
-      const clientesItem = screen.getByTestId('rail-item-clientes')
+      const clientesItem = screen.getByTestId('nav-item-clientes')
       expect(clientesItem.getAttribute('aria-current')).toBe('page')
 
-      const contactosItem = screen.getByTestId('rail-item-contactos')
+      const contactosItem = screen.getByTestId('nav-item-contactos')
       expect(contactosItem.getAttribute('aria-current')).toBeNull()
     })
 
-    it('highlights Contactos link as active when on /contactos route', async () => {
+    it('sets aria-current="page" on Contactos wrapper when on /contactos route', async () => {
       const router = createTestRouter('/contactos')
       render(<RouterProvider router={router} />)
       await router.load()
 
-      const contactosItem = screen.getByTestId('rail-item-contactos')
+      const contactosItem = screen.getByTestId('nav-item-contactos')
       expect(contactosItem.getAttribute('aria-current')).toBe('page')
 
-      const clientesItem = screen.getByTestId('rail-item-clientes')
+      const clientesItem = screen.getByTestId('nav-item-clientes')
       expect(clientesItem.getAttribute('aria-current')).toBeNull()
     })
   })
 
   describe('NavigationBar (mobile)', () => {
-    it('renders NavigationBar with navigation items', async () => {
+    it('renders mobile nav wrapper with navigation-bar testid', async () => {
       const router = createTestRouter('/clientes')
       render(<RouterProvider router={router} />)
       await router.load()
@@ -99,25 +103,41 @@ describe('RootLayout Navigation Shell', () => {
       const bar = screen.getByTestId('navigation-bar')
       expect(bar).toBeTruthy()
     })
+
+    it('renders tappable items with nav-bar-item testid', async () => {
+      const router = createTestRouter('/clientes')
+      render(<RouterProvider router={router} />)
+      await router.load()
+
+      const clientesItem = screen.getByTestId('nav-bar-item-clientes')
+      expect(clientesItem).toBeTruthy()
+
+      const contactosItem = screen.getByTestId('nav-bar-item-contactos')
+      expect(contactosItem).toBeTruthy()
+    })
   })
 
   describe('404 Not Found route', () => {
-    it('renders 404 view for unknown routes', async () => {
+    it('renders 404 view with not-found-view testid for unknown routes', async () => {
       const router = createTestRouter('/ruta-desconocida')
       render(<RouterProvider router={router} />)
       await router.load()
+
+      const notFoundView = screen.getByTestId('not-found-view')
+      expect(notFoundView).toBeTruthy()
 
       const heading = screen.getByRole('heading', { level: 1 })
       expect(heading.textContent).toBe('404')
     })
 
-    it('renders a back-to-home link in 404 view', async () => {
+    it('renders a back-to-home link with not-found-home-link testid in 404 view', async () => {
       const router = createTestRouter('/pagina-que-no-existe')
       render(<RouterProvider router={router} />)
       await router.load()
 
-      const homeLink = screen.getByRole('link', { name: /volver al inicio/i })
+      const homeLink = screen.getByTestId('not-found-home-link')
       expect(homeLink).toBeTruthy()
+      expect(homeLink.textContent).toMatch(/volver al inicio/i)
     })
   })
 
@@ -131,8 +151,28 @@ describe('RootLayout Navigation Shell', () => {
     })
   })
 
+  describe('View routes', () => {
+    it('renders clientes-view when on /clientes', async () => {
+      const router = createTestRouter('/clientes')
+      render(<RouterProvider router={router} />)
+      await router.load()
+
+      const view = screen.getByTestId('clientes-view')
+      expect(view).toBeTruthy()
+    })
+
+    it('renders contactos-view when on /contactos', async () => {
+      const router = createTestRouter('/contactos')
+      render(<RouterProvider router={router} />)
+      await router.load()
+
+      const view = screen.getByTestId('contactos-view')
+      expect(view).toBeTruthy()
+    })
+  })
+
   describe('Accessibility', () => {
-    it('nav element has aria-label in Spanish', async () => {
+    it('desktop nav element has aria-label "Navegación principal"', async () => {
       const router = createTestRouter('/clientes')
       render(<RouterProvider router={router} />)
       await router.load()

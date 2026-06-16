@@ -1,5 +1,5 @@
-import { createRootRoute, Outlet, useRouter } from '@tanstack/react-router'
-import { NavigationRailItem, NavigationBar } from 'siesa-ui-kit'
+import { createRootRoute, Link, Outlet, useRouter } from '@tanstack/react-router'
+import { NavigationRailItem } from 'siesa-ui-kit'
 import {
   UsersIcon,
   UserIcon,
@@ -42,15 +42,6 @@ function RootLayout() {
     }
   }
 
-  const barItems = navItems.map((item) => ({
-    id: item.id,
-    label: item.label,
-    icon: item.icon,
-    ariaLabel: item.ariaLabel,
-    active: item.id === activeItemId,
-    onClick: (id: string) => handleNavigate(id),
-  }))
-
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       {/* Desktop: NavigationRail on left — visible at lg and above */}
@@ -88,7 +79,7 @@ function RootLayout() {
 
       {/* Mobile: NavigationBar at bottom — visible below lg */}
       <nav
-        aria-label="Navegación principal"
+        aria-label="Navegación inferior"
         className="flex lg:hidden fixed bottom-0 left-0 w-full z-50 bg-white border-t border-slate-200"
         data-testid="navigation-bar"
       >
@@ -127,13 +118,13 @@ function NotFoundView() {
       <p className="text-lg text-slate-600 mb-8">
         La página que buscas no existe.
       </p>
-      <a
-        href="/clientes"
+      <Link
+        to="/clientes"
         data-testid="not-found-home-link"
         className="px-6 py-3 bg-[#0e79fd] text-white rounded-lg font-medium hover:bg-[#154ca9] focus-visible:ring-2 focus-visible:ring-[#0e79fd] focus-visible:ring-offset-2 transition-colors"
       >
         Volver al inicio
-      </a>
+      </Link>
     </div>
   )
 }
