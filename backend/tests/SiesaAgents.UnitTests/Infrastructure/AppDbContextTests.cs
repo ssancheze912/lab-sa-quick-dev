@@ -1,8 +1,7 @@
 // ATDD Unit Tests for Story 1.3: Backend Database Foundation
 // Epic 1: Project Foundation & Application Shell
 //
-// These tests are intentionally FAILING (RED phase) — AppDbContext does not exist yet.
-// They define the expected structural behavior of AppDbContext BEFORE implementation.
+// These tests define the expected structural behavior of AppDbContext.
 //
 // Acceptance Criteria covered:
 //   AC3 — ApplySnakeCaseNaming() is applied in OnModelCreating; all future column
@@ -61,7 +60,7 @@ public class AppDbContextTests
         using var context = new AppDbContext(options);
         var model = context.Model;
 
-        // THEN: Model is built successfully — ApplySnakeCaseNaming() call did not throw
+        // THEN: Model is built successfully — snake_case naming call did not throw
         Assert.NotNull(model);
     }
 
@@ -162,7 +161,7 @@ public class AppDbContextTests
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // AC3 — Structural: OnModelCreating calls base.OnModelCreating (convention)
+    // AC3 — Structural: AppDbContext inherits DbContext
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]

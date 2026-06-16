@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +17,11 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()));
+
+// EF Core — PostgreSQL via AppDbContext
+// snake_case naming is applied automatically in AppDbContext.OnModelCreating
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
