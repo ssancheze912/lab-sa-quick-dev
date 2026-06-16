@@ -1,15 +1,15 @@
+using Microsoft.AspNetCore.Mvc;
 using SiesaAgents.Application.Clientes.DTOs;
 using SiesaAgents.Application.Clientes.Queries;
-using SiesaAgents.Domain.Clientes.Interfaces;
 
 namespace SiesaAgents.API.Endpoints;
 
 public static class ClienteEndpoints
 {
-    public static void MapClienteEndpoints(this WebApplication app)
+    public static IEndpointRouteBuilder MapClienteEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/v1/clientes", async (
-            GetClientesQueryHandler handler,
+            IGetClientesQueryHandler handler,
             CancellationToken ct) =>
         {
             var result = await handler.HandleAsync(new GetClientesQuery(), ct);
@@ -20,68 +20,22 @@ public static class ClienteEndpoints
 
         app.MapGet("/api/v1/clientes/{id:guid}", async (
             Guid id,
-            IClienteRepository repo,
+            IGetClienteByIdQueryHandler handler,
             CancellationToken ct) =>
         {
-            var cliente = await repo.GetByIdAsync(id, ct);
-            if (cliente is null)
+            var result = await handler.HandleAsync(new GetClienteByIdQuery(id), ct);
+            if (result is null)
                 return Results.Problem(
-                    title: "Cliente no encontrado",
-                    statusCode: 404,
-                    detail: $"No existe un cliente con id '{id}'.");
+                    detail: "No se encontró el cliente solicitado.",
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Cliente no encontrado");
 
-            return Results.Ok(new ClienteDto(
-                cliente.Id,
-                cliente.Nombre,
-                cliente.NIT,
-                cliente.Telefono,
-                cliente.Ciudad,
-                cliente.CreatedAt,
-                cliente.UpdatedAt));
+            return Results.Ok(result);
         })
         .WithName("GetClienteById")
         .Produces<ClienteDto>(200)
-        .ProducesProblem(404);
+        .Produces<ProblemDetails>(404);
 
-        app.MapPost("/api/v1/clientes", async (
-            CreateClienteRequest request,
-            IClienteRepository repo,
-            CancellationToken ct) =>
-        {
-            var cliente = SiesaAgents.Domain.Clientes.Entities.ClienteEntity.Create(
-                request.Nombre, request.NIT, request.Telefono, request.Ciudad);
-            await repo.AddAsync(cliente, ct);
-            await repo.SaveChangesAsync(ct);
-
-            var dto = new ClienteDto(
-                cliente.Id, cliente.Nombre, cliente.NIT,
-                cliente.Telefono, cliente.Ciudad, cliente.CreatedAt, cliente.UpdatedAt);
-            return Results.Created($"/api/v1/clientes/{cliente.Id}", dto);
-        })
-        .WithName("CreateCliente")
-        .Produces<ClienteDto>(201)
-        .ProducesProblem(409);
-
-        app.MapDelete("/api/v1/clientes/{id:guid}", async (
-            Guid id,
-            IClienteRepository repo,
-            CancellationToken ct) =>
-        {
-            var cliente = await repo.GetByIdAsync(id, ct);
-            if (cliente is null)
-                return Results.Problem(
-                    title: "Cliente no encontrado",
-                    statusCode: 404,
-                    detail: $"No existe un cliente con id '{id}'.");
-
-            await repo.DeleteAsync(cliente, ct);
-            await repo.SaveChangesAsync(ct);
-            return Results.NoContent();
-        })
-        .WithName("DeleteCliente")
-        .Produces(204)
-        .ProducesProblem(404);
+        return app;
     }
 }
-
-public record CreateClienteRequest(string Nombre, string NIT, string Telefono, string Ciudad);

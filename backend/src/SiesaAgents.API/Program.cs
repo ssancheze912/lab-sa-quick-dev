@@ -27,9 +27,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// DI — Repositories and Query Handlers
+// DI: Cliente domain
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
-builder.Services.AddScoped<GetClientesQueryHandler>();
+builder.Services.AddScoped<IGetClientesQueryHandler, GetClientesQueryHandler>();
+builder.Services.AddScoped<IGetClienteByIdQueryHandler, GetClienteByIdQueryHandler>();
 
 var app = builder.Build();
 
@@ -41,7 +42,7 @@ app.UseCors("DevCors");
 app.MapOpenApi();
 app.MapScalarApiReference();
 
-// Endpoints
+// Client endpoints
 app.MapClienteEndpoints();
 
 app.Run();

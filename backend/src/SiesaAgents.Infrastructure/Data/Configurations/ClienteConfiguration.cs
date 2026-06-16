@@ -10,10 +10,31 @@ public sealed class ClienteConfiguration : IEntityTypeConfiguration<ClienteEntit
     {
         builder.ToTable("clientes");
         builder.HasKey(c => c.Id);
-        builder.HasIndex(c => c.NIT).IsUnique().HasDatabaseName("uk_clientes_nit");
-        builder.Property(c => c.Nombre).IsRequired().HasMaxLength(200);
-        builder.Property(c => c.NIT).IsRequired().HasMaxLength(50);
-        builder.Property(c => c.Telefono).IsRequired().HasMaxLength(50);
-        builder.Property(c => c.Ciudad).IsRequired().HasMaxLength(100);
+
+        builder.HasIndex(c => c.NIT)
+            .IsUnique()
+            .HasDatabaseName("uk_clientes_nit");
+
+        builder.Property(c => c.Nombre)
+            .IsRequired()
+            .HasMaxLength(200);
+
+        builder.Property(c => c.NIT)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.Property(c => c.Telefono)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.Property(c => c.Ciudad)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        builder.Property(c => c.CreatedAt)
+            .IsRequired();
+
+        builder.Property(c => c.UpdatedAt)
+            .IsRequired();
     }
 }

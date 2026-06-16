@@ -16,17 +16,12 @@ public sealed class ClienteEntity
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(nombre);
         ArgumentException.ThrowIfNullOrWhiteSpace(nit);
-        return new ClienteEntity { Nombre = nombre, NIT = nit, Telefono = telefono, Ciudad = ciudad };
-    }
-
-    public void Update(string nombre, string nit, string telefono, string ciudad)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(nombre);
-        ArgumentException.ThrowIfNullOrWhiteSpace(nit);
-        Nombre = nombre;
-        NIT = nit;
-        Telefono = telefono;
-        Ciudad = ciudad;
-        UpdatedAt = DateTimeOffset.UtcNow;
+        return new ClienteEntity
+        {
+            Nombre = nombre,
+            NIT = nit,
+            Telefono = telefono,
+            Ciudad = ciudad
+        };
     }
 }

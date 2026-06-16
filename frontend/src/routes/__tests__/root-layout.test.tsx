@@ -19,6 +19,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { routeTree } from '../../routeTree.gen';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -35,7 +36,12 @@ function createTestRouter(initialPath: string = '/clientes') {
 
 function renderWithRouter(initialPath: string = '/clientes') {
   const router = createTestRouter(initialPath);
-  return render(<RouterProvider router={router} />);
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -219,7 +225,12 @@ describe('AC4 — 404 Not Found view for unknown routes', () => {
     // GIVEN: The user is on the 404 page
     const user = userEvent.setup();
     const router = createTestRouter('/unknown-page');
-    render(<RouterProvider router={router} />);
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    );
 
     const homeLink = await screen.findByTestId('not-found-home-link');
 

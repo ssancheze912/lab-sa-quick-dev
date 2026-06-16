@@ -5,35 +5,27 @@ using SiesaAgents.Infrastructure.Data;
 
 namespace SiesaAgents.Infrastructure.Repositories;
 
-public sealed class ClienteRepository(AppDbContext dbContext) : IClienteRepository
+public sealed class ClienteRepository : IClienteRepository
 {
-    public async Task<IReadOnlyList<ClienteEntity>> GetAllAsync(CancellationToken ct = default)
+    private readonly AppDbContext _context;
+
+    public ClienteRepository(AppDbContext context)
     {
-        return await dbContext.Clientes
+        _context = context;
+    }
+
+    public async Task<IReadOnlyList<ClienteEntity>> GetAllAsync(CancellationToken ct)
+    {
+        return await _context.Clientes
             .AsNoTracking()
+            .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(ct);
     }
 
-    public async Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        return await dbContext.Clientes
+        return await _context.Clientes
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id, ct);
-    }
-
-    public async Task AddAsync(ClienteEntity cliente, CancellationToken ct = default)
-    {
-        await dbContext.Clientes.AddAsync(cliente, ct);
-    }
-
-    public async Task DeleteAsync(ClienteEntity cliente, CancellationToken ct = default)
-    {
-        dbContext.Clientes.Remove(cliente);
-        await Task.CompletedTask;
-    }
-
-    public async Task SaveChangesAsync(CancellationToken ct = default)
-    {
-        await dbContext.SaveChangesAsync(ct);
     }
 }
