@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
 import { ClienteListView } from '../../modules/crm/clientes/presentation/ClienteListView'
 
 export const Route = createFileRoute('/_app/clientes')({
@@ -15,9 +15,7 @@ function ClientesPage() {
           navigate({ to: '/clientes/$clienteId', params: { clienteId: id } })
         }
       />
-      <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
-        Selecciona un cliente de la lista para ver su detalle.
-      </div>
+      <Outlet />
     </div>
   )
 }
