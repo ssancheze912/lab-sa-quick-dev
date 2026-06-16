@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: review
+Status: done
 
 ## Story
 
@@ -48,7 +48,7 @@ so that subsequent stories can define entities and run migrations against a work
   - [x] Verified the middleware sets `Detail = null` — never exposes `ex.Message` or stack traces
 
 - [x] Task 5 — Unit tests (AC: #3, #4)
-  - [x] Created `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` with 8 xUnit tests
+  - [x] Created `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` with 9 xUnit tests
   - [x] Tests: `AppDbContext_CanBeInstantiated_WithOptions`, `AppDbContext_OnModelCreating_BuildsModelWithoutError`, `AppDbContext_HasNo_DbSetProperties_InStory1_3_Scope`, `AppDbContext_DoesNotContain_ClienteEntity_DbSet`, `AppDbContext_DoesNotContain_ContactoEntity_DbSet`, `AppDbContext_IsResolvable_FromDependencyInjection`, `AppDbContext_CanSaveChanges_WithEmptyContext`, `AppDbContext_Inherits_DbContext`, `AppDbContext_Constructor_AcceptsGenericOptions_NotBaseOptions`
   - [x] Added `Microsoft.EntityFrameworkCore.InMemory` v10 to `SiesaAgents.UnitTests.csproj`
   - [x] Follow Arrange / Act / Assert structure; use xUnit `[Fact]` attributes
@@ -302,3 +302,35 @@ claude-sonnet-4-6
 - `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — added `Microsoft.EntityFrameworkCore.Design` v10
 - `backend/src/SiesaAgents.API/Program.cs` — added `AddDbContext<AppDbContext>` registration
 - `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — added `Microsoft.EntityFrameworkCore.InMemory` v10
+
+## Senior Developer Review (AI)
+
+**Date**: 2026-06-16
+**Reviewer**: SiesaTeam (AI Agent — Adversarial Review)
+**Verdict**: PASS CON OBSERVACIONES — Auto-corregido
+
+### Issues Found and Resolved
+
+**[MED-1 — AUTO-FIXED]** `ToSnakeCase` regex failed for leading-uppercase acronyms (`HTMLParser` → `htmlparser` instead of `html_parser`). Fixed by adding a two-pass approach: first pass handles consecutive uppercase sequences (`([A-Z]+)([A-Z][a-z])` → `$1_$2`), second pass handles camel boundaries. Compiled static regex fields added (`RegexOptions.Compiled`) per LOW-1 fix.
+
+**[MED-2 — AUTO-FIXED]** `SiesaAgents.UnitTests.csproj` was missing `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` — inconsistent with all other projects in the solution. Added.
+
+**[MED-3 — PENDING]** `Program.cs` imports `Microsoft.EntityFrameworkCore` and calls `UseNpgsql` transitively via `SiesaAgents.Infrastructure` project reference without a direct `PackageReference` in `SiesaAgents.API.csproj`. This is fragile if the dependency graph changes. Recommended fix: add explicit `PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.*"` to API csproj OR encapsulate DI registration in an Infrastructure extension method. Not auto-corrected as it involves a design decision.
+
+**[LOW-1 — AUTO-FIXED]** `Regex.Replace` used string literal pattern per call. Replaced with pre-compiled `static readonly Regex` fields.
+
+**[LOW-2 — AUTO-FIXED]** Task 5 in story stated "8 xUnit tests" but 9 tests exist. Corrected to "9 xUnit tests".
+
+**[LOW-3 — TRACKED]** AC3 (`ApplySnakeCaseNaming` produces correct column names) is structurally verified but not end-to-end verified due to InMemory provider limitations. Integration tests with Testcontainers required to validate actual column names. This is documented and accepted for this story's scope.
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][MED] Add explicit `<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.*" />` to `SiesaAgents.API.csproj` to remove transitive dependency reliance on Infrastructure project for EF Core types in `Program.cs`.
+- [ ] [AI-Review][LOW] Add integration tests with PostgreSQL Testcontainers to verify actual snake_case column names produced by `ApplySnakeCaseNaming` (deferred to future testing story).
+
+### Change Log
+
+| Date | Author | Change |
+|------|--------|--------|
+| 2026-06-16 | AI Agent (dev) | Initial implementation — AppDbContext, migrations, DI registration, middleware verification, 9 unit tests |
+| 2026-06-16 | AI Agent (review) | Code review PASS: fixed ToSnakeCase regex (MED-1), added TreatWarningsAsErrors to test project (MED-2), upgraded to compiled static regex (LOW-1), corrected test count documentation (LOW-2) |

@@ -5,6 +5,12 @@ namespace SiesaAgents.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    // Compiled regexes for snake_case conversion (compiled once per AppDomain at startup).
+    private static readonly Regex _acronymBoundaryRegex =
+        new(@"([A-Z]+)([A-Z][a-z])", RegexOptions.Compiled);
+    private static readonly Regex _camelBoundaryRegex =
+        new(@"(?<=[a-z0-9])([A-Z])", RegexOptions.Compiled);
+
     // No DbSet<> properties in this story.
     // ClienteEntity and ContactoEntity DbSets are added in Epics 2 and 3.
 
@@ -40,8 +46,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     private static string ToSnakeCase(string name)
     {
-        // Insert underscore before uppercase letters preceded by lowercase letters or digits
-        var result = Regex.Replace(name, @"(?<=[a-z0-9])([A-Z])", "_$1");
+        // Pass 1: Insert underscore between consecutive uppercase sequences and lowercase
+        //         e.g., HTMLParser -> HTML_Parser (handles leading-uppercase acronyms)
+        var step1 = _acronymBoundaryRegex.Replace(name, "$1_$2");
+        // Pass 2: Insert underscore before uppercase letters preceded by lowercase letters or digits
+        //         e.g., parse_Html -> parse_html
+        var result = _camelBoundaryRegex.Replace(step1, "_$1");
         return result.ToLowerInvariant();
     }
 }
