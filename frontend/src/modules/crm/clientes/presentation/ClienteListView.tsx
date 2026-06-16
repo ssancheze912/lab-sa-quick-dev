@@ -6,10 +6,15 @@ import { EmptyState } from '../../../../shared/components/EmptyState';
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel';
 import { useClientes } from '../application/useClientes';
 
-export function ClienteListView() {
+interface ClienteListViewProps {
+  selectedClienteId?: string
+  onSelectCliente?: (id: string) => void
+}
+
+export function ClienteListView({ selectedClienteId, onSelectCliente }: ClienteListViewProps = {}) {
   const { data, isLoading, isError, refetch } = useClientes();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedId = selectedClienteId ?? null;
 
   const filtered = useMemo(() => {
     if (!data) return [];
@@ -80,7 +85,7 @@ export function ClienteListView() {
                 key={cliente.id}
                 cliente={cliente}
                 isSelected={selectedId === cliente.id}
-                onClick={() => setSelectedId(cliente.id)}
+                onClick={() => onSelectCliente?.(cliente.id)}
               />
             ))}
           </ul>
