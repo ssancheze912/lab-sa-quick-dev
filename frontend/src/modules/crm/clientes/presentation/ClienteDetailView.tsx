@@ -16,7 +16,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
       <div
         aria-busy="true"
         className="flex-1 p-6"
-        data-testid="cliente-detail-loading"
+        data-testid="cliente-detail-panel"
       >
         {[...Array(4)].map((_, i) => (
           <div key={i} className="mb-4">
@@ -34,14 +34,14 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
       return (
         <div
           className="flex-1 flex items-center justify-center p-6"
-          data-testid="cliente-detail-not-found"
+          data-testid="cliente-detail-panel"
         >
           <p className="text-sm text-slate-500">No se encontró el cliente solicitado.</p>
         </div>
       )
     }
     return (
-      <div className="flex-1" data-testid="cliente-detail-error">
+      <div className="flex-1" data-testid="cliente-detail-panel">
         <ErrorPanel onRetry={() => refetch()} />
       </div>
     )
@@ -52,7 +52,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   return (
     <div
       className="flex-1 p-6"
-      data-testid="cliente-detail-content"
+      data-testid="cliente-detail-panel"
     >
       <h2 className="text-base font-bold text-slate-800 mb-4">Detalle del cliente</h2>
       <dl className="space-y-4">
