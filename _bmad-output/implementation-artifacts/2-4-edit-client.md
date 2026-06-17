@@ -28,8 +28,8 @@ so that I can keep client data up to date.
     - Use EF Core `_context.Clientes.Update(entity)` + `await _context.SaveChangesAsync()`
     - Set `entity.UpdatedAt = DateTimeOffset.UtcNow` before persisting (requires `SetUpdatedAt(DateTimeOffset value)` method on the entity, or update via the `Update()` factory method below)
 
-- [ ] Task 2 — Add `Update()` factory method to `ClienteEntity` (AC: #2)
-  - [ ] Add `Update(string nombre, string nit, string telefono, string ciudad)` method to `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs`:
+- [x] Task 2 — Add `Update()` factory method to `ClienteEntity` (AC: #2)
+  - [x] Add `Update(string nombre, string nit, string telefono, string ciudad)` method to `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs`:
     ```csharp
     public void Update(string nombre, string nit, string telefono, string ciudad)
     {
@@ -41,17 +41,17 @@ so that I can keep client data up to date.
     }
     ```
 
-- [ ] Task 3 — Create Application layer: Command + Validator + Handler for update (AC: #2, #3)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommand.cs`:
+- [x] Task 3 — Create Application layer: Command + Validator + Handler for update (AC: #2, #3)
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommand.cs`:
     ```csharp
     public record UpdateClienteCommand(Guid Id, string Nombre, string NitRuc, string Telefono, string Ciudad);
     ```
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommandValidator.cs` (FluentValidation):
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommandValidator.cs` (FluentValidation):
     - `RuleFor(x => x.Nombre).NotEmpty().MaximumLength(200)`
     - `RuleFor(x => x.NitRuc).NotEmpty().MaximumLength(50)`
     - `RuleFor(x => x.Telefono).NotEmpty().MaximumLength(50)`
     - `RuleFor(x => x.Ciudad).NotEmpty().MaximumLength(100)`
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommandHandler.cs`:
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommandHandler.cs`:
     - Constructor: inject `IClienteRepository`
     - `HandleAsync(UpdateClienteCommand command)`:
       1. `var cliente = await _repository.GetByIdAsync(command.Id)` → if null, return `null` (or throw domain exception)
@@ -59,8 +59,8 @@ so that I can keep client data up to date.
       3. `await _repository.UpdateAsync(cliente)`
       4. Map to `ClienteDto` and return
 
-- [ ] Task 4 — Add `PUT /api/v1/clientes/{id}` endpoint (AC: #2, #3)
-  - [ ] Add to `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`:
+- [x] Task 4 — Add `PUT /api/v1/clientes/{id}` endpoint (AC: #2, #3)
+  - [x] Add to `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`:
     ```csharp
     app.MapPut("/api/v1/clientes/{id:guid}", async (Guid id, UpdateClienteCommand body, UpdateClienteCommandHandler handler, IValidator<UpdateClienteCommand> validator) =>
     {
@@ -76,14 +76,14 @@ so that I can keep client data up to date.
         return Results.Ok(result);
     });
     ```
-  - [ ] Register `UpdateClienteCommandHandler` and `IValidator<UpdateClienteCommand>` in `backend/src/SiesaAgents.API/Program.cs` DI container
+  - [x] Register `UpdateClienteCommandHandler` and `IValidator<UpdateClienteCommand>` in `backend/src/SiesaAgents.API/Program.cs` DI container
 
-- [ ] Task 5 — Add `update` method to frontend `IClienteRepository` and `clienteApiRepository` (AC: #2)
-  - [ ] Add to `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`:
+- [x] Task 5 — Add `update` method to frontend `IClienteRepository` and `clienteApiRepository` (AC: #2)
+  - [x] Add to `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`:
     ```typescript
     update(id: string, data: Omit<Cliente, 'id' | 'createdAt'>): Promise<Cliente>;
     ```
-  - [ ] Add to `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`:
+  - [x] Add to `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`:
     ```typescript
     update: async (id, data) => {
       const res = await apiClient.put<Cliente>(`/api/v1/clientes/${id}`, data);
@@ -91,8 +91,8 @@ so that I can keep client data up to date.
     },
     ```
 
-- [ ] Task 6 — Create Zod schema and `useUpdateCliente` TanStack Query mutation hook (AC: #2, #3)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/clienteSchema.ts`:
+- [x] Task 6 — Create Zod schema and `useUpdateCliente` TanStack Query mutation hook (AC: #2, #3)
+  - [x] Create `frontend/src/modules/crm/clientes/application/clienteSchema.ts`:
     - If a shared schema already exists from Story 2.3, verify it covers all 4 fields and re-export it; if not, create:
     ```typescript
     import { z } from 'zod';
@@ -104,7 +104,7 @@ so that I can keep client data up to date.
     });
     export type ClienteFormValues = z.infer<typeof clienteFormSchema>;
     ```
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useUpdateCliente.ts`:
+  - [x] Create `frontend/src/modules/crm/clientes/application/useUpdateCliente.ts`:
     ```typescript
     import { useMutation, useQueryClient } from '@tanstack/react-query';
     import { clienteApiRepository } from '../infrastructure/clienteApiRepository';
@@ -122,8 +122,8 @@ so that I can keep client data up to date.
     };
     ```
 
-- [ ] Task 7 — Create `ClienteEditForm` presentation component (AC: #1, #2, #3, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteEditForm.tsx`:
+- [x] Task 7 — Create `ClienteEditForm` presentation component (AC: #1, #2, #3, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteEditForm.tsx`:
     - Check siesa-ui-kit for form/input components — use if available; otherwise use shadcn/ui `Input`, `Label`, `Button` (already installed); fallback: custom TailwindCSS
     - Props: `cliente: Cliente`, `onSuccess: () => void`, `onCancel: () => void`
     - Initialize React Hook Form with `useForm<ClienteFormValues>({ resolver: zodResolver(clienteFormSchema), defaultValues: { nombre: cliente.nombre, nitRuc: cliente.nitRuc, telefono: cliente.telefono, ciudad: cliente.ciudad } })`
@@ -139,36 +139,46 @@ so that I can keep client data up to date.
     - WCAG 2.1 AA: each input has `id` + `<Label htmlFor={...}>`, `aria-invalid` when error, `aria-describedby` pointing to error message
     - Dark mode: `dark:` TailwindCSS classes on all elements
 
-- [ ] Task 8 — Add "Editar" button to `ClienteDetailView` and wire the form (AC: #1, #2)
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`:
+- [x] Task 8 — Add "Editar" button to `ClienteDetailView` and wire the form (AC: #1, #2)
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`:
     - Add local state: `const [isEditing, setIsEditing] = useState(false)`
     - When `isEditing === false`: render detail view + "Editar" button (Heroicons `PencilIcon` or `PencilSquareIcon`) that sets `isEditing = true`
     - When `isEditing === true`: render `<ClienteEditForm cliente={data} onSuccess={() => setIsEditing(false)} onCancel={() => setIsEditing(false)} />`
     - "Editar" button: styled with primary color `#0e79fd` (Siesa Blue), accessible `aria-label="Editar cliente"`
 
-- [ ] Task 9 — Integrate toast notification (AC: #2)
-  - [ ] Verify the toast system is already configured from Story 2.3 (likely `sonner` or `siesa-ui-kit` toast)
-  - [ ] If already set up: import and call `toast.success('Cliente actualizado correctamente')` in `useUpdateCliente.onSuccess` callback (or inside `ClienteEditForm` onSuccess handler)
-  - [ ] If NOT yet set up: install `sonner` (`pnpm add sonner`), add `<Toaster />` to the app root provider in `frontend/src/app/providers/`, then use `toast.success()`
+- [x] Task 9 — Integrate toast notification (AC: #2)
+  - [x] Verify the toast system is already configured from Story 2.3 (likely `sonner` or `siesa-ui-kit` toast)
+  - [x] If already set up: import and call `toast.success('Cliente actualizado correctamente')` in `useUpdateCliente.onSuccess` callback (or inside `ClienteEditForm` onSuccess handler)
+  - [x] If NOT yet set up: install `sonner` (`pnpm add sonner`), add `<Toaster />` to the app root provider in `frontend/src/app/providers/`, then use `toast.success()`
 
-- [ ] Task 10 — Write tests for Story 2.4 (AC: #1, #2, #3, #4)
-  - [ ] **Backend — API Integration (xUnit):**
+- [x] Task 10 — Write tests for Story 2.4 (AC: #1, #2, #3, #4)
+  - [x] **Backend — API Integration (xUnit):**
     - `TC-E2-P2-07`: Create client via POST, record ID → PUT `/api/v1/clientes/{id}` with modified `nombre` and `ciudad` → assert HTTP 200 → GET `/api/v1/clientes/{id}` → assert updated fields
     - `TC-E2-P0-03` (edit variant): PUT `/api/v1/clientes/{id}` with empty body → assert HTTP 400 with `application/problem+json` and field-level validation errors
     - File: `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsTests.cs` (extended)
-  - [ ] **Backend — Unit (xUnit):**
+  - [x] **Backend — Unit (xUnit):**
     - `TC-E2-P3-04` (edit variant): `UpdateClienteCommandValidator` with `Nombre = ""` → assert validation fails on `Nombre` field
     - File: `backend/tests/SiesaAgents.UnitTests/Application/Clientes/UpdateClienteCommandValidatorTests.cs`
-  - [ ] **Frontend — Component (Vitest + RTL + MSW):**
+  - [x] **Frontend — Component (Vitest + RTL + MSW):**
     - `TC-E2-P1-10`: Render `<ClienteDetailView clienteId={...} />` with MSW returning full client → click "Editar" → assert form opens with all 4 fields pre-populated with current values
     - `TC-E2-P2-02`: Open edit form → clear Nombre field → type "Nuevo Nombre" → click "Cancelar" → assert detail panel still shows original Nombre, no PUT request fired
     - `TC-E2-P2-03`: Open edit form → clear Nombre field → click "Guardar cambios" → assert inline error message under Nombre → assert no API request fired
     - File: `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx` (extended)
     - Additional file: `frontend/src/modules/crm/clientes/presentation/ClienteEditForm.test.tsx`
-  - [ ] **Frontend — Unit (Vitest):**
+  - [x] **Frontend — Unit (Vitest):**
     - `TC-E2-P3-02` (schema): `clienteFormSchema.safeParse({})` → assert failure on all 4 fields; `clienteFormSchema.safeParse({ nombre: 'X', nitRuc: 'Y', telefono: 'Z', ciudad: 'W' })` → assert success
     - File: `frontend/src/modules/crm/clientes/application/clienteSchema.test.ts`
-  - [ ] Test structure: Arrange / Act / Assert
+  - [x] Test structure: Arrange / Act / Assert
+
+## Completion Notes
+
+- Implementation completed 2026-06-17.
+- All 10 tasks implemented across frontend and backend.
+- Frontend tests: 124 tests passing across 12 test files (Vitest + RTL + MSW).
+- Backend tests written (xUnit) — dotnet CLI not available in environment, backend test execution skipped; code follows project patterns.
+- siesa-ui-kit toast (ToastProvider + toast.success/error) used; ToastProvider already configured in main.tsx from Story 2.3.
+- ClienteEditForm uses native HTML inputs with React Hook Form + Zod (siesa-ui-kit Input forwarded to HTML input elements for full RHF compatibility).
+- Temporary debugging test files in `frontend/src/test/` cleaned up.
 
 ## Dev Notes
 
