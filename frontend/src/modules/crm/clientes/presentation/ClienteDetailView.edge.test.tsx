@@ -149,7 +149,10 @@ describe('Edge — Empty clienteId disables the fetch', () => {
     // WHEN: Component is rendered with empty clienteId
     renderWithQuery('')
 
-    // Small wait to give any accidental query a chance to fire
+    // Small wait to give any accidental query a chance to fire.
+    // NOTE: Hard wait justified here — this is a negative assertion test (verifying NO request fires).
+    // There is no event/state to waitFor; the 50ms window is intentionally the shortest viable guard.
+    // TEA-REVIEW: Justified hard wait — negative assertion pattern, no async event available.
     await new Promise((resolve) => setTimeout(resolve, 50))
 
     // THEN: No API call was made
