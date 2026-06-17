@@ -27,6 +27,13 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  RouterProvider,
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from '@tanstack/react-router'
 import { ClienteListView } from './ClienteListView'
 import type { Cliente } from '../domain/Cliente'
 
@@ -83,13 +90,31 @@ function createQueryClient() {
   })
 }
 
+function createTestRouter(queryClient: QueryClient) {
+  const rootRoute = createRootRoute({
+    component: () => (
+      <QueryClientProvider client={queryClient}>
+        <ClienteListView />
+      </QueryClientProvider>
+    ),
+  })
+
+  const clienteDetailRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/clientes/$clienteId',
+    component: () => <div data-testid="cliente-detail-stub" />,
+  })
+
+  return createRouter({
+    routeTree: rootRoute.addChildren([clienteDetailRoute]),
+    history: createMemoryHistory({ initialEntries: ['/'] }),
+  })
+}
+
 function renderClienteListView() {
   const queryClient = createQueryClient()
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ClienteListView />
-    </QueryClientProvider>
-  )
+  const router = createTestRouter(queryClient)
+  return render(<RouterProvider router={router} />)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -356,8 +381,10 @@ describe('Edge — Search input placeholder', () => {
     renderClienteListView()
 
     // THEN: Placeholder text matches the spec
-    const searchInput = screen.getByRole('textbox', { name: /buscar cliente/i })
-    expect(searchInput).toHaveAttribute('placeholder', 'Buscar por nombre o NIT/RUC...')
+    await waitFor(() => {
+      const searchInput = screen.getByRole('textbox', { name: /buscar cliente/i })
+      expect(searchInput).toHaveAttribute('placeholder', 'Buscar por nombre o NIT/RUC...')
+    })
   })
 })
 

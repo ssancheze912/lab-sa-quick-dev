@@ -66,6 +66,7 @@ function createQueryClient() {
     defaultOptions: {
       queries: {
         retry: false,
+        retryDelay: 0,
         gcTime: 0,
       },
     },
@@ -412,7 +413,7 @@ describe('Skeleton loading — ClienteDetailView shows skeleton while fetching',
   it('should render skeleton placeholders while the API request is in-flight', async () => {
     // GIVEN: A delayed MSW handler that keeps the request pending briefly
     const cliente = buildClienteDto()
-    let resolveRequest: (value: unknown) => void
+    let resolveRequest: ((value: unknown) => void) | undefined
 
     server.use(
       http.get(`*/api/v1/clientes/${cliente.id}`, async () => {
@@ -426,9 +427,10 @@ describe('Skeleton loading — ClienteDetailView shows skeleton while fetching',
     renderClienteDetailView(cliente.id)
 
     // THEN: Skeleton placeholder is visible immediately (before the response arrives)
-    expect(screen.getByTestId('cliente-detail-skeleton')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByTestId('cliente-detail-skeleton')).toBeInTheDocument())
 
     // Resolve the pending request so the test can clean up
+    await waitFor(() => expect(resolveRequest).toBeDefined())
     resolveRequest!(undefined)
   })
 
@@ -454,7 +456,7 @@ describe('Skeleton loading — ClienteDetailView shows skeleton while fetching',
   it('should NOT render a spinner — only skeleton placeholders are allowed (anti-pattern guard)', async () => {
     // GIVEN: A delayed MSW handler
     const cliente = buildClienteDto()
-    let resolveRequest: (value: unknown) => void
+    let resolveRequest: ((value: unknown) => void) | undefined
 
     server.use(
       http.get(`*/api/v1/clientes/${cliente.id}`, async () => {
@@ -467,10 +469,12 @@ describe('Skeleton loading — ClienteDetailView shows skeleton while fetching',
     renderClienteDetailView(cliente.id)
 
     // THEN: No spinner/role="progressbar" elements exist — skeleton is the only allowed loading indicator
+    await waitFor(() => expect(screen.getByTestId('cliente-detail-skeleton')).toBeInTheDocument())
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
     expect(screen.queryByTestId('spinner')).not.toBeInTheDocument()
 
     // Resolve the pending request
+    await waitFor(() => expect(resolveRequest).toBeDefined())
     resolveRequest!(undefined)
   })
 })

@@ -9,7 +9,7 @@ interface ClienteDetailViewProps {
 
 function ClienteDetailSkeleton() {
   return (
-    <section aria-label="Detalle del cliente" className="max-w-xl p-6">
+    <section aria-label="Detalle del cliente" data-testid="cliente-detail-skeleton" className="max-w-xl p-6">
       <Skeleton height={28} width="60%" className="mb-4" />
       <div className="space-y-4">
         <div>
@@ -33,6 +33,7 @@ function NotFoundMessage() {
   return (
     <section
       aria-label="Detalle del cliente"
+      data-testid="cliente-not-found"
       className="flex flex-col items-center justify-center h-full text-center p-6"
     >
       <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -59,7 +60,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
       aria-label="Detalle del cliente"
       className="max-w-xl p-6"
     >
-      <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+      <h2 data-testid="cliente-detail-nombre" className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
         {data.nombre}
       </h2>
       <dl className="space-y-3">
@@ -67,7 +68,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
           <dt className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
             NIT/RUC
           </dt>
-          <dd className="text-sm text-slate-800 dark:text-slate-200 mt-0.5">
+          <dd data-testid="cliente-detail-nitruc" className="text-sm text-slate-800 dark:text-slate-200 mt-0.5">
             {data.nitRuc}
           </dd>
         </div>
@@ -75,7 +76,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
           <dt className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
             Teléfono
           </dt>
-          <dd className="text-sm text-slate-800 dark:text-slate-200 mt-0.5">
+          <dd data-testid="cliente-detail-telefono" className="text-sm text-slate-800 dark:text-slate-200 mt-0.5">
             {data.telefono}
           </dd>
         </div>
@@ -83,7 +84,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
           <dt className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
             Ciudad
           </dt>
-          <dd className="text-sm text-slate-800 dark:text-slate-200 mt-0.5">
+          <dd data-testid="cliente-detail-ciudad" className="text-sm text-slate-800 dark:text-slate-200 mt-0.5">
             {data.ciudad}
           </dd>
         </div>
