@@ -140,7 +140,9 @@ describe('TC-E2-P0-04 — Submit empty form → 4 inline errors, no API call', (
     await user.click(screen.getByRole('button', { name: /guardar/i }))
 
     // Wait briefly for any potential async calls
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    // justification: intentional 200ms buffer to allow Zod validation to complete
+    // and confirm that no async POST is fired after client-side rejection (no event-based signal to wait on)
+    await new Promise((resolve) => setTimeout(resolve, 200)) // TEA-justified: no network signal to await
 
     // THEN: No API call was fired
     expect(apiCallFired).toBe(false)
@@ -455,7 +457,9 @@ describe('AC5 — "Cancelar" calls onClose, no API call fired', () => {
     // WHEN: The user clicks "Cancelar" instead of "Guardar"
     await user.click(screen.getByRole('button', { name: /cancelar/i }))
 
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    // justification: intentional 200ms buffer to confirm no POST fires after cancel click
+    // (no event-based signal available; Cancelar is synchronous but API call would be async)
+    await new Promise((resolve) => setTimeout(resolve, 200)) // TEA-justified: no network signal to await
 
     // THEN: No API call was fired
     expect(apiCallFired).toBe(false)
