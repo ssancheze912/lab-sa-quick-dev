@@ -47,6 +47,7 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
     <form
       onSubmit={handleSubmit(onSubmit)}
       aria-label="Formulario de edición de cliente"
+      data-testid="cliente-edit-form"
       noValidate
       className="max-w-xl p-6 space-y-4"
     >
@@ -54,6 +55,7 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
         <Input
           id="nombre"
           label="Nombre"
+          data-testid="input-nombre"
           {...register('nombre')}
           aria-invalid={!!errors.nombre}
           aria-describedby={errors.nombre ? 'nombre-error' : undefined}
@@ -61,7 +63,7 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
           errorMessage={errors.nombre?.message}
         />
         {errors.nombre && (
-          <span id="nombre-error" role="alert" className="text-xs text-red-600 dark:text-red-400 mt-1 block">
+          <span id="nombre-error" data-testid="error-nombre" role="alert" className="text-xs text-red-600 dark:text-red-400 mt-1 block">
             {errors.nombre.message}
           </span>
         )}
@@ -71,6 +73,7 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
         <Input
           id="nitRuc"
           label="NIT/RUC"
+          data-testid="input-nitruc"
           {...register('nitRuc')}
           aria-invalid={!!errors.nitRuc}
           aria-describedby={errors.nitRuc ? 'nitRuc-error' : undefined}
@@ -78,7 +81,7 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
           errorMessage={errors.nitRuc?.message}
         />
         {errors.nitRuc && (
-          <span id="nitRuc-error" role="alert" className="text-xs text-red-600 dark:text-red-400 mt-1 block">
+          <span id="nitRuc-error" data-testid="error-nitruc" role="alert" className="text-xs text-red-600 dark:text-red-400 mt-1 block">
             {errors.nitRuc.message}
           </span>
         )}
@@ -88,6 +91,7 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
         <Input
           id="telefono"
           label="Teléfono"
+          data-testid="input-telefono"
           {...register('telefono')}
           aria-invalid={!!errors.telefono}
           aria-describedby={errors.telefono ? 'telefono-error' : undefined}
@@ -95,7 +99,7 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
           errorMessage={errors.telefono?.message}
         />
         {errors.telefono && (
-          <span id="telefono-error" role="alert" className="text-xs text-red-600 dark:text-red-400 mt-1 block">
+          <span id="telefono-error" data-testid="error-telefono" role="alert" className="text-xs text-red-600 dark:text-red-400 mt-1 block">
             {errors.telefono.message}
           </span>
         )}
@@ -105,6 +109,7 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
         <Input
           id="ciudad"
           label="Ciudad"
+          data-testid="input-ciudad"
           {...register('ciudad')}
           aria-invalid={!!errors.ciudad}
           aria-describedby={errors.ciudad ? 'ciudad-error' : undefined}
@@ -112,7 +117,7 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
           errorMessage={errors.ciudad?.message}
         />
         {errors.ciudad && (
-          <span id="ciudad-error" role="alert" className="text-xs text-red-600 dark:text-red-400 mt-1 block">
+          <span id="ciudad-error" data-testid="error-ciudad" role="alert" className="text-xs text-red-600 dark:text-red-400 mt-1 block">
             {errors.ciudad.message}
           </span>
         )}
@@ -124,6 +129,7 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
           type="outline"
           onClick={onCancel}
           disabled={isPending}
+          data-testid="btn-cancelar"
         >
           Cancelar
         </Button>
@@ -132,6 +138,7 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
           type="default"
           disabled={isPending}
           ariaLabel="Guardar cambios del cliente"
+          data-testid="btn-guardar-cambios"
         >
           {isPending ? 'Guardando...' : 'Guardar cambios'}
         </Button>

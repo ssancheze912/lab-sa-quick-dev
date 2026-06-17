@@ -788,7 +788,7 @@ describe('TC-E2-P1-10 — Clicking Editar opens pre-filled edit form', () => {
   it('should show form with all 4 fields pre-populated when Editar is clicked', async () => {
     // ARRANGE
     const user = userEvent.setup()
-    const cliente = buildClienteDto()
+    const cliente = buildClienteDto({ nombre: 'Empresa Ejemplo S.A.S.', nitRuc: '900123456-1', telefono: '3001234567', ciudad: 'Bogotá' })
 
     server.use(
       http.get(`*/api/v1/clientes/${cliente.id}`, () =>
@@ -826,7 +826,7 @@ describe('TC-E2-P2-02 — Cancelar closes form without saving, no PUT request', 
   it('should return to detail view and not fire PUT when Cancelar is clicked', async () => {
     // ARRANGE
     const user = userEvent.setup()
-    const cliente = buildClienteDto()
+    const cliente = buildClienteDto({ nombre: 'Empresa Ejemplo S.A.S.', nitRuc: '900123456-1', telefono: '3001234567', ciudad: 'Bogotá' })
     let putCalled = false
 
     server.use(

@@ -5,6 +5,7 @@ import { Link } from '@tanstack/react-router';
 import { useCliente } from '../application/useCliente';
 import { ErrorPanel } from '@/shared/components/ErrorPanel';
 import { ClienteEditForm } from './ClienteEditForm';
+import { Button } from 'siesa-ui-kit';
 
 interface ClienteDetailViewProps {
   clienteId: string;
@@ -82,9 +83,20 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
       data-testid="cliente-detail-panel"
       className="max-w-xl p-6"
     >
-      <h2 data-testid="cliente-detail-nombre" className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-        {data.nombre}
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 data-testid="cliente-detail-nombre" className="text-xl font-bold text-slate-900 dark:text-slate-100">
+          {data.nombre}
+        </h2>
+        <Button
+          htmlType="button"
+          type="default"
+          data-testid="btn-editar-cliente"
+          ariaLabel="Editar cliente"
+          onClick={() => setIsEditing(true)}
+        >
+          Editar
+        </Button>
+      </div>
       <dl className="space-y-3">
         <div>
           <dt className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
