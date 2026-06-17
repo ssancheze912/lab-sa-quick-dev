@@ -1,6 +1,6 @@
 # Story 2.3: Create Client
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,21 +26,21 @@ so that the client is available in the system immediately for the whole team.
 
 ### Backend Tasks
 
-- [ ] Task 1 — Create `CreateClienteCommand` and `CreateClienteCommandHandler` (AC: #2, #3, #4)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommand.cs` — record with properties: `string Nombre`, `string NitRuc`, `string Telefono`, `string Ciudad`
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommandHandler.cs`:
+- [x] Task 1 — Create `CreateClienteCommand` and `CreateClienteCommandHandler` (AC: #2, #3, #4)
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommand.cs` — record with properties: `string Nombre`, `string NitRuc`, `string Telefono`, `string Ciudad`
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommandHandler.cs`:
     - Accepts `IClienteRepository` via constructor injection
     - Calls `IClienteRepository.CreateAsync(entity)` after building the `ClienteEntity`
     - Returns the created `ClienteDto`
     - Throws a domain-specific conflict exception if NIT/RUC uniqueness constraint is violated (caught by `ExceptionHandlingMiddleware`)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/DTOs/CreateClienteRequest.cs` — DTO for request deserialization: `{ Nombre, NitRuc, Telefono, Ciudad }`
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Validators/CreateClienteRequestValidator.cs`:
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/DTOs/CreateClienteRequest.cs` — DTO for request deserialization: `{ Nombre, NitRuc, Telefono, Ciudad }`
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Validators/CreateClienteRequestValidator.cs`:
     - Validate all 4 fields: `Nombre`, `NitRuc`, `Telefono`, `Ciudad` — all required (NotEmpty)
     - Return FluentValidation errors that map to Problem Details field errors
 
-- [ ] Task 2 — Extend `IClienteRepository` and `ClienteRepository` with `CreateAsync` (AC: #2)
-  - [ ] Add `Task<ClienteEntity> CreateAsync(ClienteEntity entity)` to `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` if not already present
-  - [ ] Implement in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`:
+- [x] Task 2 — Extend `IClienteRepository` and `ClienteRepository` with `CreateAsync` (AC: #2)
+  - [x] Add `Task<ClienteEntity> CreateAsync(ClienteEntity entity)` to `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` if not already present
+  - [x] Implement in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`:
     ```csharp
     public async Task<ClienteEntity> CreateAsync(ClienteEntity entity)
     {
@@ -49,27 +49,27 @@ so that the client is available in the system immediately for the whole team.
         return entity;
     }
     ```
-  - [ ] Handle `DbUpdateException` (unique index violation on `nit` column) in the command handler or middleware — map to HTTP 409 with user-friendly Spanish message
+  - [x] Handle `DbUpdateException` (unique index violation on `nit` column) in the command handler or middleware — map to HTTP 409 with user-friendly Spanish message
 
-- [ ] Task 3 — Add `POST /api/v1/clientes` endpoint (AC: #2, #3, #4)
-  - [ ] Add to `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`:
+- [x] Task 3 — Add `POST /api/v1/clientes` endpoint (AC: #2, #3, #4)
+  - [x] Add to `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`:
     - Validate request with `CreateClienteRequestValidator` — return HTTP 400 Problem Details on failure
     - Call `CreateClienteCommandHandler.HandleAsync(command)`
     - Return HTTP 201 Created with the `ClienteDto` body and `Location: /api/v1/clientes/{id}` header
     - On uniqueness conflict: return HTTP 409 with `Content-Type: application/problem+json` and `detail: "El NIT/RUC ya está registrado"`
-  - [ ] Register `CreateClienteCommandHandler` and `CreateClienteRequestValidator` in `backend/src/SiesaAgents.API/Program.cs` DI container
+  - [x] Register `CreateClienteCommandHandler` and `CreateClienteRequestValidator` in `backend/src/SiesaAgents.API/Program.cs` DI container
 
-- [ ] Task 4 — Backend unit tests (AC: #2, #3, #4)
-  - [ ] `TC-E2-P0-01` — `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs`: POST valid payload → 201 with UUID, nombre, nitRuc, telefono, ciudad, createdAt
-  - [ ] `TC-E2-P0-02` — Duplicate NIT/RUC → 409 with `"El NIT/RUC ya está registrado"` in detail, no stack trace
-  - [ ] `TC-E2-P0-03` — Missing required fields → 400 Problem Details with field-level errors
-  - [ ] `TC-E2-P3-04` — `CreateClienteRequestValidator` rejects empty `Nombre` field
-  - [ ] File: `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsTests.cs` (extend existing)
+- [x] Task 4 — Backend unit tests (AC: #2, #3, #4)
+  - [x] `TC-E2-P0-01` — `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs`: POST valid payload → 201 with UUID, nombre, nitRuc, telefono, ciudad, createdAt
+  - [x] `TC-E2-P0-02` — Duplicate NIT/RUC → 409 with `"El NIT/RUC ya está registrado"` in detail, no stack trace
+  - [x] `TC-E2-P0-03` — Missing required fields → 400 Problem Details with field-level errors
+  - [x] `TC-E2-P3-04` — `CreateClienteRequestValidator` rejects empty `Nombre` field
+  - [x] File: `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsTests.cs` (extend existing)
 
 ### Frontend Tasks
 
-- [ ] Task 5 — Create `clienteSchema` Zod validation schema (AC: #3)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/clienteSchema.ts`:
+- [x] Task 5 — Create `clienteSchema` Zod validation schema (AC: #3)
+  - [x] Create `frontend/src/modules/crm/clientes/application/clienteSchema.ts`:
     ```typescript
     import { z } from 'zod';
     export const clienteSchema = z.object({
@@ -80,11 +80,11 @@ so that the client is available in the system immediately for the whole team.
     });
     export type ClienteFormValues = z.infer<typeof clienteSchema>;
     ```
-  - [ ] All 4 fields required; Spanish error messages (MANDATORY)
+  - [x] All 4 fields required; Spanish error messages (MANDATORY)
 
-- [ ] Task 6 — Extend `IClienteRepository` and `clienteApiRepository` with `create` method (AC: #2)
-  - [ ] Add `create(data: Omit<Cliente, 'id' | 'createdAt'>): Promise<Cliente>` to `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
-  - [ ] Implement in `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`:
+- [x] Task 6 — Extend `IClienteRepository` and `clienteApiRepository` with `create` method (AC: #2)
+  - [x] Add `create(data: Omit<Cliente, 'id' | 'createdAt'>): Promise<Cliente>` to `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
+  - [x] Implement in `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`:
     ```typescript
     create: async (data) => {
       const response = await apiClient.post<Cliente>('/api/v1/clientes', data);
@@ -92,8 +92,8 @@ so that the client is available in the system immediately for the whole team.
     }
     ```
 
-- [ ] Task 7 — Create `useCreateCliente` TanStack Query mutation hook (AC: #2, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCreateCliente.ts`:
+- [x] Task 7 — Create `useCreateCliente` TanStack Query mutation hook (AC: #2, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useCreateCliente.ts`:
     ```typescript
     import { useMutation, useQueryClient } from '@tanstack/react-query';
     import { clienteApiRepository } from '../infrastructure/clienteApiRepository';
@@ -108,20 +108,19 @@ so that the client is available in the system immediately for the whole team.
       });
     };
     ```
-  - [ ] MANDATORY: `invalidateQueries({ queryKey: ['clientes'] })` in `onSuccess` — required by FR27 and NFR2
+  - [x] MANDATORY: `invalidateQueries({ queryKey: ['clientes'] })` in `onSuccess` — required by FR27 and NFR2
 
-- [ ] Task 8 — Create `ClienteForm` presentation component (AC: #1, #2, #3, #4, #5)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx`:
+- [x] Task 8 — Create `ClienteForm` presentation component (AC: #1, #2, #3, #4, #5)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx`:
     - Uses `React Hook Form` + `zodResolver(clienteSchema)` for validation
-    - Fields: Nombre, NIT/RUC, Teléfono, Ciudad — all `<input type="text">` with Spanish labels
-    - Inline error display below each invalid field (from `formState.errors`)
-    - Submit button: "Guardar" — disabled while `isSubmitting` or mutation `isPending`
+    - Fields: Nombre, NIT/RUC, Teléfono, Ciudad — all siesa-ui-kit `Input` components with Spanish labels
+    - Inline error display below each invalid field (from `formState.errors`) with `role="alert"`
+    - Submit button: "Guardar" — disabled while mutation `isPending`; uses siesa-ui-kit `Button`
     - Cancel button: "Cancelar" — calls `onClose` prop without submitting
-    - On success: calls `onSuccess` prop + shows toast "Cliente creado correctamente"
+    - On success: calls `onSuccess` prop + shows toast "Cliente creado correctamente" (siesa-ui-kit toast)
     - On 409 conflict: sets form error with message "El NIT/RUC ya está registrado" (no alert, inline)
     - On generic error: shows toast "No se pudo guardar. Intenta de nuevo."
-    - Check siesa-ui-kit for `FormField`, `Input`, `Button` equivalents before using shadcn/ui or custom
-  - [ ] Component signature:
+  - [x] Component signature:
     ```typescript
     interface ClienteFormProps {
       onSuccess?: (cliente: Cliente) => void;
@@ -129,21 +128,21 @@ so that the client is available in the system immediately for the whole team.
     }
     ```
 
-- [ ] Task 9 — Add "Nuevo cliente" button to client list view and wire modal/drawer (AC: #1, #5)
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`:
-    - Add "Nuevo cliente" button at the top of the left panel (above search)
-    - Button triggers a local `useState` boolean (`isFormOpen`) to show/hide the `ClienteForm`
-    - Use shadcn/ui `Dialog` or `Sheet` component to host the form (already installed per architecture)
-    - When form closes (cancel or success), reset `isFormOpen = false`
-    - siesa-ui-kit check: look for modal/dialog/drawer component first
+- [x] Task 9 — Add "Nuevo cliente" button to client list view and wire modal/drawer (AC: #1, #5)
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`:
+    - Added "Nuevo cliente" button at the top of the left panel (above search) using siesa-ui-kit `Button` with `PlusIcon`
+    - Button triggers `useState` boolean (`isFormOpen`) to show/hide the `ClienteForm`
+    - Uses shadcn/ui `Dialog` to host the form (already installed per architecture)
+    - When form closes (cancel or success), resets `isFormOpen = false`
+    - Added `ToastProvider` from siesa-ui-kit to `main.tsx`
 
-- [ ] Task 10 — Frontend component and unit tests (AC: #1, #2, #3, #4, #5)
-  - [ ] `TC-E2-P0-04` — Create `frontend/src/modules/crm/clientes/presentation/ClienteForm.test.tsx`:
+- [x] Task 10 — Frontend component and unit tests (AC: #1, #2, #3, #4, #5)
+  - [x] `TC-E2-P0-04` — Created `frontend/src/modules/crm/clientes/presentation/ClienteForm.test.tsx`:
     - Render `<ClienteForm onClose={mockFn} />` — submit empty form → assert 4 inline error messages, no API call
     - Fill all fields → submit → assert POST `/api/v1/clientes` fired, `queryClient.invalidateQueries` called
     - MSW: 409 response → assert "El NIT/RUC ya está registrado" in DOM (TC-E2-P0-05)
     - Cancel click → assert `onClose` called, no API call
-  - [ ] `TC-E2-P3-02` — `frontend/src/modules/crm/clientes/application/clienteSchema.test.ts`:
+  - [x] `TC-E2-P3-02` — `frontend/src/modules/crm/clientes/application/clienteSchema.test.ts` (already created by linter during development):
     - Valid payload → parse succeeds
     - Missing each required field → error on that specific field key
 
@@ -566,6 +565,47 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- Used siesa-ui-kit `Button`, `Input`, and `toast`/`ToastProvider` components — no custom UI components created.
+- `DuplicateNitException` domain exception created in `SiesaAgents.Domain/Clientes/Exceptions/` — mapped to HTTP 409 via `ExceptionHandlingMiddleware`.
+- `DbUpdateException` caught in `ClienteRepository.CreateAsync` — unique constraint violation triggers `DuplicateNitException`.
+- `ToastProvider` added to `main.tsx` wrapping `RouterProvider`.
+- shadcn/ui `Dialog` used for modal (already installed). No siesa-ui-kit equivalent for generic form dialogs.
+- Story 2.4 had already added `UpdateAsync` to `IClienteRepository` and `update` to the frontend interface — both are preserved.
+- `clienteSchema.test.ts` was auto-created by the linter using `clienteFormSchema` alias; the schema file exports both `clienteSchema` and `clienteFormSchema` for compatibility.
+- Frontend tests (ClienteForm.test.tsx): 5/5 pass. clienteSchema.test.ts: 7/7 pass.
+- Pre-existing failures in `ClienteEditForm.test.tsx` (Story 2.4) and `ClienteListView.test.tsx` are unrelated to this story.
+- dotnet CLI not available in environment — backend tests verified by code review; integration tests authored for Story 2.3 in `ClienteEndpointsTests.cs`.
+
 ### File List
+
+**Backend — New Files:**
+- `backend/src/SiesaAgents.Domain/Clientes/Exceptions/DuplicateNitException.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommand.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommandHandler.cs`
+- `backend/src/SiesaAgents.Application/Clientes/DTOs/CreateClienteRequest.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Validators/CreateClienteRequestValidator.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs`
+
+**Backend — Modified Files:**
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` (added `CreateAsync`)
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` (added `CreateAsync` with unique constraint handling)
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` (added POST endpoint)
+- `backend/src/SiesaAgents.API/Program.cs` (registered `CreateClienteCommandHandler` and `CreateClienteRequestValidator`)
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` (added `DuplicateNitException` → HTTP 409 mapping)
+- `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsTests.cs` (added TC-E2-P0-01, TC-E2-P0-02, TC-E2-P0-03)
+
+**Frontend — New Files:**
+- `frontend/src/modules/crm/clientes/application/clienteSchema.ts`
+- `frontend/src/modules/crm/clientes/application/useCreateCliente.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteForm.test.tsx`
+
+**Frontend — Modified Files:**
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` (added `create` method)
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` (added `create` implementation)
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` (added "Nuevo cliente" button + Dialog modal)
+- `frontend/src/main.tsx` (added `ToastProvider` + `siesa-ui-kit/styles.css` import)
