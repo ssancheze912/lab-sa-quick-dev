@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { Link } from '@tanstack/react-router';
 import { useCliente } from '../application/useCliente';
 import { ErrorPanel } from '@/shared/components/ErrorPanel';
+import { ClienteEditForm } from './ClienteEditForm';
 
 interface ClienteDetailViewProps {
   clienteId: string;
@@ -53,15 +55,26 @@ function NotFoundMessage() {
 
 export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   const { data, isLoading, isError, error, refetch } = useCliente(clienteId);
+  const [isEditing, setIsEditing] = useState(false);
 
   const isNotFound =
     isError && (error as { response?: { status?: number } })?.response?.status === 404;
 
   if (isLoading) return <ClienteDetailSkeleton />;
   if (isNotFound) return <NotFoundMessage />;
-  if (isError) return <ErrorPanel onRetry={refetch} />;
+  if (isError) return <ErrorPanel onRetry={refetch} message="No se pudo cargar el detalle del cliente." />;
 
   if (!data) return null;
+
+  if (isEditing) {
+    return (
+      <ClienteEditForm
+        cliente={data}
+        onSuccess={() => setIsEditing(false)}
+        onCancel={() => setIsEditing(false)}
+      />
+    );
+  }
 
   return (
     <section

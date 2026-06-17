@@ -1,13 +1,23 @@
 import { useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { PlusIcon } from '@heroicons/react/24/outline';
+import { Button } from 'siesa-ui-kit';
 import { useClientes } from '../application/useClientes';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { ErrorPanel } from '@/shared/components/ErrorPanel';
 import { ClientListItem } from '@/shared/components/ClientListItem';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
+import { ClienteForm } from './ClienteForm';
 
 export function ClienteListView() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const { data, isLoading, isError, refetch } = useClientes();
 
   const filteredClientes = useMemo(() => {
@@ -20,8 +30,19 @@ export function ClienteListView() {
   }, [data, searchQuery]);
 
   return (
+    <>
     <div className="flex flex-col w-[280px] h-full border-r border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-700 overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+      <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex flex-col gap-2">
+        <Button
+          type="default"
+          htmlType="button"
+          fullWidth
+          leftIcon={<PlusIcon className="w-4 h-4" />}
+          onClick={() => setIsFormOpen(true)}
+          ariaLabel="Crear nuevo cliente"
+        >
+          Nuevo cliente
+        </Button>
         <input
           type="text"
           aria-label="Buscar cliente"
@@ -45,7 +66,7 @@ export function ClienteListView() {
         )}
 
         {isError && !isLoading && (
-          <ErrorPanel onRetry={refetch} />
+          <ErrorPanel onRetry={refetch} message="No se pudo cargar la lista de clientes." />
         )}
 
         {!isLoading && !isError && data?.length === 0 && !searchQuery && (
@@ -61,5 +82,18 @@ export function ClienteListView() {
         )}
       </div>
     </div>
+
+    <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <DialogContent aria-label="Formulario de nuevo cliente">
+        <DialogHeader>
+          <DialogTitle>Nuevo cliente</DialogTitle>
+        </DialogHeader>
+        <ClienteForm
+          onClose={() => setIsFormOpen(false)}
+          onSuccess={() => setIsFormOpen(false)}
+        />
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

@@ -6,4 +6,6 @@ public interface IClienteRepository
 {
     Task<List<ClienteEntity>> GetAllAsync();
     Task<ClienteEntity?> GetByIdAsync(Guid id);
+    Task<ClienteEntity> CreateAsync(ClienteEntity entity);
+    Task UpdateAsync(ClienteEntity entity);
 }

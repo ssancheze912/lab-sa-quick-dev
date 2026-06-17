@@ -2,16 +2,17 @@ import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 interface ErrorPanelProps {
   onRetry: () => void;
+  message?: string;
 }
 
-export function ErrorPanel({ onRetry }: ErrorPanelProps) {
+export function ErrorPanel({ onRetry, message = 'No se pudo cargar la información.' }: ErrorPanelProps) {
   return (
     <div
       data-testid="error-panel"
       className="flex flex-col items-center justify-center gap-3 py-12 text-slate-400"
     >
       <ExclamationCircleIcon className="h-12 w-12 text-red-400" aria-hidden="true" />
-      <p className="text-sm text-center">No se pudo cargar la lista de clientes.</p>
+      <p className="text-sm text-center">{message}</p>
       <button
         type="button"
         onClick={onRetry}
