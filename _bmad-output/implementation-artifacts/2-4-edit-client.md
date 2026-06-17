@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,9 +22,9 @@ so that I can keep client data up to date.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add `UpdateAsync` to backend Domain and Infrastructure layers (AC: #2)
-  - [ ] Add `UpdateAsync(ClienteEntity entity): Task` method to `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
-  - [ ] Implement `UpdateAsync` in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`:
+- [x] Task 1 — Add `UpdateAsync` to backend Domain and Infrastructure layers (AC: #2)
+  - [x] Add `UpdateAsync(ClienteEntity entity): Task` method to `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
+  - [x] Implement `UpdateAsync` in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`:
     - Use EF Core `_context.Clientes.Update(entity)` + `await _context.SaveChangesAsync()`
     - Set `entity.UpdatedAt = DateTimeOffset.UtcNow` before persisting (requires `SetUpdatedAt(DateTimeOffset value)` method on the entity, or update via the `Update()` factory method below)
 
