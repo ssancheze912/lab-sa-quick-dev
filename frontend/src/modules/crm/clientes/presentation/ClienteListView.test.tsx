@@ -21,6 +21,13 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  RouterProvider,
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from '@tanstack/react-router'
 import { ClienteListView } from './ClienteListView'
 import type { Cliente } from '../domain/Cliente'
 
@@ -82,15 +89,39 @@ function createQueryClient() {
 }
 
 /**
+ * Creates a minimal TanStack Router with a stub route that renders ClienteListView.
+ * Required because ClientListItem now uses TanStack Router <Link>.
+ */
+function createTestRouter(queryClient: QueryClient) {
+  const rootRoute = createRootRoute({
+    component: () => (
+      <QueryClientProvider client={queryClient}>
+        <ClienteListView />
+      </QueryClientProvider>
+    ),
+  })
+
+  const clienteDetailRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/clientes/$clienteId',
+    component: () => <div data-testid="cliente-detail-stub" />,
+  })
+
+  const router = createRouter({
+    routeTree: rootRoute.addChildren([clienteDetailRoute]),
+    history: createMemoryHistory({ initialEntries: ['/'] }),
+  })
+
+  return router
+}
+
+/**
  * Renders ClienteListView wrapped in the required providers.
  */
 function renderClienteListView() {
   const queryClient = createQueryClient()
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ClienteListView />
-    </QueryClientProvider>
-  )
+  const router = createTestRouter(queryClient)
+  return render(<RouterProvider router={router} />)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
