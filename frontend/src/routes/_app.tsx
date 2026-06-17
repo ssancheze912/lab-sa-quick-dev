@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import {
   BuildingOffice2Icon,
@@ -49,7 +49,6 @@ function useIsDesktop(): boolean {
 
 export function AppLayout() {
   const router = useRouterState()
-  const navigate = useNavigate()
   const currentPath = router.location.pathname
   const isDesktop = useIsDesktop()
 
@@ -76,12 +75,12 @@ export function AppLayout() {
           {navItems.map((item) => {
             const isActive = activeId === item.id
             return (
-              <button
+              <Link
                 key={item.id}
+                to={item.to}
                 data-testid={`nav-item-${item.id}`}
                 aria-current={isActive ? 'page' : undefined}
                 aria-label={item.label}
-                onClick={() => navigate({ to: item.to })}
                 className={`flex flex-col items-center gap-1 px-2 py-2 rounded-2xl w-14 text-xs font-bold transition-colors cursor-pointer ${
                   isActive
                     ? 'bg-[#dbeefe] text-[#0e79fd]'
@@ -90,7 +89,7 @@ export function AppLayout() {
               >
                 {item.icon}
                 {item.label}
-              </button>
+              </Link>
             )
           })}
         </nav>
@@ -111,19 +110,19 @@ export function AppLayout() {
           {navItems.map((item) => {
             const isActive = activeId === item.id
             return (
-              <button
+              <Link
                 key={item.id}
+                to={item.to}
                 data-testid={`nav-item-${item.id}`}
                 aria-current={isActive ? 'page' : undefined}
                 aria-label={item.label}
-                onClick={() => navigate({ to: item.to })}
                 className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 text-xs font-bold transition-colors cursor-pointer ${
                   isActive ? 'text-[#0e79fd]' : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
                 {item.icon}
                 {item.label}
-              </button>
+              </Link>
             )
           })}
         </nav>
