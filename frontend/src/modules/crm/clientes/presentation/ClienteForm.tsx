@@ -40,6 +40,7 @@ export function ClienteForm({ onSuccess, onClose }: ClienteFormProps) {
 
   return (
     <form
+      data-testid="cliente-form"
       onSubmit={handleSubmit(onSubmit)}
       aria-label="Formulario de nuevo cliente"
       className="flex flex-col gap-4"
@@ -47,6 +48,7 @@ export function ClienteForm({ onSuccess, onClose }: ClienteFormProps) {
       <div>
         <Input
           id="nombre"
+          data-testid="input-nombre"
           label="Nombre"
           inputSize="base"
           error={!!errors.nombre}
@@ -54,7 +56,7 @@ export function ClienteForm({ onSuccess, onClose }: ClienteFormProps) {
           {...register('nombre')}
         />
         {errors.nombre && (
-          <p id="nombre-error" role="alert" className="text-xs text-red-600 mt-1">
+          <p id="nombre-error" data-testid="error-nombre" role="alert" className="text-xs text-red-600 mt-1">
             {errors.nombre.message}
           </p>
         )}
@@ -63,6 +65,7 @@ export function ClienteForm({ onSuccess, onClose }: ClienteFormProps) {
       <div>
         <Input
           id="nitRuc"
+          data-testid="input-nitruc"
           label="NIT/RUC"
           inputSize="base"
           error={!!errors.nitRuc}
@@ -70,7 +73,7 @@ export function ClienteForm({ onSuccess, onClose }: ClienteFormProps) {
           {...register('nitRuc')}
         />
         {errors.nitRuc && (
-          <p id="nitRuc-error" role="alert" className="text-xs text-red-600 mt-1">
+          <p id="nitRuc-error" data-testid="error-nitruc" role="alert" className="text-xs text-red-600 mt-1">
             {errors.nitRuc.message}
           </p>
         )}
@@ -79,6 +82,7 @@ export function ClienteForm({ onSuccess, onClose }: ClienteFormProps) {
       <div>
         <Input
           id="telefono"
+          data-testid="input-telefono"
           label="Teléfono"
           inputSize="base"
           error={!!errors.telefono}
@@ -86,7 +90,7 @@ export function ClienteForm({ onSuccess, onClose }: ClienteFormProps) {
           {...register('telefono')}
         />
         {errors.telefono && (
-          <p id="telefono-error" role="alert" className="text-xs text-red-600 mt-1">
+          <p id="telefono-error" data-testid="error-telefono" role="alert" className="text-xs text-red-600 mt-1">
             {errors.telefono.message}
           </p>
         )}
@@ -95,6 +99,7 @@ export function ClienteForm({ onSuccess, onClose }: ClienteFormProps) {
       <div>
         <Input
           id="ciudad"
+          data-testid="input-ciudad"
           label="Ciudad"
           inputSize="base"
           error={!!errors.ciudad}
@@ -102,7 +107,7 @@ export function ClienteForm({ onSuccess, onClose }: ClienteFormProps) {
           {...register('ciudad')}
         />
         {errors.ciudad && (
-          <p id="ciudad-error" role="alert" className="text-xs text-red-600 mt-1">
+          <p id="ciudad-error" data-testid="error-ciudad" role="alert" className="text-xs text-red-600 mt-1">
             {errors.ciudad.message}
           </p>
         )}
@@ -112,6 +117,7 @@ export function ClienteForm({ onSuccess, onClose }: ClienteFormProps) {
         <Button
           type="outline"
           htmlType="button"
+          data-testid="btn-cancelar"
           onClick={onClose}
           ariaLabel="Cancelar creación de cliente"
         >
@@ -120,6 +126,7 @@ export function ClienteForm({ onSuccess, onClose }: ClienteFormProps) {
         <Button
           type="default"
           htmlType="submit"
+          data-testid="btn-guardar"
           disabled={isPending}
           ariaLabel="Guardar cliente"
         >

@@ -37,6 +37,7 @@ export function ClienteListView() {
           type="default"
           htmlType="button"
           fullWidth
+          data-testid="nuevo-cliente-button"
           leftIcon={<PlusIcon className="w-4 h-4" />}
           onClick={() => setIsFormOpen(true)}
           ariaLabel="Crear nuevo cliente"
