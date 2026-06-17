@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -623,3 +623,29 @@ claude-sonnet-4-6
 ### Completion Notes List
 
 ### File List
+
+**Frontend:**
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` (modified — add update method)
+- `frontend/src/modules/crm/clientes/application/clienteSchema.ts` (created — Zod schema for form validation)
+- `frontend/src/modules/crm/clientes/application/clienteSchema.test.ts` (created — unit tests TC-E2-P3-02)
+- `frontend/src/modules/crm/clientes/application/clienteSchema.edge-cases.test.ts` (created — boundary tests)
+- `frontend/src/modules/crm/clientes/application/useUpdateCliente.ts` (created — TanStack Query mutation hook)
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` (modified — add update method)
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx` (modified — add isEditing state + Editar button)
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx` (modified — TC-E2-P1-10, TC-E2-P2-02)
+- `frontend/src/modules/crm/clientes/presentation/ClienteEditForm.tsx` (created — edit form component)
+- `frontend/src/modules/crm/clientes/presentation/ClienteEditForm.test.tsx` (created — component tests TC-E2-P2-02, TC-E2-P2-03)
+- `frontend/src/modules/crm/clientes/presentation/ClienteEditForm.edge-cases.test.tsx` (created — edge case tests)
+- `frontend/src/main.tsx` (modified — ToastProvider already configured from Story 2.3)
+
+**Backend:**
+- `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs` (modified — add Update() method)
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` (modified — add UpdateAsync)
+- `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommand.cs` (created)
+- `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommandValidator.cs` (created)
+- `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommandHandler.cs` (created)
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` (modified — add UpdateAsync)
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` (modified — add PUT /api/v1/clientes/{id})
+- `backend/src/SiesaAgents.API/Program.cs` (modified — register UpdateClienteCommandHandler + Validator)
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/UpdateClienteCommandValidatorTests.cs` (created — TC-E2-P3-04)
+- `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsTests.cs` (modified — TC-E2-P2-07, 400 edit variant)

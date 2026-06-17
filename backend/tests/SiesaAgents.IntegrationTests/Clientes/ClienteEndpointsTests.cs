@@ -586,5 +586,8 @@ public class ClienteEndpointsTests : IAsyncLifetime
 
         var contentType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
         Assert.Contains("application/problem+json", contentType);
+
+        var responseBody = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(responseBody.TryGetProperty("errors", out _), "Missing 'errors' in Problem Details for validation failure");
     }
 }

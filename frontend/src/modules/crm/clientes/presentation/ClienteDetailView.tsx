@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { Link } from '@tanstack/react-router';
+import { PencilSquareIcon } from '@heroicons/react/24/outline';
 import { useCliente } from '../application/useCliente';
 import { ErrorPanel } from '@/shared/components/ErrorPanel';
 import { ClienteEditForm } from './ClienteEditForm';
@@ -94,6 +95,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
           ariaLabel="Editar cliente"
           onClick={() => setIsEditing(true)}
         >
+          <PencilSquareIcon className="h-4 w-4 mr-1 inline-block" aria-hidden="true" />
           Editar
         </Button>
       </div>
