@@ -488,7 +488,6 @@ describe('Edge — Rapid search typing does not trigger extra API calls', () => 
     )
 
     // THEN: No additional API calls were made during typing
-    await waitFor(() => {}, { timeout: 500 })
     expect(callCount).toBe(callsAfterLoad)
   })
 })

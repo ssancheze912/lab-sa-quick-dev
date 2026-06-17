@@ -345,7 +345,6 @@ describe('TC-E2-P1-05 — Real-time search filters by Nombre', () => {
     )
 
     // THEN: No additional API calls — filter is synchronous over cached data
-    await waitFor(() => {}, { timeout: 500 })
     expect(callCount).toBe(callsAfterLoad)
   })
 
@@ -485,7 +484,6 @@ describe('TC-E2-P1-06 — Real-time search filters by NIT/RUC', () => {
     )
 
     // THEN: No additional API call (synchronous filter over cache)
-    await waitFor(() => {}, { timeout: 500 })
     expect(callCount).toBe(callsAfterLoad)
   })
 
