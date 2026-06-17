@@ -17,11 +17,15 @@ function NotFoundPage() {
   return (
     <div
       className="flex flex-col items-center justify-center h-screen gap-4 text-center p-6"
-      data-testid="not-found-page"
+      data-testid="not-found-view"
     >
       <h1 className="text-4xl font-bold text-slate-900">404</h1>
       <p className="text-lg text-slate-600">Página no encontrada</p>
-      <Link to="/clientes" className="text-blue-600 underline hover:text-blue-800">
+      <Link
+        to="/clientes"
+        className="text-blue-600 underline hover:text-blue-800"
+        data-testid="not-found-back-link"
+      >
         Ir a Clientes
       </Link>
     </div>
