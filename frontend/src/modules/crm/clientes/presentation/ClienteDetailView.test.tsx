@@ -1,17 +1,21 @@
 /**
  * Story 2.2: Client Detail View — Component Tests
+ * Story 2.4: Edit Client — Extended tests for ClienteDetailView
  * Epic 2: Client Management
  *
  * Test IDs covered:
  *   TC-E2-P1-07 (frontend) — Render ClienteDetailView with valid clienteId; all 4 fields visible
  *   TC-E2-P1-09            — Non-existent clienteId shows not-found message, no JS error
  *   Skeleton test           — Skeleton visible while pending; disappears after response
+ *   TC-E2-P1-10            — Edit form opens pre-filled with current values when Editar clicked
+ *   TC-E2-P2-02            — Cancel restores original data; no PUT fired
  *
  * Tooling: Vitest 2+ | @testing-library/react | MSW 2
  */
 
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -231,5 +235,95 @@ describe('Skeleton loading — visible while pending, gone after response', () =
     await waitFor(() => {
       expect(screen.getByText('Empresa Ejemplo S.A.S.')).toBeInTheDocument()
     })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STORY 2.4 — TC-E2-P1-10: Edit form opens pre-filled with all 4 field values
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('TC-E2-P1-10 — Clicking Editar opens pre-filled edit form', () => {
+  it('should show form with all 4 fields pre-populated when Editar is clicked', async () => {
+    // ARRANGE
+    const user = userEvent.setup()
+    const cliente = buildClienteDto()
+
+    server.use(
+      http.get(`*/api/v1/clientes/${cliente.id}`, () =>
+        HttpResponse.json(cliente, { status: 200 })
+      )
+    )
+
+    renderClienteDetailView(cliente.id)
+
+    // Wait for detail view to load
+    await waitFor(() => {
+      expect(screen.getByText('Empresa Ejemplo S.A.S.')).toBeInTheDocument()
+    })
+
+    // ACT — click Editar button
+    const editButton = screen.getByRole('button', { name: /editar cliente/i })
+    await user.click(editButton)
+
+    // ASSERT — edit form appears with pre-filled values
+    await waitFor(() => {
+      const nombreInput = screen.getByRole('textbox', { name: /nombre/i })
+      expect(nombreInput).toHaveValue('Empresa Ejemplo S.A.S.')
+    })
+    expect(screen.getByRole('textbox', { name: /nit\/ruc/i })).toHaveValue('900123456-1')
+    expect(screen.getByRole('textbox', { name: /teléfono/i })).toHaveValue('3001234567')
+    expect(screen.getByRole('textbox', { name: /ciudad/i })).toHaveValue('Bogotá')
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STORY 2.4 — TC-E2-P2-02: Cancel restores original data, no PUT fired
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('TC-E2-P2-02 — Cancelar closes form without saving, no PUT request', () => {
+  it('should return to detail view and not fire PUT when Cancelar is clicked', async () => {
+    // ARRANGE
+    const user = userEvent.setup()
+    const cliente = buildClienteDto()
+    let putCalled = false
+
+    server.use(
+      http.get(`*/api/v1/clientes/${cliente.id}`, () =>
+        HttpResponse.json(cliente, { status: 200 })
+      ),
+      http.put(`*/api/v1/clientes/${cliente.id}`, () => {
+        putCalled = true
+        return HttpResponse.json(cliente, { status: 200 })
+      })
+    )
+
+    renderClienteDetailView(cliente.id)
+
+    // Wait for detail to load, then open edit form
+    await waitFor(() => {
+      expect(screen.getByText('Empresa Ejemplo S.A.S.')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /editar cliente/i }))
+
+    // Wait for form to open
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: /nombre/i })).toBeInTheDocument()
+    })
+
+    // ACT — modify Nombre then cancel
+    const nombreInput = screen.getByRole('textbox', { name: /nombre/i })
+    await user.clear(nombreInput)
+    await user.type(nombreInput, 'Nuevo Nombre Modificado')
+
+    await user.click(screen.getByRole('button', { name: /cancelar/i }))
+
+    // ASSERT — original name is shown again (detail view restored)
+    await waitFor(() => {
+      expect(screen.getByText('Empresa Ejemplo S.A.S.')).toBeInTheDocument()
+    })
+
+    // ASSERT — no PUT was fired
+    expect(putCalled).toBe(false)
   })
 })
