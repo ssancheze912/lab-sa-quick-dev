@@ -27,21 +27,22 @@ import { AppLayout } from '../_app'
 // Test Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Mock TanStack Router's useRouterState to simulate the current pathname.
- * This avoids needing a full router setup in component tests.
- */
+// vi.hoisted() runs before vi.mock() hoisting, making the ref available in the factory
+const currentPath = vi.hoisted(() => ({ value: '/clientes' }))
+
+vi.mock('@tanstack/react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-router')>()
+  return {
+    ...actual,
+    useRouterState: () => ({
+      location: { pathname: currentPath.value },
+    }),
+    Outlet: () => <div data-testid="outlet-content">outlet</div>,
+  }
+})
+
 function mockCurrentPath(pathname: string) {
-  vi.mock('@tanstack/react-router', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('@tanstack/react-router')>()
-    return {
-      ...actual,
-      useRouterState: () => ({
-        location: { pathname },
-      }),
-      Outlet: () => <div data-testid="outlet-content">outlet</div>,
-    }
-  })
+  currentPath.value = pathname
 }
 
 /**

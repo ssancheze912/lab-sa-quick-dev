@@ -163,9 +163,9 @@ test.describe('AC2 — Mobile NavigationBar (viewport < 1024px)', () => {
     await page.goto('/clientes');
     await page.waitForLoadState('networkidle');
 
-    // WHEN: The user taps the Contactos navigation item
+    // WHEN: The user clicks/taps the Contactos navigation item
     const contactosItem = page.locator('[data-testid="nav-item-contactos"]');
-    await contactosItem.tap();
+    await contactosItem.click();
     await page.waitForURL('**/contactos');
 
     // THEN: The app navigates to /contactos
