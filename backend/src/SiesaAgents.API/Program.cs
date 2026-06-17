@@ -1,5 +1,9 @@
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +13,10 @@ builder.Services.AddOpenApi();
 // Database context
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// DI registrations
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<GetClientesQueryHandler>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];
@@ -24,6 +32,7 @@ var app = builder.Build();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("DevCors");
 app.MapScalarApiReference();
+app.MapClienteEndpoints();
 
 // Test endpoint — triggers middleware error handling (used by integration tests TC-E1-P0-05)
 // Registered only in Development to avoid exposing an error-triggering route in production
