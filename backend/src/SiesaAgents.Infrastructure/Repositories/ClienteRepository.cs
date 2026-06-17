@@ -9,7 +9,7 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
 {
     public async Task<List<ClienteEntity>> GetAllAsync()
     {
-        return await dbContext.Clientes.ToListAsync();
+        return await dbContext.Clientes.AsNoTracking().ToListAsync();
     }
 
     public async Task<ClienteEntity?> GetByIdAsync(Guid id)
