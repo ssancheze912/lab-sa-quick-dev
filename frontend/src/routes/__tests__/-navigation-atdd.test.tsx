@@ -17,7 +17,6 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 
 // NOTE: These imports will fail (RED phase) until the files are created
 // The AppLayout component does not exist yet — it will be created in _app.tsx

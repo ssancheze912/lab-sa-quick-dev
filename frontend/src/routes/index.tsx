@@ -5,11 +5,3 @@ export const Route = createFileRoute('/')({
     throw redirect({ to: '/clientes' })
   },
 })
-
-function IndexPage() {
-  return (
-    <div>
-      <h1>Agentes Siesa</h1>
-    </div>
-  )
-}
