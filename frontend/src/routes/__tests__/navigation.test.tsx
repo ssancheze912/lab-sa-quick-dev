@@ -21,7 +21,7 @@ import userEvent from '@testing-library/user-event'
 
 // NOTE: These imports will fail (RED phase) until the files are created
 // The AppLayout component does not exist yet — it will be created in _app.tsx
-import { AppLayout } from '../_app'
+import { AppLayout } from '../-app-layout'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test Helpers
@@ -38,6 +38,11 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
       location: { pathname: currentPath.value },
     }),
     Outlet: () => <div data-testid="outlet-content">outlet</div>,
+    Link: ({ to, children, ...rest }: { to: string; children: React.ReactNode; [key: string]: unknown }) => (
+      <a href={to} {...rest}>
+        {children}
+      </a>
+    ),
   }
 })
 

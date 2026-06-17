@@ -22,7 +22,7 @@ vi.mock('@tanstack/react-router', async () => {
   }
 })
 
-import { AppLayout } from '../_app'
+import { AppLayout } from '../-app-layout'
 
 function setDesktopViewport() {
   Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1280 })
