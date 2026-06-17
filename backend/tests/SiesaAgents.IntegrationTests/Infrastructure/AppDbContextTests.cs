@@ -213,20 +213,16 @@ public class AppDbContextTests : IAsyncLifetime
     public async Task GivenUnhandledException_WhenErrorReachesMiddleware_ThenResponseIsApplicationProblemJson()
     {
         // GIVEN: A test endpoint that intentionally throws an exception
+        // Use CreateFactory() to keep the real Program.cs pipeline intact (middleware + routes)
         await using var factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(host =>
             {
                 host.UseSetting(
                     "ConnectionStrings:DefaultConnection",
                     _postgres.GetConnectionString());
-
-                host.Configure(app =>
-                {
-                    // Intentional: register the real middleware pipeline from Program.cs
-                    // The test endpoint /api/v1/test-error must be added via minimal API in Program.cs
-                    // or injected here for test isolation
-                    var existingConfigure = host.GetType().GetMethod("Configure");
-                });
+                // NOTE: Do NOT call host.Configure() here — it replaces the entire pipeline
+                // and removes ExceptionHandlingMiddleware from Program.cs.
+                // UseSetting alone is sufficient to inject the test DB connection string.
             });
 
         using var client = factory.CreateClient();
