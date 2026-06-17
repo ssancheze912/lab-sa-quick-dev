@@ -312,3 +312,14 @@ claude-sonnet-4-6
 ### Completion Notes List
 
 ### File List
+
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` — Created
+- `backend/src/SiesaAgents.Infrastructure/Data/Configurations/` — Created (empty scaffold for future IEntityTypeConfiguration<T>)
+- `backend/src/SiesaAgents.Infrastructure/Migrations/20260617000000_InitialCreate.cs` — Created (empty Up/Down per scope)
+- `backend/src/SiesaAgents.Infrastructure/Migrations/20260617000000_InitialCreate.Designer.cs` — Created
+- `backend/src/SiesaAgents.Infrastructure/Migrations/AppDbContextModelSnapshot.cs` — Created
+- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — Modified (added Microsoft.EntityFrameworkCore.Design)
+- `backend/src/SiesaAgents.API/Program.cs` — Modified (AddDbContext registration + /api/v1/test-error endpoint)
+- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — Modified (InternalsVisibleTo for test project)
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` — Created
+- `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — Modified (added TestContainers, InMemory, MVC.Testing packages)

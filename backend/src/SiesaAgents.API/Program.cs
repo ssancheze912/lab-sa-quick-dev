@@ -26,9 +26,13 @@ app.UseCors("DevCors");
 app.MapScalarApiReference();
 
 // Test endpoint — triggers middleware error handling (used by integration tests TC-E1-P0-05)
-app.MapGet("/api/v1/test-error", () =>
+// Registered only in Development to avoid exposing an error-triggering route in production
+if (app.Environment.IsDevelopment())
 {
-    throw new InvalidOperationException("Test exception for middleware validation");
-});
+    app.MapGet("/api/v1/test-error", () =>
+    {
+        throw new InvalidOperationException("Test exception for middleware validation");
+    });
+}
 
 app.Run();
