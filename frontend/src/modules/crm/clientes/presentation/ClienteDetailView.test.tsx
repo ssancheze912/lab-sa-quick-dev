@@ -18,6 +18,13 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  RouterProvider,
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from '@tanstack/react-router'
 import { ClienteDetailView } from './ClienteDetailView'
 import type { Cliente } from '../domain/Cliente'
 
@@ -75,14 +82,31 @@ function createQueryClient() {
 
 /**
  * Renders ClienteDetailView wrapped in required providers.
+ * RouterProvider is needed because NotFoundMessage renders a TanStack <Link>.
  */
 function renderClienteDetailView(clienteId: string) {
   const queryClient = createQueryClient()
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ClienteDetailView clienteId={clienteId} />
-    </QueryClientProvider>
-  )
+
+  const rootRoute = createRootRoute({
+    component: () => (
+      <QueryClientProvider client={queryClient}>
+        <ClienteDetailView clienteId={clienteId} />
+      </QueryClientProvider>
+    ),
+  })
+
+  const clientesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/clientes',
+    component: () => <div data-testid="clientes-list-stub" />,
+  })
+
+  const router = createRouter({
+    routeTree: rootRoute.addChildren([clientesRoute]),
+    history: createMemoryHistory({ initialEntries: ['/'] }),
+  })
+
+  return render(<RouterProvider router={router} />)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -448,9 +472,9 @@ describe('Skeleton loading — ClienteDetailView shows skeleton while fetching',
 
     // THEN: Skeleton disappears and client Nombre is visible
     await waitFor(() => {
-      expect(screen.queryByTestId('cliente-detail-skeleton')).not.toBeInTheDocument()
-    })
-    expect(screen.getByTestId('cliente-detail-nombre')).toHaveTextContent('Empresa Skeleton Final S.A.')
+      expect(screen.getByTestId('cliente-detail-nombre')).toHaveTextContent('Empresa Skeleton Final S.A.')
+    }, { timeout: 3000 })
+    expect(screen.queryByTestId('cliente-detail-skeleton')).not.toBeInTheDocument()
   })
 
   it('should NOT render a spinner — only skeleton placeholders are allowed (anti-pattern guard)', async () => {

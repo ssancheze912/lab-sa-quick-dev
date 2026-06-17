@@ -1,5 +1,6 @@
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { Link } from '@tanstack/react-router';
 import { useCliente } from '../application/useCliente';
 import { ErrorPanel } from '@/shared/components/ErrorPanel';
 
@@ -39,6 +40,13 @@ function NotFoundMessage() {
       <p className="text-slate-500 dark:text-slate-400 text-sm">
         No se encontró el cliente solicitado.
       </p>
+      <Link
+        to="/clientes"
+        data-testid="cliente-not-found-back"
+        className="mt-4 text-sm text-[#0e79fd] hover:underline focus:outline-none focus:ring-2 focus:ring-[#0e79fd] focus:ring-offset-2 rounded"
+      >
+        Volver a la lista de clientes
+      </Link>
     </section>
   );
 }
@@ -58,6 +66,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   return (
     <section
       aria-label="Detalle del cliente"
+      data-testid="cliente-detail-panel"
       className="max-w-xl p-6"
     >
       <h2 data-testid="cliente-detail-nombre" className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
