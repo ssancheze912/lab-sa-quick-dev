@@ -1,7 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
-  component: IndexPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/clientes' })
+  },
 })
 
 function IndexPage() {
