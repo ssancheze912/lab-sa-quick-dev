@@ -271,4 +271,84 @@ public class ClienteEndpointsTests : IAsyncLifetime
         var contentType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
         Assert.Contains("application/json", contentType);
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STORY 2.2 — Client Detail View
+    // TC-E2-P1-07: GET /api/v1/clientes/{id} — Returns 200 with correct client data
+    // TC-E2-P2-08: GET /api/v1/clientes/{id} — Non-existent UUID → HTTP 404 Problem Details
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// TC-E2-P1-07 (backend portion):
+    /// GIVEN: 1 client seeded in the database
+    /// WHEN:  GET /api/v1/clientes/{id} is called with the seeded client's id
+    /// THEN:  HTTP 200 with correct id, nombre, nitRuc, telefono, ciudad, createdAt
+    /// </summary>
+    [Fact]
+    public async Task GivenClientSeeded_WhenGetClienteById_ThenReturns200WithCorrectFields()
+    {
+        // ARRANGE
+        await using var factory = CreateFactory();
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<SiesaAgents.Infrastructure.Data.AppDbContext>();
+        await dbContext.Database.MigrateAsync();
+
+        var cliente = SiesaAgents.Domain.Clientes.Entities.ClienteEntity.Create(
+            "Empresa Detail S.A.S.", "900100001-1", "3001000001", "Bogotá");
+        dbContext.Clientes.Add(cliente);
+        await dbContext.SaveChangesAsync();
+
+        using var client = factory.CreateClient();
+
+        // ACT
+        var response = await client.GetAsync($"/api/v1/clientes/{cliente.Id}");
+
+        // ASSERT
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(body.TryGetProperty("id", out var idProp), "Missing field 'id'");
+        Assert.True(body.TryGetProperty("nombre", out var nombreProp), "Missing field 'nombre'");
+        Assert.True(body.TryGetProperty("nitRuc", out var nitRucProp), "Missing field 'nitRuc'");
+        Assert.True(body.TryGetProperty("telefono", out var telefonoProp), "Missing field 'telefono'");
+        Assert.True(body.TryGetProperty("ciudad", out var ciudadProp), "Missing field 'ciudad'");
+        Assert.True(body.TryGetProperty("createdAt", out _), "Missing field 'createdAt'");
+
+        Assert.Equal(cliente.Id.ToString(), idProp.GetString());
+        Assert.Equal("Empresa Detail S.A.S.", nombreProp.GetString());
+        Assert.Equal("900100001-1", nitRucProp.GetString());
+        Assert.Equal("3001000001", telefonoProp.GetString());
+        Assert.Equal("Bogotá", ciudadProp.GetString());
+    }
+
+    /// <summary>
+    /// TC-E2-P2-08:
+    /// GIVEN: A non-existent UUID
+    /// WHEN:  GET /api/v1/clientes/00000000-0000-0000-0000-000000000000 is called
+    /// THEN:  HTTP 404 with Content-Type application/problem+json and status: 404
+    /// </summary>
+    [Fact]
+    public async Task GivenNonExistentId_WhenGetClienteById_ThenReturns404ProblemDetails()
+    {
+        // ARRANGE
+        await using var factory = CreateFactory();
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<SiesaAgents.Infrastructure.Data.AppDbContext>();
+        await dbContext.Database.MigrateAsync();
+
+        using var client = factory.CreateClient();
+
+        // ACT
+        var response = await client.GetAsync("/api/v1/clientes/00000000-0000-0000-0000-000000000000");
+
+        // ASSERT
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
+        Assert.Contains("application/problem+json", contentType);
+
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(body.TryGetProperty("status", out var statusProp), "Missing field 'status' in Problem Details");
+        Assert.Equal(404, statusProp.GetInt32());
+    }
 }
