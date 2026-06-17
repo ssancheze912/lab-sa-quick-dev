@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
 // Mock TanStack Router hooks
@@ -65,6 +65,10 @@ describe('Navigation Shell — AppLayout', () => {
   beforeEach(() => {
     mockPathname.mockReturnValue('/clientes')
     setDesktopViewport()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   describe('AC#1 — Desktop: NavigationRail visible on large viewports', () => {

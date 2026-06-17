@@ -260,26 +260,14 @@ test.describe('[P1] Keyboard accessibility — navigation items', () => {
     await page.goto('/clientes');
     await page.waitForLoadState('networkidle');
 
-    // WHEN: User tabs through the page
-    // Tab enough times to reach the navigation items
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-
-    // THEN: A navigation item eventually receives focus
-    // Accept that at least one nav item is focusable (Tab doesn't crash the page)
+    // WHEN: User tabs through the page (deterministic: focus directly on the nav item)
     const clientes = page.locator('[data-testid="nav-item-clientes"]');
-    const contactos = page.locator('[data-testid="nav-item-contactos"]');
-    const clientesFocused = await clientes.evaluate((el) => el === document.activeElement);
-    const contactosFocused = await contactos.evaluate((el) => el === document.activeElement);
+    await clientes.focus();
 
-    // At least one nav item should be reachable by Tab (they are links/anchors)
-    // If neither is focused after 2 tabs, try 2 more
-    if (!clientesFocused && !contactosFocused) {
-      await page.keyboard.press('Tab');
-      await page.keyboard.press('Tab');
-    }
+    // THEN: The Clientes nav item receives keyboard focus
+    await expect(clientes).toBeFocused();
 
-    // Verify they are keyboard-focusable elements (anchor tags)
+    // AND: The nav item is an anchor tag (keyboard accessible)
     const clientesTag = await clientes.evaluate((el) => el.tagName.toLowerCase());
     expect(clientesTag).toBe('a');
   });
