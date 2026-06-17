@@ -564,3 +564,216 @@ describe('Generic network error — ClienteDetailView shows ErrorPanel with retr
     expect(screen.queryByTestId('cliente-not-found')).not.toBeInTheDocument()
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Story 2.4: Edit Client — Tests extending ClienteDetailView
+// TC-E2-P1-10 — Edit form opens pre-filled with current values when "Editar" clicked
+// TC-E2-P2-02 — Cancel restores original data; no PUT fired
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('TC-E2-P1-10 — ClienteDetailView shows "Editar" button and opens pre-filled edit form (AC1)', () => {
+  it('TC-E2-P1-10 — should render an "Editar" button in the detail view when client data is loaded', async () => {
+    // GIVEN: MSW returns a valid client for the detail view
+    const cliente = buildClienteDto({ nombre: 'Empresa Editar Button S.A.' })
+    server.use(
+      http.get(`*/api/v1/clientes/${cliente.id}`, () =>
+        HttpResponse.json(cliente, { status: 200 })
+      )
+    )
+
+    // WHEN: ClienteDetailView is rendered
+    renderClienteDetailView(cliente.id)
+
+    // THEN: The "Editar" button is visible in the detail panel
+    await waitFor(() => {
+      expect(screen.getByTestId('btn-editar-cliente')).toBeInTheDocument()
+    })
+  })
+
+  it('TC-E2-P1-10 — should open the edit form when "Editar" button is clicked', async () => {
+    // GIVEN: MSW returns a valid client; the detail view is rendered
+    const cliente = buildClienteDto({ nombre: 'Empresa Edit Form Open S.A.' })
+    server.use(
+      http.get(`*/api/v1/clientes/${cliente.id}`, () =>
+        HttpResponse.json(cliente, { status: 200 })
+      )
+    )
+
+    renderClienteDetailView(cliente.id)
+    await waitFor(() => {
+      expect(screen.getByTestId('btn-editar-cliente')).toBeInTheDocument()
+    })
+
+    // WHEN: User clicks "Editar"
+    const user = (await import('@testing-library/user-event')).default
+    const userEventInstance = user.setup()
+    await userEventInstance.click(screen.getByTestId('btn-editar-cliente'))
+
+    // THEN: The edit form is rendered
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-edit-form')).toBeInTheDocument()
+    })
+  })
+
+  it('TC-E2-P1-10 — should pre-fill the Nombre field in the edit form with the current client value', async () => {
+    // GIVEN: MSW returns a client with a known Nombre
+    const cliente = buildClienteDto({ nombre: 'Empresa Pre-fill Detail S.A.' })
+    server.use(
+      http.get(`*/api/v1/clientes/${cliente.id}`, () =>
+        HttpResponse.json(cliente, { status: 200 })
+      )
+    )
+
+    renderClienteDetailView(cliente.id)
+    await waitFor(() => {
+      expect(screen.getByTestId('btn-editar-cliente')).toBeInTheDocument()
+    })
+
+    // WHEN: User clicks "Editar"
+    const user = (await import('@testing-library/user-event')).default
+    const userEventInstance = user.setup()
+    await userEventInstance.click(screen.getByTestId('btn-editar-cliente'))
+
+    // THEN: Nombre input is pre-filled with the current value
+    await waitFor(() => {
+      expect(screen.getByTestId('input-nombre')).toHaveValue('Empresa Pre-fill Detail S.A.')
+    })
+  })
+
+  it('TC-E2-P1-10 — should pre-fill all 4 fields (Nombre, NIT/RUC, Teléfono, Ciudad) when edit form opens', async () => {
+    // GIVEN: MSW returns a client with known values for all 4 fields
+    const cliente = buildClienteDto({
+      nombre: 'Empresa Pre-fill All Fields S.A.',
+      nitRuc: '900700001-1',
+      telefono: '3007000001',
+      ciudad: 'Manizales',
+    })
+    server.use(
+      http.get(`*/api/v1/clientes/${cliente.id}`, () =>
+        HttpResponse.json(cliente, { status: 200 })
+      )
+    )
+
+    renderClienteDetailView(cliente.id)
+    await waitFor(() => {
+      expect(screen.getByTestId('btn-editar-cliente')).toBeInTheDocument()
+    })
+
+    // WHEN: User clicks "Editar"
+    const user = (await import('@testing-library/user-event')).default
+    const userEventInstance = user.setup()
+    await userEventInstance.click(screen.getByTestId('btn-editar-cliente'))
+
+    // THEN: All 4 form fields are pre-filled with the current values
+    await waitFor(() => {
+      expect(screen.getByTestId('input-nombre')).toHaveValue('Empresa Pre-fill All Fields S.A.')
+    })
+    expect(screen.getByTestId('input-nitruc')).toHaveValue('900700001-1')
+    expect(screen.getByTestId('input-telefono')).toHaveValue('3007000001')
+    expect(screen.getByTestId('input-ciudad')).toHaveValue('Manizales')
+  })
+})
+
+describe('TC-E2-P2-02 — Clicking "Cancelar" in ClienteDetailView preserves original data; no PUT fired (AC4)', () => {
+  it('TC-E2-P2-02 — should show original Nombre in the detail panel after "Cancelar" is clicked in the edit form', async () => {
+    // GIVEN: MSW returns a valid client; user opens the edit form and modifies Nombre
+    const cliente = buildClienteDto({ nombre: 'Empresa Original Data S.A.' })
+    server.use(
+      http.get(`*/api/v1/clientes/${cliente.id}`, () =>
+        HttpResponse.json(cliente, { status: 200 })
+      )
+    )
+
+    renderClienteDetailView(cliente.id)
+    await waitFor(() => {
+      expect(screen.getByTestId('btn-editar-cliente')).toBeInTheDocument()
+    })
+
+    const user = (await import('@testing-library/user-event')).default
+    const userEventInstance = user.setup()
+    await userEventInstance.click(screen.getByTestId('btn-editar-cliente'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-nombre')).toBeInTheDocument()
+    })
+    await userEventInstance.clear(screen.getByTestId('input-nombre'))
+    await userEventInstance.type(screen.getByTestId('input-nombre'), 'Nombre Cancelado')
+
+    // WHEN: User clicks "Cancelar"
+    await userEventInstance.click(screen.getByTestId('btn-cancelar'))
+
+    // THEN: The original Nombre is still shown in the detail view (unchanged)
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-detail-nombre')).toHaveTextContent('Empresa Original Data S.A.')
+    })
+  })
+
+  it('TC-E2-P2-02 — should NOT fire a PUT request when user clicks "Cancelar"', async () => {
+    // GIVEN: MSW returns a valid client; track any PUT calls
+    const cliente = buildClienteDto({ nombre: 'Empresa No PUT Cancel Detail S.A.' })
+    let putFired = false
+
+    server.use(
+      http.get(`*/api/v1/clientes/${cliente.id}`, () =>
+        HttpResponse.json(cliente, { status: 200 })
+      ),
+      http.put(`*/api/v1/clientes/${cliente.id}`, () => {
+        putFired = true
+        return HttpResponse.json(cliente, { status: 200 })
+      })
+    )
+
+    renderClienteDetailView(cliente.id)
+    await waitFor(() => {
+      expect(screen.getByTestId('btn-editar-cliente')).toBeInTheDocument()
+    })
+
+    const user = (await import('@testing-library/user-event')).default
+    const userEventInstance = user.setup()
+    await userEventInstance.click(screen.getByTestId('btn-editar-cliente'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-nombre')).toBeInTheDocument()
+    })
+    await userEventInstance.clear(screen.getByTestId('input-nombre'))
+    await userEventInstance.type(screen.getByTestId('input-nombre'), 'Nombre Sin Guardar')
+
+    // WHEN: User clicks "Cancelar"
+    await userEventInstance.click(screen.getByTestId('btn-cancelar'))
+
+    // THEN: No PUT request was fired
+    expect(putFired).toBe(false)
+  })
+
+  it('TC-E2-P2-02 — should hide the edit form and show the detail view after "Cancelar" is clicked', async () => {
+    // GIVEN: MSW returns a valid client; user opens the edit form
+    const cliente = buildClienteDto({ nombre: 'Empresa Form Toggle S.A.' })
+    server.use(
+      http.get(`*/api/v1/clientes/${cliente.id}`, () =>
+        HttpResponse.json(cliente, { status: 200 })
+      )
+    )
+
+    renderClienteDetailView(cliente.id)
+    await waitFor(() => {
+      expect(screen.getByTestId('btn-editar-cliente')).toBeInTheDocument()
+    })
+
+    const user = (await import('@testing-library/user-event')).default
+    const userEventInstance = user.setup()
+    await userEventInstance.click(screen.getByTestId('btn-editar-cliente'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-edit-form')).toBeInTheDocument()
+    })
+
+    // WHEN: User clicks "Cancelar"
+    await userEventInstance.click(screen.getByTestId('btn-cancelar'))
+
+    // THEN: Edit form is gone; detail panel is visible again
+    await waitFor(() => {
+      expect(screen.queryByTestId('cliente-edit-form')).not.toBeInTheDocument()
+    })
+    expect(screen.getByTestId('cliente-detail-panel')).toBeInTheDocument()
+  })
+})
