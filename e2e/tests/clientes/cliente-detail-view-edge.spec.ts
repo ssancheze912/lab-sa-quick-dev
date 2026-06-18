@@ -29,7 +29,7 @@ test.describe('Story 2.2 — Client Detail View Edge Cases', () => {
   // Direct URL deep link loads correct detail without redirect (AC-2, R-207)
   // ---------------------------------------------------------------------------
   test(
-    '[P1] GIVEN a valid clienteId in the URL '
+    '[2.2-E2E-002][P1] GIVEN a valid clienteId in the URL '
     + 'WHEN the user accesses /clientes/:clienteId directly '
     + 'THEN the correct client details are loaded without a redirect',
     async ({ page }) => {
@@ -77,7 +77,7 @@ test.describe('Story 2.2 — Client Detail View Edge Cases', () => {
   // Non-existent UUID shows "Cliente no encontrado." (AC-3)
   // ---------------------------------------------------------------------------
   test(
-    '[P1] GIVEN a clienteId in the URL that does not exist '
+    '[2.2-E2E-003][P1] GIVEN a clienteId in the URL that does not exist '
     + 'WHEN the API returns 404 '
     + 'THEN the not-found message is displayed without crash or blank screen',
     async ({ page }) => {
@@ -117,7 +117,7 @@ test.describe('Story 2.2 — Client Detail View Edge Cases', () => {
   // API 500 on detail endpoint shows ErrorPanel (non-404 error path)
   // ---------------------------------------------------------------------------
   test(
-    '[P1] GIVEN the detail API returns 500 '
+    '[2.2-E2E-004][P1] GIVEN the detail API returns 500 '
     + 'WHEN the user navigates to /clientes/:clienteId '
     + 'THEN the ErrorPanel is shown with "Reintentar" button',
     async ({ page }) => {
@@ -164,7 +164,7 @@ test.describe('Story 2.2 — Client Detail View Edge Cases', () => {
   // Retry after 500 recovers and shows detail data
   // ---------------------------------------------------------------------------
   test(
-    '[P1] GIVEN the detail API initially fails with 500 '
+    '[2.2-E2E-005][P1] GIVEN the detail API initially fails with 500 '
     + 'WHEN the user clicks "Reintentar" and API succeeds '
     + 'THEN the client detail is displayed',
     async ({ page }) => {
@@ -224,7 +224,7 @@ test.describe('Story 2.2 — Client Detail View Edge Cases', () => {
   // Empty state when /clientes is opened with no client selected
   // ---------------------------------------------------------------------------
   test(
-    '[P2] GIVEN the user navigates to /clientes without selecting a client '
+    '[2.2-E2E-006][P2] GIVEN the user navigates to /clientes without selecting a client '
     + 'WHEN the list is loaded '
     + 'THEN the right panel shows an empty/placeholder state (not a crash)',
     async ({ page }) => {
@@ -262,7 +262,7 @@ test.describe('Story 2.2 — Client Detail View Edge Cases', () => {
   // Detail panel shows Spanish field labels (label accuracy)
   // ---------------------------------------------------------------------------
   test(
-    '[P2] GIVEN client details are loaded '
+    '[2.2-E2E-007][P2] GIVEN client details are loaded '
     + 'WHEN the detail panel renders '
     + 'THEN all four field labels are displayed in Spanish',
     async ({ page }) => {

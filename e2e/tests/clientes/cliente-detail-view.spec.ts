@@ -30,7 +30,7 @@ test.describe('Story 2.2 — Client Detail View', () => {
   // E-01 — Click client item → URL updates + detail panel shows data (P1, R-207)
   // ---------------------------------------------------------------------------
   test(
-    'GIVEN the client list is displayed '
+    '[2.2-E2E-001][P1] GIVEN the client list is displayed '
     + 'WHEN the user clicks a client item in the left panel '
     + 'THEN the right panel shows the complete client details '
     + 'AND the URL updates to /clientes/:clienteId',
