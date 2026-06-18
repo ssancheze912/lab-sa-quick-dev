@@ -1,0 +1,25 @@
+# Node
+node_modules/
+pnpm-lock.yaml
+
+# Frontend build output
+frontend/dist/
+frontend/dist-ssr/
+
+# .NET build artifacts
+backend/src/**/bin/
+backend/src/**/obj/
+backend/tests/**/bin/
+backend/tests/**/obj/
+
+# Test results
+playwright-report/
+playwright-results/
+
+# OS / Editor
+.DS_Store
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sw?
