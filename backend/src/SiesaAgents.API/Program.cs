@@ -1,11 +1,20 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
 using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
+// AddEndpointsApiExplorer + AddSwaggerGen used only to generate the OpenAPI JSON document
+// consumed by Scalar. Swagger UI is NOT enabled (no app.UseSwaggerUI()).
+// NOTE: .NET 8 environment — built-in app.MapOpenApi() is only available in .NET 9+.
+// Per company standards, Scalar is the API documentation UI (never Swagger UI).
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Siesa Agents API", Version = "v1" });
+});
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];
@@ -28,11 +37,11 @@ var app = builder.Build();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("DevCors");
 
-// Serve OpenAPI JSON document (required by Scalar)
-app.MapOpenApi();
+// Serve OpenAPI JSON document (required by Scalar) — Swagger UI NOT enabled
+app.UseSwagger();
 
-// Scalar API Reference (replaces Swagger UI)
-app.MapScalarApiReference();
+// Scalar API Reference (replaces Swagger UI — per company standards)
+app.MapScalarApiReference(options => options.WithOpenApiRoutePattern("/swagger/v1/swagger.json"));
 
 if (app.Environment.IsDevelopment())
 {
