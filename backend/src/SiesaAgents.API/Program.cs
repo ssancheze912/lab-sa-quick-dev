@@ -39,6 +39,14 @@ app.UseSwagger();
 // Scalar API Reference (replaces Swagger UI — no app.UseSwaggerUI())
 app.MapScalarApiReference(options => options.WithOpenApiRoutePattern("/swagger/v1/swagger.json"));
 
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/api/v1/test-error", () =>
+    {
+        throw new InvalidOperationException("ATDD test exception — intentional error for middleware validation");
+    });
+}
+
 app.Run();
 
 // Expose Program class for WebApplicationFactory in integration tests
