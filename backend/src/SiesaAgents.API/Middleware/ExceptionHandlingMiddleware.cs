@@ -1,4 +1,5 @@
 using System.Text.Json;
+using SiesaAgents.Domain.Exceptions;
 
 namespace SiesaAgents.API.Middleware;
 
@@ -19,6 +20,13 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
             if (!context.Response.HasStarted && context.Response.StatusCode == 404)
             {
                 await WriteProblemDetailsAsync(context, 404, "Resource not found.", "The requested resource was not found.");
+            }
+        }
+        catch (NotFoundException ex)
+        {
+            if (!context.Response.HasStarted)
+            {
+                await WriteProblemDetailsAsync(context, 404, "Not Found", ex.Message);
             }
         }
         catch (Exception)

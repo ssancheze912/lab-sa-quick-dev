@@ -1,16 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ClienteListView } from '../../modules/crm/clientes/presentation/ClienteListView'
+import { ClienteDetailView } from '../../modules/crm/clientes/presentation/ClienteDetailView'
 
 export const Route = createFileRoute('/_app/clientes/$clienteId')({
-  component: ClienteDetailView,
+  component: ClienteDetailRoute,
 })
 
-function ClienteDetailView() {
+function ClienteDetailRoute() {
   const { clienteId } = Route.useParams()
 
   return (
-    <div data-testid="cliente-detail-view">
-      <h2 className="text-2xl font-bold text-slate-900">Detalle de Cliente</h2>
-      <p className="text-slate-600">{clienteId}</p>
+    <div data-testid="clientes-view" className="flex h-full">
+      <ClienteListView />
+      <ClienteDetailView clienteId={clienteId} />
     </div>
   )
 }

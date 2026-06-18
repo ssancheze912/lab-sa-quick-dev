@@ -15,13 +15,15 @@
  *   C-04 — ErrorPanel + "Reintentar" on MSW 500 error (P1, R-209)
  */
 
-import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createRouter, RouterContextProvider } from '@tanstack/react-router';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../../../../test/mocks/server';
 import { clienteFactory } from '../../../../../test/factories/cliente.factory';
+import { routeTree } from '../../../../../routeTree.gen';
 
 // SUT — does NOT exist yet; import will fail at compile time (RED phase)
 import { ClienteListView } from '../ClienteListView';
@@ -34,8 +36,36 @@ afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
 // ---------------------------------------------------------------------------
-// Test helper: wrap in QueryClientProvider with fresh client per test
+// Test helper: wrap in QueryClientProvider + RouterContextProvider per test
+// RouterContextProvider is required because ClienteListView uses <Link>
 // ---------------------------------------------------------------------------
+function createTestRouter() {
+  return createRouter({
+    routeTree,
+    history: {
+      subscribe: (_cb: () => void) => () => undefined,
+      push: vi.fn(),
+      replace: vi.fn(),
+      go: vi.fn(),
+      back: vi.fn(),
+      forward: vi.fn(),
+      createHref: (_location: { pathname: string }) => _location.pathname,
+      block: vi.fn(),
+      flush: vi.fn(),
+      destroy: vi.fn(),
+      notify: vi.fn(),
+      location: {
+        pathname: '/clientes',
+        search: '',
+        hash: '',
+        state: {},
+        key: 'default',
+      },
+      encodeLocation: (location: { pathname: string }) => location,
+    },
+  });
+}
+
 function renderWithQuery(ui: React.ReactElement) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -46,7 +76,11 @@ function renderWithQuery(ui: React.ReactElement) {
     },
   });
   return render(
-    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+    <QueryClientProvider client={queryClient}>
+      <RouterContextProvider router={createTestRouter()}>
+        {ui}
+      </RouterContextProvider>
+    </QueryClientProvider>,
   );
 }
 

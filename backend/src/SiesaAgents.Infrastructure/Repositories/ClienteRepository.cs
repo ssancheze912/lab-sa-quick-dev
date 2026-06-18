@@ -20,4 +20,10 @@ public class ClienteRepository : IClienteRepository
             .OrderBy(c => c.Nombre)
             .ToListAsync(ct);
     }
+
+    public async Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+    {
+        return await _context.Clientes
+            .FirstOrDefaultAsync(c => c.Id == id, ct);
+    }
 }

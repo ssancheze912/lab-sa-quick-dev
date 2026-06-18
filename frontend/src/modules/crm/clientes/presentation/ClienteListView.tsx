@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { Link } from '@tanstack/react-router';
 import { useClientes } from '../application/useClientes';
 import { filterClientes } from '../application/filterClientes';
 import { EmptyState } from '../../../../shared/components/EmptyState';
@@ -72,12 +73,18 @@ export function ClienteListView() {
               <li
                 key={cliente.id}
                 data-testid="cliente-list-item"
-                className="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
               >
-                <p className="text-sm font-medium text-slate-900 truncate">
-                  {cliente.nombre}
-                </p>
-                <p className="text-xs text-slate-500 truncate">{cliente.nit}</p>
+                <Link
+                  to="/clientes/$clienteId"
+                  params={{ clienteId: cliente.id }}
+                  className="block px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                  activeProps={{ className: 'block px-4 py-3 border-b border-slate-100 bg-blue-50 cursor-pointer' }}
+                >
+                  <p className="text-sm font-medium text-slate-900 truncate">
+                    {cliente.nombre}
+                  </p>
+                  <p className="text-xs text-slate-500 truncate">{cliente.nit}</p>
+                </Link>
               </li>
             ))}
           </ul>
