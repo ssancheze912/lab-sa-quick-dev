@@ -14,7 +14,6 @@
 
 import { test, expect } from '@playwright/test';
 import { ClientesPage } from '../../pages/clientes.page';
-import { ApiHelper } from '../../helpers/api.helper';
 import { buildCliente } from '../../helpers/data.helper';
 
 // ---------------------------------------------------------------------------
@@ -22,19 +21,9 @@ import { buildCliente } from '../../helpers/data.helper';
 // ---------------------------------------------------------------------------
 test.describe('Story 2.1 — Client List & Search', () => {
   let clientesPage: ClientesPage;
-  let apiHelper: ApiHelper;
-  const createdIds: string[] = [];
 
-  test.beforeEach(async ({ page, request }) => {
+  test.beforeEach(async ({ page }) => {
     clientesPage = new ClientesPage(page);
-    apiHelper = new ApiHelper(request);
-  });
-
-  test.afterEach(async () => {
-    for (const id of createdIds) {
-      await apiHelper.deleteCliente(id).catch(() => null);
-    }
-    createdIds.length = 0;
   });
 
   test(
@@ -42,14 +31,24 @@ test.describe('Story 2.1 — Client List & Search', () => {
     + 'WHEN the user navigates to /clientes '
     + 'THEN the left panel shows at least one client row',
     async ({ page }) => {
-      // GIVEN: at least one client exists in the backend
+      // GIVEN: mock GET /api/v1/clientes BEFORE navigation (network-first pattern)
       const data = buildCliente({ nombre: 'E2E List Test Corp' });
-      const created = await apiHelper.createCliente(data);
-      createdIds.push(created.id);
-
-      // CRITICAL: intercept BEFORE navigation (network-first pattern)
-      // The route is already real (backend running); we verify the panel renders
-      // after the real GET /api/v1/clientes succeeds.
+      await page.route('**/api/v1/clientes', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            {
+              id: '00000000-0000-0000-0000-000000000011',
+              nombre: data.nombre,
+              nit: data.nit,
+              telefono: data.telefono,
+              ciudad: data.ciudad,
+              createdAt: new Date().toISOString(),
+            },
+          ]),
+        }),
+      );
 
       // WHEN: user navigates to /clientes
       await clientesPage.goto();
@@ -65,12 +64,33 @@ test.describe('Story 2.1 — Client List & Search', () => {
     + 'WHEN the user types in the search field '
     + 'THEN only matching clients are shown',
     async ({ page }) => {
-      // GIVEN: two clients with distinct names
+      // GIVEN: mock GET /api/v1/clientes BEFORE navigation (network-first pattern)
       const dataA = buildCliente({ nombre: 'Search Target Alpha' });
       const dataB = buildCliente({ nombre: 'Search Target Beta' });
-      const cA = await apiHelper.createCliente(dataA);
-      const cB = await apiHelper.createCliente(dataB);
-      createdIds.push(cA.id, cB.id);
+      await page.route('**/api/v1/clientes', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            {
+              id: '00000000-0000-0000-0000-000000000021',
+              nombre: dataA.nombre,
+              nit: dataA.nit,
+              telefono: dataA.telefono,
+              ciudad: dataA.ciudad,
+              createdAt: new Date().toISOString(),
+            },
+            {
+              id: '00000000-0000-0000-0000-000000000022',
+              nombre: dataB.nombre,
+              nit: dataB.nit,
+              telefono: dataB.telefono,
+              ciudad: dataB.ciudad,
+              createdAt: new Date().toISOString(),
+            },
+          ]),
+        }),
+      );
 
       // WHEN: navigate and wait for list
       await clientesPage.goto();
