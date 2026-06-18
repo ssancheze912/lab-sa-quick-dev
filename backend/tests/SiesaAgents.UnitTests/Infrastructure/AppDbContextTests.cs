@@ -2,9 +2,6 @@
  * Story 1.3: Backend Database Foundation
  * Epic 1: Project Foundation & Application Shell
  *
- * ATDD Acceptance Tests — RED Phase (API/Unit Level)
- * These tests are intentionally FAILING until implementation is complete.
- *
  * Acceptance Criteria covered:
  *   AC1 — siesa_agents_db created, __ef_migrations_history exists
  *   AC3 — ApplySnakeCaseNaming() applied as LAST call in OnModelCreating
@@ -67,8 +64,8 @@ public class AppDbContextTests
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // AC3: ApplySnakeCaseNaming() must be the LAST call in OnModelCreating
-    // Verifies: UseSnakeCaseNamingConvention is wired into the context options
+    // AC3: UseSnakeCaseNamingConvention() must be wired into the context options
+    // Verifies: snake_case convention is applied via DbContextOptions
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]
@@ -84,8 +81,6 @@ public class AppDbContextTests
         using var context = new AppDbContext(options);
 
         // THEN: Model is accessible and no naming convention exception is thrown
-        // (If UseSnakeCaseNamingConvention was NOT called the options would be incomplete
-        //  and EFCore.NamingConventions would fail at model building time)
         var exception = Record.Exception(() => _ = context.Model);
         Assert.Null(exception);
     }
@@ -186,7 +181,6 @@ public class AppDbContextTests
             .ToList();
 
         // THEN: No DbSet<> properties named Cliente or Contacto exist
-        // (Domain entities are NOT in scope for Story 1.3 — they belong to Epics 2 and 3)
         var forbiddenNames = dbSetProperties
             .Where(name =>
                 name.Contains("Cliente", StringComparison.OrdinalIgnoreCase) ||
