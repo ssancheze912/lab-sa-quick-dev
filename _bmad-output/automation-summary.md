@@ -1,14 +1,15 @@
-# Automation Summary — Story 1.1: Project Initialization & Repository Structure
+# Automation Summary — Epic 1: Project Foundation & Application Shell
 
 **Date:** 2026-06-18
-**Story:** 1.1 — Project Initialization & Repository Structure
 **Epic:** Epic 1 — Project Foundation & Application Shell
 **Mode:** BMad-Integrated
 **Coverage Target:** critical-paths + edge-cases
 
 ---
 
-## Tests Created (New — Edge Case Expansion)
+## Story 1.1: Project Initialization & Repository Structure
+
+**Story:** 1.1 — Project Initialization & Repository Structure
 
 ### E2E Tests — `e2e/tests/foundation/project-initialization-edge-cases.spec.ts`
 
@@ -49,74 +50,123 @@
 
 ---
 
-## ATDD Tests (Existing — NOT duplicated)
+## Story 1.2: Frontend Navigation Shell
 
-**File:** `e2e/tests/foundation/project-initialization.spec.ts` — 7 tests
-**File:** `e2e/tests/api/backend-initialization.api.spec.ts` — 9 tests
+**Story:** 1.2 — Frontend Navigation Shell
+**ATDD file:** `e2e/tests/navigation/navigation-shell.spec.ts` (24 existing ATDD tests)
+**Expansion file:** `e2e/tests/navigation/navigation-shell-edge-cases.spec.ts`
+
+### E2E Tests — `e2e/tests/navigation/navigation-shell-edge-cases.spec.ts`
+
+22 new tests expanding beyond ATDD coverage
+
+| Priority | Test ID | Scenario | AC Covered |
+|----------|---------|----------|------------|
+| [P2] | EC-NAV-1a | Tablet viewport (768px) does not crash the app | AC1/AC2 boundary |
+| [P2] | EC-NAV-1b | Navigation items visible at 768px tablet viewport | AC1/AC2 boundary |
+| [P1] | EC-NAV-2 | Deep link to /clientes/123 renders without redirect or crash | AC3 sub-route |
+| [P1] | EC-NAV-3 | Deep link to /contactos/456 renders without redirect or crash | AC3 sub-route |
+| [P1] | EC-NAV-4a | Clientes nav item active on /clientes/123 sub-route | AC5 sub-route |
+| [P1] | EC-NAV-4b | Contactos nav item active on /contactos/456 sub-route | AC5 sub-route |
+| [P1] | EC-NAV-5a | Browser back from /contactos returns to /clientes | AC6 history |
+| [P1] | EC-NAV-5b | Browser forward from /clientes returns to /contactos | AC6 history |
+| [P2] | EC-NAV-6 | Rapid alternating nav clicks do not crash or show blank page | AC6 race condition |
+| [P0] | EC-NAV-7 | Shell renders without any JavaScript runtime errors | AC1 regression |
+| [P1] | EC-NAV-8a | Desktop NavigationRail has accessible navigation landmark (ARIA) | AC1 a11y |
+| [P1] | EC-NAV-8b | Mobile NavigationBar has accessible navigation landmark (ARIA) | AC2 a11y |
+| [P1] | EC-NAV-9 | Clientes active state clears after navigating to Contactos | AC5 mutual exclusion |
+| [P0] | EC-NAV-10 | Unknown route does NOT cause a JavaScript crash | AC4 error path |
+| [P1] | EC-NAV-11 | 404 page shows numeric "404" heading | AC4 boundary |
+| [P1] | EC-NAV-12 | 404 page shows descriptive Spanish error text | AC4 boundary |
+| [P2] | EC-NAV-13a | Unknown route with special chars renders 404 gracefully | AC4 encoding edge |
+| [P2] | EC-NAV-13b | Deeply nested unknown path renders 404 gracefully | AC4 boundary |
+| [P1] | EC-NAV-14 | At exactly 1024px, desktop NavigationRail is visible | AC1 breakpoint |
+| [P1] | EC-NAV-15 | At exactly 1023px, mobile NavigationBar is visible | AC2 breakpoint |
+| [P1] | EC-SHELL-PERSIST-1 | Shell stays visible after /clientes → /contactos | AC6 persistence |
+| [P1] | EC-SHELL-PERSIST-2 | Shell stays visible after /contactos → /clientes | AC6 persistence |
+| [P2] | EC-SHELL-PERSIST-3 | Shell visible after index redirect (/ → /clientes) | AC3 + AC6 |
 
 ---
 
 ## Coverage Analysis
 
-### Before Expansion (ATDD only)
-- E2E: 7 tests | API: 9 tests | Component: 0 | Unit: 0
-- **Total: 16 tests**
+### Story 1.1 — Before/After
 
-### After Expansion (ATDD + Automate)
-- E2E: 7 + 9 = **16 tests**
-- API: 9 + 13 = **22 tests**
-- Component: 0
-- Unit: 0
-- **Total: 38 tests**
+| Level | ATDD (before) | Automate (after) |
+|-------|--------------|-----------------|
+| E2E   | 7            | 16 (+9)          |
+| API   | 9            | 22 (+13)         |
+| **Total** | **16**   | **38 (+22)**     |
 
-### Priority Breakdown (New Tests Only)
-- P0: 3 (critical middleware security checks)
-- P1: 8 (important boundary conditions and arch constraints)
-- P2: 11 (edge cases and robustness)
-- P3: 0
+### Story 1.2 — Before/After
 
-### Coverage Gaps Addressed
+| Level | ATDD (before) | Automate (after) |
+|-------|--------------|-----------------|
+| E2E   | 24           | 47 (+23)         |
+| API   | 0            | 0                |
+| Component | 0      | 0                |
+| **Total** | **24**   | **47 (+23)**     |
+
+Note: Component/unit tests for Story 1.2 exist in `frontend/src/routes/__tests__/-_app.test.tsx` (7 Vitest tests written by the dev agent, not managed here). No API tests needed for this purely frontend story.
+
+### Priority Breakdown — Story 1.2 New Tests (23 tests)
+
+| Priority | Count | Description |
+|----------|-------|-------------|
+| P0 | 2 | Runtime error regression on shell render + 404 no-crash |
+| P1 | 14 | Sub-routes, browser history, a11y, breakpoints, shell persistence |
+| P2 | 7 | Tablet viewport, rapid clicks, encoding edges, deeply nested paths |
+| P3 | 0 | — |
+
+### Coverage Gaps Addressed — Story 1.2
 
 | Gap | ATDD Coverage | Expansion Coverage |
 |-----|--------------|-------------------|
-| ExceptionHandlingMiddleware hides stack trace | ❌ | ✅ EC-API-1, EC-API-3 |
-| RFC 7807 field structure validation | ❌ | ✅ EC-API-2 |
-| CORS negative test (disallowed origin blocked) | ❌ | ✅ EC-CORS-1 |
-| CORS for POST/DELETE methods | ❌ | ✅ EC-CORS-2, EC-CORS-3 |
-| CORS Content-Type header allowed | ❌ | ✅ EC-CORS-4 |
-| Vite page title customization | ❌ | ✅ EC-FE-1 |
-| Unknown route (frontend) no crash | ❌ | ✅ EC-FE-4 |
-| HMR WebSocket errors | ❌ | ✅ EC-FE-5 |
-| Server version header disclosure | ❌ | ✅ EC-API-7 |
-| Swashbuckle UI path (index.html) | Partial | ✅ EC-API-9b |
-| Backend response time boundary | ❌ | ✅ EC-API-13 |
-| Sequential load robustness | ❌ | ✅ EC-API-12 |
+| Tablet viewport (768px) behavior | ❌ | ✅ EC-NAV-1a/1b |
+| Deep link to /clientes/:id sub-route | ❌ | ✅ EC-NAV-2 |
+| Deep link to /contactos/:id sub-route | ❌ | ✅ EC-NAV-3 |
+| Active state on sub-routes | ❌ | ✅ EC-NAV-4a/4b |
+| Browser back navigation preserves state | ❌ | ✅ EC-NAV-5a/5b |
+| Rapid nav clicks (race condition boundary) | ❌ | ✅ EC-NAV-6 |
+| No JS runtime errors during shell lifecycle | ❌ | ✅ EC-NAV-7 |
+| Accessible ARIA landmarks on navigation | ❌ | ✅ EC-NAV-8a/8b |
+| Active state mutual exclusion | ❌ | ✅ EC-NAV-9 |
+| 404: no JS crash on unknown route | ❌ | ✅ EC-NAV-10 |
+| 404 numeric heading visible | ❌ | ✅ EC-NAV-11 |
+| 404 Spanish descriptive text visible | ❌ | ✅ EC-NAV-12 |
+| 404 with special chars in path | ❌ | ✅ EC-NAV-13a |
+| 404 with deeply nested unknown path | ❌ | ✅ EC-NAV-13b |
+| Breakpoint boundary at exactly 1024px | ❌ | ✅ EC-NAV-14 |
+| Breakpoint boundary at exactly 1023px | ❌ | ✅ EC-NAV-15 |
+| Shell persistence across route transitions | ❌ | ✅ EC-SHELL-PERSIST-1/2/3 |
 
 ---
 
 ## Infrastructure
 
-No new fixtures or factories created — Story 1.1 tests infrastructure initialization only (no domain data needed). Existing `e2e/fixtures/base.fixture.ts` and `e2e/helpers/data.helper.ts` are sufficient.
+No new fixtures or factories created for Story 1.2 — navigation shell tests require only page navigation and assertions, which are covered by Playwright's built-in `page` fixture. Existing `e2e/fixtures/base.fixture.ts` patterns are sufficient.
 
 ---
 
 ## Tests Marked as fixme
 
-None — all 22 new tests are syntactically valid and follow the same patterns as the existing ATDD files. Tests cannot be run in isolation since both frontend and backend servers are not yet implemented (pre-implementation phase).
+None — all 23 new tests are syntactically valid and follow the same patterns as the existing ATDD files.
 
 ---
 
 ## Test Execution
 
 ```bash
+# Run all Story 1.2 navigation tests (ATDD + edge cases)
+pnpm exec playwright test e2e/tests/navigation/
+
+# Run only edge case expansion tests
+pnpm exec playwright test e2e/tests/navigation/navigation-shell-edge-cases.spec.ts
+
 # Run all Story 1.1 tests (ATDD + edge cases)
 pnpm exec playwright test e2e/tests/foundation/ e2e/tests/api/
 
-# Run only edge case expansion tests
-pnpm exec playwright test e2e/tests/foundation/project-initialization-edge-cases.spec.ts
-pnpm exec playwright test e2e/tests/api/backend-initialization-edge-cases.api.spec.ts
-
-# Run only P0 critical tests
+# Run only P0 critical tests across all stories
 pnpm exec playwright test e2e/tests/ --grep "\[P0\]"
 
 # Run P0 + P1 (pre-merge gate)
@@ -131,10 +181,11 @@ pnpm exec playwright test e2e/tests/ --grep "\[P0\]|\[P1\]"
 - [x] All tests have priority tags ([P0], [P1], [P2])
 - [x] No hard waits (no `waitForTimeout`)
 - [x] No conditional test flow (no `if (await element.isVisible())`)
-- [x] No page objects — tests are direct
+- [x] No page objects — tests are direct (page object files exist separately for Epic 2/3)
 - [x] Deterministic patterns — no flaky conditions
 - [x] Consistent with existing ATDD file patterns
 - [x] No duplicate coverage (edge cases only — happy paths remain in ATDD files)
+- [x] All test files under 300 lines
 
 ---
 
