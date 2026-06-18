@@ -140,17 +140,19 @@ public class ExceptionMiddlewareEdgeCaseTests : IClassFixture<ExceptionMiddlewar
         var body = await response.Content.ReadAsStringAsync();
         var json = JsonDocument.Parse(body);
 
-        // THEN: The "detail" field does NOT contain the raw exception message text
-        if (json.RootElement.TryGetProperty("detail", out var detailElement))
-        {
-            var detail = detailElement.GetString() ?? string.Empty;
+        // THEN: The "detail" field exists (middleware always sets it)
+        Assert.True(
+            json.RootElement.TryGetProperty("detail", out var detailElement),
+            $"Expected 'detail' field in Problem Details response. Body: {body}"
+        );
 
-            // Raw exception message from TestErrorEndpointStartupFilter must not appear
-            Assert.DoesNotContain("internal test", detail, StringComparison.OrdinalIgnoreCase);
-            // Stack traces from .NET must not appear
-            Assert.DoesNotMatch(@"at SiesaAgents\.", detail);
-        }
-        // If detail field is absent, this is also acceptable (RFC 7807 — detail is optional)
+        var detail = detailElement.GetString() ?? string.Empty;
+
+        // AND: The "detail" field does NOT contain the raw exception message text
+        // Raw exception message from TestErrorEndpointStartupFilter must not appear
+        Assert.DoesNotContain("internal test", detail, StringComparison.OrdinalIgnoreCase);
+        // Stack traces from .NET must not appear
+        Assert.DoesNotMatch(@"at SiesaAgents\.", detail);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
