@@ -76,15 +76,15 @@ test.describe('AC1 — Desktop NavigationRail (viewport ≥ 1024px)', () => {
     await appLoad;
 
     // WHEN: User clicks the Clientes nav item
-    // Track whether a full page reload happens by monitoring navigation events
-    let fullReloadOccurred = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame()) {
-        fullReloadOccurred = true;
+    // Track document-type requests to detect a full page reload
+    const documentRequests: string[] = [];
+    page.on('request', (req) => {
+      if (req.resourceType() === 'document') {
+        documentRequests.push(req.url());
       }
     });
-    // Reset after initial load
-    fullReloadOccurred = false;
+    // Clear any document requests from initial page load
+    documentRequests.length = 0;
 
     await page.locator('[data-testid="nav-item-clientes"]').click();
 
@@ -93,6 +93,9 @@ test.describe('AC1 — Desktop NavigationRail (viewport ≥ 1024px)', () => {
 
     // AND: The clientes view is rendered (client-side routing, no full reload)
     await expect(page.locator('[data-testid="clientes-view"]')).toBeVisible();
+
+    // AND: No document (HTML) reload occurred — client-side navigation only
+    expect(documentRequests).toHaveLength(0);
   });
 
   test('should navigate to /contactos without full page reload when clicking Contactos nav item', async ({ page }) => {

@@ -248,11 +248,11 @@ test.describe('[P1] EC-NAV — Navigation shell edge cases & boundary conditions
   // EC-NAV-8: Accessibility — ARIA roles on navigation
   // ───────────────────────────────────────────────────────
 
-  test.describe('[P1] EC-NAV-8: Accessibility ARIA roles for navigation', () => {
+  test.describe('[P1] EC-NAV-8a: Accessibility ARIA roles — desktop NavigationRail', () => {
+    test.use({ viewport: { width: 1280, height: 800 } });
 
     test('[P1] EC-NAV-8a: desktop NavigationRail should have an accessible navigation landmark', async ({ page }) => {
       // GIVEN: The app loads on desktop viewport
-      test.use({ viewport: { width: 1280, height: 800 } });
       await page.goto('/clientes');
       await page.waitForLoadState('networkidle');
 
@@ -260,10 +260,13 @@ test.describe('[P1] EC-NAV — Navigation shell edge cases & boundary conditions
       const navLandmarks = page.locator('nav, [role="navigation"]');
       await expect(navLandmarks.first()).toBeVisible();
     });
+  });
+
+  test.describe('[P1] EC-NAV-8b: Accessibility ARIA roles — mobile NavigationBar', () => {
+    test.use({ viewport: { width: 375, height: 812 } });
 
     test('[P1] EC-NAV-8b: mobile NavigationBar should have an accessible navigation landmark', async ({ page }) => {
       // GIVEN: The app loads on mobile viewport
-      test.use({ viewport: { width: 375, height: 812 } });
       await page.goto('/clientes');
       await page.waitForLoadState('networkidle');
 
