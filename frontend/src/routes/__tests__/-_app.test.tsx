@@ -6,9 +6,20 @@ import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { routeTree } from '../../routeTree.gen'
 
-// MSW server to intercept API calls from ClienteListView in route tests
+// MSW server to intercept API calls from ClienteListView and ClienteDetailView in route tests
+const FIXED_CLIENTE_ID = '00000000-0000-0000-0000-000000000099'
 const server = setupServer(
   http.get('/api/v1/clientes', () => HttpResponse.json([])),
+  http.get(`/api/v1/clientes/${FIXED_CLIENTE_ID}`, () =>
+    HttpResponse.json({
+      id: FIXED_CLIENTE_ID,
+      nombre: 'Empresa Ruta SA',
+      nit: '900000099',
+      telefono: '3000000099',
+      ciudad: 'Bogotá',
+      createdAt: new Date().toISOString(),
+    }),
+  ),
 )
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => server.resetHandlers())
@@ -115,5 +126,27 @@ describe('NotFoundPage', () => {
     expect(screen.getByText('404')).toBeInTheDocument()
     expect(screen.getByText('Página no encontrada')).toBeInTheDocument()
     expect(screen.getByText('La ruta solicitada no existe.')).toBeInTheDocument()
+  })
+})
+
+// Story 2.2 — Route test: /clientes/:clienteId renders ClienteDetailView with correct param
+describe('ClienteDetailRoute — /clientes/:clienteId', () => {
+  it('renders ClienteDetailView with the correct clienteId param from the URL', async () => {
+    const router = createTestRouter(`/clientes/${FIXED_CLIENTE_ID}`)
+    await router.load()
+    renderWithProviders(router)
+
+    // The detail panel must be present
+    expect(screen.getByTestId('cliente-detail-panel')).toBeInTheDocument()
+  })
+
+  it('loads and displays client data when navigating directly to /clientes/:clienteId', async () => {
+    const router = createTestRouter(`/clientes/${FIXED_CLIENTE_ID}`)
+    await router.load()
+    renderWithProviders(router)
+
+    // Client name should appear after data loads
+    await screen.findByText('Empresa Ruta SA')
+    expect(screen.getByText('900000099')).toBeInTheDocument()
   })
 })
