@@ -1,6 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,13 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod()));
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString)
+           .UseSnakeCaseNamingConvention());
+
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -31,3 +40,6 @@ app.UseSwagger();
 app.MapScalarApiReference(options => options.WithOpenApiRoutePattern("/swagger/v1/swagger.json"));
 
 app.Run();
+
+// Expose Program class for WebApplicationFactory in integration tests
+public partial class Program { }

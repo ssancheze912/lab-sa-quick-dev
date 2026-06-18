@@ -1,9 +1,14 @@
-using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace SiesaAgents.API.Middleware;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next)
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -13,28 +18,31 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
             // Handle routing 404s (no endpoint matched) — response has not started yet
             if (!context.Response.HasStarted && context.Response.StatusCode == 404)
             {
-                context.Response.ContentType = "application/problem+json";
-                await context.Response.WriteAsJsonAsync(new ProblemDetails
-                {
-                    Status = 404,
-                    Title = "Resource not found.",
-                    Detail = null
-                });
+                await WriteProblemDetailsAsync(context, 404, "Resource not found.", "The requested resource was not found.");
             }
         }
         catch (Exception)
         {
             if (!context.Response.HasStarted)
             {
-                context.Response.ContentType = "application/problem+json";
-                context.Response.StatusCode = 500;
-                await context.Response.WriteAsJsonAsync(new ProblemDetails
-                {
-                    Status = 500,
-                    Title = "An unexpected error occurred.",
-                    Detail = null // Never expose ex.Message or stack traces
-                });
+                await WriteProblemDetailsAsync(context, 500, "Internal Server Error", "An unexpected error occurred.");
             }
         }
+    }
+
+    private static async Task WriteProblemDetailsAsync(HttpContext context, int status, string title, string detail)
+    {
+        context.Response.StatusCode = status;
+        context.Response.ContentType = "application/problem+json";
+
+        var problemDetails = new
+        {
+            status,
+            title,
+            detail
+        };
+
+        var json = JsonSerializer.Serialize(problemDetails, JsonOptions);
+        await context.Response.WriteAsync(json);
     }
 }
