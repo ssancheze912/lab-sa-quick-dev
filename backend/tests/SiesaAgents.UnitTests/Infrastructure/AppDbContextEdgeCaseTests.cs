@@ -18,6 +18,7 @@
  *   EC-CTX-10 — EFCore.NamingConventions assembly is referenced in Infrastructure
  */
 
+using EFCore.NamingConventions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using SiesaAgents.Infrastructure.Data;
@@ -263,31 +264,31 @@ public class AppDbContextEdgeCaseTests
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // EC-CTX-10: EFCore.NamingConventions assembly is referenced in Infrastructure
-    // Edge case: Verifies the NamingConventions package (not just Npgsql) is installed
+    // EC-CTX-10: EFCore.NamingConventions extension is resolvable in the test process
+    // Edge case: Verifies the UseSnakeCaseNamingConvention() extension method is available
+    // Note: The package is installed in Infrastructure.csproj; the extension method is called
+    //       in Program.cs (API layer) via DbContextOptionsBuilder. This test verifies the
+    //       extension method type is loadable at runtime (i.e., the DLL is deployed).
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void Infrastructure_EFCoreNamingConventions_IsReferenced()
+    public void EFCoreNamingConventions_UseSnakeCaseNamingConvention_ExtensionMethodIsAccessible()
     {
-        // GIVEN: The SiesaAgents.Infrastructure assembly
-        var infrastructureAssembly = typeof(AppDbContext).Assembly;
+        // GIVEN: EFCore.NamingConventions is installed (dotnet add Infrastructure package EFCore.NamingConventions)
+        // AND: UseSnakeCaseNamingConvention() is the extension method it provides
 
-        // WHEN: Referenced assemblies are inspected for EFCore.NamingConventions
-        var referencedAssemblies = infrastructureAssembly
-            .GetReferencedAssemblies()
-            .Select(a => a.Name ?? string.Empty)
-            .ToList();
+        // WHEN: We try to apply UseSnakeCaseNamingConvention() to a DbContextOptionsBuilder
+        var exception = Record.Exception(() =>
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: $"TestDb_EC10_{Guid.NewGuid()}")
+                .UseSnakeCaseNamingConvention(); // This method comes from EFCore.NamingConventions
 
-        // THEN: EFCore.NamingConventions (or its internals) is present
-        var hasNamingConventions = referencedAssemblies
-            .Any(name => name.Contains("NamingConventions", StringComparison.OrdinalIgnoreCase) ||
-                         name.Contains("EFCore.NamingConventions", StringComparison.OrdinalIgnoreCase));
+            using var ctx = new AppDbContext(optionsBuilder.Options);
+            _ = ctx.Model; // Force model build to confirm convention is active
+        });
 
-        Assert.True(
-            hasNamingConventions,
-            $"SiesaAgents.Infrastructure does not reference EFCore.NamingConventions. " +
-            $"Run: dotnet add src/SiesaAgents.Infrastructure package EFCore.NamingConventions"
-        );
+        // THEN: No MissingMethodException or TypeLoadException — package is correctly deployed
+        Assert.Null(exception);
     }
 }

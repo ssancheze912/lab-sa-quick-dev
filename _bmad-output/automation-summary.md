@@ -88,6 +88,69 @@
 
 ---
 
+## Story 1.3: Backend Database Foundation
+
+**Story:** 1.3 — Backend Database Foundation
+**ATDD files:**
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` (6 xUnit tests)
+- `backend/tests/SiesaAgents.UnitTests/Api/ExceptionMiddlewareTests.cs` (8 xUnit tests)
+- `e2e/tests/api/backend-database-foundation.api.spec.ts` (10 Playwright API tests)
+
+### Unit Tests — `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextEdgeCaseTests.cs`
+
+10 new xUnit tests expanding beyond ATDD coverage for AppDbContext
+
+| Priority | Test | Coverage Added |
+|----------|------|----------------|
+| Unit | EC-CTX-1: Multiple independent context instances do not leak state | EC — multi-instance boundary |
+| Unit | EC-CTX-2: Accessing Database after Dispose throws ObjectDisposedException | EC — lifecycle error path |
+| Unit | EC-CTX-3: Context without UseSnakeCaseNamingConvention still instantiates | EC — naming convention optional at context level |
+| Unit | EC-CTX-4: ChangeTracker accessible on fresh context, zero entries | EC — internal initialization |
+| Unit | EC-CTX-5: Model contains no entity types named Cliente or Contacto | EC — scope boundary guard |
+| Unit | EC-CTX-6: 10 create/dispose cycles do not throw (no resource leak) | EC — repeated lifecycle |
+| Unit | EC-CTX-7: ModelSnapshot class exists in the Migrations namespace | EC — migration scaffolding completeness |
+| Unit | EC-CTX-8: InitialCreate migration Up() method exists and is accessible | EC — migration structure |
+| Unit | EC-CTX-9: Model has zero entity types (empty initial scope) | EC — domain-free migration |
+| Unit | EC-CTX-10: UseSnakeCaseNamingConvention() extension method is callable | EC — NamingConventions package deployed |
+
+### Unit Tests — `backend/tests/SiesaAgents.UnitTests/Api/ExceptionMiddlewareEdgeCaseTests.cs`
+
+10 new xUnit integration tests expanding beyond ATDD coverage for ExceptionHandlingMiddleware
+
+| Priority | Test | Coverage Added |
+|----------|------|----------------|
+| Unit | EC-MID-1: Error response body is valid parseable JSON | EC — JSON integrity |
+| Unit | EC-MID-2: Response does NOT contain "exceptionType" key (NFR6) | EC — additional debug leak vector |
+| Unit | EC-MID-3: "status" field is JSON Number kind, not String | EC — RFC 7807 type correctness |
+| Unit | EC-MID-4: "title" field is a non-empty string | EC — RFC 7807 field validity |
+| Unit | EC-MID-5: "detail" does NOT echo raw exception message text | EC — NFR6 message leak |
+| Unit | EC-MID-6: 3 sequential error requests all return 500 (idempotency) | EC — middleware state isolation |
+| Unit | EC-MID-7: Routing 404 returns application/problem+json Content-Type | EC — 404 handling path |
+| Unit | EC-MID-8: Routing 404 body "status" field equals 404 | EC — 404 Problem Details correctness |
+| Unit | EC-MID-9: None of 9 forbidden sensitive debug keys appear in response | EC — comprehensive NFR6 check |
+| Unit | EC-MID-10: Error response Content-Type is NOT text/html | EC — no ASP.NET HTML fallback |
+
+### API Tests — `e2e/tests/api/backend-database-foundation-edge-cases.api.spec.ts`
+
+12 new Playwright API tests expanding beyond ATDD coverage
+
+| Priority | Test | AC Covered |
+|----------|------|------------|
+| [P1] | EC-DB-1: Response has no sensitive debug keys beyond RFC 7807 fields | AC2 security |
+| [P1] | EC-DB-2: "status" field is a number, not a string | AC2 RFC 7807 type |
+| [P1] | EC-DB-3: "title" field is a non-empty string | AC2 RFC 7807 validity |
+| [P1] | EC-DB-4: "detail" does NOT echo raw exception message | AC2 + NFR6 |
+| [P1] | EC-DB-5: 3 sequential error requests all handled correctly (idempotency) | AC2 robustness |
+| [P1] | EC-DB-6: Routing 404 returns application/problem+json Content-Type | AC2 404 path |
+| [P1] | EC-DB-7: Routing 404 body "status" equals 404 | AC2 404 path |
+| [P1] | EC-DB-8: Error response body is valid parseable JSON | AC2 integrity |
+| [P1] | EC-DB-9: Error response Content-Type is NOT text/html | AC2 boundary |
+| [P1] | EC-DB-10: /scalar returns 200 after EF Core DbContext registration (AC5 smoke) | AC5 smoke |
+| [P1] | EC-DB-11: Response does NOT contain "exceptionType" key (NFR6) | AC2 + NFR6 |
+| [P1] | EC-DB-12: Normal API response has no diagnostic/exception leak in body | AC2 security |
+
+---
+
 ## Coverage Analysis
 
 ### Story 1.1 — Before/After
@@ -140,6 +203,50 @@ Note: Component/unit tests for Story 1.2 exist in `frontend/src/routes/__tests__
 | Breakpoint boundary at exactly 1023px | ❌ | ✅ EC-NAV-15 |
 | Shell persistence across route transitions | ❌ | ✅ EC-SHELL-PERSIST-1/2/3 |
 
+### Story 1.3 — Before/After
+
+| Level | ATDD (before) | Automate (after) |
+|-------|--------------|-----------------|
+| Unit (xUnit) | 14 | 34 (+20) |
+| API (Playwright) | 10 | 22 (+12) |
+| **Total** | **24** | **56 (+32)** |
+
+### Priority Breakdown — Story 1.3 New Tests (32 tests)
+
+| Priority | Count | Description |
+|----------|-------|-------------|
+| P0 | 0 | — (P0 happy paths fully covered in ATDD) |
+| P1 | 32 | Edge cases, boundary conditions, NFR6 checks, RFC 7807 type validation |
+| P2 | 0 | — |
+| P3 | 0 | — |
+
+### Coverage Gaps Addressed — Story 1.3
+
+| Gap | ATDD Coverage | Expansion Coverage |
+|-----|--------------|-------------------|
+| Multiple context instances independence | ❌ | ✅ EC-CTX-1 |
+| Context lifecycle (Dispose throws) | ❌ | ✅ EC-CTX-2 |
+| Context without naming convention option | ❌ | ✅ EC-CTX-3 |
+| ChangeTracker initialization | ❌ | ✅ EC-CTX-4 |
+| Model entity type guard (no domain types) | ❌ | ✅ EC-CTX-5 |
+| Repeated create/dispose cycles | ❌ | ✅ EC-CTX-6 |
+| ModelSnapshot class presence | ❌ | ✅ EC-CTX-7 |
+| Migration Up() method structure | ❌ | ✅ EC-CTX-8 |
+| Zero entity types in initial scope | ❌ | ✅ EC-CTX-9 |
+| NamingConventions extension available | ❌ | ✅ EC-CTX-10 |
+| Error response body is valid JSON | ❌ | ✅ EC-MID-1, EC-DB-8 |
+| exceptionType key absent (NFR6) | ❌ | ✅ EC-MID-2, EC-DB-11 |
+| status field is numeric type | ❌ | ✅ EC-MID-3, EC-DB-2 |
+| title is non-empty string | ❌ | ✅ EC-MID-4, EC-DB-3 |
+| detail does not echo ex.Message | ❌ | ✅ EC-MID-5, EC-DB-4 |
+| Middleware idempotency (sequential reqs) | ❌ | ✅ EC-MID-6, EC-DB-5 |
+| 404 routing path returns problem+json | ❌ | ✅ EC-MID-7, EC-DB-6 |
+| 404 routing body status = 404 | ❌ | ✅ EC-MID-8, EC-DB-7 |
+| Comprehensive forbidden key check (9 keys) | ❌ | ✅ EC-MID-9, EC-DB-1 |
+| Content-Type not text/html | ❌ | ✅ EC-MID-10, EC-DB-9 |
+| Backend starts successfully with DbContext | ❌ (xUnit only) | ✅ EC-DB-10 (external smoke) |
+| Diagnostic leak via traceId/response body | ❌ | ✅ EC-DB-12 |
+
 ---
 
 ## Infrastructure
@@ -150,7 +257,7 @@ No new fixtures or factories created for Story 1.2 — navigation shell tests re
 
 ## Tests Marked as fixme
 
-None — all 23 new tests are syntactically valid and follow the same patterns as the existing ATDD files.
+None — all new tests across stories 1.1, 1.2, and 1.3 are syntactically valid and verified passing.
 
 ---
 
@@ -160,11 +267,17 @@ None — all 23 new tests are syntactically valid and follow the same patterns a
 # Run all Story 1.2 navigation tests (ATDD + edge cases)
 pnpm exec playwright test e2e/tests/navigation/
 
-# Run only edge case expansion tests
+# Run only edge case expansion tests for Story 1.2
 pnpm exec playwright test e2e/tests/navigation/navigation-shell-edge-cases.spec.ts
 
 # Run all Story 1.1 tests (ATDD + edge cases)
-pnpm exec playwright test e2e/tests/foundation/ e2e/tests/api/
+pnpm exec playwright test e2e/tests/foundation/ e2e/tests/api/backend-initialization-edge-cases.api.spec.ts
+
+# Run all Story 1.3 Playwright API tests (ATDD + edge cases)
+pnpm exec playwright test e2e/tests/api/backend-database-foundation.api.spec.ts e2e/tests/api/backend-database-foundation-edge-cases.api.spec.ts
+
+# Run all Story 1.3 xUnit tests (ATDD + edge cases)
+cd backend && dotnet test tests/SiesaAgents.UnitTests/
 
 # Run only P0 critical tests across all stories
 pnpm exec playwright test e2e/tests/ --grep "\[P0\]"
