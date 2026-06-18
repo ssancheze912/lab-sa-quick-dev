@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { clienteListFactory } from '../../../../test/factories/cliente.factory';
+import { clienteListFactory } from '../../../../../test/factories/cliente.factory';
 
 // SUT — pure filter function that will be extracted from ClienteListView.
 // Does NOT exist yet → import fails (RED phase).

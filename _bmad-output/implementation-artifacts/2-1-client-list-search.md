@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,34 +22,34 @@ so that I can quickly find the client I am looking for.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: Implement `GET /api/v1/clientes` endpoint (AC: #1, #2)
-  - [ ] Create `ClienteEntity.cs` in `SiesaAgents.Domain/Clientes/Entities/` — fields: `Id` (Guid), `Nombre` (string), `Nit` (string), `Telefono` (string), `Ciudad` (string), `CreatedAt` (DateTimeOffset), `UpdatedAt` (DateTimeOffset). Use static `Create()` factory pattern, private constructor.
-  - [ ] Create `IClienteRepository.cs` in `SiesaAgents.Domain/Clientes/Interfaces/` — method: `Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken ct)`
-  - [ ] Create `ClienteDto.cs` in `SiesaAgents.Application/Clientes/DTOs/` — fields: `Id` (Guid), `Nombre`, `Nit`, `Telefono`, `Ciudad`, `CreatedAt` (DateTimeOffset)
-  - [ ] Create `GetClientesQuery.cs` and `GetClientesQueryHandler.cs` in `SiesaAgents.Application/Clientes/Queries/` — handler calls `IClienteRepository.GetAllAsync()` and maps to `IEnumerable<ClienteDto>`
-  - [ ] Create `ClienteConfiguration.cs` in `SiesaAgents.Infrastructure/Data/Configurations/` — configures `ClienteEntity`, table `clientes`, unique index `uk_clientes_nit` on `Nit`. Apply `ApplySnakeCaseNaming()` in `AppDbContext.OnModelCreating()`.
-  - [ ] Create `ClienteRepository.cs` in `SiesaAgents.Infrastructure/Repositories/` implementing `IClienteRepository`
-  - [ ] Add `DbSet<ClienteEntity> Clientes` to `AppDbContext.cs`
-  - [ ] Create EF Core initial migration: `dotnet ef migrations add AddClientesTable --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API`
-  - [ ] Register `IClienteRepository` → `ClienteRepository` and `GetClientesQueryHandler` in `Program.cs` DI
-  - [ ] Map `GET /api/v1/clientes` endpoint in `ClienteEndpoints.cs` — calls handler, returns `200 OK` with `IEnumerable<ClienteDto>` (direct array, no wrapper)
+- [x] Task 1 — Backend: Implement `GET /api/v1/clientes` endpoint (AC: #1, #2)
+  - [x] Create `ClienteEntity.cs` in `SiesaAgents.Domain/Clientes/Entities/` — fields: `Id` (Guid), `Nombre` (string), `Nit` (string), `Telefono` (string), `Ciudad` (string), `CreatedAt` (DateTimeOffset), `UpdatedAt` (DateTimeOffset). Use static `Create()` factory pattern, private constructor.
+  - [x] Create `IClienteRepository.cs` in `SiesaAgents.Domain/Clientes/Interfaces/` — method: `Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken ct)`
+  - [x] Create `ClienteDto.cs` in `SiesaAgents.Application/Clientes/DTOs/` — fields: `Id` (Guid), `Nombre`, `Nit`, `Telefono`, `Ciudad`, `CreatedAt` (DateTimeOffset)
+  - [x] Create `GetClientesQuery.cs` and `GetClientesQueryHandler.cs` in `SiesaAgents.Application/Clientes/Queries/` — handler calls `IClienteRepository.GetAllAsync()` and maps to `IEnumerable<ClienteDto>`
+  - [x] Create `ClienteConfiguration.cs` in `SiesaAgents.Infrastructure/Data/Configurations/` — configures `ClienteEntity`, table `clientes`, unique index `uk_clientes_nit` on `Nit`. Apply `ApplySnakeCaseNaming()` in `AppDbContext.OnModelCreating()`.
+  - [x] Create `ClienteRepository.cs` in `SiesaAgents.Infrastructure/Repositories/` implementing `IClienteRepository`
+  - [x] Add `DbSet<ClienteEntity> Clientes` to `AppDbContext.cs`
+  - [x] Create EF Core initial migration: `dotnet ef migrations add AddClientesTable --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API`
+  - [x] Register `IClienteRepository` → `ClienteRepository` and `GetClientesQueryHandler` in `Program.cs` DI
+  - [x] Map `GET /api/v1/clientes` endpoint in `ClienteEndpoints.cs` — calls handler, returns `200 OK` with `IEnumerable<ClienteDto>` (direct array, no wrapper)
 
-- [ ] Task 2 — Frontend Domain & Application layer (AC: #1, #2)
-  - [ ] Create `frontend/src/modules/crm/clientes/domain/Cliente.ts` — TypeScript interface: `{ id: string; nombre: string; nit: string; telefono: string; ciudad: string; createdAt: string; }`
-  - [ ] Create `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — interface: `{ getAll(): Promise<Cliente[]> }`
-  - [ ] Create `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implements `IClienteRepository` using `apiClient.get<Cliente[]>('/api/v1/clientes')`
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useClientes.ts` — TanStack Query hook: `useQuery({ queryKey: ['clientes'], queryFn: () => clienteApiRepository.getAll() })`. Export `data`, `isLoading`, `isError`, `refetch`.
+- [x] Task 2 — Frontend Domain & Application layer (AC: #1, #2)
+  - [x] Create `frontend/src/modules/crm/clientes/domain/Cliente.ts` — TypeScript interface: `{ id: string; nombre: string; nit: string; telefono: string; ciudad: string; createdAt: string; }`
+  - [x] Create `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — interface: `{ getAll(): Promise<Cliente[]> }`
+  - [x] Create `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implements `IClienteRepository` using `apiClient.get<Cliente[]>('/api/v1/clientes')`
+  - [x] Create `frontend/src/modules/crm/clientes/application/useClientes.ts` — TanStack Query hook: `useQuery({ queryKey: ['clientes'], queryFn: () => clienteApiRepository.getAll() })`. Export `data`, `isLoading`, `isError`, `refetch`.
 
-- [ ] Task 3 — Frontend Presentation: `ClienteListView` component (AC: #1, #2, #3, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` — renders the 280px scrollable left panel:
+- [x] Task 3 — Frontend Presentation: `ClienteListView` component (AC: #1, #2, #3, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` — renders the 280px scrollable left panel:
     - Calls `useClientes()` to fetch all clients
     - Shows `react-loading-skeleton` skeleton rows while `isLoading === true`
     - Shows `<ErrorPanel onRetry={refetch} />` when `isError === true`
     - Shows `<EmptyState />` when data array is empty
     - Shows scrollable list when data is present — each item renders `Nombre` and `NIT/RUC`
-  - [ ] Create `frontend/src/shared/components/EmptyState.tsx` — displays a message guiding the user to create the first client (Spanish text: "No hay clientes registrados. Crea el primero."), includes a Heroicons icon
-  - [ ] Create `frontend/src/shared/components/ErrorPanel.tsx` — displays error message (Spanish: "No se pudo cargar la lista. Intenta de nuevo.") with a "Reintentar" button that calls `onRetry`
-  - [ ] Add client-side search: add `searchQuery` local state (`useState<string>('')`). Render a search `<input>` at the top of the panel with placeholder "Buscar por nombre o NIT/RUC...". Filter with `useMemo`:
+  - [x] Create `frontend/src/shared/components/EmptyState.tsx` — displays a message guiding the user to create the first client (Spanish text: "No hay clientes registrados. Crea el primero."), includes a Heroicons icon
+  - [x] Create `frontend/src/shared/components/ErrorPanel.tsx` — displays error message (Spanish: "No se pudo cargar la lista. Intenta de nuevo.") with a "Reintentar" button that calls `onRetry`
+  - [x] Add client-side search: add `searchQuery` local state (`useState<string>('')`). Render a search `<input>` at the top of the panel with placeholder "Buscar por nombre o NIT/RUC...". Filter with `useMemo`:
     ```typescript
     const filtered = useMemo(() =>
       (data ?? []).filter(c =>
@@ -59,25 +59,25 @@ so that I can quickly find the client I am looking for.
       [data, searchQuery]
     )
     ```
-  - [ ] Add `aria-label="Buscar clientes"` to the search input (WCAG 2.1 AA)
-  - [ ] Use `react-loading-skeleton` (`<Skeleton />`) for list item placeholders during loading
+  - [x] Add `aria-label="Buscar clientes"` to the search input (WCAG 2.1 AA)
+  - [x] Use `react-loading-skeleton` (`<Skeleton />`) for list item placeholders during loading
 
-- [ ] Task 4 — Frontend Route: wire `ClienteListView` into `/clientes` route (AC: #1)
-  - [ ] Create `frontend/src/routes/_app/clientes.tsx` (TanStack Router file-based). This route renders the split-panel layout: 280px left panel (`ClienteListView`) + flex right panel (placeholder for Story 2.2). The route file must export a `Route` using `createFileRoute('/clientes')`.
-  - [ ] Ensure `_app.tsx` layout route exists at `frontend/src/routes/_app.tsx` (pathless layout), wrapping child routes in the app shell.
+- [x] Task 4 — Frontend Route: wire `ClienteListView` into `/clientes` route (AC: #1)
+  - [x] Create `frontend/src/routes/_app/clientes.tsx` (TanStack Router file-based). This route renders the split-panel layout: 280px left panel (`ClienteListView`) + flex right panel (placeholder for Story 2.2). The route file must export a `Route` using `createFileRoute('/clientes')`.
+  - [x] Ensure `_app.tsx` layout route exists at `frontend/src/routes/_app.tsx` (pathless layout), wrapping child routes in the app shell.
 
-- [ ] Task 5 — Frontend Unit & Component Tests (AC: #1, #2, #3, #4)
-  - [ ] `useClientes.test.ts` — unit test: MSW handler returns array of 2 clients; assert hook returns correct `Cliente[]` data
-  - [ ] `ClienteListView.test.tsx` — component test:
+- [x] Task 5 — Frontend Unit & Component Tests (AC: #1, #2, #3, #4)
+  - [x] `useClientes.test.ts` — unit test: MSW handler returns array of 2 clients; assert hook returns correct `Cliente[]` data
+  - [x] `ClienteListView.test.tsx` — component test:
     - Renders skeleton while loading (MSW delayed response)
     - Renders list of clients when data is returned from MSW
     - Renders `EmptyState` when MSW returns `[]`
     - Renders `ErrorPanel` with "Reintentar" button on MSW 500 error; clicking button calls `refetch`
     - Client-side search filter: render 3 clients, type in search field, assert only matching item visible
-  - [ ] Performance test: render `ClienteListView` with 500-item fixture via MSW; assert `useMemo` filter completes in < 50ms (NFR1)
+  - [x] Performance test: render `ClienteListView` with 500-item fixture via MSW; assert `useMemo` filter completes in < 50ms (NFR1)
 
-- [ ] Task 6 — Backend xUnit Integration Tests (AC: #1)
-  - [ ] `GetClientesTests.cs` in `SiesaAgents.UnitTests/Application/Clientes/`:
+- [x] Task 6 — Backend xUnit Integration Tests (AC: #1)
+  - [x] `GetClientesTests.cs` in `SiesaAgents.UnitTests/Application/Clientes/`:
     - Happy path: `GET /api/v1/clientes` → 200 with JSON array
     - Empty DB: `GET /api/v1/clientes` → 200 with empty array `[]`
     - Response shape: assert returned objects contain `id`, `nombre`, `nit`, `telefono`, `ciudad`, `createdAt` fields
@@ -240,6 +240,54 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+- Backend tests: 40/40 pass (including 3 new GetClientesTests integration tests)
+- Frontend tests: 18/18 pass (7 ClienteListView component tests, 3 perf tests, 1 useClientes unit test, 7 route tests)
+- Fixed ATDD test import path (5 levels up vs 4) for `useClientes.perf.test.ts`
+- Updated Story 1.3 scope-guard tests (EC-CTX-5, EC-CTX-9, AppDbContext_DoesNotContain) to reflect ClienteEntity addition
+- Route test updated to wrap with QueryClientProvider + MSW server to handle ClienteListView's useQuery
+
 ### Completion Notes List
 
+- `filterClientes.ts` extracted as a pure utility (separate from component) so perf test can import it directly
+- `data-testid="clientes-list-panel"` placed only on success state div (not during loading) so ATDD test's `waitFor` correctly waits for data
+- EmptyState and ErrorPanel created as custom shared components (no equivalent found in siesa-ui-kit)
+- EF migration `AddClientesTable` created (timestamp: 20260618045635)
+- Backend WebApplicationFactory test removes EF provider descriptors by service type namespace prefix to avoid "multiple database providers" conflict
+
 ### File List
+
+**Backend - New files:**
+- `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs`
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
+- `backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQuery.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQueryHandler.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
+- `backend/src/SiesaAgents.Infrastructure/Migrations/20260618045635_AddClientesTable.cs`
+- `backend/src/SiesaAgents.Infrastructure/Migrations/20260618045635_AddClientesTable.Designer.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesTests.cs`
+
+**Backend - Modified files:**
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` — added `DbSet<ClienteEntity> Clientes`
+- `backend/src/SiesaAgents.API/Program.cs` — added DI registrations and endpoint mapping
+- `backend/src/SiesaAgents.Infrastructure/Migrations/AppDbContextModelSnapshot.cs` — updated by EF migration
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` — updated scope-guard test
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextEdgeCaseTests.cs` — updated 2 scope-guard tests
+
+**Frontend - New files:**
+- `frontend/src/modules/crm/clientes/domain/Cliente.ts`
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`
+- `frontend/src/modules/crm/clientes/application/useClientes.ts`
+- `frontend/src/modules/crm/clientes/application/filterClientes.ts`
+- `frontend/src/modules/crm/clientes/application/useClientes.test.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`
+- `frontend/src/shared/components/EmptyState.tsx`
+- `frontend/src/shared/components/ErrorPanel.tsx`
+
+**Frontend - Modified files:**
+- `frontend/src/routes/_app/clientes.tsx` — wired ClienteListView into split-panel layout
+- `frontend/src/routes/__tests__/-_app.test.tsx` — added QueryClientProvider + MSW server for route tests
+- `frontend/src/modules/crm/clientes/application/__tests__/useClientes.perf.test.ts` — fixed import path (4→5 levels up)

@@ -167,9 +167,10 @@ public class AppDbContextTests
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void AppDbContext_DoesNotContain_ClienteOrContactoDbSets()
+    public void AppDbContext_Contains_ClientesDbSet_AddedInStory21()
     {
         // GIVEN: The AppDbContext type definition
+        // Updated in Story 2.1: ClienteEntity was added to AppDbContext (Epic 2)
         var contextType = typeof(AppDbContext);
 
         // WHEN: We inspect all public properties of type DbSet<T>
@@ -180,13 +181,9 @@ public class AppDbContextTests
             .Select(p => p.Name)
             .ToList();
 
-        // THEN: No DbSet<> properties named Cliente or Contacto exist
-        var forbiddenNames = dbSetProperties
-            .Where(name =>
-                name.Contains("Cliente", StringComparison.OrdinalIgnoreCase) ||
-                name.Contains("Contacto", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        Assert.Empty(forbiddenNames);
+        // THEN: Clientes DbSet exists (added by Story 2.1); Contacto does not yet exist
+        Assert.Contains("Clientes", dbSetProperties);
+        Assert.DoesNotContain(dbSetProperties,
+            name => name.Contains("Contacto", StringComparison.OrdinalIgnoreCase));
     }
 }

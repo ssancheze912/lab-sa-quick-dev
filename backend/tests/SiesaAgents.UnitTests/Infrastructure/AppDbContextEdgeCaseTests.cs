@@ -134,9 +134,10 @@ public class AppDbContextEdgeCaseTests
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void AppDbContext_Model_DoesNotContainClienteOrContactoEntityType()
+    public void AppDbContext_Model_ContainsClienteEntityType_AddedInStory21()
     {
         // GIVEN: An AppDbContext with InMemory provider
+        // Updated in Story 2.1: ClienteEntity is now registered in the model
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: $"TestDb_EC5_{Guid.NewGuid()}")
             .Options;
@@ -149,14 +150,10 @@ public class AppDbContextEdgeCaseTests
             .Select(e => e.ClrType.Name)
             .ToList();
 
-        // THEN: Neither ClienteEntity nor ContactoEntity appear in the model
-        var forbiddenTypes = entityTypeNames
-            .Where(name =>
-                name.Contains("Cliente", StringComparison.OrdinalIgnoreCase) ||
-                name.Contains("Contacto", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        Assert.Empty(forbiddenTypes);
+        // THEN: ClienteEntity appears in the model (added by Story 2.1); ContactoEntity does not yet exist
+        Assert.Contains("ClienteEntity", entityTypeNames);
+        Assert.DoesNotContain(entityTypeNames,
+            name => name.Contains("Contacto", StringComparison.OrdinalIgnoreCase));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -247,9 +244,10 @@ public class AppDbContextEdgeCaseTests
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void AppDbContext_Model_HasZeroEntityTypes_AtInitialScope()
+    public void AppDbContext_Model_HasOneEntityType_ClienteEntity_AddedInStory21()
     {
         // GIVEN: AppDbContext with InMemory provider
+        // Updated in Story 2.1: ClienteEntity added — model now has 1 entity type
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: $"TestDb_EC9_{Guid.NewGuid()}")
             .Options;
@@ -259,8 +257,8 @@ public class AppDbContextEdgeCaseTests
         // WHEN: The model entity type count is checked
         var entityTypeCount = context.Model.GetEntityTypes().Count();
 
-        // THEN: Zero entity types — no domain tables are defined in this story scope
-        Assert.Equal(0, entityTypeCount);
+        // THEN: Exactly 1 entity type (ClienteEntity) — ContactoEntity will be added in Epic 3
+        Assert.Equal(1, entityTypeCount);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
