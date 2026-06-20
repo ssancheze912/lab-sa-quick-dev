@@ -99,14 +99,13 @@ test.describe('AC2 — ExceptionHandlingMiddleware returns Problem Details RFC 7
     // WHEN: A 500 error occurs
 
     const response = await request.get(`${API_BASE_URL}/api/test/throw`);
+    const contentType = response.headers()['content-type'] ?? '';
 
-    // THEN: The response body is valid JSON — not HTML error page
-    let body: unknown;
-    try {
-      body = await response.json();
-    } catch {
-      body = null;
-    }
+    // THEN: Content-Type confirms JSON before parsing (avoids swallowing parse errors)
+    // TODO (TEA Review): Removed try/catch that was swallowing JSON parse errors — if response
+    // is not valid JSON, the test must fail explicitly, not mask the issue. See test-review-1-3.md
+    expect(contentType).toContain('application/problem+json');
+    const body = await response.json() as Record<string, unknown>;
     expect(body).not.toBeNull();
     expect(typeof body).toBe('object');
   });

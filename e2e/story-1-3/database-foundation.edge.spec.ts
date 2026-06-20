@@ -419,10 +419,11 @@ test.describe('[P1] Infrastructure — Lazy EF Core connection and security boun
     expect(errorResponse.status()).toBe(500);
 
     // AND: The Problem Details status field matches the HTTP status in both cases
-    if (errorResponse.headers()['content-type']?.includes('application/problem+json')) {
-      const body = await errorResponse.json();
-      expect(body.status).toBe(500);
-    }
+    // TODO (TEA Review): Conditional assertion replaced — Content-Type must always be
+    // application/problem+json for 500 errors; hiding this behind an if hides a critical violation
+    expect(errorResponse.headers()['content-type']).toContain('application/problem+json');
+    const body = await errorResponse.json();
+    expect(body.status).toBe(500);
   });
 
   test('[P2] should not return a 500 for GET /api/v1 (API root discovery path)', async ({
