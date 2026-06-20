@@ -45,7 +45,11 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'pnpm --filter frontend dev',
+    // Story 1.1 GREEN phase: replace with `pnpm --filter frontend run dev`
+    // once the frontend workspace is initialized at frontend/
+    // For now, tests run against an already-running Vite dev server (pnpm run dev in frontend/)
+    command: 'pnpm run dev',
+    cwd: 'frontend',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

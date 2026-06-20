@@ -2,5 +2,14 @@ node_modules/
 playwright-results/
 test-results/
 dist/
+frontend/dist/
 .env.local
 *.local
+
+# .NET build artifacts
+backend/**/bin/
+backend/**/obj/
+
+# Frontend env files
+frontend/.env.local
+frontend/.env.development.local

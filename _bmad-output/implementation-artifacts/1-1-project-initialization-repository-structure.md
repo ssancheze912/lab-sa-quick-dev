@@ -185,3 +185,24 @@ claude-sonnet-4-6
 ### Completion Notes List
 
 ### File List
+
+<!-- RED Phase (ATDD) — files committed before implementation -->
+- `playwright.config.ts` — Playwright E2E configuration (frontend baseURL: 5173, backend: 5000)
+- `package.json` — Root package.json with pnpm + @playwright/test devDependency
+- `pnpm-lock.yaml` — Lock file for root test tooling
+- `.gitignore` — Excludes node_modules, playwright-results, test-results, dist, .env.local
+- `e2e/story-1-1/project-initialization.spec.ts` — ATDD E2E tests for AC1, AC3 (RED phase)
+- `e2e/story-1-1/backend-solution.api.spec.ts` — ATDD API tests for AC2, AC3 (RED phase)
+- `e2e/story-1-1/project-initialization.edge.spec.ts` — Expanded coverage edge cases (automate phase)
+- `e2e/support/factories/environment.factory.ts` — Environment constants and CORS request builders
+- `e2e/tests/foundation/project-initialization.spec.ts` — ATDD tests (feature-level structure, AC1/AC3/AC4)
+- `e2e/tests/api/backend-initialization.api.spec.ts` — ATDD API tests (feature-level structure, AC2/AC5)
+- `e2e/fixtures/base.fixture.ts` — Extended Playwright fixtures (clientesPage, contactosPage)
+- `e2e/helpers/api.helper.ts` — REST API helper for test data setup/teardown
+- `e2e/helpers/data.helper.ts` — Test data factories (buildCliente, buildContacto)
+- `e2e/pages/clientes.page.ts` — Page Object Model for Clientes (future Epic 2)
+- `e2e/pages/contactos.page.ts` — Page Object Model for Contactos (future Epic 3)
+- `e2e/tests/clientes/clientes-crud.spec.ts` — E2E tests for FR1-FR8 (scaffolded for Epic 2)
+- `_bmad-output/atdd-checklist-1-1.md` — ATDD implementation checklist with RED phase evidence
+- `_bmad-output/implementation-artifacts/test-design-epic-1.md` — Test design for Epic 1
+- `_bmad-output/test-design-epic-1.md` — Duplicate test design artifact (see above)

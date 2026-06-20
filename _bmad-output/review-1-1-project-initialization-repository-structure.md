@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3]
+stepsCompleted: [1, 2, 3, 4, 5]
 story_path: _bmad-output/implementation-artifacts/1-1-project-initialization-repository-structure.md
 story_key: 1-1-project-initialization-repository-structure
 date: '2026-06-20'
@@ -118,10 +118,14 @@ There is a `webServer` entry for the frontend (`http://localhost:5173`) but none
 
 ## Fix Outcome
 
-- **Action Taken**: Auto-fix applied where possible (CRITICAL-3: story file list, LOW-1: .gitignore). MED-1, MED-2, MED-4 documented for manual resolution when implementation begins.
-- **Fixed Count**: 2 auto-fixed
-- **Task Count**: 4 items flagged for manual attention
-- **Recommended Status**: in-progress (story is in RED phase — implementation not yet started)
+- **Action Taken**: Auto-fix applied
+  - CRITICAL-3: Story Dev Agent Record File List populated with all committed files
+  - LOW-1: `.gitignore` extended with `frontend/dist/`, `backend/**/bin/`, `backend/**/obj/`
+  - MED-2: `playwright.config.ts` webServer command fixed from `pnpm --filter frontend dev` (broken, requires workspace) to `pnpm run dev` with `cwd: 'frontend'` (correct pattern)
+  - MED-4: `e2e/tests/foundation/project-initialization.spec.ts` fixed `data-testid="app-root"` to `#root` per ATDD checklist
+- **Fixed Count**: 4 auto-fixed
+- **Pending Manual**: MED-1 (duplicate test directories — consolidate `e2e/story-1-1/` vs `e2e/tests/` after implementation)
+- **Recommended Status**: ready-for-dev (story is correctly in RED phase — implementation not yet started)
 
 ## Status Sync
 
