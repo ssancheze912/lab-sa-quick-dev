@@ -408,66 +408,18 @@ describe('AC2 — Valid form submission calls useCreateCliente mutate', () => {
 
 describe('AC4 — 409 NIT conflict shows inline error on NIT field', () => {
   it('renders "El NIT/RUC ya está registrado" below NIT field when 409 error is set', async () => {
-    // GIVEN: Form where mutation has a 409 conflict error AND setError was called on nit
-    // Simulated by rendering with a component that sets nit field error on mount (via useEffect or
-    // via the hook calling setError on the form — tested by wiring the onError callback)
-    // For ATDD, we validate the error appears via the component's error rendering logic
-    mockIdle()
+    // GIVEN: Hook returns isError=true with a 409 conflict error
+    // The component uses useEffect([isError, error]) to call setError('nit', ...) on 409
+    mockConflictError()
     renderForm()
 
-    // Fill the form to isolate to NIT error
-    await userEvent.type(screen.getByTestId('cliente-nombre-input'), 'Empresa Duplicada')
-    await userEvent.type(screen.getByTestId('cliente-nit-input'), '900000001')
-    await userEvent.type(screen.getByTestId('cliente-telefono-input'), '3001234567')
-    await userEvent.type(screen.getByTestId('cliente-ciudad-input'), 'Bogotá')
-
-    // Trigger 409: mock mutate to call setError on nit in the component's onError
-    // The component's onError handler should call setError('nit', { message: 'El NIT/RUC ya está registrado' })
-    // We verify the error element exists with correct text when this scenario occurs
-    // For RED phase: this test documents the EXPECTED behavior — error must appear below NIT
-    // The implementation must call setError('nit', ...) in the onError callback
-
-    // Note: The actual 409 flow is tested via the mutate mock returning an error.
-    // This is a RED test — it will fail until implementation wires 409 → setError('nit', ...).
-    mockConflictError()
-
-    // Re-render to apply conflict error state
-    vi.clearAllMocks()
-    mockUseCreateCliente.mockReturnValue({
-      mutate: vi.fn((_, { onError } = {}) => {
-        // Simulate the component calling setError after 409
-      }),
-      isPending: false,
-      isError: false,
-      error: null,
-    })
-
-    // Simulate: component calls form.setError('nit', ...) after 409
-    // This ATDD test validates the NIT error element exists with the exact required message
-    // The RED failure will be: TestId 'cliente-nit-error' not found OR text mismatch
-    const { rerender } = renderForm()
-
-    // After 409, implementation MUST set nit field error via setError
-    // Verify the error container exists and is wired to the NIT field
-    await userEvent.type(screen.getByTestId('cliente-nit-input'), '900000001')
-    await userEvent.click(screen.getByTestId('guardar-btn'))
-
-    // The test fails (RED) because NIT error is not shown yet until:
-    // 1. Backend returns 409
-    // 2. Component calls setError('nit', { message: 'El NIT/RUC ya está registrado' })
-    // This is the acceptance test that drives that implementation
+    // WHEN: The useEffect in ClienteForm fires due to isError+error state
+    // THEN: The NIT error message appears below the NIT field
     await waitFor(() => {
       const nitError = screen.queryByTestId('cliente-nit-error')
-      // RED phase: nitError may be null — this assertion documents expected behavior
       expect(nitError).toBeInTheDocument()
       expect(nitError).toHaveTextContent('El NIT/RUC ya está registrado')
-    }, { timeout: 1000 }).catch(() => {
-      // Expected failure in RED phase — NIT conflict error not yet wired
-      throw new Error(
-        'RED: NIT conflict error "El NIT/RUC ya está registrado" not shown below NIT field. ' +
-        'Implementation must call setError("nit", { message: "El NIT/RUC ya está registrado" }) on 409 response.',
-      )
-    })
+    }, { timeout: 1000 })
   })
 })
 
