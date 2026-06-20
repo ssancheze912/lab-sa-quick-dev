@@ -1,10 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ClienteListView } from '../../modules/crm/clientes/presentation/ClienteListView'
+
+function ClienteDetailPlaceholder() {
+  return (
+    <div className="flex flex-1 items-center justify-center text-slate-400">
+      <p className="text-sm">Selecciona un cliente para ver sus detalles.</p>
+    </div>
+  )
+}
 
 function ClientesView() {
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-semibold text-slate-800">Clientes</h2>
-      <p className="mt-2 text-slate-600">Lista de clientes (implementación en Épica 2).</p>
+    <div className="flex h-full">
+      <ClienteListView />
+      <ClienteDetailPlaceholder />
     </div>
   )
 }

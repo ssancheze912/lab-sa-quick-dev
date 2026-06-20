@@ -21,13 +21,13 @@ function renderWithRouter(initialPath: string) {
 describe('Navigation Shell', () => {
   it('redirects root / to /clientes', async () => {
     renderWithRouter('/')
-    // After redirect, clientes view should be visible
-    expect(await screen.findByText('Clientes')).toBeInTheDocument()
+    // After redirect, clientes view should be visible with the search input
+    expect(await screen.findByRole('textbox', { name: 'Buscar clientes' })).toBeInTheDocument()
   })
 
   it('renders Clientes view on /clientes', async () => {
     renderWithRouter('/clientes')
-    expect(await screen.findByText('Clientes')).toBeInTheDocument()
+    expect(await screen.findByRole('textbox', { name: 'Buscar clientes' })).toBeInTheDocument()
   })
 
   it('renders Contactos view on /contactos', async () => {
@@ -54,7 +54,7 @@ describe('Navigation Shell', () => {
 
   it('navigation entries render with correct aria-labels', async () => {
     renderWithRouter('/clientes')
-    await screen.findByText('Clientes')
+    await screen.findByRole('textbox', { name: 'Buscar clientes' })
     // Icons should have aria-label for accessibility
     const clientesIcons = document.querySelectorAll('[aria-label="Clientes"]')
     expect(clientesIcons.length).toBeGreaterThan(0)
