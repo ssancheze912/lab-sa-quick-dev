@@ -69,6 +69,7 @@ export function ClienteForm({ onClose }: ClienteFormProps) {
             data-testid="cliente-nombre-input"
             placeholder="Nombre de la empresa"
             aria-describedby={errors.nombre ? 'cliente-nombre-error' : undefined}
+            autoFocus
             {...register('nombre')}
           />
           {errors.nombre && (

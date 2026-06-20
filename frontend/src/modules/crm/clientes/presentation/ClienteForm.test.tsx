@@ -419,7 +419,7 @@ describe('AC4 — 409 NIT conflict shows inline error on NIT field', () => {
       const nitError = screen.queryByTestId('cliente-nit-error')
       expect(nitError).toBeInTheDocument()
       expect(nitError).toHaveTextContent('El NIT/RUC ya está registrado')
-    }, { timeout: 1000 })
+    })
   })
 })
 
