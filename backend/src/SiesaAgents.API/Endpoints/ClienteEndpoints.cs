@@ -3,6 +3,7 @@ using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.DTOs;
 using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Application.Clientes.Validators;
+using SiesaAgents.Application.Common.Exceptions;
 
 namespace SiesaAgents.API.Endpoints;
 
@@ -50,6 +51,33 @@ public static class ClienteEndpoints
         .WithName("CreateCliente")
         .Produces<ClienteDto>(StatusCodes.Status201Created)
         .Produces<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)
+        .Produces<ProblemDetails>(StatusCodes.Status409Conflict);
+
+        app.MapPut("/api/v1/clientes/{id:guid}", async (
+            Guid id,
+            UpdateClienteRequest request,
+            UpdateClienteRequestValidator validator,
+            UpdateClienteCommandHandler handler,
+            CancellationToken ct) =>
+        {
+            var validation = await validator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+            {
+                var errors = validation.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+
+                return Results.ValidationProblem(errors);
+            }
+
+            var command = new UpdateClienteCommand(id, request.Nombre, request.Nit, request.Telefono, request.Ciudad);
+            var result = await handler.Handle(command, ct);
+            return Results.Ok(result);
+        })
+        .WithName("UpdateCliente")
+        .Produces<ClienteDto>(StatusCodes.Status200OK)
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+        .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
         .Produces<ProblemDetails>(StatusCodes.Status409Conflict);
     }
 }

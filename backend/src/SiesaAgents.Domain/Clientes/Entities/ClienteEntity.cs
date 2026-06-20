@@ -27,4 +27,13 @@ public class ClienteEntity : Entity
             Ciudad = ciudad
         };
     }
+
+    public void Update(string nombre, string nit, string telefono, string ciudad)
+    {
+        Nombre = nombre;
+        Nit = nit;
+        Telefono = telefono;
+        Ciudad = ciudad;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }
