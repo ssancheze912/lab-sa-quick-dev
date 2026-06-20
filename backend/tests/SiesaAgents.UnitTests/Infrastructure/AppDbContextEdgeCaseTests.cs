@@ -144,14 +144,13 @@ public class AppDbContextEdgeCaseTests
     {
         // GIVEN: AppDbContext registered as IApplicationDbContext — no pending changes
         var options = BuildOptions();
-        IApplicationDbContext context = new AppDbContext(options);
+        await using var context = new AppDbContext(options);
 
         // WHEN: SaveChangesAsync is called with the explicit None token
-        var result = await context.SaveChangesAsync(CancellationToken.None);
+        var result = await ((IApplicationDbContext)context).SaveChangesAsync(CancellationToken.None);
 
         // THEN: Returns 0 (no state entries affected) and does not throw
         Assert.Equal(0, result);
-        ((IDisposable)context).Dispose();
     }
 
     [Fact(DisplayName = "AC4 Edge: SaveChangesAsync with pre-cancelled token throws OperationCanceledException")]
@@ -159,16 +158,14 @@ public class AppDbContextEdgeCaseTests
     {
         // GIVEN: A CancellationToken that is already cancelled before the call
         var options = BuildOptions();
-        IApplicationDbContext context = new AppDbContext(options);
+        await using var context = new AppDbContext(options);
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
         // WHEN: SaveChangesAsync is called with a pre-cancelled token
         // THEN: OperationCanceledException is thrown (EF Core respects cancellation)
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => context.SaveChangesAsync(cts.Token));
-
-        ((IDisposable)context).Dispose();
+            () => ((IApplicationDbContext)context).SaveChangesAsync(cts.Token));
     }
 
     [Fact(DisplayName = "AC4 Edge: IApplicationDbContext does NOT expose IDisposable on the interface")]

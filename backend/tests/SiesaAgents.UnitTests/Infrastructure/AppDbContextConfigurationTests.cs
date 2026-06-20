@@ -112,13 +112,11 @@ public class AppDbContextConfigurationTests
             .Options;
 
         // WHEN: SaveChangesAsync is called via the abstraction interface
-        IApplicationDbContext context = new AppDbContext(options);
-        var result = await context.SaveChangesAsync(CancellationToken.None);
+        await using var context = new AppDbContext(options);
+        var result = await ((IApplicationDbContext)context).SaveChangesAsync(CancellationToken.None);
 
         // THEN: No exception is thrown; returns number of affected state entries (0 for no changes)
         Assert.Equal(0, result);
-
-        ((IDisposable)context).Dispose();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
