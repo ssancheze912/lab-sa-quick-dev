@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SiesaAgents.Application.Common.Exceptions;
 
 namespace SiesaAgents.API.Middleware;
 
@@ -9,6 +10,24 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         try
         {
             await next(context);
+        }
+        catch (NotFoundException ex)
+        {
+            logger.LogWarning(ex, "Resource not found on {Method} {Path}",
+                context.Request.Method, context.Request.Path);
+
+            context.Response.ContentType = "application/problem+json";
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+
+            var problem = new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Recurso no encontrado",
+                Detail = ex.Message,
+                Type = "https://tools.ietf.org/html/rfc7807"
+            };
+
+            await context.Response.WriteAsJsonAsync(problem);
         }
         catch (Exception ex)
         {

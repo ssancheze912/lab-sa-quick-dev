@@ -7,7 +7,15 @@ import { ClientListItem } from '../../../../shared/components/ClientListItem'
 import { EmptyState } from '../../../../shared/components/EmptyState'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 
-export function ClienteListView() {
+interface ClienteListViewProps {
+  selectedClienteId?: string | null
+  onSelectCliente?: (clienteId: string) => void
+}
+
+export function ClienteListView({
+  selectedClienteId,
+  onSelectCliente,
+}: ClienteListViewProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const { data: clientes, isLoading, isError, refetch } = useClientes()
 
@@ -59,8 +67,8 @@ export function ClienteListView() {
             <ClientListItem
               key={cliente.id}
               cliente={cliente}
-              isSelected={false}
-              onClick={() => {}}
+              isSelected={selectedClienteId === cliente.id}
+              onClick={() => onSelectCliente?.(cliente.id)}
             />
           ))
         }

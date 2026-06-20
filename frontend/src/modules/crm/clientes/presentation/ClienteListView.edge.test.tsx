@@ -63,16 +63,6 @@ function mockData(clientes: ReturnType<typeof createCliente>[]) {
   })
 }
 
-function mockError() {
-  const refetch = vi.fn()
-  mockUseClientes.mockReturnValue({
-    data: undefined,
-    isLoading: false,
-    isError: true,
-    refetch,
-  })
-  return { refetch }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
