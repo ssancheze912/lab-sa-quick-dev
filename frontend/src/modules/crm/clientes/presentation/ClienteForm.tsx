@@ -5,12 +5,16 @@ import { Input } from 'siesa-ui-kit'
 import type { AxiosError } from 'axios'
 import { clienteSchema, type ClienteFormValues } from '../application/clienteSchema'
 import { useCreateCliente } from '../application/useCreateCliente'
+import { useUpdateCliente } from '../application/useUpdateCliente'
 
 interface ClienteFormProps {
+  mode?: 'create' | 'edit'
+  clienteId?: string
+  defaultValues?: ClienteFormValues
   onClose: () => void
 }
 
-export function ClienteForm({ onClose }: ClienteFormProps) {
+export function ClienteForm({ mode = 'create', clienteId, defaultValues, onClose }: ClienteFormProps) {
   const {
     register,
     handleSubmit,
@@ -19,9 +23,16 @@ export function ClienteForm({ onClose }: ClienteFormProps) {
     reset,
   } = useForm<ClienteFormValues>({
     resolver: zodResolver(clienteSchema),
+    defaultValues,
   })
 
-  const { mutate, isPending, isSuccess, isError, error } = useCreateCliente()
+  const createMutation = useCreateCliente()
+  const updateMutation = useUpdateCliente(clienteId ?? '')
+
+  const mutation = mode === 'edit' ? updateMutation : createMutation
+
+  const { mutate, isPending, isSuccess, isError, error } = mutation
+
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 

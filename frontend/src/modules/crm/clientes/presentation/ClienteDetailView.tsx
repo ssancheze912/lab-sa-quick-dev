@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import type { AxiosError } from 'axios'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useCliente } from '../application/useCliente'
 import { ClienteDetailPlaceholder } from '../../../../shared/components/ClienteDetailPlaceholder'
+import { EditarClienteDialog } from './EditarClienteDialog'
+import type { ClienteFormValues } from '../application/clienteSchema'
 
 interface ClienteDetailViewProps {
   clienteId: string | null
@@ -25,6 +28,7 @@ function DetailField({ label, value, testId }: DetailFieldProps) {
 
 function ClienteDetailContent({ clienteId }: { clienteId: string }) {
   const { data, isLoading, isError, error, refetch } = useCliente(clienteId)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   const is404 = isError && (error as AxiosError)?.response?.status === 404
 
@@ -74,15 +78,40 @@ function ClienteDetailContent({ clienteId }: { clienteId: string }) {
 
   if (!data) return null
 
+  const defaultValues: ClienteFormValues = {
+    nombre: data.nombre,
+    nit: data.nit,
+    telefono: data.telefono,
+    ciudad: data.ciudad,
+  }
+
   return (
     <div
       data-testid="cliente-detail-panel"
       className="flex flex-col p-6"
     >
+      <div className="mb-4 flex items-center justify-end">
+        <button
+          type="button"
+          data-testid="editar-cliente-btn"
+          onClick={() => setIsEditDialogOpen(true)}
+          className="inline-flex items-center justify-center rounded-md bg-[#0e79fd] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#154ca9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd]"
+        >
+          Editar
+        </button>
+      </div>
+
       <DetailField label="Nombre" value={data.nombre} testId="cliente-detail-nombre" />
       <DetailField label="NIT/RUC" value={data.nit} testId="cliente-detail-nit" />
       <DetailField label="Teléfono" value={data.telefono} testId="cliente-detail-telefono" />
       <DetailField label="Ciudad" value={data.ciudad} testId="cliente-detail-ciudad" />
+
+      <EditarClienteDialog
+        open={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        clienteId={clienteId}
+        defaultValues={defaultValues}
+      />
     </div>
   )
 }

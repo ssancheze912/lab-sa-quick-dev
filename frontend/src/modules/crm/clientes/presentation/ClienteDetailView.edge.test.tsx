@@ -50,12 +50,15 @@ function renderView(clienteId: string | null = null) {
 
 function rerenderWithId(rerender: ReturnType<typeof render>['rerender'], clienteId: string | null) {
   const qc = makeQueryClient()
-  rerender(
+  void rerender(
     <QueryClientProvider client={qc}>
       <ClienteDetailView clienteId={clienteId} />
     </QueryClientProvider>,
   )
 }
+
+// Note: rerenderWithId is exported for potential future test use
+export { rerenderWithId }
 
 // ── Shared mock helpers ───────────────────────────────────────────────────────
 

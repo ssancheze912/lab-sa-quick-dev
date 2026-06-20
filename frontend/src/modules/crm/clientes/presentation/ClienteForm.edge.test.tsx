@@ -27,7 +27,12 @@ vi.mock('../application/useCreateCliente', () => ({
   useCreateCliente: vi.fn(),
 }))
 
+vi.mock('../application/useUpdateCliente', () => ({
+  useUpdateCliente: vi.fn(),
+}))
+
 import { useCreateCliente } from '../application/useCreateCliente'
+import { useUpdateCliente } from '../application/useUpdateCliente'
 import { ClienteForm } from './ClienteForm'
 
 // ── Wrapper helpers ───────────────────────────────────────────────────────────
@@ -46,6 +51,17 @@ function renderForm(onClose = vi.fn()) {
 }
 
 const mockUseCreateCliente = useCreateCliente as ReturnType<typeof vi.fn>
+const mockUseUpdateClienteFn = useUpdateCliente as ReturnType<typeof vi.fn>
+
+function mockUpdateIdle() {
+  mockUseUpdateClienteFn.mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+  })
+}
 
 function mockIdle(mutateFn = vi.fn()) {
   mockUseCreateCliente.mockReturnValue({
@@ -55,6 +71,7 @@ function mockIdle(mutateFn = vi.fn()) {
     isError: false,
     error: null,
   })
+  mockUpdateIdle()
 }
 
 function mockPending() {
@@ -65,6 +82,7 @@ function mockPending() {
     isError: false,
     error: null,
   })
+  mockUpdateIdle()
 }
 
 function mockServerError() {
@@ -78,6 +96,7 @@ function mockServerError() {
     isError: true,
     error,
   })
+  mockUpdateIdle()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -335,6 +354,7 @@ describe('ClienteForm — inline error styling', () => {
       isError: true,
       error: conflictError,
     })
+    mockUpdateIdle()
 
     renderForm()
 

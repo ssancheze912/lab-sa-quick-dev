@@ -1,13 +1,16 @@
 import { useEffect, useRef, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { ClienteForm } from './ClienteForm'
+import type { ClienteFormValues } from '../application/clienteSchema'
 
-interface NuevoClienteDialogProps {
+interface EditarClienteDialogProps {
   open: boolean
   onClose: () => void
+  clienteId: string
+  defaultValues: ClienteFormValues
 }
 
-export function NuevoClienteDialog({ open, onClose }: NuevoClienteDialogProps) {
+export function EditarClienteDialog({ open, onClose, clienteId, defaultValues }: EditarClienteDialogProps) {
   const titleId = useId()
   const overlayRef = useRef<HTMLDivElement>(null)
 
@@ -44,7 +47,7 @@ export function NuevoClienteDialog({ open, onClose }: NuevoClienteDialogProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        data-testid="nuevo-cliente-dialog"
+        data-testid="editar-cliente-dialog"
         className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
       >
         <div className="mb-4 flex items-center justify-between">
@@ -52,7 +55,7 @@ export function NuevoClienteDialog({ open, onClose }: NuevoClienteDialogProps) {
             id={titleId}
             className="text-lg font-semibold text-slate-900"
           >
-            Nuevo cliente
+            Editar cliente
           </h2>
           <button
             type="button"
@@ -64,7 +67,12 @@ export function NuevoClienteDialog({ open, onClose }: NuevoClienteDialogProps) {
           </button>
         </div>
 
-        <ClienteForm mode="create" onClose={onClose} />
+        <ClienteForm
+          mode="edit"
+          clienteId={clienteId}
+          defaultValues={defaultValues}
+          onClose={onClose}
+        />
       </div>
     </div>,
     document.body,

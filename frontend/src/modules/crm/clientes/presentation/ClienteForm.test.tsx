@@ -38,7 +38,14 @@ vi.mock('../application/useCreateCliente', () => ({
   useCreateCliente: vi.fn(),
 }))
 
+// ── Module mock: useUpdateCliente hook ────────────────────────────────────────
+// ClienteForm also imports useUpdateCliente; mock it to prevent real calls.
+vi.mock('../application/useUpdateCliente', () => ({
+  useUpdateCliente: vi.fn(),
+}))
+
 import { useCreateCliente } from '../application/useCreateCliente'
+import { useUpdateCliente } from '../application/useUpdateCliente'
 import { ClienteForm } from './ClienteForm'
 
 // ── Test wrapper ──────────────────────────────────────────────────────────────
@@ -61,6 +68,17 @@ function renderForm(onClose = vi.fn()) {
 // ── Shared mock helper ────────────────────────────────────────────────────────
 
 const mockUseCreateCliente = useCreateCliente as ReturnType<typeof vi.fn>
+const mockUseUpdateClienteFn = useUpdateCliente as ReturnType<typeof vi.fn>
+
+// Default stub for useUpdateCliente when rendering in create mode
+function mockUpdateIdle() {
+  mockUseUpdateClienteFn.mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+  })
+}
 
 function mockIdle(mutateFn = vi.fn()) {
   mockUseCreateCliente.mockReturnValue({
@@ -69,6 +87,7 @@ function mockIdle(mutateFn = vi.fn()) {
     isError: false,
     error: null,
   })
+  mockUpdateIdle()
 }
 
 function mockPending() {
@@ -78,6 +97,7 @@ function mockPending() {
     isError: false,
     error: null,
   })
+  mockUpdateIdle()
 }
 
 function mockConflictError() {
@@ -90,6 +110,7 @@ function mockConflictError() {
     isError: true,
     error,
   })
+  mockUpdateIdle()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

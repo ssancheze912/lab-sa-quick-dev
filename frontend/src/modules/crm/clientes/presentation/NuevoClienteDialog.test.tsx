@@ -25,7 +25,13 @@ vi.mock('../application/useCreateCliente', () => ({
   useCreateCliente: vi.fn(),
 }))
 
+// ── Module mock: useUpdateCliente hook ────────────────────────────────────────
+vi.mock('../application/useUpdateCliente', () => ({
+  useUpdateCliente: vi.fn(),
+}))
+
 import { useCreateCliente } from '../application/useCreateCliente'
+import { useUpdateCliente } from '../application/useUpdateCliente'
 import { NuevoClienteDialog } from './NuevoClienteDialog'
 
 // ── Test wrapper ──────────────────────────────────────────────────────────────
@@ -48,9 +54,16 @@ function renderDialog(open: boolean, onClose = vi.fn()) {
 // ── Shared mock helper ────────────────────────────────────────────────────────
 
 const mockUseCreateCliente = useCreateCliente as ReturnType<typeof vi.fn>
+const mockUseUpdateClienteFn = useUpdateCliente as ReturnType<typeof vi.fn>
 
 function mockIdle() {
   mockUseCreateCliente.mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+  })
+  mockUseUpdateClienteFn.mockReturnValue({
     mutate: vi.fn(),
     isPending: false,
     isError: false,
