@@ -50,7 +50,7 @@ export function ClienteListView() {
           <ErrorPanel onRetry={refetch} />
         )}
 
-        {!isLoading && !isError && filteredClientes.length === 0 && (
+        {!isLoading && !isError && clientes !== undefined && clientes.length === 0 && (
           <EmptyState message="Aún no hay clientes. Crea el primero." />
         )}
 
