@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.DTOs;
 using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Application.Clientes.Validators;
 
 namespace SiesaAgents.API.Endpoints;
 
@@ -24,5 +26,30 @@ public static class ClienteEndpoints
         .WithName("GetClienteById")
         .Produces<ClienteDto>(StatusCodes.Status200OK)
         .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+
+        app.MapPost("/api/v1/clientes", async (
+            CreateClienteRequest request,
+            CreateClienteRequestValidator validator,
+            CreateClienteCommandHandler handler,
+            CancellationToken ct) =>
+        {
+            var validation = await validator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+            {
+                var errors = validation.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+
+                return Results.ValidationProblem(errors);
+            }
+
+            var command = new CreateClienteCommand(request.Nombre, request.Nit, request.Telefono, request.Ciudad);
+            var result = await handler.Handle(command, ct);
+            return Results.Created($"/api/v1/clientes/{result.Id}", result);
+        })
+        .WithName("CreateCliente")
+        .Produces<ClienteDto>(StatusCodes.Status201Created)
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+        .Produces<ProblemDetails>(StatusCodes.Status409Conflict);
     }
 }

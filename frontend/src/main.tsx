@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { QueryProvider } from './app/providers/QueryProvider'
+import { ToastProvider } from 'siesa-ui-kit'
 import { routeTree } from './routeTree.gen'
 import './index.css'
 
@@ -18,8 +19,10 @@ if (!rootElement) throw new Error('Root element not found')
 
 createRoot(rootElement).render(
   <StrictMode>
-    <QueryProvider>
-      <RouterProvider router={router} />
-    </QueryProvider>
+    <ToastProvider>
+      <QueryProvider>
+        <RouterProvider router={router} />
+      </QueryProvider>
+    </ToastProvider>
   </StrictMode>,
 )

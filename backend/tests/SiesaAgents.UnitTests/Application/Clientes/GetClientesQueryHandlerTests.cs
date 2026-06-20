@@ -48,6 +48,10 @@ public class GetClientesQueryHandlerTests
             Guid id, CancellationToken ct = default)
             => Task.FromResult<SiesaAgents.Domain.Clientes.Entities.ClienteEntity?>(null);
 
+        public Task<SiesaAgents.Domain.Clientes.Entities.ClienteEntity?> GetByNitAsync(
+            string nit, CancellationToken ct = default)
+            => Task.FromResult<SiesaAgents.Domain.Clientes.Entities.ClienteEntity?>(null);
+
         public Task AddAsync(
             SiesaAgents.Domain.Clientes.Entities.ClienteEntity entity,
             CancellationToken ct = default)

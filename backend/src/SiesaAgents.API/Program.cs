@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.Application.Interfaces;
+using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Application.Clientes.Validators;
 using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
 using SiesaAgents.Domain.Clientes.Interfaces;
@@ -30,6 +32,8 @@ builder.Services.AddScoped<IApplicationDbContext>(provider =>
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<GetClienteByIdQueryHandler>();
+builder.Services.AddScoped<CreateClienteCommandHandler>();
+builder.Services.AddScoped<CreateClienteRequestValidator>();
 
 var app = builder.Build();
 

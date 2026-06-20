@@ -29,6 +29,24 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
             await context.Response.WriteAsJsonAsync(problem);
         }
+        catch (ConflictException ex)
+        {
+            logger.LogWarning(ex, "Conflict on {Method} {Path}",
+                context.Request.Method, context.Request.Path);
+
+            context.Response.ContentType = "application/problem+json";
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+
+            var problem = new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflicto de datos",
+                Detail = ex.Message,
+                Type = "https://tools.ietf.org/html/rfc7807"
+            };
+
+            await context.Response.WriteAsJsonAsync(problem);
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unhandled exception on {Method} {Path}",
