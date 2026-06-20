@@ -70,20 +70,19 @@ test.describe('AC2 — Backend API runtime contracts', () => {
     request,
   }) => {
     // GIVEN: The ExceptionHandlingMiddleware is configured to return Problem Details
-    // WHEN: The backend encounters an error (simulated via a non-existent endpoint that returns 404)
+    // WHEN: The backend encounters an error (non-existent endpoint expected to return 4xx/5xx)
     const response = await request.get(
       `${BACKEND_BASE_URL}/trigger-server-error`,
       { failOnStatusCode: false },
     );
 
-    // THEN: If the status is 4xx/5xx, the Content-Type is application/problem+json
-    if (response.status() >= 400) {
+    // THEN: The endpoint must return an error status (never 200 — it does not exist)
+    expect(response.status()).toBeGreaterThanOrEqual(400);
+
+    // AND: If it is a 5xx, the middleware MUST set content-type to application/problem+json
+    if (response.status() >= 500) {
       const contentType = response.headers()['content-type'] ?? '';
-      // Either problem+json or the standard 404 page — middleware should wrap 5xx
-      // For a 500, content-type MUST be application/problem+json
-      if (response.status() >= 500) {
-        expect(contentType).toContain('application/problem+json');
-      }
+      expect(contentType).toContain('application/problem+json');
     }
   });
 });
