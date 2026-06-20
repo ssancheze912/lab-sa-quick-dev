@@ -21,7 +21,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createCliente, createClientes } from '../../../../test-support/factories/cliente.factory'
@@ -117,7 +117,7 @@ describe('Search — boundary and edge conditions', () => {
     expect(screen.getByText('900123456-1')).toBeInTheDocument()
   })
 
-  it('special regex characters in search term do not throw', async () => {
+  it('special regex characters in search term do not throw', () => {
     // GIVEN: A client and a search term with characters that would break a RegExp
     const cliente = createCliente({ nombre: 'Empresa Real S.A.' })
     mockData([cliente])
@@ -125,11 +125,14 @@ describe('Search — boundary and edge conditions', () => {
     renderView()
     const input = screen.getByTestId('cliente-search-input')
 
-    // WHEN: User types regex-special characters
-    // THEN: No error is thrown — filter uses String.prototype.includes, not RegExp
-    expect(async () => {
-      await userEvent.type(input, '.*+?^${}()|[\\]')
+    // WHEN: fireEvent.change with regex-special chars (bypasses userEvent key parsing)
+    // THEN: No error thrown — filter uses String.prototype.includes, not RegExp
+    expect(() => {
+      fireEvent.change(input, { target: { value: '.*+?^${}()|[\\]' } })
     }).not.toThrow()
+
+    // AND: Zero items match (the special chars don't match the client's name)
+    expect(screen.queryAllByTestId('cliente-list-item')).toHaveLength(0)
   })
 
   it('shows zero items (not EmptyState) when post-filter result is empty', async () => {
