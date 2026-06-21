@@ -76,8 +76,11 @@ function RootLayout() {
       {/* Mobile NavigationBar — visible on mobile (< 1024px), hidden on desktop */}
       <NavigationBar
         items={navigationBarItems}
-        activeItemId={currentPath.replace('/', '')}
-        onItemClick={(id) => void navigate({ to: `/${id}` as '/clientes' | '/contactos' })}
+        activeItemId={currentPath.slice(1)}
+        onItemClick={(id) => {
+          const route = id === 'clientes' ? '/clientes' : '/contactos'
+          void navigate({ to: route })
+        }}
         className="flex lg:hidden"
         ariaLabel="Navegación principal"
       />
