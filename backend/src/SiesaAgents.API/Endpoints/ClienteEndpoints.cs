@@ -26,7 +26,7 @@ public static class ClienteEndpoints
     {
         var result = await handler.Handle(new GetClienteByIdQuery(id), cancellationToken);
         return result is null
-            ? Results.NotFound(new { title = "Cliente no encontrado.", status = 404 })
+            ? Results.Problem(title: "Cliente no encontrado.", statusCode: StatusCodes.Status404NotFound)
             : Results.Ok(result);
     }
 }
