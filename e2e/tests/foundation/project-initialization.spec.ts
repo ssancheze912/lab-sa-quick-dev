@@ -20,7 +20,7 @@ const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('AC1 — Frontend Vite server initialization', () => {
-  test('should serve the frontend app on port 5173 without errors', async ({ page }) => {
+  test('[P0] should serve the frontend app on port 5173 without errors', async ({ page }) => {
     // GIVEN: A clean development machine with Node.js installed
     // WHEN: The developer runs pnpm run dev (baseURL is http://localhost:5173)
 
@@ -36,7 +36,7 @@ test.describe('AC1 — Frontend Vite server initialization', () => {
     expect(response.status()).toBe(200);
   });
 
-  test('should render the root HTML document with a valid React mount point', async ({ page }) => {
+  test('[P0] should render the root HTML document with a valid React mount point', async ({ page }) => {
     // GIVEN: The Vite dev server is running at http://localhost:5173
     // WHEN: The browser navigates to the root URL
     await page.goto('/');
@@ -46,7 +46,7 @@ test.describe('AC1 — Frontend Vite server initialization', () => {
     await expect(page.locator('[data-testid="app-root"]')).toBeVisible();
   });
 
-  test('should load without any TypeScript compilation errors visible in the browser console', async ({ page }) => {
+  test('[P1] should load without any TypeScript compilation errors visible in the browser console', async ({ page }) => {
     // GIVEN: TypeScript strict mode is enabled in tsconfig.app.json
     // WHEN: The page loads
     const consoleErrors: string[] = [];
@@ -63,7 +63,7 @@ test.describe('AC1 — Frontend Vite server initialization', () => {
     expect(tsErrors).toHaveLength(0);
   });
 
-  test('should not have any JavaScript runtime errors on initial load', async ({ page }) => {
+  test('[P0] should not have any JavaScript runtime errors on initial load', async ({ page }) => {
     // GIVEN: The frontend project is initialized with all required dependencies
     // WHEN: The app renders for the first time
     const runtimeErrors: string[] = [];
@@ -83,7 +83,7 @@ test.describe('AC1 — Frontend Vite server initialization', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('AC3 — CORS configuration between frontend and backend', () => {
-  test('should allow frontend to reach backend health endpoint without CORS errors', async ({ page }) => {
+  test('[P0] should allow frontend to reach backend health endpoint without CORS errors', async ({ page }) => {
     // GIVEN: Both frontend (5173) and backend (5000) servers are running
 
     const corsErrors: string[] = [];
@@ -119,7 +119,7 @@ test.describe('AC3 — CORS configuration between frontend and backend', () => {
     expect(corsErrors).toHaveLength(0);
   });
 
-  test('should receive a valid HTTP response from the backend health probe without CORS blocking', async ({
+  test('[P0] should receive a valid HTTP response from the backend health probe without CORS blocking', async ({
     page,
     request,
   }) => {
@@ -139,7 +139,7 @@ test.describe('AC3 — CORS configuration between frontend and backend', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('AC4 — TypeScript strict mode active on frontend', () => {
-  test('should load the frontend without Vite TypeScript error overlay', async ({ page }) => {
+  test('[P1] should load the frontend without Vite TypeScript error overlay', async ({ page }) => {
     // GIVEN: tsconfig.app.json has strict:true, noImplicitAny:true, strictNullChecks:true
     // WHEN: The Vite dev server compiles and serves the app
 
