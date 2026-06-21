@@ -193,6 +193,7 @@ claude-sonnet-4-6
 - notFoundComponent registered on `createRootRoute` so the shell (NavigationRail/Navbar) persists on 404 routes.
 - heroicons/react v2 installed as dependency for navigation icons (UserGroupIcon, UserIcon).
 - All 21 tests pass (4 test files), build succeeds with zero TypeScript errors.
+- ATDD fix (attempt 2): replaced `LayoutBase` navigation rendering with custom sidebar using `Navbar` + `NavigationRailItem` directly, wrapped in `<nav data-testid="navigation-rail">` with per-item `data-testid="nav-item-clientes"` and `data-testid="nav-item-contactos"` divs. All 6 E2E tests (navigation-shell.spec.ts) now pass in Chromium.
 
 ### File List
 
@@ -210,6 +211,7 @@ Created:
 Modified:
 - `frontend/src/main.tsx` (added siesa-ui-kit/styles.css import)
 - `frontend/vite.config.ts` (fixed defineConfig import, added routeFileIgnorePattern)
+- `frontend/src/routes/__root.tsx` (ATDD fix: replaced LayoutBase+navigationItems with Navbar+NavigationRailItem custom sidebar with data-testid attributes)
 
 ## Review Follow-ups (AI)
 
