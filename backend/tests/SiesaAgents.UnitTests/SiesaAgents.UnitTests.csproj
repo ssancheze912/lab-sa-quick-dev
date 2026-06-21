@@ -12,11 +12,13 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
     <PackageReference Include="xunit" Version="2.*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.*" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SiesaAgents.Application\SiesaAgents.Application.csproj" />
     <ProjectReference Include="..\..\src\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
+    <ProjectReference Include="..\..\src\SiesaAgents.API\SiesaAgents.API.csproj" />
   </ItemGroup>
 
 </Project>
