@@ -139,17 +139,18 @@ describe('TC-2.3-C-07: Form fields are reset after successful creation', () => {
       expect(onSuccess).toHaveBeenCalledTimes(1);
     });
 
-    // After success, input fields should be reset (empty)
-    // The form calls reset() on success; even if the component unmounts via onSuccess,
-    // the reset state is the contract we verify here.
-    // If the component stays mounted (onSuccess does not unmount), fields should be empty.
-    const nombreInput = screen.queryByLabelText('Nombre');
-    if (nombreInput) {
-      // If component is still mounted after success, it must be empty
-      expect((nombreInput as HTMLInputElement).value).toBe('');
-    }
-    // If component unmounted (onSuccess closed the dialog), onSuccess being called is sufficient proof
+    // After success, the form should call reset() — onSuccess callback is the primary contract.
+    // The component calls reset() before invoking onSuccess, so if the component stays mounted
+    // (e.g., the Dialog does not unmount immediately), fields will be empty.
+    // We assert onSuccess was called; additional field-empty check is secondary.
     expect(onSuccess).toHaveBeenCalledTimes(1);
+
+    // If component is still mounted, verify fields are empty (deterministic assertion)
+    const nombreInput = screen.queryByLabelText('Nombre');
+    // queryByLabelText returns null if component unmounted — skip assertion when unmounted
+    expect(
+      nombreInput === null || (nombreInput as HTMLInputElement).value === ''
+    ).toBe(true);
   });
 });
 
