@@ -53,29 +53,40 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   }
 
   return (
-    <div className="flex-1 p-6 bg-white overflow-y-auto">
-      <h2 className="text-xl font-bold text-slate-900 mb-6">{data!.nombre}</h2>
+    <div className="flex-1 p-6 bg-white overflow-y-auto" data-testid="cliente-detail-panel">
+      <h2
+        className="text-xl font-bold text-slate-900 mb-6"
+        data-testid="cliente-detail-nombre"
+      >
+        {data!.nombre}
+      </h2>
 
       <dl className="space-y-4">
         <div>
           <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">
             NIT/RUC
           </dt>
-          <dd className="mt-1 text-sm text-slate-800">{data!.nit}</dd>
+          <dd className="mt-1 text-sm text-slate-800" data-testid="cliente-detail-nit">
+            {data!.nit}
+          </dd>
         </div>
 
         <div>
           <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">
             Teléfono
           </dt>
-          <dd className="mt-1 text-sm text-slate-800">{data!.telefono}</dd>
+          <dd className="mt-1 text-sm text-slate-800" data-testid="cliente-detail-telefono">
+            {data!.telefono}
+          </dd>
         </div>
 
         <div>
           <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">
             Ciudad
           </dt>
-          <dd className="mt-1 text-sm text-slate-800">{data!.ciudad}</dd>
+          <dd className="mt-1 text-sm text-slate-800" data-testid="cliente-detail-ciudad">
+            {data!.ciudad}
+          </dd>
         </div>
       </dl>
     </div>
