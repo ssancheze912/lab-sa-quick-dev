@@ -191,4 +191,145 @@ public class ClienteEndpointsTests : IClassFixture<WebApplicationFactory<Program
         Assert.DoesNotContain("stackTrace", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("exception", json, StringComparison.OrdinalIgnoreCase);
     }
+
+    // ─── POST /api/v1/clientes ────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task POST_ApiV1Clientes_ValidPayload_Returns201WithCorrectShape()
+    {
+        // Arrange
+        var client = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptor = services.SingleOrDefault(d =>
+                    d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                if (descriptor != null) services.Remove(descriptor);
+
+                services.AddDbContext<AppDbContext>(options =>
+                    options.UseInMemoryDatabase("TestDb_post_valid_" + Guid.NewGuid()));
+            });
+        }).CreateClient();
+
+        var payload = new
+        {
+            nombre = "Empresa Post SA",
+            nit = "900111222-5",
+            telefono = "+573001112223",
+            ciudad = "Bogotá"
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        var item = doc.RootElement;
+
+        Assert.True(item.TryGetProperty("id", out var idProp));
+        Assert.True(Guid.TryParse(idProp.GetString(), out _), "id should be a valid UUID");
+
+        Assert.True(item.TryGetProperty("nombre", out var nombreProp));
+        Assert.Equal("Empresa Post SA", nombreProp.GetString());
+
+        Assert.True(item.TryGetProperty("nit", out var nitProp));
+        Assert.Equal("900111222-5", nitProp.GetString());
+
+        Assert.True(item.TryGetProperty("telefono", out _));
+        Assert.True(item.TryGetProperty("ciudad", out _));
+
+        Assert.True(item.TryGetProperty("createdAt", out var createdAtProp));
+        Assert.True(DateTimeOffset.TryParse(createdAtProp.GetString(), out _),
+            "createdAt should be ISO 8601 with timezone offset");
+    }
+
+    [Fact]
+    public async Task POST_ApiV1Clientes_MissingNombre_Returns400ProblemDetails()
+    {
+        // Arrange
+        var client = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptor = services.SingleOrDefault(d =>
+                    d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                if (descriptor != null) services.Remove(descriptor);
+
+                services.AddDbContext<AppDbContext>(options =>
+                    options.UseInMemoryDatabase("TestDb_post_missing_nombre_" + Guid.NewGuid()));
+            });
+        }).CreateClient();
+
+        var payload = new
+        {
+            nombre = "",
+            nit = "900111222-6",
+            telefono = "+573001112224",
+            ciudad = "Cali"
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var json = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("stackTrace", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task POST_ApiV1Clientes_DuplicateNit_Returns409WithTitleNoStackTrace()
+    {
+        // Arrange — TC-2.3-P0-03 (R-002, NFR6)
+        var dbName = "TestDb_post_dup_nit_" + Guid.NewGuid();
+
+        var clientFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptor = services.SingleOrDefault(d =>
+                    d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                if (descriptor != null) services.Remove(descriptor);
+
+                services.AddDbContext<AppDbContext>(options =>
+                    options.UseInMemoryDatabase(dbName));
+
+                var sp = services.BuildServiceProvider();
+                using var scope = sp.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Clientes.Add(ClienteEntity.Create("Existing Corp", "900-DUP-1", "+573000000000", "Bogotá"));
+                db.SaveChanges();
+            });
+        });
+
+        var client = clientFactory.CreateClient();
+
+        var payload = new
+        {
+            nombre = "Another Corp",
+            nit = "900-DUP-1",
+            telefono = "+573001112225",
+            ciudad = "Medellín"
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        var item = doc.RootElement;
+
+        Assert.True(item.TryGetProperty("title", out var titleProp));
+        Assert.Equal("El NIT/RUC ya está registrado.", titleProp.GetString());
+
+        // NFR6: No stackTrace in response
+        Assert.DoesNotContain("stackTrace", json, StringComparison.OrdinalIgnoreCase);
+    }
 }

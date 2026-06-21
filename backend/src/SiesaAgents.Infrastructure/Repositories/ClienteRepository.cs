@@ -19,4 +19,11 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
         return await dbContext.Clientes
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
+
+    public async Task<ClienteEntity> AddAsync(ClienteEntity entity, CancellationToken cancellationToken = default)
+    {
+        dbContext.Clientes.Add(entity);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return entity;
+    }
 }
