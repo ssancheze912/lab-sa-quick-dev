@@ -1,15 +1,18 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
+using SiesaAgents.Infrastructure.Data.Configurations;
 
 namespace SiesaAgents.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    // No DbSets in this story — added in Epics 2 and 3
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        // Future entity configurations go HERE (before snake_case)
+
+        modelBuilder.ApplyConfiguration(new ClienteConfiguration());
 
         modelBuilder.ApplySnakeCaseNaming(); // MUST be last
     }
