@@ -12,7 +12,6 @@ public class GetClientesQueryHandler(IClienteRepository repository)
         var clientes = await repository.GetAllAsync(cancellationToken);
 
         return clientes
-            .OrderByDescending(c => c.CreatedAt)
             .Select(c => new ClienteDto(
                 c.Id,
                 c.Nombre,
