@@ -34,6 +34,15 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+// Mock TanStack Router to avoid requiring router context in component tests
+vi.mock('@tanstack/react-router', async () => {
+  const { createElement } = await import('react');
+  return {
+    Link: ({ children, className, to, params }: { children: React.ReactNode; className?: string; to?: string; params?: Record<string, string> }) =>
+      createElement('a', { href: to ? String(to) : '#', className }, children),
+  };
+});
+
 // Component under test — does not exist yet (RED phase)
 // Import will fail until implementation is complete
 import { ClienteListView } from '../ClienteListView';

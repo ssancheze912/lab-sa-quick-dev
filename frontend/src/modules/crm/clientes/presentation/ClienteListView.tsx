@@ -51,22 +51,16 @@ export function ClienteListView() {
         )}
 
         {!isLoading && !isError && filteredClientes.length > 0 && (
-          <>
-            <p className="sr-only" aria-live="polite" aria-atomic="true">
-              {filteredClientes.length === 1
-                ? '1 cliente encontrado'
-                : `${filteredClientes.length} clientes encontrados`}
-            </p>
-            <ul role="list" aria-label="Lista de clientes">
-              {filteredClientes.map((cliente) => (
-                <ClientListItem
-                  key={cliente.id}
-                  nombre={cliente.nombre}
-                  nit={cliente.nit}
-                />
-              ))}
-            </ul>
-          </>
+          <ul role="list" aria-label="Lista de clientes">
+            {filteredClientes.map((cliente) => (
+              <ClientListItem
+                key={cliente.id}
+                id={cliente.id}
+                nombre={cliente.nombre}
+                nit={cliente.nit}
+              />
+            ))}
+          </ul>
         )}
       </div>
     </div>
