@@ -17,7 +17,7 @@ public class CreateClienteRequestValidator : AbstractValidator<CreateClienteRequ
 
         RuleFor(x => x.Telefono)
             .NotEmpty()
-            .MaximumLength(50);
+            .MaximumLength(30);
 
         RuleFor(x => x.Ciudad)
             .NotEmpty()

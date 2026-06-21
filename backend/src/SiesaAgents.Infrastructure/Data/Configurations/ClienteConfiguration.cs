@@ -19,9 +19,11 @@ public class ClienteConfiguration : IEntityTypeConfiguration<ClienteEntity>
             .HasMaxLength(50);
 
         builder.Property(c => c.Telefono)
+            .IsRequired()
             .HasMaxLength(30);
 
         builder.Property(c => c.Ciudad)
+            .IsRequired()
             .HasMaxLength(100);
 
         builder.HasIndex(c => c.Nit)

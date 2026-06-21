@@ -58,8 +58,12 @@ describe('useCreateCliente', () => {
       http.post(API_URL, () => HttpResponse.json(createdClienteResponse, { status: 201 }))
     );
 
-    const invalidateSpy = vi.fn();
-    const wrapper = makeWrapper();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: queryClient }, children);
 
     const { result } = renderHook(() => useCreateCliente(), { wrapper });
 
@@ -69,8 +73,7 @@ describe('useCreateCliente', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    // The hook calls invalidateQueries internally; we verify via isSuccess
-    expect(result.current.isSuccess).toBe(true);
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['clientes'] });
   });
 
   it('409 error: calls setNitError without triggering generic error', async () => {

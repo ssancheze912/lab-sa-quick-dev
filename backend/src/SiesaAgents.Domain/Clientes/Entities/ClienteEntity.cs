@@ -15,8 +15,8 @@ public class ClienteEntity : Entity
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(nombre);
         ArgumentException.ThrowIfNullOrWhiteSpace(nit);
-        ArgumentNullException.ThrowIfNull(telefono);
-        ArgumentNullException.ThrowIfNull(ciudad);
+        ArgumentException.ThrowIfNullOrWhiteSpace(telefono);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ciudad);
 
         return new ClienteEntity
         {
