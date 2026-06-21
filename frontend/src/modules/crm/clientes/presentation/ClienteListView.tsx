@@ -26,7 +26,7 @@ export function ClienteListView() {
   );
 
   return (
-    <div className="w-[280px] flex flex-col h-full border-r border-slate-200 bg-white">
+    <div data-testid="clientes-list-panel" className="w-[280px] flex flex-col h-full border-r border-slate-200 bg-white">
       <div className="p-3 border-b border-slate-100 space-y-2">
         <button
           data-testid="nuevo-cliente-button"
