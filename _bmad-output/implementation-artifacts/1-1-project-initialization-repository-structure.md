@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -152,3 +152,13 @@ claude-sonnet-4-6
 - `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj`
 - `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj`
 - `backend/tests/SiesaAgents.UnitTests/SolutionInitializationTests.cs`
+
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][CRITICAL] `SolutionInitializationTests.cs`: Replace `Assert.True(true)` placeholder with a meaningful test (e.g., verify `Entity` `Id` is a non-empty Guid on construction, confirming project references resolve correctly)
+- [ ] [AI-Review][HIGH] `Entity.cs`: Add private constructor and static `Create()` factory method per DDD standard (company-standards.md: "Entity Pattern: Private constructor + static Create() factory + domain events")
+- [ ] [AI-Review][HIGH] `ExceptionHandlingMiddleware.cs`: Log exception details and include diagnostic `Detail` in non-production environments; inspect exception type to differentiate validation errors (400) from server errors (500)
+- [ ] [AI-Review][MED] `apiClient.ts`: Add request interceptor (auth header injection placeholder) and response interceptor (normalize error format) — story task claimed "JSON interceptors" but only `Content-Type` header was set
+- [ ] [AI-Review][MED] `App.tsx`: Remove orphaned Vite-template component (never imported in `main.tsx`; functionality is in `src/routes/__root.tsx`)
+- [ ] [AI-Review][MED] Remove Vite template leftovers: `frontend/public/vite.svg`, `frontend/src/assets/react.svg`
+- [ ] [AI-Review][LOW] Evaluate backend folder structure: company standard expects `src/Services/{Domain}/` grouping — current flat `src/SiesaAgents.*` layout deviates; acceptable for single-domain MVP but must be addressed before adding a second microservice
