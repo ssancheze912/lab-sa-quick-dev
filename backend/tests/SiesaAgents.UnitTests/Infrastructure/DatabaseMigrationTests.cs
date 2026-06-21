@@ -18,6 +18,7 @@ public class DatabaseMigrationTests : IClassFixture<WebApplicationFactory<Progra
 
     private readonly WebApplicationFactory<Program> _factory;
     private AppDbContext? _dbContext;
+    private IServiceScope? _scope;
 
     public DatabaseMigrationTests(WebApplicationFactory<Program> factory)
     {
@@ -41,8 +42,8 @@ public class DatabaseMigrationTests : IClassFixture<WebApplicationFactory<Progra
 
     public async Task InitializeAsync()
     {
-        var scope = _factory.Services.CreateScope();
-        _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        _scope = _factory.Services.CreateScope();
+        _dbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Arrange: apply all pending migrations to the test database
         await _dbContext.Database.MigrateAsync();
@@ -56,6 +57,7 @@ public class DatabaseMigrationTests : IClassFixture<WebApplicationFactory<Progra
             await _dbContext.Database.EnsureDeletedAsync();
             await _dbContext.DisposeAsync();
         }
+        _scope?.Dispose();
     }
 
     [Fact]

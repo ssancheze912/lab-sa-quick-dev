@@ -86,10 +86,18 @@ public class ExceptionHandlingMiddlewareTests : IClassFixture<WebApplicationFact
         using var doc = JsonDocument.Parse(body);
         var root = doc.RootElement;
 
-        // detail should be null (not exposing exception message to client)
+        // detail should be absent OR null (not exposing exception message to client)
+        // If 'detail' is present, it must be null — never a string with exception message.
+        // Using deterministic assertion: both outcomes (absent or null) are valid per AC #3.
         if (root.TryGetProperty("detail", out var detailProp))
         {
-            Assert.Equal(JsonValueKind.Null, detailProp.ValueKind);
+            // GIVEN: 'detail' key is present in response body
+            // WHEN: Its value is inspected
+            // THEN: It must be null (never the exception message)
+            Assert.True(
+                detailProp.ValueKind == JsonValueKind.Null || detailProp.ValueKind == JsonValueKind.Undefined,
+                $"'detail' field must be null but was: {detailProp.ValueKind} = {detailProp}");
         }
+        // If 'detail' is absent entirely, that is also acceptable per RFC 7807 (field is optional).
     }
 }
