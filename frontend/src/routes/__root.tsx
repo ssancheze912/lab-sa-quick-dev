@@ -2,6 +2,7 @@ import { createRootRoute, Outlet, useNavigate, useRouterState } from '@tanstack/
 import { UserGroupIcon, UserIcon } from '@heroicons/react/24/outline'
 import { Navbar, NavigationRailItem, NavigationBar } from 'siesa-ui-kit'
 import type { NavigationBarItem } from 'siesa-ui-kit'
+import { Toaster } from 'sonner'
 import { NotFound } from '@/shared/components/NotFound'
 
 function RootLayout() {
@@ -84,6 +85,7 @@ function RootLayout() {
         className="flex lg:hidden"
         ariaLabel="Navegación principal"
       />
+      <Toaster richColors position="top-right" />
     </div>
   )
 }

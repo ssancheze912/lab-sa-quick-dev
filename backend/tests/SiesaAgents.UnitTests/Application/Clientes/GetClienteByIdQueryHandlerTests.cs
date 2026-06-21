@@ -74,5 +74,8 @@ public class GetClienteByIdQueryHandlerTests
 
         public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
             => Task.FromResult(entity is not null && entity.Id == id ? entity : null);
+
+        public Task<ClienteEntity> AddAsync(ClienteEntity e, CancellationToken cancellationToken = default)
+            => Task.FromResult(e);
     }
 }
