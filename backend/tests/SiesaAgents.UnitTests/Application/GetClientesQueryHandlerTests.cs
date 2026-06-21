@@ -102,5 +102,8 @@ public class GetClientesQueryHandlerTests
     {
         public Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(data);
+
+        public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+            => Task.FromResult(data.FirstOrDefault(c => c.Id == id));
     }
 }

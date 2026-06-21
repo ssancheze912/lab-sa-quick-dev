@@ -55,6 +55,7 @@ export function ClienteListView() {
             {filteredClientes.map((cliente) => (
               <ClientListItem
                 key={cliente.id}
+                id={cliente.id}
                 nombre={cliente.nombre}
                 nit={cliente.nit}
               />

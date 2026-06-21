@@ -13,4 +13,10 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Clientes
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
 }
