@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: review
+Status: done
 
 ## Story
 
@@ -216,3 +216,37 @@ claude-sonnet-4-6
 - `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — added `Microsoft.EntityFrameworkCore.Design` package
 - `backend/src/SiesaAgents.API/Program.cs` — added AppDbContext DI registration and `public partial class Program {}`
 - `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — added `Microsoft.AspNetCore.Mvc.Testing` package and API project reference
+
+## Senior Developer Review (AI)
+
+**Date:** 2026-06-21
+**Reviewer:** SiesaTeam (AI Agent — Adversarial Senior Developer)
+**Outcome:** PASS CON OBSERVACIONES — Auto-corrections applied, 2 items require manual attention
+
+### Critical Issues (Must Fix)
+None.
+
+### High Issues (Auto-Corrected)
+- [HIGH] [AUTO-FIXED] `ExceptionHandlingMiddlewareTests.cs`: `WebApplicationFactory` configuration replaced entire pipeline without replacing DB context, causing potential startup failure if PostgreSQL is unavailable. Fixed: added `ConfigureTestServices` to replace `AppDbContext` with `InMemoryDatabase`. Added `Microsoft.EntityFrameworkCore.InMemory` package to `SiesaAgents.UnitTests.csproj`.
+- [HIGH] [AUTO-FIXED] `AppDbContextModelSnapshot.cs`: Manually scaffolded snapshot called `NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder)`, which sets integer identity as default for all columns. This conflicts with the company's mandatory UUID PKs pattern. Removed the call and added explanatory comment. Removed unused `Npgsql.EntityFrameworkCore.PostgreSQL.Metadata` import.
+
+### Medium Issues (Auto-Corrected)
+- [MED] [AUTO-FIXED] `DatabaseMigrationTests.cs`: `IServiceScope` created in `InitializeAsync()` was never disposed — resource leak. Fixed: extracted `_scope` field, disposed in `DisposeAsync()`.
+- [MED] [NOTE ADDED] `DatabaseMigrationTests.cs`: AC #2 test asserts `migration_id` and `product_version` columns in `__ef_migrations_history`. Clarified via code comment that `ApplySnakeCaseNaming()` does NOT affect this internal EF Core table — Npgsql already creates these columns in lowercase by default. The test assertions are correct but for the wrong reason.
+- [MED] [MANUAL REQUIRED] `SiesaAgents.UnitTests` project contains integration tests (`ExceptionHandlingMiddlewareTests`, `DatabaseMigrationTests`) that require a running PostgreSQL and `WebApplicationFactory`. Company standards require these in a separate `SiesaAgents.IntegrationTests` project. Since a new project creation is beyond this review's auto-fix scope, this is deferred to a follow-up task.
+
+### Low Issues (Informational)
+- [LOW] `Program.cs`: Middleware pipeline lacks `UseAuthentication()`/`UseAuthorization()` placeholders. When JWT/RBAC is added in future stories, pipeline ordering will require attention. No change needed in this story's scope — flagged for future.
+- [LOW] Git commit `fc5ca05` bundled `_bmad-output/review-1-2-frontend-navigation-shell.md` (not in story 1.3 file list). Undocumented change — no code impact, documentation-only discrepancy.
+
+### Fix Summary
+- Auto-fixed: 3 issues (scope leak, InMemory DB override for middleware tests, `UseIdentityByDefaultColumns` removal)
+- Manual required: 1 issue (integration test project separation — deferred to Epic 2+)
+- Informational: 2 notes
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-06-21 | Initial implementation | claude-sonnet-4-6 |
+| 2026-06-21 | Code review auto-corrections applied | SiesaTeam (AI Agent) |
