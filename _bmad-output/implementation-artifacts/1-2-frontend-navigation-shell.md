@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -208,6 +208,9 @@ Created:
 - `frontend/src/shared/components/NotFound.tsx`
 - `frontend/src/routes/__tests__/navigation.test.tsx`
 
+Created (ATDD fix commit):
+- `e2e/tests/navigation/navigation-shell.spec.ts`
+
 Modified:
 - `frontend/src/main.tsx` (added siesa-ui-kit/styles.css import)
 - `frontend/vite.config.ts` (fixed defineConfig import, added routeFileIgnorePattern)
@@ -215,4 +218,5 @@ Modified:
 
 ## Review Follow-ups (AI)
 
-_to be filled by code review agent_
+- [ ] [AI-Review][HIGH] AC#1 deviation: `LayoutBase` from siesa-ui-kit is NOT used — implementation uses a custom `div` layout with `Navbar` + `NavigationRailItem`. Story explicitly requires `LayoutBase` shell. The ATDD fix bypassed the siesa-ui-kit `LayoutBase` to expose `data-testid` attributes. Evaluate if `LayoutBase` internal navigation can accept `data-testid` props via `navigationRailProps`, or if this deviation is intentionally accepted as a pragmatic decision for testability.
+- [ ] [AI-Review][HIGH] E2E test gap: AC#8 (unknown route / 404 page with shell persisting) has NO E2E coverage in `e2e/tests/navigation/navigation-shell.spec.ts`. Only 6 E2E tests were written; AC#8 is missing. Add an E2E test navigating to `/ruta-inexistente` and asserting `not-found-view` is visible and `navigation-rail` persists.
