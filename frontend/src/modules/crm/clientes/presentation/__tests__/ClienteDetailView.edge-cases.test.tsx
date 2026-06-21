@@ -1,22 +1,6 @@
-/**
- * Story 2.2: Client Detail View
- * Epic 2: Client Management
- *
- * Component Tests — Edge Cases & Boundary Conditions (BMad-Integrated Expansion)
- * Expands ATDD coverage with edge cases not covered in ClienteDetailView.test.tsx.
- *
- * New Test Cases:
- *   TC-2.2-C-07 — clienteId prop changes from one valid ID to another → correct new data shown
- *   TC-2.2-C-08 — data-testid attributes on detail panel and fields are present (contract for E2E)
- *   TC-2.2-C-09 — Reintentar button is keyboard accessible (Tab focus + Enter triggers retry)
- *   TC-2.2-C-10 — Empty telefono/ciudad fields still rendered (not undefined/null crash)
- *   TC-2.2-C-11 — clienteId change from valid → undefined restores placeholder immediately
- *   TC-2.2-C-12 — ErrorPanel message text is in Spanish (no English error leakage)
- *   TC-2.2-C-13 — 404 vs generic error: only 404 shows not-found message, others show ErrorPanel
- */
-
+// Story 2.2 — ClienteDetailView edge cases (BMad-Integrated Expansion)
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
@@ -95,7 +79,7 @@ describe('E2E contract — data-testid attributes on detail fields', () => {
 
     await screen.findByText(mockCliente1.nombre);
 
-    expect(document.querySelector('[data-testid="cliente-detail-panel"]')).toBeInTheDocument();
+    expect(screen.getByTestId('cliente-detail-panel')).toBeInTheDocument();
   });
 
   it('[P1][TC-2.2-C-08b] Given valid clienteId, When detail renders, Then data-testid="cliente-detail-nombre" contains the client name', async () => {
@@ -103,9 +87,9 @@ describe('E2E contract — data-testid attributes on detail fields', () => {
 
     await screen.findByText(mockCliente1.nombre);
 
-    const nombreEl = document.querySelector('[data-testid="cliente-detail-nombre"]');
+    const nombreEl = screen.getByTestId('cliente-detail-nombre');
     expect(nombreEl).toBeInTheDocument();
-    expect(nombreEl!.textContent).toContain(mockCliente1.nombre);
+    expect(nombreEl.textContent).toContain(mockCliente1.nombre);
   });
 
   it('[P1][TC-2.2-C-08c] Given valid clienteId, When detail renders, Then data-testid attributes for nit, telefono, ciudad are present', async () => {
@@ -113,9 +97,9 @@ describe('E2E contract — data-testid attributes on detail fields', () => {
 
     await screen.findByText(mockCliente1.nombre);
 
-    expect(document.querySelector('[data-testid="cliente-detail-nit"]')).toBeInTheDocument();
-    expect(document.querySelector('[data-testid="cliente-detail-telefono"]')).toBeInTheDocument();
-    expect(document.querySelector('[data-testid="cliente-detail-ciudad"]')).toBeInTheDocument();
+    expect(screen.getByTestId('cliente-detail-nit')).toBeInTheDocument();
+    expect(screen.getByTestId('cliente-detail-telefono')).toBeInTheDocument();
+    expect(screen.getByTestId('cliente-detail-ciudad')).toBeInTheDocument();
   });
 });
 
@@ -236,9 +220,10 @@ describe('Boundary — empty optional fields render without crash', () => {
     await screen.findByText(mockClienteEmptyOptionals.nombre);
     expect(screen.getByText(mockClienteEmptyOptionals.nit)).toBeInTheDocument();
 
-    // AND: No JS error thrown — empty strings render as empty dd elements
-    const ddElements = document.querySelectorAll('dd');
-    expect(ddElements.length).toBeGreaterThan(0);
+    // AND: No JS error thrown — data-testid fields for nit, telefono, ciudad are rendered (even if empty)
+    expect(screen.getByTestId('cliente-detail-nit')).toBeInTheDocument();
+    expect(screen.getByTestId('cliente-detail-telefono')).toBeInTheDocument();
+    expect(screen.getByTestId('cliente-detail-ciudad')).toBeInTheDocument();
   });
 });
 
