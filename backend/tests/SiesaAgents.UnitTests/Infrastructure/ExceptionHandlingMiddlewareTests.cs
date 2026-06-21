@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SiesaAgents.Infrastructure.Data;
 using Xunit;
 
 namespace SiesaAgents.UnitTests.Infrastructure;
@@ -21,9 +23,16 @@ public class ExceptionHandlingMiddlewareTests : IClassFixture<WebApplicationFact
     {
         _factory = factory.WithWebHostBuilder(builder =>
         {
+            // Replace the real DB context with InMemory to avoid needing a live PostgreSQL in unit tests
             builder.ConfigureTestServices(services =>
             {
-                // No additional services needed for this test
+                var descriptor = services.SingleOrDefault(d =>
+                    d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                if (descriptor is not null)
+                    services.Remove(descriptor);
+
+                services.AddDbContext<AppDbContext>(options =>
+                    options.UseInMemoryDatabase("middleware-test-db"));
             });
 
             builder.Configure(app =>

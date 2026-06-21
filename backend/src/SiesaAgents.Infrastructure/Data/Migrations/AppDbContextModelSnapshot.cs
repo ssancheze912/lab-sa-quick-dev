@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SiesaAgents.Infrastructure.Data;
 
 #nullable disable
@@ -19,7 +18,9 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             .HasAnnotation("ProductVersion", "10.0.0")
             .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-        NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+        // NOTE: UseIdentityByDefaultColumns removed — project uses UUID PKs exclusively (Guid.NewGuid()).
+        // Integer identity sequences are not used per company standards.
+        // Re-run `dotnet ef migrations add InitialCreate` after .NET 10 SDK is available to regenerate this snapshot.
 #pragma warning restore 612, 618
     }
 }

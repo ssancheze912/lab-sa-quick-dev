@@ -39,10 +39,12 @@ public class DatabaseMigrationTests : IClassFixture<WebApplicationFactory<Progra
         });
     }
 
+    private IServiceScope? _scope;
+
     public async Task InitializeAsync()
     {
-        var scope = _factory.Services.CreateScope();
-        _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        _scope = _factory.Services.CreateScope();
+        _dbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Arrange: apply all pending migrations to the test database
         await _dbContext.Database.MigrateAsync();
@@ -56,6 +58,7 @@ public class DatabaseMigrationTests : IClassFixture<WebApplicationFactory<Progra
             await _dbContext.Database.EnsureDeletedAsync();
             await _dbContext.DisposeAsync();
         }
+        _scope?.Dispose();
     }
 
     [Fact]
@@ -115,7 +118,11 @@ public class DatabaseMigrationTests : IClassFixture<WebApplicationFactory<Progra
         }
         await connection.CloseAsync();
 
-        // Assert: columns are snake_case (AC #2)
+        // Assert: columns exist in the migrations history table.
+        // NOTE: The __ef_migrations_history table is managed by EF Core internally.
+        // Npgsql creates this table with lowercase column names by default (migration_id, product_version).
+        // ApplySnakeCaseNaming() does NOT affect this internal EF Core table — it only applies to user-defined entities.
+        // AC #2 is satisfied because Npgsql's default already creates these columns in snake_case.
         Assert.Contains("migration_id", columns);
         Assert.Contains("product_version", columns);
     }
