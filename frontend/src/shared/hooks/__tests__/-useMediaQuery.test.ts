@@ -29,7 +29,7 @@ function createMatchMediaMock(initialMatches: boolean) {
     addEventListener: vi.fn((event: string, handler: (e: MediaQueryListEvent) => void) => {
       if (event === 'change') listeners.push(handler)
     }),
-    removeEventListener: vi.fn((event: string, handler: (e: MediaQueryListEvent) => void) => {
+    removeEventListener: vi.fn((_event: string, handler: (e: MediaQueryListEvent) => void) => {
       const idx = listeners.indexOf(handler)
       if (idx !== -1) listeners.splice(idx, 1)
     }),

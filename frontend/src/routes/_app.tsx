@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components -- TanStack Router route file */
-import { createFileRoute, Outlet, useRouter, Link } from '@tanstack/react-router'
+import { createFileRoute, Outlet, useRouter, useRouterState, Link } from '@tanstack/react-router'
 import { NavigationRail, NavigationBar } from 'siesa-ui-kit'
 import type { NavigationRailItemProps } from 'siesa-ui-kit'
 import type { NavigationBarItem } from 'siesa-ui-kit'
@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 
 function AppShell() {
   const router = useRouter()
-  const currentPath = router.state.location.pathname
+  const currentPath = useRouterState({ select: (s) => s.location.pathname })
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const activeId = NAV_ITEMS.find((item) =>
