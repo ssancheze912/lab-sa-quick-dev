@@ -5,6 +5,6 @@ export function useClientes() {
   return useQuery({
     queryKey: ['clientes'],
     queryFn: () => clienteApiRepository.getAll(),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   })
 }

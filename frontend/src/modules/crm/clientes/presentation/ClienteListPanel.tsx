@@ -79,8 +79,18 @@ export function ClienteListPanel() {
           <ErrorPanel onRetry={() => refetch()} />
         )}
 
-        {!isLoading && !isError && filteredClientes.length === 0 && (
-          <EmptyState />
+        {!isLoading && !isError && data.length === 0 && (
+          <EmptyState
+            title="No hay clientes registrados"
+            description="Crea el primer cliente para comenzar."
+          />
+        )}
+
+        {!isLoading && !isError && data.length > 0 && filteredClientes.length === 0 && (
+          <EmptyState
+            title="Sin resultados para la búsqueda"
+            description="Intenta con otro nombre o NIT/RUC."
+          />
         )}
 
         {!isLoading && !isError && filteredClientes.length > 0 && (
