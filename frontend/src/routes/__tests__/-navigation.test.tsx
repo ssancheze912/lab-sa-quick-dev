@@ -14,7 +14,8 @@ vi.mock('siesa-ui-kit', async (importOriginal) => {
   return {
     ...actual,
     NavigationRail: vi.fn(({ items, selectedId, onItemSelect }) => (
-      <nav data-testid="navigation-rail" aria-label="navigation-rail">
+      // Note: data-testid="navigation-rail" is on the wrapper div in _app.tsx, not here
+      <nav aria-label="navigation-rail">
         {items.map(
           (item: { id: string; label: string; selected?: boolean }) => (
             <button
@@ -30,7 +31,8 @@ vi.mock('siesa-ui-kit', async (importOriginal) => {
       </nav>
     )),
     NavigationBar: vi.fn(({ items, activeItemId, onItemClick }) => (
-      <nav data-testid="navigation-bar" aria-label="navigation-bar">
+      // Note: data-testid="navigation-bar" is on the wrapper div in _app.tsx, not here
+      <nav aria-label="navigation-bar">
         {items.map(
           (item: { id: string; label: string; active?: boolean }) => (
             <button
