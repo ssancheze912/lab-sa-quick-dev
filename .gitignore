@@ -1,0 +1,12 @@
+node_modules/
+playwright-results/
+playwright-report/
+test-results/
+.playwright/
+dist/
+build/
+*.local
+.env
+.env.*
+!.env.example
+!.env.development
