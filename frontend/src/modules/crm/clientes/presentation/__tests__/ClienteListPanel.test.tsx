@@ -346,10 +346,10 @@ describe('ClienteListPanel', () => {
   })
 
   // ---------------------------------------------------------------------------
-  // UNIT-C-FE-CLP-14: No-match search shows EmptyState
-  // Boundary: filter returns [] → same empty state shown as when DB is empty
+  // UNIT-C-FE-CLP-14: No-match search shows EmptyState with "Sin resultados" message (AC#5)
+  // Boundary: filter returns [] with data present → distinct message from no-data state
   // ---------------------------------------------------------------------------
-  it('UNIT-C-FE-CLP-14 — search with no results shows EmptyState', async () => {
+  it('UNIT-C-FE-CLP-14 — search with no results shows EmptyState with sin resultados message', async () => {
     mockUseClientes.mockReturnValue({
       data: mockClientes,
       isLoading: false,
@@ -364,8 +364,27 @@ describe('ClienteListPanel', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('empty-state')).toBeInTheDocument()
+      expect(screen.getByText(/sin resultados para la búsqueda/i)).toBeInTheDocument()
       expect(screen.queryByTestId('cliente-list-item')).not.toBeInTheDocument()
     })
+  })
+
+  // ---------------------------------------------------------------------------
+  // UNIT-C-FE-CLP-17: No clients in DB shows EmptyState with "No hay clientes" message (AC#3)
+  // Boundary: data.length === 0 → distinct CTA message
+  // ---------------------------------------------------------------------------
+  it('UNIT-C-FE-CLP-17 — empty data shows EmptyState with no-hay-clientes message', () => {
+    mockUseClientes.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+
+    renderWithRouter(<ClienteListPanel />)
+
+    expect(screen.getByTestId('empty-state')).toBeInTheDocument()
+    expect(screen.getByText(/no hay clientes registrados/i)).toBeInTheDocument()
   })
 
   // ---------------------------------------------------------------------------
