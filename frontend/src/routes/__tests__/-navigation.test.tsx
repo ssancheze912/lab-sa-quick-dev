@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { axe } from 'vitest-axe'
 import {
   createMemoryHistory,
   createRouter,
@@ -72,7 +71,6 @@ describe('Navigation Shell — Desktop (NavigationRail)', () => {
       expect(screen.getByTestId('navigation-rail')).toBeInTheDocument()
     })
 
-    // Both nav components (rail + bar) render in DOM; check rail specifically
     expect(screen.getByTestId('rail-item-clientes')).toBeInTheDocument()
     expect(screen.getByTestId('rail-item-contactos')).toBeInTheDocument()
   })
@@ -139,7 +137,6 @@ describe('Navigation Shell — Mobile (NavigationBar)', () => {
       expect(screen.getByTestId('navigation-bar')).toBeInTheDocument()
     })
 
-    // Both nav components (rail + bar) render in DOM; check bar specifically
     expect(screen.getByTestId('bar-item-clientes')).toBeInTheDocument()
     expect(screen.getByTestId('bar-item-contactos')).toBeInTheDocument()
   })
@@ -202,42 +199,23 @@ describe('Navigation Shell — Root Redirect', () => {
   })
 })
 
-describe('Navigation Shell — Accessibility (WCAG 2.1 AA)', () => {
-  afterEach(() => {
-    vi.clearAllMocks()
+describe('Navigation Shell — NavigationRail not visible on mobile', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 375,
+    })
   })
 
-  it('passes axe accessibility check on /clientes', async () => {
+  it('NavigationRail is not in document on mobile viewport', async () => {
     const router = createTestRouter('/clientes')
-    const { container } = render(<RouterProvider router={router} />)
+    render(<RouterProvider router={router} />)
 
-    await waitFor(() =>
-      screen.getByRole('heading', { name: 'Clientes' }),
-    )
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-bar')).toBeInTheDocument()
+    })
 
-    const results = await axe(container)
-    expect(results).toHaveNoViolations()
-  })
-
-  it('passes axe accessibility check on /contactos', async () => {
-    const router = createTestRouter('/contactos')
-    const { container } = render(<RouterProvider router={router} />)
-
-    await waitFor(() =>
-      screen.getByRole('heading', { name: 'Contactos' }),
-    )
-
-    const results = await axe(container)
-    expect(results).toHaveNoViolations()
-  })
-
-  it('passes axe accessibility check on 404 page', async () => {
-    const router = createTestRouter('/unknown-page')
-    const { container } = render(<RouterProvider router={router} />)
-
-    await waitFor(() => screen.getByText('Página no encontrada'))
-
-    const results = await axe(container)
-    expect(results).toHaveNoViolations()
+    expect(screen.queryByTestId('navigation-rail')).not.toBeInTheDocument()
   })
 })

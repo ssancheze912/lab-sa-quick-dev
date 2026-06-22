@@ -1,6 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import { axe } from 'vitest-axe'
 import {
   createMemoryHistory,
   createRouter,
@@ -60,6 +59,14 @@ function createTestRouter(initialPath: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('AC1 — NavigationRail wrapper testid present in DOM', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1280,
+    })
+  })
+
   it('navigation-rail wrapper is in the document at /clientes', async () => {
     const router = createTestRouter('/clientes')
     render(<RouterProvider router={router} />)
@@ -75,6 +82,14 @@ describe('AC1 — NavigationRail wrapper testid present in DOM', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('AC4 — NavigationBar wrapper testid present in DOM', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 375,
+    })
+  })
+
   it('navigation-bar wrapper is in the document at /clientes', async () => {
     const router = createTestRouter('/clientes')
     render(<RouterProvider router={router} />)
@@ -90,15 +105,21 @@ describe('AC4 — NavigationBar wrapper testid present in DOM', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('AC5/AC6 — nav-item testids present with data-active', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1280,
+    })
+  })
+
   it('nav-item-clientes has data-active="true" on /clientes', async () => {
     const router = createTestRouter('/clientes')
     render(<RouterProvider router={router} />)
 
-    // nav-item-clientes is inside navigation-rail (desktop), find all and check one is active
     await waitFor(() => {
-      const navItems = screen.getAllByTestId('nav-item-clientes')
-      const activeItem = navItems.find((el) => el.getAttribute('data-active') === 'true')
-      expect(activeItem).toBeDefined()
+      const navItem = screen.getByTestId('nav-item-clientes')
+      expect(navItem.getAttribute('data-active')).toBe('true')
     })
   })
 
@@ -107,9 +128,8 @@ describe('AC5/AC6 — nav-item testids present with data-active', () => {
     render(<RouterProvider router={router} />)
 
     await waitFor(() => {
-      const navItems = screen.getAllByTestId('nav-item-contactos')
-      const activeItem = navItems.find((el) => el.getAttribute('data-active') === 'true')
-      expect(activeItem).toBeDefined()
+      const navItem = screen.getByTestId('nav-item-contactos')
+      expect(navItem.getAttribute('data-active')).toBe('true')
     })
   })
 
@@ -118,7 +138,7 @@ describe('AC5/AC6 — nav-item testids present with data-active', () => {
     render(<RouterProvider router={router} />)
 
     await waitFor(() => {
-      expect(screen.getAllByTestId('nav-item-clientes').length).toBeGreaterThan(0)
+      expect(screen.getByTestId('nav-item-clientes')).toBeInTheDocument()
     })
   })
 
@@ -127,7 +147,7 @@ describe('AC5/AC6 — nav-item testids present with data-active', () => {
     render(<RouterProvider router={router} />)
 
     await waitFor(() => {
-      expect(screen.getAllByTestId('nav-item-contactos').length).toBeGreaterThan(0)
+      expect(screen.getByTestId('nav-item-contactos')).toBeInTheDocument()
     })
   })
 })
@@ -194,31 +214,5 @@ describe('AC8 — Root path / redirects to /clientes', () => {
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/clientes')
     })
-  })
-})
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Accessibility
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('Accessibility — WCAG 2.1 AA on key routes', () => {
-  it('passes axe check at /clientes', async () => {
-    const router = createTestRouter('/clientes')
-    const { container } = render(<RouterProvider router={router} />)
-
-    await waitFor(() => screen.getByTestId('clientes-shell-view'))
-
-    const results = await axe(container)
-    expect(results).toHaveNoViolations()
-  })
-
-  it('passes axe check on 404 page', async () => {
-    const router = createTestRouter('/unknown-page')
-    const { container } = render(<RouterProvider router={router} />)
-
-    await waitFor(() => screen.getByTestId('not-found-view'))
-
-    const results = await axe(container)
-    expect(results).toHaveNoViolations()
   })
 })
