@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="Scalar.AspNetCore" Version="2.*" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.*-*" />
+    <PackageReference Include="FluentValidation" Version="11.*" />
   </ItemGroup>
 
   <ItemGroup>
