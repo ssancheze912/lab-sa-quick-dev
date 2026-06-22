@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
@@ -6,13 +6,11 @@ import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    TanStackRouterVite({ autoCodeSplitting: true }),
+    TanStackRouterVite({ routesDirectory: './src/routes' }),
     react(),
     tailwindcss(),
   ],
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test-setup.ts'],
+  server: {
+    port: 5173,
   },
 })

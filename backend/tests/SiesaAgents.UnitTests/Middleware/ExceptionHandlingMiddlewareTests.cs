@@ -1,160 +1,195 @@
-using System.Net;
+using System.IO;
+using System.Text;
 using System.Text.Json;
-using FluentValidation;
-using FluentValidation.Results;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using SiesaAgents.API.Middleware;
-using SiesaAgents.Domain.Exceptions;
-using Xunit;
 
 namespace SiesaAgents.UnitTests.Middleware;
 
+/// <summary>
+/// Unit tests for ExceptionHandlingMiddleware — Story 1.3 AC2 / NFR6.
+/// These tests are in RED phase. They will fail until ExceptionHandlingMiddleware
+/// is created at backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs.
+///
+/// Test IDs: UNIT-F-04, UNIT-F-05
+/// </summary>
 public class ExceptionHandlingMiddlewareTests
 {
-    private static IHost BuildHost(Exception exceptionToThrow)
-    {
-        return new HostBuilder()
-            .ConfigureWebHost(webBuilder =>
-            {
-                webBuilder.UseTestServer();
-                webBuilder.ConfigureServices(services =>
-                {
-                    services.AddLogging();
-                    services.AddRouting();
-                });
-                webBuilder.Configure(app =>
-                {
-                    app.UseMiddleware<ExceptionHandlingMiddleware>();
-                    app.Run(_ => throw exceptionToThrow);
-                });
-            })
-            .Build();
-    }
-
+    /// <summary>
+    /// UNIT-F-04 (P1 — AC2)
+    /// Given an unhandled exception occurs during request processing
+    /// When the ExceptionHandlingMiddleware catches the exception
+    /// Then the HTTP response status is 500 (Internal Server Error)
+    /// And the response body is valid JSON with status, title, and detail fields (RFC 7807)
+    /// </summary>
     [Fact]
-    public async Task UnhandledException_Returns500_WithProblemDetails_NoStackTrace()
+    public async Task InvokeAsync_UnhandledException_ReturnsProblemDetailsWithRequiredFields()
     {
         // Arrange
-        using var host = BuildHost(new InvalidOperationException("Something went wrong internally"));
-        await host.StartAsync();
-        var client = host.GetTestClient();
+        var middleware = new ExceptionHandlingMiddleware(
+            next: _ => throw new Exception("boom"),
+            logger: NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
 
         // Act
-        var response = await client.GetAsync("/");
+        await middleware.InvokeAsync(context);
 
-        // Assert
-        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        var json = JsonDocument.Parse(body).RootElement;
 
-        var body = await response.Content.ReadAsStringAsync();
-        var problem = JsonSerializer.Deserialize<ProblemDetails>(body, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
+        // Assert — HTTP status must be 500
+        Assert.Equal(500, context.Response.StatusCode);
 
-        Assert.NotNull(problem);
-        Assert.Equal(500, problem.Status);
-        Assert.Equal("Internal Server Error", problem.Title);
-        // Stack trace must NOT appear in response body
-        Assert.DoesNotContain("at ", body);
-        Assert.DoesNotContain("System.", body.Replace("\"System.", "REPLACED"));
+        // Assert — Problem Details RFC 7807 required fields must be present
+        Assert.True(json.TryGetProperty("status", out var statusProp),
+            "Problem Details must contain 'status' field");
+        Assert.Equal(JsonValueKind.Number, statusProp.ValueKind);
+
+        Assert.True(json.TryGetProperty("title", out var titleProp),
+            "Problem Details must contain 'title' field");
+        Assert.Equal(JsonValueKind.String, titleProp.ValueKind);
+        Assert.False(string.IsNullOrWhiteSpace(titleProp.GetString()),
+            "'title' field must not be empty");
+
+        Assert.True(json.TryGetProperty("detail", out var detailProp),
+            "Problem Details must contain 'detail' field");
+        Assert.Equal(JsonValueKind.String, detailProp.ValueKind);
     }
 
+    /// <summary>
+    /// UNIT-F-05 (P1 — AC2 / NFR6)
+    /// Given an unhandled exception with sensitive details (stack trace, type name)
+    /// When the ExceptionHandlingMiddleware catches and serializes the exception
+    /// Then the response body does NOT contain stackTrace in any form
+    /// And the response body does NOT contain the exception type name
+    /// And the response body does NOT contain the original exception message
+    /// </summary>
     [Fact]
-    public async Task NotFoundException_Returns404_WithProblemDetails()
+    public async Task InvokeAsync_UnhandledException_DoesNotExposeStackTraceOrExceptionType()
     {
-        // Arrange
-        using var host = BuildHost(new NotFoundException("Resource with id '42' was not found"));
-        await host.StartAsync();
-        var client = host.GetTestClient();
+        // Arrange — use an exception with an identifiable message to confirm it is NOT leaked
+        const string sensitiveMessage = "secret-internal-database-password-leak-test";
+        var middleware = new ExceptionHandlingMiddleware(
+            next: _ => throw new InvalidOperationException(sensitiveMessage),
+            logger: NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
 
         // Act
-        var response = await client.GetAsync("/");
+        await middleware.InvokeAsync(context);
 
-        // Assert
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
 
-        var body = await response.Content.ReadAsStringAsync();
-        var problem = JsonSerializer.Deserialize<ProblemDetails>(body, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
+        // Assert — no stack trace fields (NFR6)
+        Assert.DoesNotContain("stackTrace", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("stack_trace", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("StackTrace", body);
 
-        Assert.NotNull(problem);
-        Assert.Equal(404, problem.Status);
-        Assert.Equal("Not Found", problem.Title);
-        Assert.Contains("42", problem.Detail ?? string.Empty);
+        // Assert — no exception type names in response
+        Assert.DoesNotContain("InvalidOperationException", body);
+        Assert.DoesNotContain("System.", body);
+        Assert.DoesNotContain("Exception", body);
+
+        // Assert — sensitive exception message must not leak
+        Assert.DoesNotContain(sensitiveMessage, body);
+
+        // Assert — no " at " patterns from stack traces
+        Assert.DoesNotContain(" at ", body, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// UNIT-F-04b (P1 — AC2)
+    /// Given an ArgumentException (bad request type) occurs during request processing
+    /// When the ExceptionHandlingMiddleware catches the exception
+    /// Then the HTTP response status is 400 (Bad Request)
+    /// And the response body is valid RFC 7807 Problem Details
+    /// </summary>
     [Fact]
-    public async Task ConflictException_Returns409_WithProblemDetails()
+    public async Task InvokeAsync_ArgumentException_Returns400BadRequest()
     {
         // Arrange
-        using var host = BuildHost(new ConflictException("A resource with this name already exists"));
-        await host.StartAsync();
-        var client = host.GetTestClient();
+        var middleware = new ExceptionHandlingMiddleware(
+            next: _ => throw new ArgumentException("invalid input"),
+            logger: NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
 
         // Act
-        var response = await client.GetAsync("/");
+        await middleware.InvokeAsync(context);
+
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        var json = JsonDocument.Parse(body).RootElement;
 
         // Assert
-        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-
-        var body = await response.Content.ReadAsStringAsync();
-        var problem = JsonSerializer.Deserialize<ProblemDetails>(body, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
-
-        Assert.NotNull(problem);
-        Assert.Equal(409, problem.Status);
-        Assert.Equal("Conflict", problem.Title);
+        Assert.Equal(400, context.Response.StatusCode);
+        Assert.True(json.TryGetProperty("status", out _),
+            "Problem Details must contain 'status' field");
+        Assert.True(json.TryGetProperty("title", out _),
+            "Problem Details must contain 'title' field");
     }
 
+    /// <summary>
+    /// UNIT-F-04c (P1 — AC2)
+    /// Given a KeyNotFoundException (not found type) occurs during request processing
+    /// When the ExceptionHandlingMiddleware catches the exception
+    /// Then the HTTP response status is 404 (Not Found)
+    /// And the response body contains Problem Details with status = 404
+    /// </summary>
     [Fact]
-    public async Task ProblemDetailsContentType_IsApplicationProblemJson()
+    public async Task InvokeAsync_KeyNotFoundException_Returns404NotFound()
     {
         // Arrange
-        using var host = BuildHost(new NotFoundException("Not found"));
-        await host.StartAsync();
-        var client = host.GetTestClient();
+        var middleware = new ExceptionHandlingMiddleware(
+            next: _ => throw new KeyNotFoundException("resource not found"),
+            logger: NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
 
         // Act
-        var response = await client.GetAsync("/");
+        await middleware.InvokeAsync(context);
+
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        var json = JsonDocument.Parse(body).RootElement;
 
         // Assert
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(404, context.Response.StatusCode);
+        Assert.True(json.TryGetProperty("status", out var statusProp));
+        Assert.Equal(404, statusProp.GetInt32());
     }
 
+    /// <summary>
+    /// UNIT-F-04d (P1 — AC2)
+    /// Given an unhandled exception occurs
+    /// When the middleware writes the response
+    /// Then the Content-Type header is application/problem+json (RFC 7807)
+    /// And NOT plain application/json
+    /// </summary>
     [Fact]
-    public async Task ValidationException_Returns400_WithValidationProblemDetails()
+    public async Task InvokeAsync_UnhandledException_SetsContentTypeToProblemJson()
     {
         // Arrange
-        var failures = new List<ValidationFailure>
-        {
-            new("Name", "Name is required"),
-            new("Email", "Email must be a valid email address")
-        };
-        using var host = BuildHost(new ValidationException(failures));
-        await host.StartAsync();
-        var client = host.GetTestClient();
+        var middleware = new ExceptionHandlingMiddleware(
+            next: _ => throw new Exception("test"),
+            logger: NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
 
         // Act
-        var response = await client.GetAsync("/");
+        await middleware.InvokeAsync(context);
 
-        // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-
-        var body = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Validation Failed", body);
+        // Assert — Content-Type must contain problem+json per RFC 7807 (AC2)
+        var contentType = context.Response.ContentType ?? string.Empty;
+        Assert.Contains("problem+json", contentType, StringComparison.OrdinalIgnoreCase);
     }
 }

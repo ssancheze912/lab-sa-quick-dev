@@ -20,6 +20,15 @@ export class ClientesPage {
   readonly detailPanel: Locator;
   readonly emptyState: Locator;
 
+  // Sort control (Story 2.6)
+  readonly sortControl: Locator;
+
+  // ContactManager locators (Story 4.1 & 4.2)
+  readonly contactManagerContainer: Locator;
+  readonly contactManagerRows: Locator;
+  readonly btnAgregarContacto: Locator;
+  readonly btnDesasociarContacto: Locator;
+
   // Form (dialog/drawer)
   readonly form: Locator;
   readonly inputNombre: Locator;
@@ -43,6 +52,16 @@ export class ClientesPage {
 
     this.detailPanel = page.getByTestId('cliente-detail-panel');
     this.emptyState = page.getByTestId('empty-state');
+
+    // Sort control — data-testid="sort-control" on root/trigger element
+    this.sortControl = page.getByTestId('sort-control');
+
+    // ContactManager locators (Story 4.1)
+    // Rows: each contact row has an "Editar" button — works for both desktop (table) and mobile (cards)
+    this.contactManagerContainer = page.getByTestId('contact-manager')
+    this.contactManagerRows = page.getByTestId('contact-manager').getByRole('button', { name: 'Editar' })
+    this.btnAgregarContacto = page.getByRole('button', { name: /agregar contacto|nuevo contacto|asociar contacto/i })
+    this.btnDesasociarContacto = page.getByRole('button', { name: /desasociar|eliminar de cliente|quitar/i })
 
     this.form = page.getByRole('dialog');
     this.inputNombre = page.getByLabel(/nombre/i);
@@ -95,5 +114,22 @@ export class ClientesPage {
 
   async limpiarBusqueda() {
     await this.searchInput.clear();
+  }
+
+  /**
+   * Selects a sort option from the SortControl component.
+   * Supports both shadcn/ui Select (click trigger → click option) and native <select>.
+   * Uses role-based option locator with i18n-safe Spanish label patterns.
+   */
+  async seleccionarOrden(option: 'nombre-asc' | 'nombre-desc' | 'fecha-desc' | 'fecha-asc') {
+    const labelMap: Record<string, RegExp> = {
+      'nombre-asc': /nombre a→z|nombre a-z/i,
+      'nombre-desc': /nombre z→a|nombre z-a/i,
+      'fecha-desc': /más reciente/i,
+      'fecha-asc': /más antiguo/i,
+    };
+
+    await this.sortControl.click();
+    await this.page.getByRole('option', { name: labelMap[option] }).click();
   }
 }

@@ -1,73 +1,105 @@
+using System.Text.Json;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SiesaAgents.Domain.Exceptions;
 
 namespace SiesaAgents.API.Middleware;
 
-/// <summary>
-/// Global exception handling middleware. Maps domain exceptions to Problem Details RFC 7807 responses.
-/// Stack traces are NEVER exposed in responses (NFR6).
-/// </summary>
-public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+public class ExceptionHandlingMiddleware
 {
+    private readonly RequestDelegate _next;
+    private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
+    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    {
+        ArgumentNullException.ThrowIfNull(next);
+        ArgumentNullException.ThrowIfNull(logger);
+        _next = next;
+        _logger = logger;
+    }
+
+    public ExceptionHandlingMiddleware(RequestDelegate next)
+        : this(next, NullLogger<ExceptionHandlingMiddleware>.Instance)
+    {
+    }
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
         {
-            await next(context);
-        }
-        catch (NotFoundException ex)
-        {
-            await WriteProblemDetailsAsync(context, StatusCodes.Status404NotFound, "Not Found", ex.Message);
-        }
-        catch (ConflictException ex)
-        {
-            await WriteProblemDetailsAsync(context, StatusCodes.Status409Conflict, "Conflict", ex.Message);
-        }
-        catch (ValidationException ex)
-        {
-            await WriteValidationProblemDetailsAsync(context, ex);
+            await _next(context);
+
+            // Handle non-exception 4xx/5xx responses without a body
+            if (context.Response.StatusCode >= 400 && context.Response.Body.Position == 0)
+            {
+                await WriteStatusCodeProblemDetailsAsync(context);
+            }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unhandled exception occurred");
-            // Generic message — NEVER expose stack traces (NFR6)
-            await WriteProblemDetailsAsync(
-                context,
-                StatusCodes.Status500InternalServerError,
-                "Internal Server Error",
-                "An unexpected error occurred. Please try again later.");
+            _logger.LogError(ex, "Unhandled exception: {ExceptionType}", ex.GetType().Name);
+            await HandleExceptionAsync(context, ex);
         }
     }
 
-    private static async Task WriteProblemDetailsAsync(HttpContext context, int status, string title, string detail)
+    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        context.Response.StatusCode = status;
-        context.Response.ContentType = "application/problem+json";
-        var problem = new ProblemDetails
+        var (statusCode, title) = exception switch
         {
-            Status = status,
-            Title = title,
-            Detail = detail
+            ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
+            InvalidOperationException => (StatusCodes.Status409Conflict, "Conflict"),
+            ValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
+            KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
+            ArgumentException => (StatusCodes.Status400BadRequest, "Bad request"),
+            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
         };
-        await context.Response.WriteAsJsonAsync(problem);
+
+        var problemDetails = new ProblemDetails
+        {
+            Status = statusCode,
+            Title = title,
+            Detail = "See server logs for details."   // Never expose exception message or stack trace (NFR6)
+        };
+
+        var json = JsonSerializer.Serialize(problemDetails, JsonOptions);
+
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsync(json);
     }
 
-    private static async Task WriteValidationProblemDetailsAsync(HttpContext context, ValidationException ex)
+    private static async Task WriteStatusCodeProblemDetailsAsync(HttpContext context)
     {
-        context.Response.StatusCode = StatusCodes.Status400BadRequest;
-        context.Response.ContentType = "application/problem+json";
-        var errors = ex.Errors
-            .GroupBy(e => e.PropertyName)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(e => e.ErrorMessage).ToArray());
-        var problem = new ValidationProblemDetails(errors)
+        var statusCode = context.Response.StatusCode;
+        var title = statusCode switch
         {
-            Status = StatusCodes.Status400BadRequest,
-            Title = "Validation Failed",
-            Detail = "One or more validation errors occurred."
+            400 => "Bad request",
+            401 => "Unauthorized",
+            403 => "Forbidden",
+            404 => "Resource not found",
+            405 => "Method not allowed",
+            409 => "Conflict",
+            422 => "Unprocessable entity",
+            _ => "An error occurred"
         };
-        await context.Response.WriteAsJsonAsync(problem);
+
+        var problemDetails = new ProblemDetails
+        {
+            Status = statusCode,
+            Title = title,
+            Detail = null
+        };
+
+        var json = JsonSerializer.Serialize(problemDetails, JsonOptions);
+
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsync(json);
     }
 }

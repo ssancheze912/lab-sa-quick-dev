@@ -1,18 +1,23 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
+using SiesaAgents.Domain.Contactos.Entities;
 
 namespace SiesaAgents.Infrastructure.Data;
 
-/// <summary>
-/// Application database context. Configured with snake_case naming convention per company standards.
-/// </summary>
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public class AppDbContext : DbContext
 {
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
+    public DbSet<ContactoEntity> Contactos => Set<ContactoEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        // Apply entity configurations from this assembly
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-        // CRITICAL: ApplySnakeCaseNaming() MUST be called LAST in OnModelCreating
-        modelBuilder.ApplySnakeCaseNaming();
+
+        // snake_case naming convention is applied via UseSnakeCaseNamingConvention()
+        // registered in DbContextOptions (see Program.cs) — no manual [Column]/[Table] attributes needed
     }
 }

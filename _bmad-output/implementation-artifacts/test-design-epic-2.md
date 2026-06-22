@@ -1,462 +1,452 @@
 ---
 epic: 2
 title: "Client Management"
-mode: epic-level
 phase: 4
-createdAt: "2026-06-22"
+mode: epic-level
+date: 2026-05-20
 stories:
-  - "2.1 — Client List & Search"
-  - "2.2 — Client Detail View"
-  - "2.3 — Create Client"
-  - "2.4 — Edit Client"
-  - "2.5 — Delete Client"
-  - "2.6 — Sort Client List"
-status: draft
+  - "2.1: Client List & Search"
+  - "2.2: Client Detail View"
+  - "2.3: Create Client"
+  - "2.4: Edit Client"
+  - "2.5: Delete Client"
+  - "2.6: Sort Client List"
+frs_covered: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR8]
+nfrs_relevant: [NFR1, NFR2, NFR5, NFR6]
+status: complete
 ---
 
 # Test Design — Epic 2: Client Management
 
-**Date:** 2026-06-22
-**Author:** SiesaTeam
-**Status:** Draft
+## 1. Epic Overview
 
----
+Epic 2 delivers the complete CRUD lifecycle for client records in Siesa Agents CRM, along with real-time search and client-side sorting.
 
-## Executive Summary
+| Story | Scope |
+|---|---|
+| 2.1 | Left panel (280px) listing all clients; real-time search by Nombre/NIT; EmptyState; ErrorPanel |
+| 2.2 | Right panel detail view; URL deep linking `/clientes/:id`; not-found handling |
+| 2.3 | "Nuevo cliente" dialog form; POST `/api/v1/clientes`; toast success; duplicate NIT 409 handling |
+| 2.4 | "Editar" pre-filled form; PUT `/api/v1/clientes/:id`; cancel preserves data |
+| 2.5 | "Eliminar" confirmation dialog; DELETE `/api/v1/clientes/:id`; contacts unassigned on cascade |
+| 2.6 | SortControl component; 4 sort options (nombre-asc, nombre-desc, fecha-desc, fecha-asc); client-side sort; preserves active search filter |
 
-**Scope:** Full test design for Epic 2 — Client Management (Stories 2.1 through 2.6)
+**Epic-Level Acceptance Criteria:**
 
-This epic delivers the complete CRUD lifecycle for the `clientes` entity: list with real-time search, detail view with deep-linking, create, edit, delete with cascade-contact handling, and client-side sort. It covers FRs FR1–FR8 and is the first epic that touches the database domain layer (`clientes` table, `ClienteEntity`, FluentValidation).
+| AC | Description |
+|---|---|
+| AC-E2.1 | User can register a new client (Nombre, NIT/RUC, Teléfono, Ciudad) and it appears in the list immediately |
+| AC-E2.2 | User can search clients by name or NIT/RUC and see results in under 1 second |
+| AC-E2.3 | User can view full client detail, edit any field and save changes |
+| AC-E2.4 | System prevents saving a client with empty required fields, showing clear error messages |
+| AC-E2.5 | User can delete a client and it disappears from the list |
+| AC-E2.6 | User can sort the client list without reloading the page or losing the active search filter |
 
-**Risk Summary:**
+**FRs Covered:** FR1 (create), FR2 (list), FR3 (search by name), FR4 (search by NIT), FR5 (view detail), FR6 (edit), FR7 (delete), FR8 (required field validation)
 
-- Total risks identified: 11
-- High-priority risks (score ≥6): 5 (R-001, R-002, R-003, R-004, R-005)
-- Critical categories: DATA, PERF, BUS, SEC, TECH
-
-**Coverage Summary:**
-
-- P0 scenarios: 12 (24 hours)
-- P1 scenarios: 18 (18 hours)
-- P2 scenarios: 14 (7 hours)
-- P3 scenarios: 5 (1.25 hours)
-- **Total effort:** 50.25 hours (~6.3 days)
-
----
-
-## 1. Epic Overview & Test Scope
-
-### Stories in Scope
-
-| Story | Title                   | Key Concerns                                                                     |
-|-------|-------------------------|----------------------------------------------------------------------------------|
-| 2.1   | Client List & Search    | Real-time filter (<1s, 500 records), EmptyState, ErrorPanel + retry             |
-| 2.2   | Client Detail View      | Deep-link routing (`/clientes/:id`), 404 handling, panel selection state        |
-| 2.3   | Create Client           | Form validation (all required), NIT/RUC uniqueness (409), optimistic update     |
-| 2.4   | Edit Client             | Pre-fill values, inline validation, cancel discards changes, FR27 refresh       |
-| 2.5   | Delete Client           | Confirmation dialog, contact cascade (clienteId=null), "Sin cliente" filter     |
-| 2.6   | Sort Client List        | 4 sort options, client-side only (no new API call), preserves active search     |
-
-### Out of Scope
-
-- Authentication — not in MVP (no auth story)
-- Contact management — Epic 3
-- Client↔Contact association — Epic 4
-- "Sin cliente" filter for contacts — Epic 3/4
-- HTTPS in non-local — NFR4 deferred
-
-### Technology Stack Context
-
-| Layer      | Technology                                             |
-|------------|--------------------------------------------------------|
-| Frontend   | Vite 7 / React 18 / TypeScript strict / TanStack Router / TanStack Query 5 |
-| Backend    | .NET 10 / C# Minimal API / Clean Architecture / FluentValidation |
-| Database   | PostgreSQL 18 / EF Core 10 / snake_case / UUID PKs / DateTimeOffset |
-| Testing    | Vitest + RTL + MSW (frontend) / xUnit (backend) |
-| UI         | siesa-ui-kit + shadcn/ui Dialog |
-| HTTP       | Axios, REST `/api/v1/clientes` |
+**NFRs Applicable:**
+- NFR1: Search results in < 1s with up to 500 records
+- NFR2: CRUD changes reflected in UI in < 2s
+- NFR5: Input validation and sanitization (FluentValidation + Zod)
+- NFR6: No stack traces or internal errors exposed to user
 
 ---
 
 ## 2. Risk Assessment
 
-### High-Priority Risks (Score ≥6)
+### Risk Matrix
 
-| Risk ID | Category | Description                                                                                       | Probability | Impact | Score | Mitigation                                                                                          | Owner | Timeline    |
-|---------|----------|---------------------------------------------------------------------------------------------------|-------------|--------|-------|------------------------------------------------------------------------------------------------------|-------|-------------|
-| R-001   | DATA     | Delete client does NOT set `clienteId = null` on associated contacts — contacts silently orphaned with stale FK | 2 | 3 | 6 | Integration + E2E test: create client with contacts, delete client, assert contacts have `clienteId = null` and appear in "Sin cliente" filter | Dev/QA | Story 2.5  |
-| R-002   | BUS      | NIT/RUC duplicate silently creates a second record (409 not handled) — corrupt data integrity    | 2           | 3      | 6     | API test: POST duplicate NIT/RUC → assert 409 + correct Spanish error message. Frontend component test: 409 response renders "El NIT/RUC ya está registrado" without stack trace | Dev/QA | Story 2.3  |
-| R-003   | PERF     | Client-side filter over 500 records takes >1s (NFR1 violation) due to unoptimized `Array.filter` or missing debounce | 3 | 2 | 6 | Component performance test: load 500 fixture clients, measure filter response with `performance.now()`, assert <1s | QA     | Story 2.1  |
-| R-004   | SEC      | FluentValidation not registered or not applied — raw unvalidated inputs persisted (NFR5)         | 2           | 3      | 6     | API integration test: POST/PUT with empty Nombre, empty NIT, oversized fields → assert 400 + Problem Details RFC 7807, no 500 | Dev/QA | Stories 2.3–2.4 |
-| R-005   | TECH     | Sort changes trigger an additional `GET /api/v1/clientes` call (wrong implementation) — should be pure client-side over TanStack Query cache | 2 | 3 | 6 | Component test + network spy: intercept fetch, apply sort, assert zero new network calls | Dev/QA | Story 2.6  |
+| ID | Risk | Probability | Impact | Priority | Mitigation |
+|---|---|---|---|---|---|
+| R1 | Real-time search debounce not implemented or firing on every keystroke — causes N API calls instead of client-side filter | High | High | P0 | E2E test that types multiple characters and verifies only the initial load request is made; assert no new network calls during typing |
+| R2 | NIT uniqueness constraint violation (409) not surfaced to user — form closes silently or shows generic error | High | High | P0 | API-level test for 409 response; E2E test verifying Spanish message "El NIT/RUC ya está registrado" appears inline |
+| R3 | Delete with associated contacts — `cliente_id` not set to NULL on cascade; contacts orphaned or deleted | High | High | P0 | API integration test: create client + contacts, delete client, assert contacts still exist with `clienteId = null` |
+| R4 | TanStack Query cache not invalidated after mutation — list does not update without reload (FR27 violated) | High | High | P0 | E2E tests: assert new/edited/deleted client appears/disappears in list immediately without page reload |
+| R5 | Sort combined with search filter — changing SortControl clears `searchInput` value or re-fetches from API | Medium | High | P1 | E2E test: type search term → apply sort → assert search input retains value and list shows only matching + sorted items |
+| R6 | Deep link `/clientes/:id` with non-existent ID — unhandled 404 throws uncaught exception instead of graceful not-found | Medium | High | P1 | E2E test: navigate directly to `/clientes/00000000-0000-0000-0000-000000000000`; assert not-found UI renders |
+| R7 | Cancel on Edit form — `PUT` request fires even when user clicks "Cancelar" | Medium | High | P1 | E2E test: open edit form, modify field, click cancel, assert no PUT network request fired |
+| R8 | Required field validation runs only on backend — empty fields submitted causing unnecessary round trip | Medium | Medium | P1 | E2E test: submit form empty, assert no API call made; inline error messages visible |
+| R9 | EmptyState not shown when client list is genuinely empty — list panel shows blank area | Medium | Medium | P2 | E2E test: ensure no pre-existing clients, navigate to `/clientes`, assert EmptyState component visible |
+| R10 | SortControl default order not "Más reciente" on initial load — new clients appear at bottom of list | Low | Medium | P2 | E2E test: create two clients in sequence, verify newest appears first on fresh page load |
+| R11 | ErrorPanel with "Reintentar" button not rendered when API call fails — no user feedback on network error | Low | High | P2 | E2E test with API route interception: mock 500, navigate to `/clientes`, assert ErrorPanel + Reintentar button visible |
+| R12 | URL not updated when clicking a client item — deep linking (FR30) broken for /clientes/:id | Low | Medium | P2 | E2E test: click client item, assert URL changes to `/clientes/{uuid}` |
 
-### Medium-Priority Risks (Score 3–4)
+**Top 3 Critical Risk Areas:**
 
-| Risk ID | Category | Description                                                                                     | Probability | Impact | Score | Mitigation                                                                     | Owner |
-|---------|----------|-------------------------------------------------------------------------------------------------|-------------|--------|-------|---------------------------------------------------------------------------------|-------|
-| R-006   | BUS      | EmptyState not shown when client list is genuinely empty — user sees blank panel with no guidance | 2 | 2 | 4 | Component test: mock API returns `[]`, assert `EmptyState` renders with CTA text | DEV   |
-| R-007   | TECH     | Deep-link `/clientes/:clienteId` with invalid UUID format causes unhandled 500 instead of 404   | 2           | 2      | 4     | API + E2E test: navigate to `/clientes/not-a-uuid`, assert 404/not-found UI without crash | QA    |
-| R-008   | BUS      | Cancel in edit form clears fields visually but leaves dirty state → next open shows empty form  | 2           | 2      | 4     | Component test: open edit, modify, cancel, re-open → assert original values restored | DEV   |
-| R-009   | BUS      | Sort resets to default when search input changes — violates AC-E2.6 (sort must persist over filter) | 2 | 2 | 4 | Component test: sort "Nombre Z→A", type in search, assert sort order still Z→A | DEV   |
-
-### Low-Priority Risks (Score 1–2)
-
-| Risk ID | Category | Description                                                                               | Probability | Impact | Score | Action  |
-|---------|----------|-------------------------------------------------------------------------------------------|-------------|--------|-------|---------|
-| R-010   | OPS      | Toast notifications not dismissed (stay on screen >5s), cluttering UI for power users    | 1           | 2      | 2     | Monitor |
-| R-011   | BUS      | Confirmation dialog "Eliminar" accessible by keyboard only (a11y gap), not caught in PR  | 1           | 1      | 1     | Monitor |
+1. **Data mutation + cache invalidation (R1, R4)** — If TanStack Query cache is not invalidated after create/edit/delete, the list will not reflect changes without a reload, violating FR27. This is the most widespread structural risk affecting Stories 2.3, 2.4, and 2.5.
+2. **NIT uniqueness and 409 error handling (R2)** — A silent failure on duplicate NIT degrades data quality and user trust. Both frontend Zod validation and backend FluentValidation are in play; the 409 contract between API and UI is a critical boundary.
+3. **Delete cascade and contact integrity (R3)** — Story 2.5 defines explicit behavior when deleting a client that has associated contacts (`clienteId = null`, contacts remain). If the DB cascade is misconfigured (e.g., ON DELETE CASCADE instead of ON DELETE SET NULL), production data loss will occur.
 
 ---
 
-## 3. Test Coverage Plan
+## 3. Test Strategy by Level
 
-### P0 (Critical) — Run on every commit
+### Level Distribution
 
-**Criteria:** Blocks core journey + High risk (≥6) + No workaround
+| Level | Tool | Volume | Focus |
+|---|---|---|---|
+| E2E (UI) | Playwright (chromium) | 28 tests | Full user journeys, form interactions, list behaviors, URL routing |
+| API / Integration | Playwright APIRequestContext | 10 tests | REST contract validation, 409/404/500 error responses, cascade behavior |
+| Component / Unit | Vitest + RTL (frontend) | 8 tests | SortControl logic, search filter function, form validation schema |
+| Backend Unit | xUnit | 6 tests | ClienteValidator (FluentValidation), ClienteService command handlers |
 
-| AC / Requirement                                   | Test Level | Risk Link | Scenarios | Owner | Notes                                                     |
-|----------------------------------------------------|------------|-----------|-----------|-------|-----------------------------------------------------------|
-| DELETE client → contacts set clienteId=null (AC-E2.5 cascade) | E2E + API | R-001 | 2 | QA | Requires seeded client + contacts. Assert contact still exists with null FK |
-| POST duplicate NIT/RUC → 409 + Spanish error message (AC-E2.4) | API        | R-002     | 2         | QA    | Backend returns 409; frontend toast shows correct message (no stack trace) |
-| Search 500 records returns results <1s (NFR1, AC-E2.2)         | Component  | R-003     | 2         | QA    | Vitest + performance.now(); fixture: 500 generated clients |
-| POST/PUT empty required fields → 400 FluentValidation (AC-E2.4, NFR5) | API | R-004 | 3 | Dev | Empty Nombre, empty NIT, empty Telefono; each returns 400 Problem Details |
-| Sort changes zero additional API calls (AC-E2.6 technical) | Component  | R-005     | 3         | Dev   | MSW intercept; verify fetch count stays 1 across all 4 sort options |
+**Total: 52 test cases**
 
-**Total P0:** 12 scenarios, 24 hours
+### Playwright Projects Applicable
 
-### P1 (High) — Run on PR to main
+| Project | Rationale |
+|---|---|
+| chromium (Desktop Chrome) | Primary — all E2E tests |
+| firefox | Secondary coverage for form interactions and sort |
+| mobile-chrome (Pixel 5) | Responsive layout: split panel collapses correctly on mobile |
 
-**Criteria:** Important feature + Medium risk (3–4) + Common workflow
+### Key Testing Principles for Epic 2
 
-| AC / Requirement                                           | Test Level | Risk Link | Scenarios | Owner | Notes                                                      |
-|------------------------------------------------------------|------------|-----------|-----------|-------|------------------------------------------------------------|
-| EmptyState shown when client list is empty (AC-E2.1)      | Component  | R-006     | 1         | Dev   | Mock API `[]`, assert EmptyState + CTA visible             |
-| ErrorPanel + "Reintentar" shown on fetch failure (Story 2.1) | Component | -       | 1         | Dev   | MSW returns 503, assert ErrorPanel with retry button       |
-| Deep-link `/clientes/:id` loads correct client (AC-E2.2, FR30) | E2E   | R-007     | 2         | QA    | Direct URL navigation; assert detail panel populated       |
-| `/clientes/:id` not-found → graceful message (Story 2.2)  | E2E + API  | R-007     | 2         | QA    | Non-existent UUID; assert 404 API + not-found UI           |
-| Create client → appears in list immediately (AC-E2.1, FR27) | E2E      | -         | 2         | QA    | Full create flow; assert list updates without page reload  |
-| Edit pre-fills current values (AC-E2.3, FR6)              | Component  | R-008     | 1         | Dev   | Assert form fields match client fixture data               |
-| Cancel edit → original values unchanged (Story 2.4)       | Component  | R-008     | 1         | Dev   | Modify field, cancel, re-open, assert original             |
-| Delete confirmation dialog shows before deleting (Story 2.5) | E2E     | -         | 1         | QA    | Click Eliminar → dialog appears                            |
-| Cancel delete → client remains (Story 2.5)                | E2E        | -         | 1         | QA    | Open dialog, click Cancelar, assert client still in list   |
-| Sort preserves active search filter (AC-E2.6)             | Component  | R-009     | 2         | Dev   | Apply search, change sort, assert filtered + sorted result |
-| Sort "Más reciente" default on load (AC-E2.6)             | Component  | -         | 1         | Dev   | Initial render; assert sort state = `fecha-desc`           |
-| POST client → success toast "Cliente creado correctamente" | Component | -        | 1         | Dev   | Assert toast appears after successful mutation             |
-
-**Total P1:** 16 scenarios, 16 hours
-
-### P2 (Medium) — Run nightly/weekly
-
-**Criteria:** Secondary feature + Low risk (1–2) + Edge cases
-
-| AC / Requirement                                                     | Test Level | Risk Link | Scenarios | Owner | Notes                                                              |
-|----------------------------------------------------------------------|------------|-----------|-----------|-------|--------------------------------------------------------------------|
-| URL updates to `/clientes/:id` when client selected (FR30)           | E2E        | -         | 1         | QA    | Click list item, assert URL changed                               |
-| All 4 sort options reorder list correctly (AC-E2.6)                  | Component  | -         | 4         | Dev   | Assert array ordering for nombre-asc, nombre-desc, fecha-desc, fecha-asc |
-| Edit client → changes reflected in list + detail (AC-E2.3, FR27)    | E2E        | -         | 1         | QA    | Full edit flow; assert updated name in list panel                 |
-| Delete client with contacts → toast mentions contacts unassigned     | E2E        | R-001     | 1         | QA    | Assert special toast message (not the generic one)                |
-| PUT empty required field → inline error, no backend call (AC-E2.4, FR8) | Component | R-004 | 2 | Dev | Zod validation fires before Axios call; assert no network request |
-| Inline error messages on empty required fields at create (AC-E2.4, FR8) | Component | R-004 | 2 | Dev | Each required field shows individual error label                  |
-| NIT/RUC uniqueness check on edit (409 on PUT)                        | API        | R-002     | 1         | QA    | PUT with NIT that belongs to another client → 409               |
-| Backend returns Problem Details RFC 7807 (no stackTrace key)         | API        | -         | 1         | Dev   | Assert response has `type`, `title`, `status`; no `stackTrace`  |
-| Search input debounce — no filter on every keystroke                 | Component  | R-003     | 1         | Dev   | Assert filter function called at most once per 150ms window       |
-
-**Total P2:** 14 scenarios, 7 hours
-
-### P3 (Low) — Run on-demand
-
-**Criteria:** Nice-to-have + Exploratory + Benchmarks
-
-| Requirement                                                         | Test Level | Scenarios | Owner | Notes                                                      |
-|---------------------------------------------------------------------|------------|-----------|-------|------------------------------------------------------------|
-| Sort label reflects selected option in SortControl UI               | Component  | 1         | Dev   | Assert aria-label or visible text updates                  |
-| Keyboard navigation through client list (a11y)                      | E2E        | 1         | QA    | Arrow keys traverse list items                             |
-| 500-client dataset load time < 2s (NFR2 full list)                  | Component  | 1         | QA    | Measure total load from API mock to rendered list          |
-| Search clears → full list restored immediately                      | Component  | 1         | Dev   | Clear search input, assert all items reappear              |
-| Error panel retry button re-fetches client list                     | Component  | 1         | Dev   | After 503, click retry; mock next call success; assert list |
-
-**Total P3:** 5 scenarios, 1.25 hours
+- All API setup/teardown uses `ApiHelper` (`e2e/helpers/api.helper.ts`) — no UI to create test data.
+- All test data built with `buildCliente()` from `data.helper.ts` — no hardcoded NITs.
+- Each test cleans up its own created records in `afterEach` via `apiHelper.deleteCliente(id)`.
+- All text assertions use Spanish patterns matching the UI (`/guardar/i`, `/cancelar/i`, `/eliminar/i`, `/nuevo cliente/i`).
+- Network interception via `page.route()` for error scenarios — no test infrastructure changes needed.
+- The `ClientesPage` POM (`e2e/pages/clientes.page.ts`) already exists and covers all required locators. Extend it only for SortControl.
 
 ---
 
-## 4. Execution Order
+## 4. Test Cases
 
-### Smoke Tests (<5 min)
+### 4.1 E2E Tests (Playwright)
 
-Fast feedback — catch build-breaking issues before running full suite.
+#### File: `e2e/tests/clientes/clientes-list.spec.ts`
 
-- [ ] `GET /api/v1/clientes` returns 200 with empty array (API contract alive) (20s)
-- [ ] `/clientes` route renders without crash (E2E shell) (30s)
-- [ ] `POST /api/v1/clientes` with valid payload returns 201 + UUID (30s)
-- [ ] Client list component mounts and displays fixture client name (Component, 20s)
+| Test ID | Priority | Story | AC | Description |
+|---|---|---|---|---|
+| E2E-C-01 | P0 | 2.1 | AC-E2.2 | List panel renders all clients returned by API on page load |
+| E2E-C-02 | P0 | 2.1 | AC-E2.2 | Typing in search input filters list to matching clients (by Nombre) in real time without new API calls |
+| E2E-C-03 | P0 | 2.1 | AC-E2.2 | Typing NIT in search input filters list to matching clients (by NIT/RUC) |
+| E2E-C-04 | P1 | 2.1 | — | Clearing search input after filtering restores full client list |
+| E2E-C-05 | P2 | 2.1 | — | EmptyState component is visible when no clients exist in the system |
+| E2E-C-06 | P2 | 2.1 | — | ErrorPanel with "Reintentar" button is shown when API returns 500 on load |
 
-**Total:** 4 scenarios, ~2 min
-
-### P0 Tests (<10 min)
-
-- [ ] DELETE client → contacts set clienteId=null (E2E)
-- [ ] DELETE client → contacts still exist in DB (API)
-- [ ] POST duplicate NIT/RUC → 409 response (API)
-- [ ] POST duplicate NIT/RUC → "El NIT/RUC ya está registrado" toast (Component)
-- [ ] Filter 500 clients by name → result < 1s (Component perf)
-- [ ] Filter 500 clients by NIT → result < 1s (Component perf)
-- [ ] POST empty Nombre → 400 + Problem Details (API)
-- [ ] POST empty NIT → 400 + Problem Details (API)
-- [ ] POST empty Telefono → 400 + Problem Details (API)
-- [ ] Sort `nombre-asc` → zero new API calls (Component + network spy)
-- [ ] Sort `nombre-desc` → zero new API calls (Component + network spy)
-- [ ] Sort `fecha-asc` → zero new API calls (Component + network spy)
-
-**Total:** 12 scenarios, ~8 min
-
-### P1 Tests (<30 min)
-
-- [ ] EmptyState renders when API returns `[]` (Component)
-- [ ] ErrorPanel + "Reintentar" renders on 503 (Component)
-- [ ] Direct URL `/clientes/:validId` loads correct client detail (E2E)
-- [ ] Direct URL `/clientes/:validId` does not reload left panel (E2E)
-- [ ] Invalid UUID `/clientes/not-a-uuid` → API 404 (API)
-- [ ] Invalid UUID `/clientes/not-a-uuid` → not-found UI (E2E)
-- [ ] Create client → client appears in list without reload (E2E)
-- [ ] Create client → success toast "Cliente creado correctamente" (E2E)
-- [ ] Edit form opens pre-filled with all 4 field values (Component)
-- [ ] Cancel edit → re-open shows original values (Component)
-- [ ] Delete confirmation dialog shown on "Eliminar" click (E2E)
-- [ ] Cancel delete → client still in list (E2E)
-- [ ] Search active + change sort → filtered + sorted (Component)
-- [ ] Search active + change sort → search input not cleared (Component)
-- [ ] Default sort on initial load = `fecha-desc` (Component)
-- [ ] Create client → success mutation → POST called once (Component + spy)
-
-**Total:** 16 scenarios, ~22 min
-
-### P2/P3 Tests (<60 min)
-
-All P2 and P3 scenarios listed in coverage plan above.
-
-**Total:** 19 scenarios, ~45 min
+**Implementation notes:**
+- E2E-C-02: Use `page.route('**/api/v1/clientes', ...)` to assert only 1 GET call is made on page load; subsequent filter is client-side. Type multiple characters, assert no additional network requests.
+- E2E-C-05: Requires isolation — either clear all clients via `apiHelper` in `beforeEach` or use a separate browser context with mocked empty response.
+- E2E-C-06: Use `page.route('**/api/v1/clientes', route => route.fulfill({ status: 500 }))` before navigation.
 
 ---
 
-## 5. Resource Estimates
+#### File: `e2e/tests/clientes/clientes-detail.spec.ts`
 
-### Test Development Effort
+| Test ID | Priority | Story | AC | Description |
+|---|---|---|---|---|
+| E2E-C-07 | P0 | 2.2 | AC-E2.3 | Clicking a client in the list shows full detail (Nombre, NIT, Teléfono, Ciudad) in right panel |
+| E2E-C-08 | P1 | 2.2 | — | URL updates to `/clientes/:clienteId` after clicking a client item (FR30) |
+| E2E-C-09 | P1 | 2.2 | — | Direct navigation to `/clientes/:clienteId` loads correct client detail without prior list interaction |
+| E2E-C-10 | P1 | 2.2 | — | Direct navigation to `/clientes/00000000-0000-0000-0000-000000000000` shows not-found message gracefully |
 
-| Priority  | Count | Hours/Test | Total Hours | Notes                              |
-|-----------|-------|------------|-------------|------------------------------------|
-| P0        | 12    | 2.0        | 24.0        | Complex setup: DB seed, perf fixtures, network spies |
-| P1        | 16    | 1.0        | 16.0        | Standard coverage, MSW mocks       |
-| P2        | 14    | 0.5        | 7.0         | Simple scenarios, reuse fixtures   |
-| P3        | 5     | 0.25       | 1.25        | Exploratory / benchmarks           |
-| **Total** | **47** | —         | **48.25**   | **~6 days**                        |
-
-### Prerequisites
-
-**Test Data:**
-
-- `ClienteFactory` — faker-based, generates Nombre/NIT/Telefono/Ciudad with unique NITs, auto-cleanup after test
-- `ClienteWithContactsFixture` — seeds 1 client + N contacts for cascade delete scenarios (Story 2.5)
-- `BulkClienteFixture` — seeds 500 clients for NFR1 performance tests (Story 2.1)
-
-**Tooling:**
-
-- Vitest + @testing-library/react — component tests (already in stack)
-- MSW (Mock Service Worker) — API mocking for frontend unit/component tests
-- xUnit + EF Core InMemory or Testcontainers/PostgreSQL — backend API integration tests
-- `performance.now()` — client-side filter timing measurement
-- Playwright (if framework initialized) — E2E tests for Stories 2.2, 2.3, 2.5
-- Network spy (`vi.spyOn` or MSW request tracker) — verify zero re-fetch on sort
-
-**Environment:**
-
-- Local PostgreSQL `siesa_agents_db` (same as Epic 1 migration)
-- Testcontainers or Docker PostgreSQL for isolated CI runs
-- Frontend dev server on port 5173, Backend on port 5000 (CORS already validated in Epic 1)
-- MSW worker registered in `src/mocks/browser.ts` for test environment
+**Implementation notes:**
+- E2E-C-08: After `clientesPage.seleccionarCliente(nombre)`, assert `page.url()` matches `/clientes/{uuid}` pattern.
+- E2E-C-09: Use `page.goto('/clientes/' + cliente.id)` directly. Assert detail panel content without clicking list item.
+- E2E-C-10: Assert the not-found component is visible and no unhandled JS error is thrown (listen for `page.on('pageerror', ...)`).
 
 ---
 
-## 6. Detailed Mitigation Plans
+#### File: `e2e/tests/clientes/clientes-create.spec.ts`
 
-### R-001: Delete cascade — contacts not unassigned (Score: 6)
+| Test ID | Priority | Story | AC | Description |
+|---|---|---|---|---|
+| E2E-C-11 | P0 | 2.3 | AC-E2.1 | Clicking "Nuevo cliente" opens the form dialog with all 4 required fields visible |
+| E2E-C-12 | P0 | 2.3 | AC-E2.1 | Submitting all required fields creates client and it appears in list immediately (no reload) |
+| E2E-C-13 | P0 | 2.3 | AC-E2.4 | Submitting empty form shows inline error messages and does NOT call POST API |
+| E2E-C-14 | P0 | 2.3 | AC-E2.4 | Submitting partially empty form shows error only on empty required fields |
+| E2E-C-15 | P0 | 2.3 | — | Backend 409 (duplicate NIT) surfaces message "El NIT/RUC ya está registrado" in form |
+| E2E-C-16 | P1 | 2.3 | AC-E2.1 | Success toast "Cliente creado correctamente" appears after successful create |
+| E2E-C-17 | P1 | 2.3 | — | Form closes automatically after successful create |
 
-**Mitigation Strategy:**
-1. Backend: Confirm `ON DELETE SET NULL` is declared in EF Core Fluent API for `ContactoEntity.ClienteId` FK. Add xUnit integration test: seed client + 2 contacts → DELETE client → assert contacts have `ClienteId = null`.
-2. Frontend E2E: After confirmed deletion, navigate to contacts view and assert the deleted client's former contacts appear in "Sin cliente" filter (Epic 4 dependency noted — partial validation possible in Epic 2 by checking `clienteId` null in API response).
-3. Toast message test: assert toast reads "Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado." (not the generic delete toast).
-
-**Owner:** Dev (backend EF config) + QA (E2E)
-**Timeline:** Before Story 2.5 implementation completes
-**Status:** Planned
-**Verification:** xUnit test green + E2E scenario green
-
-### R-002: NIT/RUC duplicate not rejected (Score: 6)
-
-**Mitigation Strategy:**
-1. Backend: `uk_clientes_nit` unique constraint must exist in migration. FluentValidation rule on `CreateClienteCommand` rejects empty NIT. `ClienteService` must catch DB unique violation and return 409 (not 500).
-2. API test: POST with existing NIT → 409 + body contains `"El NIT/RUC ya está registrado"`.
-3. Frontend component test: MSW returns 409 → assert toast (or inline error) shows the Spanish message. Assert no stack trace visible.
-
-**Owner:** Dev (backend) + Dev (frontend error handling)
-**Timeline:** Before Story 2.3 implementation completes
-**Status:** Planned
-**Verification:** API test 409 + Component test error message rendered
-
-### R-003: Filter >500 records >1s (Score: 6)
-
-**Mitigation Strategy:**
-1. Verify debounce: search input must debounce at 150ms before calling filter function (architecture doc reference).
-2. Implement filter using `useMemo` over TanStack Query data — not re-filtering on every render.
-3. Component performance test: `BulkClienteFixture` (500 items), `performance.now()` around filter call, assert `<1000ms`. Run in Vitest with `--pool forks` to avoid shared-worker timing noise.
-
-**Owner:** Dev (implementation) + QA (measurement)
-**Timeline:** Story 2.1 implementation
-**Status:** Planned
-**Verification:** Vitest performance test < 1000ms on P99
-
-### R-004: FluentValidation not applied — raw input persisted (Score: 6)
-
-**Mitigation Strategy:**
-1. Backend: FluentValidation validators registered in DI with `AddFluentValidationAutoValidation()`. Validators for `CreateClienteCommand` and `UpdateClienteCommand` enforce non-empty Nombre, NIT, Telefono, Ciudad + max lengths.
-2. API integration test (xUnit): POST/PUT with empty body fields → assert 400 + Problem Details format (type, title, status, errors dictionary).
-3. Frontend: Zod schema enforces same rules client-side — assert form does not submit to Axios when fields are empty (network spy: 0 calls on invalid submit).
-
-**Owner:** Dev (backend validators) + Dev (Zod schema)
-**Timeline:** Stories 2.3 and 2.4
-**Status:** Planned
-**Verification:** xUnit API tests green + Component network spy confirms no call on invalid form
-
-### R-005: Sort triggers new API call (Score: 6)
-
-**Mitigation Strategy:**
-1. Implementation requirement: sort must be pure `Array.sort` over the TanStack Query cache data — no `refetch()` or `invalidateQueries()` call in sort handler.
-2. Sort state: `useState<SortOption>('fecha-desc')` local to ClientesView — not in URL, not in Zustand.
-3. Component test: MSW request tracker — count requests before and after each sort change. Assert request count = 1 (initial load only) across all 4 sort transitions.
-
-**Owner:** Dev (implementation + test)
-**Timeline:** Story 2.6
-**Status:** Planned
-**Verification:** Component test with request counter spy green
+**Implementation notes:**
+- E2E-C-12: After `clientesPage.guardar()`, assert `clientesPage.form` is hidden and the new client's Nombre is visible in `clientesPage.clienteItems`. Monitor: no `page.reload()` call — this is an optimistic update via TanStack Query `invalidateQueries`.
+- E2E-C-13: Before clicking guardar with empty form, set up a request listener: `page.on('request', r => if r.url includes '/clientes' and r.method === 'POST' → fail test)`.
+- E2E-C-15: Pre-create client via `apiHelper.createCliente(data)`. Open form, fill same NIT with different Nombre, click guardar. Assert form remains visible with the 409 error message.
+- E2E-C-16: Assert toast element with matching text using `page.getByRole('status')` or `page.getByText(/cliente creado correctamente/i)`.
 
 ---
 
-## 7. Coverage Matrix (Requirements → Tests)
+#### File: `e2e/tests/clientes/clientes-edit.spec.ts`
 
-| Acceptance Criterion        | Story | Test Level  | Priority | Risk Link      | Scenarios |
-|-----------------------------|-------|-------------|----------|----------------|-----------|
-| AC-E2.1 Register client     | 2.3   | E2E + API   | P0/P1    | R-002, R-004   | 5         |
-| AC-E2.2 Search <1s / 500    | 2.1   | Component   | P0       | R-003          | 2         |
-| AC-E2.3 View + edit + save  | 2.4   | E2E + Comp  | P1       | R-008          | 3         |
-| AC-E2.4 Required field errors | 2.3/2.4 | API + Comp | P0/P2 | R-004         | 5         |
-| AC-E2.5 Delete → removed    | 2.5   | E2E + API   | P0/P1    | R-001          | 5         |
-| AC-E2.6 Sort (4 options)    | 2.6   | Component   | P0/P2    | R-005, R-009   | 8         |
-| FR30 Deep-link              | 2.2   | E2E + API   | P1       | R-007          | 4         |
-| NFR1 Search <1s             | 2.1   | Component   | P0       | R-003          | 2         |
-| NFR5 Input sanitization     | 2.3/2.4 | API       | P0       | R-004          | 3         |
-| NFR6 No stack traces        | 2.3/2.4 | API       | P2       | R-004          | 1         |
-| FR27 Immediate UI refresh   | 2.3/2.4/2.5 | E2E  | P1       | -              | 3         |
-| FR8 Inline validation errors | 2.3/2.4 | Component | P2      | R-004          | 4         |
-| EmptyState (no clients)     | 2.1   | Component   | P1       | R-006          | 1         |
-| ErrorPanel + Retry          | 2.1   | Component   | P1       | -              | 1         |
-| Not-found (invalid ID)      | 2.2   | E2E + API   | P1       | R-007          | 2         |
+| Test ID | Priority | Story | AC | Description |
+|---|---|---|---|---|
+| E2E-C-18 | P0 | 2.4 | AC-E2.3 | Clicking "Editar" on a client opens pre-filled form with current field values |
+| E2E-C-19 | P0 | 2.4 | AC-E2.3 | Modifying a field and saving updates detail panel and list immediately (no reload) |
+| E2E-C-20 | P0 | 2.4 | AC-E2.4 | Clearing a required field and saving shows inline error; no PUT API call fired |
+| E2E-C-21 | P1 | 2.4 | — | Success toast "Cliente actualizado correctamente" appears after successful edit |
+| E2E-C-22 | P1 | 2.4 | — | Clicking "Cancelar" closes form without making PUT request; original data unchanged |
+
+**Implementation notes:**
+- E2E-C-18: After clicking Editar, assert `clientesPage.inputNombre.inputValue()` equals the client's nombre.
+- E2E-C-19: Modify nombre to a unique value. After save, assert new value visible in both list item and detail panel.
+- E2E-C-20: Clear `inputNombre`, click guardar. Assert form visible, error message visible. Use request interceptor to assert no PUT call was made.
+- E2E-C-22: Use `page.route` to intercept PUT and fail the test if called; open edit, modify field, click Cancelar. Assert original nombre still displayed.
 
 ---
 
-## 8. Quality Gate Criteria
+#### File: `e2e/tests/clientes/clientes-delete.spec.ts`
 
-### Pass/Fail Thresholds
+| Test ID | Priority | Story | AC | Description |
+|---|---|---|---|---|
+| E2E-C-23 | P0 | 2.5 | AC-E2.5 | Clicking "Eliminar" shows confirmation dialog with "Confirmar" and "Cancelar" |
+| E2E-C-24 | P0 | 2.5 | AC-E2.5 | Confirming deletion removes client from list immediately and shows empty/default right panel |
+| E2E-C-25 | P0 | 2.5 | AC-E2.5 | Success toast "Cliente eliminado correctamente" appears after deletion (no associated contacts) |
+| E2E-C-26 | P1 | 2.5 | — | Clicking "Cancelar" in confirmation dialog leaves client in list unchanged |
+| E2E-C-27 | P1 | 2.5 | — | Deleting client with associated contacts: toast shows "Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado." |
 
-- **P0 pass rate:** 100% (zero exceptions; any P0 failure blocks story completion)
-- **P1 pass rate:** ≥95% (waivers require documented justification)
-- **P2/P3 pass rate:** ≥90% (informational, does not block)
-- **High-risk mitigations (R-001 through R-005):** 100% confirmed before epic close
-
-### Coverage Targets
-
-- **Critical paths (create, delete cascade, search):** ≥80% branch coverage
-- **Security scenarios (NFR5 validation, NFR6 error exposure):** 100%
-- **Business logic (sort, filter, pre-fill):** ≥70%
-- **Edge cases (empty state, error state, invalid UUID):** ≥50%
-
-### Non-Negotiable Requirements
-
-- [ ] All P0 tests pass (12 scenarios)
-- [ ] R-001 (cascade delete) test green — contacts unassigned confirmed
-- [ ] R-002 (NIT uniqueness) API test green — 409 returned
-- [ ] R-004 (FluentValidation) API test green — 400 + Problem Details
-- [ ] R-005 (sort no refetch) component test green — 0 extra API calls
-- [ ] No test exposes raw stack traces or internal error details
+**Implementation notes:**
+- E2E-C-24: After confirmar, assert the deleted client's nombre is no longer in `clientesPage.clienteItems`, and assert `clientesPage.emptyState` or default state is visible in right panel.
+- E2E-C-26: Use request interceptor to assert no DELETE call; click Cancelar; assert client still in list.
+- E2E-C-27: Use `apiHelper.createCliente` + `apiHelper.createContacto({ clienteId: cliente.id })`. Select the client, click Eliminar, confirm. Assert specific toast text.
 
 ---
 
-## 9. Assumptions and Dependencies
+#### File: `e2e/tests/clientes/clientes-sort.spec.ts`
 
-### Assumptions
+| Test ID | Priority | Story | AC | Description |
+|---|---|---|---|---|
+| E2E-C-28 | P0 | 2.6 | AC-E2.6 | Selecting "Nombre A→Z" reorders list alphabetically ascending without new API call |
+| E2E-C-29 | P0 | 2.6 | AC-E2.6 | Selecting "Nombre Z→A" reorders list alphabetically descending without new API call |
+| E2E-C-30 | P1 | 2.6 | AC-E2.6 | Selecting "Más reciente" orders by creation date descending (newest first) |
+| E2E-C-31 | P1 | 2.6 | AC-E2.6 | Selecting "Más antiguo" orders by creation date ascending (oldest first) |
+| E2E-C-32 | P0 | 2.6 | AC-E2.6 | Changing sort with active search filter: search input value is preserved, sort applies only to filtered set |
+| E2E-C-33 | P2 | 2.6 | — | Default sort on initial page load is "Más reciente" (newest client appears first) |
 
-1. Epic 1 foundation is complete and green: PostgreSQL connected, CORS configured, Problem Details middleware registered, `dotnet build` exits 0.
-2. The `clientes` table migration runs successfully before Epic 2 stories begin (`uk_clientes_nit` unique constraint included in migration).
-3. MSW is already wired in `src/mocks/browser.ts` (or configured in Vitest setup) — no additional tooling setup needed for frontend component tests.
-4. `ON DELETE SET NULL` for `contactos.cliente_id` FK is defined in the EF Core migration (referenced in architecture doc) — if not present, R-001 mitigation becomes a migration fix, not just a test.
-
-### Dependencies
-
-1. **Epic 1 tests green** — CORS, backend health, DB connection must be green (validates environment for Epic 2 API tests). Required before Epic 2 P0 API tests run.
-2. **`clientes` EF Core migration** — must be applied before any backend integration tests. Required by Story 2.1 implementation start.
-3. **MSW handler setup for `/api/v1/clientes`** — required for all frontend component tests. Required by Story 2.1 component test implementation.
-4. **`SortControl` component** (`src/shared/components/SortControl`) — referenced in Story 2.6; must be implemented before component tests for sort run.
-5. **"Sin cliente" filter (Epic 3/4)** — Story 2.5 cascade test can only fully validate the filter behavior when Epic 3 contacts view is implemented. Partial validation (null `clienteId` in API) is in scope for Epic 2.
-
-### Risks to Plan
-
-- **Risk:** PostgreSQL `ON DELETE SET NULL` not present in migration — cascade test fails with FK violation instead of null assignment.
-  - **Impact:** R-001 E2E/API tests fail; Story 2.5 blocked.
-  - **Contingency:** Add `OnDelete(DeleteBehavior.SetNull)` in EF Core Fluent API and re-generate migration before 2.5 tests run.
-
-- **Risk:** `siesa-ui-kit` Dialog component not available or breaking change — confirmation dialog in Story 2.5 cannot be tested.
-  - **Impact:** Delete E2E tests need workaround.
-  - **Contingency:** Fall back to shadcn/ui Dialog (already in architecture as fallback).
+**Implementation notes:**
+- E2E-C-28/E2E-C-29: Create at least 3 clients with known names (e.g., "Zebra Corp", "Alfa SAS", "Medio Ltda"). After sort, assert `clienteItems.nth(0)` contains the expected name using `toHaveText`.
+- E2E-C-28/E2E-C-29: Monitor network requests — assert no `GET /api/v1/clientes` fires after SortControl interaction.
+- E2E-C-30/E2E-C-31: Create clients with known `createdAt` ordering (sequential API creates). After sort, assert relative order by checking the first and last visible item.
+- E2E-C-32: Type a search term that matches 2 of 3 test clients. Change sort. Assert `clientesPage.searchInput.inputValue()` still equals the search term. Assert filtered+sorted count matches.
+- SortControl locator to add to `ClientesPage`: `this.sortControl = page.getByTestId('sort-control')` + `this.sortOption = (value: string) => page.getByRole('option', { name: new RegExp(value, 'i') })`.
 
 ---
 
-## 10. Follow-on Workflows (Manual)
+### 4.2 API / Integration Tests
 
-- Run `*atdd` to generate failing P0 tests before Story 2.1 implementation begins (separate workflow; not auto-run by `*test-design`).
-- Run `*automate` after all 6 stories implemented to expand coverage and fill P2/P3 gaps.
-- Run `*trace` after Epic 2 complete to generate traceability matrix (FRs FR1–FR8 → test coverage).
-- Run `*nfr` to formally validate NFR1 (search <1s), NFR2 (CRUD <2s), NFR5 (validation), NFR6 (no stack traces).
+#### File: `e2e/tests/clientes/clientes-api.spec.ts`
 
----
+| Test ID | Priority | Story | Description |
+|---|---|---|---|
+| API-C-01 | P0 | 2.3 | POST `/api/v1/clientes` with valid payload returns 201 and body with `id` (UUID), `nombre`, `nit`, `telefono`, `ciudad`, `createdAt` |
+| API-C-02 | P0 | 2.3 | POST `/api/v1/clientes` with duplicate NIT returns 409 and Problem Details body with no stack trace |
+| API-C-03 | P0 | 2.3 | POST `/api/v1/clientes` with missing required field (`nombre`) returns 400 and Problem Details body |
+| API-C-04 | P0 | 2.4 | PUT `/api/v1/clientes/:id` with valid changes returns 200 and updated fields in body |
+| API-C-05 | P0 | 2.5 | DELETE `/api/v1/clientes/:id` returns 204 and subsequent GET `/api/v1/clientes/:id` returns 404 |
+| API-C-06 | P0 | 2.5 | DELETE `/api/v1/clientes/:id` (with associated contacts): contacts still exist via GET `/api/v1/contactos/:id`; `clienteId` field is `null` |
+| API-C-07 | P1 | 2.1 | GET `/api/v1/clientes` returns array of clients; each item has `id`, `nombre`, `nit` fields |
+| API-C-08 | P1 | 2.2 | GET `/api/v1/clientes/:id` with valid ID returns 200 and full client object |
+| API-C-09 | P1 | 2.2 | GET `/api/v1/clientes/:id` with non-existent ID returns 404 and Problem Details (no stack trace) |
+| API-C-10 | P1 | 2.4 | PUT `/api/v1/clientes/:id` with missing required field returns 400 Problem Details |
 
-## Approval
-
-**Test Design Approved By:**
-
-- [ ] Product Manager: __________ Date: __________
-- [ ] Tech Lead: __________ Date: __________
-- [ ] QA Lead: __________ Date: __________
-
----
-
-## Appendix
-
-### Knowledge Base References Applied
-
-- `risk-governance.md` — Risk classification (6 categories: TECH/SEC/PERF/DATA/BUS/OPS), scoring
-- `probability-impact.md` — Probability × impact matrix (P×I thresholds: ≥6 = high priority)
-- `test-levels-framework.md` — E2E for critical paths, API for business logic, Component for UI behavior, Unit for edge cases
-- `test-priorities-matrix.md` — P0 (blocks core + score ≥6), P1 (important + score 3–4), P2/P3 (low risk/edge case)
-
-### Related Documents
-
-- Epic source: `_bmad-output/planning-artifacts/epics/epic-02-gestion-de-clientes.md`
-- Feature PRD: `_bmad-output/planning-artifacts/prd/feature-gestion-de-clientes.md`
-- Architecture: `_bmad-output/planning-artifacts/architecture.md`
-- NFRs: `_bmad-output/planning-artifacts/prd/non-functional-requirements.md`
-- Epic 1 Test Design (reference): `_bmad-output/implementation-artifacts/test-design-epic-1.md`
+**Implementation notes:**
+- All API tests use `request` fixture from Playwright — no browser UI involved.
+- API-C-02: Assert `response.status() === 409`; parse JSON body and assert no `stackTrace` key present (NFR6).
+- API-C-06: Setup — create client, create 2 contacts with `clienteId = cliente.id`; delete client; GET each contact; assert `clienteId === null`. This is the critical cascade test for R3.
+- API-C-01: Assert `id` matches UUID v4 pattern (`/^[0-9a-f]{8}-/i`); assert `createdAt` is ISO 8601 with timezone offset (DateTimeOffset — not plain DateTime).
 
 ---
 
-**Generated by:** BMad TEA Agent — Test Architect Module
-**Workflow:** `_bmad/bmm/testarch/test-design`
-**Version:** 4.0 (BMad v6)
-**Mode:** Epic-Level (Phase 4)
+### 4.3 Component / Unit Tests (Frontend — Vitest)
+
+#### File: `frontend/src/shared/components/__tests__/SortControl.test.tsx`
+
+| Test ID | Priority | Story | Description |
+|---|---|---|---|
+| UNIT-C-01 | P1 | 2.6 | SortControl renders 4 options: "Nombre A→Z", "Nombre Z→A", "Más reciente", "Más antiguo" |
+| UNIT-C-02 | P1 | 2.6 | SortControl fires `onChange` callback with correct sort option identifier when an option is selected |
+| UNIT-C-03 | P1 | 2.6 | SortControl shows "Más reciente" selected by default when no `value` prop is passed |
+| UNIT-C-04 | P2 | 2.6 | SortControl controlled: changing `value` prop updates the displayed selection |
+
+#### File: `frontend/src/modules/crm/clientes/__tests__/sortClientes.test.ts`
+
+| Test ID | Priority | Story | Description |
+|---|---|---|---|
+| UNIT-C-05 | P1 | 2.6 | `sortClientes('nombre-asc')` returns clients alphabetically ascending by nombre |
+| UNIT-C-06 | P1 | 2.6 | `sortClientes('nombre-desc')` returns clients alphabetically descending by nombre |
+| UNIT-C-07 | P1 | 2.6 | `sortClientes('fecha-desc')` returns clients newest first (by createdAt) |
+| UNIT-C-08 | P1 | 2.6 | `sortClientes('fecha-asc')` returns clients oldest first (by createdAt) |
+
+---
+
+### 4.4 Backend Unit Tests (xUnit)
+
+#### File: `backend/tests/SiesaAgents.UnitTests/Validators/ClienteValidatorTests.cs`
+
+| Test ID | Priority | Story | Description |
+|---|---|---|---|
+| UNIT-B-01 | P1 | 2.3/2.4 | `CreateClienteCommand` validator: empty Nombre fails with error message |
+| UNIT-B-02 | P1 | 2.3/2.4 | `CreateClienteCommand` validator: empty NIT fails with error message |
+| UNIT-B-03 | P1 | 2.3/2.4 | `CreateClienteCommand` validator: valid payload passes validation |
+
+#### File: `backend/tests/SiesaAgents.UnitTests/Handlers/ClienteHandlerTests.cs`
+
+| Test ID | Priority | Story | Description |
+|---|---|---|---|
+| UNIT-B-04 | P1 | 2.3 | `CreateClienteHandler` returns created `ClienteDto` with UUID id on success |
+| UNIT-B-05 | P1 | 2.3 | `CreateClienteHandler` throws `ConflictException` when NIT already exists in repository |
+| UNIT-B-06 | P1 | 2.5 | `DeleteClienteHandler` does not throw when deleting client with 0 contacts |
+
+---
+
+## 5. Test Execution Order & Priority
+
+### P0 — Blocking (gate for beginning story implementation)
+
+1. API-C-01 — POST create returns 201 with valid contract
+2. API-C-02 — Duplicate NIT returns 409 Problem Details (no stack trace)
+3. API-C-05 — DELETE returns 204; subsequent GET returns 404
+4. API-C-06 — DELETE with contacts: contacts retain `clienteId = null`
+5. API-C-03 — Missing required field returns 400
+6. E2E-C-01 — List renders on page load
+7. E2E-C-02 — Real-time search by Nombre (client-side, no extra API calls)
+8. E2E-C-11 — Form opens with 4 fields
+9. E2E-C-12 — Create client appears in list immediately
+10. E2E-C-13 — Empty form: error messages shown, no POST fired
+11. E2E-C-15 — Duplicate NIT: 409 message in form
+12. E2E-C-18 — Edit form pre-filled
+13. E2E-C-19 — Edit save updates list immediately
+14. E2E-C-20 — Edit: clear required field → error, no PUT fired
+15. E2E-C-23 — Delete confirmation dialog
+16. E2E-C-24 — Delete removes from list immediately
+17. E2E-C-28 — Sort Nombre A→Z (no new API call)
+18. E2E-C-29 — Sort Nombre Z→A
+19. E2E-C-32 — Sort preserves active search filter
+
+### P1 — High (should pass before second story in sprint)
+
+- E2E-C-03 (search by NIT), E2E-C-04 (clear search)
+- E2E-C-07 (detail panel), E2E-C-08 (URL update), E2E-C-09 (deep link), E2E-C-10 (not-found)
+- E2E-C-16, E2E-C-17 (create toast + form close)
+- E2E-C-21, E2E-C-22 (edit toast + cancel no PUT)
+- E2E-C-25, E2E-C-26, E2E-C-27 (delete toasts + cancel)
+- E2E-C-30, E2E-C-31 (sort by date)
+- API-C-04, API-C-07, API-C-08, API-C-09, API-C-10
+- UNIT-C-01 through UNIT-C-04 (SortControl)
+- UNIT-C-05 through UNIT-C-08 (sortClientes function)
+- UNIT-B-01 through UNIT-B-06
+
+### P2 — Medium (complete within epic sprint)
+
+- E2E-C-05 (EmptyState)
+- E2E-C-06 (ErrorPanel with Reintentar)
+- E2E-C-33 (default sort order)
+- Mobile-chrome tests: E2E-C-01, E2E-C-11, E2E-C-12 run on Pixel 5 viewport
+
+### P3 — Low (nice to have)
+
+- Cross-browser: E2E-C-02, E2E-C-12, E2E-C-19, E2E-C-24 run on firefox project
+- Performance assertion: E2E-C-02 with `performance.now()` check that filter result renders in < 1000ms (NFR1)
+- NFR2 assertion on create/edit/delete: measure time from click to list update < 2000ms
+
+---
+
+## 6. Test File Structure
+
+```
+e2e/
+  tests/
+    clientes/
+      clientes-list.spec.ts           # E2E-C-01 to E2E-C-06
+      clientes-detail.spec.ts         # E2E-C-07 to E2E-C-10
+      clientes-create.spec.ts         # E2E-C-11 to E2E-C-17
+      clientes-edit.spec.ts           # E2E-C-18 to E2E-C-22
+      clientes-delete.spec.ts         # E2E-C-23 to E2E-C-27
+      clientes-sort.spec.ts           # E2E-C-28 to E2E-C-33
+      clientes-api.spec.ts            # API-C-01 to API-C-10
+  pages/
+    clientes.page.ts                  # Existing — extend with SortControl locators
+  helpers/
+    api.helper.ts                     # Existing — already has createCliente, deleteCliente, getClientes
+    data.helper.ts                    # Existing — buildCliente() ready to use
+  fixtures/
+    base.fixture.ts                   # Existing — reuse as-is
+
+frontend/src/
+  shared/components/__tests__/
+    SortControl.test.tsx              # UNIT-C-01 to UNIT-C-04
+  modules/crm/clientes/__tests__/
+    sortClientes.test.ts              # UNIT-C-05 to UNIT-C-08
+
+backend/tests/
+  SiesaAgents.UnitTests/
+    Validators/
+      ClienteValidatorTests.cs        # UNIT-B-01 to UNIT-B-03
+    Handlers/
+      ClienteHandlerTests.cs          # UNIT-B-04 to UNIT-B-06
+```
+
+---
+
+## 7. ClientesPage POM — Extension Required
+
+The existing `e2e/pages/clientes.page.ts` covers list, detail, and form interactions. One extension is needed for Story 2.6:
+
+```typescript
+// Add to ClientesPage constructor:
+this.sortControl = page.getByTestId('sort-control');
+this.btnEditar = page.getByRole('button', { name: /editar/i });
+
+// Add methods:
+async seleccionarOrden(option: 'nombre-asc' | 'nombre-desc' | 'fecha-desc' | 'fecha-asc') {
+  await this.sortControl.click();
+  await this.page.getByRole('option', { name: new RegExp(option, 'i') }).click();
+}
+
+async abrirEdicion() {
+  await this.btnEditar.click();
+  await expect(this.form).toBeVisible();
+}
+```
+
+**Note:** The exact `data-testid` for SortControl must match what is defined in `src/shared/components/SortControl`. If the component uses a `<select>` element instead of a custom dropdown, use `page.selectOption('[data-testid="sort-control"]', value)`.
+
+---
+
+## 8. Coverage Matrix — Epic 2
+
+| Requirement | Test IDs | Level | Status |
+|---|---|---|---|
+| AC-E2.1 (create client appears immediately) | E2E-C-11, E2E-C-12, API-C-01 | E2E + API | Designed |
+| AC-E2.2 (search < 1s, 500 records) | E2E-C-01, E2E-C-02, E2E-C-03 | E2E | Designed |
+| AC-E2.3 (view detail, edit, save) | E2E-C-07, E2E-C-18, E2E-C-19 | E2E | Designed |
+| AC-E2.4 (block save on empty required) | E2E-C-13, E2E-C-14, E2E-C-20, UNIT-B-01, UNIT-B-02 | E2E + Unit | Designed |
+| AC-E2.5 (delete removes from list) | E2E-C-23, E2E-C-24, API-C-05 | E2E + API | Designed |
+| AC-E2.6 (sort without reload, preserves filter) | E2E-C-28, E2E-C-29, E2E-C-32 | E2E | Designed |
+| FR1 (create client record) | E2E-C-12, API-C-01, UNIT-B-04 | E2E + API + Unit | Designed |
+| FR2 (list all clients) | E2E-C-01, API-C-07 | E2E + API | Designed |
+| FR3 (search by name) | E2E-C-02, E2E-C-04 | E2E | Designed |
+| FR4 (search by NIT) | E2E-C-03 | E2E | Designed |
+| FR5 (view client detail) | E2E-C-07, E2E-C-09, API-C-08 | E2E + API | Designed |
+| FR6 (edit client) | E2E-C-18, E2E-C-19, API-C-04 | E2E + API | Designed |
+| FR7 (delete client) | E2E-C-23, E2E-C-24, API-C-05 | E2E + API | Designed |
+| FR8 (required field validation) | E2E-C-13, E2E-C-14, E2E-C-20, API-C-03, UNIT-B-01, UNIT-B-02, UNIT-B-03 | All levels | Designed |
+| FR27 (changes immediately visible) | E2E-C-12, E2E-C-19, E2E-C-24 | E2E | Designed |
+| FR30 (deep linking /clientes/:id) | E2E-C-08, E2E-C-09, E2E-C-10 | E2E | Designed |
+| NFR1 (search < 1s) | E2E-C-02 (+ P3 perf assertion) | E2E | Designed |
+| NFR2 (CRUD < 2s) | E2E-C-12, E2E-C-19, E2E-C-24 (P3 timing) | E2E | Designed |
+| NFR5 (input validation + sanitization) | API-C-02, API-C-03, UNIT-B-01, UNIT-B-02 | API + Unit | Designed |
+| NFR6 (no stack traces) | API-C-02, API-C-09 | API | Designed |
+| Duplicate NIT (409 + UI message) | E2E-C-15, API-C-02, UNIT-B-05 | All levels | Designed |
+| Delete cascade (contacts → clienteId=null) | E2E-C-27, API-C-06 | E2E + API | Designed |
+| SortControl — 4 options | UNIT-C-01, UNIT-C-02, UNIT-C-03, UNIT-C-04 | Unit | Designed |
+| Client-side sort logic | UNIT-C-05, UNIT-C-06, UNIT-C-07, UNIT-C-08 | Unit | Designed |
+
+**Coverage: 24/24 requirements addressed — 100%**
+
+---
+
+## 9. Definition of Done (Epic 2 Testing)
+
+- [ ] All P0 test cases (19) pass before any story is considered dev-complete
+- [ ] All P1 test cases (27) pass before Epic 2 is closed
+- [ ] `ClientesPage` POM extended with SortControl locators (`seleccionarOrden`, `abrirEdicion`)
+- [ ] `clientes-api.spec.ts` passes fully against running backend — confirms REST contract
+- [ ] API-C-06 (cascade delete contacts) passes — confirmed data integrity
+- [ ] No test uses hardcoded NIT values — all use `buildCliente()` factory
+- [ ] All Spanish text assertions use case-insensitive regex (no hardcoded exact strings)
+- [ ] `afterEach` cleanup in all E2E spec files calls `apiHelper.deleteCliente(id)` for every created record
+- [ ] `page.on('pageerror', ...)` listener added to deep link and error scenario tests
+- [ ] Mobile-chrome project run confirmed for P2 responsive tests (E2E-C-01, E2E-C-11, E2E-C-12)
