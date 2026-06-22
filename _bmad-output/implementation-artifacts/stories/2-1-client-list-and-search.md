@@ -447,6 +447,9 @@ claude-sonnet-4-6
 - 2 backend unit tests GREEN (UNIT-B-01, UNIT-B-02)
 - EF Core migration AddClienteEntity applied to siesa_agents_db
 - POST/DELETE endpoints added to support E2E test data setup (prerequisite for Story 2.3)
+- Dev-story re-run 2026-06-22: Fixed EmptyState differentiation — AC#3 "No hay clientes registrados" vs AC#5 "Sin resultados para la búsqueda" now show distinct messages
+- Dev-story re-run 2026-06-22: Changed useClientes staleTime to 0 per story spec (Task 3 requirement)
+- Dev-story re-run 2026-06-22: Added UNIT-C-FE-CLP-17 test for AC#3 EmptyState message verification; 19 frontend unit tests GREEN
 
 ### File List
 
