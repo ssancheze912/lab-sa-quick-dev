@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -32,41 +32,41 @@ so that I can move between sections without full page reloads from any device.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Create layout shell routes (AC: 1, 2, 7, 8)
-  - [ ] 1.1 Create `frontend/src/routes/_app.tsx` — pathless layout route that wraps all authenticated views with the navigation shell (NavigationRail on desktop, NavigationBar on mobile)
-  - [ ] 1.2 Install `siesa-ui-kit` if not already present: `pnpm add siesa-ui-kit`
-  - [ ] 1.3 Import and render `NavigationRail` from `siesa-ui-kit` inside `_app.tsx` for desktop viewports
-  - [ ] 1.4 Import and render `NavigationBar` from `siesa-ui-kit` inside `_app.tsx` for mobile viewports (Tailwind breakpoint `lg:`)
-  - [ ] 1.5 Wire TanStack Router's `useRouterState` or `useMatchRoute` to set the active item on the nav components
-  - [ ] 1.6 Use `<Link>` from `@tanstack/react-router` for each nav item to ensure SPA navigation
+- [x] Task 1 — Create layout shell routes (AC: 1, 2, 7, 8)
+  - [x] 1.1 Create `frontend/src/routes/_app.tsx` — pathless layout route that wraps all authenticated views with the navigation shell (NavigationRail on desktop, NavigationBar on mobile)
+  - [x] 1.2 Install `siesa-ui-kit` if not already present: `pnpm add siesa-ui-kit`
+  - [x] 1.3 Import and render `NavigationRail` from `siesa-ui-kit` inside `_app.tsx` for desktop viewports
+  - [x] 1.4 Import and render `NavigationBar` from `siesa-ui-kit` inside `_app.tsx` for mobile viewports (Tailwind breakpoint `lg:`)
+  - [x] 1.5 Wire TanStack Router's `useRouterState` or `useMatchRoute` to set the active item on the nav components
+  - [x] 1.6 Use `<Link>` from `@tanstack/react-router` for each nav item to ensure SPA navigation
 
-- [ ] Task 2 — Create stub route files for Clientes and Contactos (AC: 3, 4, 6)
-  - [ ] 2.1 Create `frontend/src/routes/_app/clientes.tsx` — renders a placeholder `<ClientesPage />` component (stub text "Sección Clientes — próximamente")
-  - [ ] 2.2 Create `frontend/src/routes/_app/contactos.tsx` — renders a placeholder `<ContactosPage />` component (stub text "Sección Contactos — próximamente")
-  - [ ] 2.3 Update `frontend/src/routes/index.tsx` to redirect to `/clientes` using TanStack Router's `redirect`
+- [x] Task 2 — Create stub route files for Clientes and Contactos (AC: 3, 4, 6)
+  - [x] 2.1 Create `frontend/src/routes/_app/clientes.tsx` — renders a placeholder `<ClientesPage />` component (stub text "Sección Clientes — próximamente")
+  - [x] 2.2 Create `frontend/src/routes/_app/contactos.tsx` — renders a placeholder `<ContactosPage />` component (stub text "Sección Contactos — próximamente")
+  - [x] 2.3 Update `frontend/src/routes/index.tsx` to redirect to `/clientes` using TanStack Router's `redirect`
 
-- [ ] Task 3 — Create 404 not-found route (AC: 5)
-  - [ ] 3.1 Create `frontend/src/routes/404.tsx` (or `$` catch-all route per TanStack Router conventions) rendering a Spanish not-found message and a link back to `/clientes`
+- [x] Task 3 — Create 404 not-found route (AC: 5)
+  - [x] 3.1 Create `frontend/src/routes/404.tsx` (or `$` catch-all route per TanStack Router conventions) rendering a Spanish not-found message and a link back to `/clientes`
 
-- [ ] Task 4 — Update root layout (AC: 1, 2)
-  - [ ] 4.1 Update `frontend/src/routes/__root.tsx` to render `<Outlet />` so child routes (including `_app`) are mounted correctly
-  - [ ] 4.2 Ensure `AppProviders` (QueryClientProvider + RouterProvider) in `main.tsx` remains intact
+- [x] Task 4 — Update root layout (AC: 1, 2)
+  - [x] 4.1 Update `frontend/src/routes/__root.tsx` to render `<Outlet />` so child routes (including `_app`) are mounted correctly
+  - [x] 4.2 Ensure `AppProviders` (QueryClientProvider + RouterProvider) in `main.tsx` remains intact
 
-- [ ] Task 5 — Responsive layout implementation (AC: 1, 2)
-  - [ ] 5.1 Use Tailwind `hidden lg:flex` / `flex lg:hidden` pattern to show NavigationRail on desktop and NavigationBar on mobile
-  - [ ] 5.2 Ensure the main content area fills the remaining viewport width on desktop (flex layout: nav + content)
-  - [ ] 5.3 On mobile, ensure NavigationBar is at the bottom of the viewport and content scrolls above it
+- [x] Task 5 — Responsive layout implementation (AC: 1, 2)
+  - [x] 5.1 Use Tailwind `hidden lg:flex` / `flex lg:hidden` pattern to show NavigationRail on desktop and NavigationBar on mobile
+  - [x] 5.2 Ensure the main content area fills the remaining viewport width on desktop (flex layout: nav + content)
+  - [x] 5.3 On mobile, ensure NavigationBar is at the bottom of the viewport and content scrolls above it
 
-- [ ] Task 6 — Accessibility (AC: 9)
-  - [ ] 6.1 Verify each nav item has an accessible label in Spanish (`aria-label` or visible text)
-  - [ ] 6.2 Ensure keyboard navigation works: Tab to focus nav items, Enter/Space to activate
-  - [ ] 6.3 Verify color contrast meets WCAG 2.1 AA (Siesa Blue `#0e79fd` on white background)
+- [x] Task 6 — Accessibility (AC: 9)
+  - [x] 6.1 Verify each nav item has an accessible label in Spanish (`aria-label` or visible text)
+  - [x] 6.2 Ensure keyboard navigation works: Tab to focus nav items, Enter/Space to activate
+  - [x] 6.3 Verify color contrast meets WCAG 2.1 AA (Siesa Blue `#0e79fd` on white background)
 
-- [ ] Task 7 — Tests (AC: 1–10)
-  - [ ] 7.1 Write Vitest + RTL unit test for `_app.tsx`: renders NavigationRail with "Clientes" and "Contactos" items
-  - [ ] 7.2 Write unit test: clicking "Contactos" nav item calls router navigation without page reload
-  - [ ] 7.3 Write unit test: active nav item matches current route
-  - [ ] 7.4 Write unit test: 404 route renders not-found message in Spanish
+- [x] Task 7 — Tests (AC: 1–10)
+  - [x] 7.1 Write Vitest + RTL unit test for `_app.tsx`: renders NavigationRail with "Clientes" and "Contactos" items
+  - [x] 7.2 Write unit test: clicking "Contactos" nav item calls router navigation without page reload
+  - [x] 7.3 Write unit test: active nav item matches current route
+  - [x] 7.4 Write unit test: 404 route renders not-found message in Spanish
 
 ## Dev Notes
 
@@ -295,6 +295,39 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+- Test files renamed to use `-` prefix (TanStack Router ignores files with this prefix) to prevent router plugin warnings.
+- `@testing-library/user-event` and `jsdom` installed as dev dependencies (missing from Story 1.1 setup).
+- `siesa-ui-kit` exports `NavigationRailItemProps as NavigationRailProps` — used actual `NavigationRailItemProps` for items array type to match the component's internal props interface.
+- `useNavigate` used for programmatic navigation in onClick handlers instead of `<Link>` in nav components (siesa-ui-kit expects `onClick` callback pattern, not router Link wrapping).
+- Vitest configured with `jsdom` environment and `test-setup.ts` in `vite.config.ts`.
+
 ### Completion Notes List
 
+- All tasks completed. 13 unit tests written and passing (10 for AppLayout, 3 for NotFoundPage).
+- TypeScript strict mode: zero errors.
+- `NavigationRail` and `NavigationBar` from `siesa-ui-kit@1.0.228` used as required. No custom navigation components created.
+- `@heroicons/react` installed (was not present from Story 1.1).
+- `siesa-ui-kit/styles.css` import added to `main.tsx`.
+- `routeTree.gen.ts` regenerated via `pnpm dev` — includes `/_app`, `/clientes`, `/contactos`, `/404` routes.
+- `__root.tsx` updated to use `notFoundComponent: NotFoundPage` for 404 handling.
+- `index.tsx` updated with `beforeLoad` redirect to `/clientes`.
+
 ### File List
+
+**Created:**
+- `frontend/src/routes/_app.tsx` — pathless layout with NavigationRail (desktop) + NavigationBar (mobile)
+- `frontend/src/routes/_app/clientes.tsx` — stub route for /clientes
+- `frontend/src/routes/_app/contactos.tsx` — stub route for /contactos
+- `frontend/src/routes/404.tsx` — not-found page in Spanish with link back to /clientes
+- `frontend/src/routes/-app.test.tsx` — 10 unit tests for AppLayout
+- `frontend/src/routes/-404.test.tsx` — 3 unit tests for NotFoundPage
+- `frontend/src/test-setup.ts` — Vitest setup with jest-dom
+
+**Modified:**
+- `frontend/src/routes/__root.tsx` — added notFoundComponent
+- `frontend/src/routes/index.tsx` — redirect to /clientes via beforeLoad
+- `frontend/src/main.tsx` — added siesa-ui-kit/styles.css import
+- `frontend/vite.config.ts` — added vitest configuration (jsdom, globals, setupFiles)
+- `frontend/package.json` — added @heroicons/react, @testing-library/user-event, jsdom, @vitest/coverage-v8
+- `frontend/src/routeTree.gen.ts` — auto-regenerated with new routes
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — status updated to review
