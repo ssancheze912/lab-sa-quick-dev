@@ -421,10 +421,10 @@ test.describe('AC10 — Keyboard navigation edge cases', () => {
     await page.goto('/clientes');
     await page.keyboard.press('Tab');
 
-    // THEN: A focused element exists (search input or first focusable element in panel)
-    const focused = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
-    // The search input or a keyboard-reachable element received focus
-    expect(focused !== null || focused !== undefined).toBeTruthy();
+    // THEN: A focused element exists inside the clientes panel (not body/document.body)
+    const focusedTag = await page.evaluate(() => document.activeElement?.tagName?.toLowerCase());
+    // Focused element should be an interactive element, not the body (unfocused state)
+    expect(focusedTag).not.toBe('body');
   });
 
   test('[P2] should mark selected client item visually (highlighted state) when clicked', async ({ page }) => {

@@ -37,7 +37,7 @@ export class ClientesPage {
     this.navLinkClientes = page.getByRole('link', { name: /clientes/i });
 
     this.listPanel = page.getByTestId('clientes-list-panel');
-    this.searchInput = page.getByPlaceholder(/buscar cliente/i);
+    this.searchInput = page.getByRole('textbox', { name: 'Buscar cliente' });
     this.clienteItems = page.getByTestId('cliente-list-item');
     this.btnNuevoCliente = page.getByRole('button', { name: /nuevo cliente/i });
 

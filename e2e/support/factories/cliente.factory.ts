@@ -6,10 +6,16 @@
  * No faker dependency required — uses counter-based uniqueness for E2E stability.
  */
 
-let counter = Date.now();
+let counter = 0;
 
 function uniqueId(): string {
   return `${++counter}`;
+}
+
+/** Generates a valid v4-format UUID using a padded counter for test stability. */
+function buildUuid(n: number): string {
+  const hex = n.toString(16).padStart(12, '0').slice(-12);
+  return `00000000-0000-4000-8000-${hex}`;
 }
 
 /**
@@ -52,12 +58,13 @@ export interface CreateClienteInput {
  *   }));
  */
 export function buildClienteFixture(overrides: Partial<ClienteFixture> = {}): ClienteFixture {
-  const id = uniqueId();
+  const n = ++counter;
+  const nPadded = String(n).padStart(8, '0');
   return {
-    id: `00000000-0000-0000-0000-${id.padStart(12, '0')}`,
-    nombre: `Cliente Test ${id}`,
-    nit: `9${id.slice(-8).padStart(8, '0')}`,
-    telefono: `300${id.slice(-7).padStart(7, '0')}`,
+    id: buildUuid(n),
+    nombre: `Cliente Test ${n}`,
+    nit: `9${nPadded}`,
+    telefono: `300${nPadded.slice(-7).padStart(7, '0')}`,
     ciudad: 'Bogotá',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
