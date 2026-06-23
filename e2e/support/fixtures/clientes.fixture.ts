@@ -99,7 +99,6 @@ export const test = base.extend<ClienteTestFixtures>({
     // Setup: intercept with 500 clients BEFORE navigation (NFR1 performance test)
     const clientes = Array.from({ length: 500 }, (_, i) =>
       buildClienteFixture({
-        id: `00000000-0000-0000-0000-${String(i + 1).padStart(12, '0')}`,
         nombre: `Empresa Bulk ${String(i + 1).padStart(3, '0')} SAS`,
         nit: `${String(900000000 + i)}`,
       })
