@@ -57,30 +57,40 @@ test.describe('AC1 — Desktop NavigationRail', () => {
     // GIVEN: The user is on a desktop browser at /contactos
     await page.goto('/contactos');
 
-    // WHEN: The user clicks the Clientes nav item
-    let navigationCount = 0;
-    page.on('framenavigated', () => { navigationCount++; });
+    // Inject SPA marker — survives pushState but not full page reloads
+    await page.evaluate(() => {
+      (window as Record<string, unknown>).__spaMarker = true;
+    });
 
+    // WHEN: The user clicks the Clientes nav item
     await page.locator('[data-testid="nav-item-clientes"]').click();
 
     // THEN: URL changes to /clientes and no full page reload occurred
     await page.waitForURL('**/clientes');
-    expect(navigationCount).toBe(0);
+    const markerExists = await page.evaluate(() => {
+      return (window as Record<string, unknown>).__spaMarker === true;
+    });
+    expect(markerExists).toBe(true);
   });
 
   test('should navigate to /contactos without full page reload when clicking Contactos entry', async ({ page }) => {
     // GIVEN: The user is on a desktop browser at /clientes
     await page.goto('/clientes');
 
-    // WHEN: The user clicks the Contactos nav item
-    let navigationCount = 0;
-    page.on('framenavigated', () => { navigationCount++; });
+    // Inject SPA marker — survives pushState but not full page reloads
+    await page.evaluate(() => {
+      (window as Record<string, unknown>).__spaMarker = true;
+    });
 
+    // WHEN: The user clicks the Contactos nav item
     await page.locator('[data-testid="nav-item-contactos"]').click();
 
     // THEN: URL changes to /contactos and no full page reload occurred
     await page.waitForURL('**/contactos');
-    expect(navigationCount).toBe(0);
+    const markerExists = await page.evaluate(() => {
+      return (window as Record<string, unknown>).__spaMarker === true;
+    });
+    expect(markerExists).toBe(true);
   });
 });
 
