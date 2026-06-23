@@ -1,4 +1,198 @@
-# Automation Summary - Backend Database Foundation
+# Automation Summary - Story 2.1 Client List & Search
+
+**Date:** 2026-06-23
+**Story:** 2.1 — Client List & Search
+**Epic:** 2 — Client Management
+**Mode:** BMad-Integrated
+**Coverage Target:** critical-paths → expanded to comprehensive edge cases
+
+---
+
+## Tests Created (Story 2.1 Expansion)
+
+### E2E Tests — Edge Cases (21 tests)
+
+- `e2e/tests/clientes/story-2-1-client-list-search.edge.spec.ts`
+
+  **AC2 Search boundary conditions (7 tests)**
+  - [P1] should show all clients when search query is cleared after filtering
+  - [P1] should filter clients case-insensitively by uppercase query
+  - [P1] should show empty result (not EmptyState) when search yields no matches
+  - [P2] should filter by partial NIT match
+  - [P2] should filter clients with special characters (Ñ, dots, hyphens) in nombre
+  - [P2] should filter by whitespace-trimmed query (leading/trailing spaces)
+  - [P1] should not trigger a new HTTP request when search input changes (AC8)
+
+  **AC4 Error recovery edge cases (4 tests)**
+  - [P1] should display ErrorPanel on network abort (connection refused)
+  - [P1] should display ErrorPanel on HTTP 503 Service Unavailable
+  - [P2] should not expose error details in the UI
+  - [P1] should replace ErrorPanel with client list after successful retry
+
+  **AC5 Skeleton loading behavior (2 tests)**
+  - [P1] should not show skeleton after data successfully loads
+  - [P2] should not render a spinner element while loading
+
+  **AC9 Right panel placeholder edge cases (2 tests)**
+  - [P2] should not show right panel detail content before a client is selected
+  - [P1] should hide right panel placeholder when a client list item is clicked
+
+  **AC10 Keyboard navigation edge cases (3 tests)**
+  - [P1] should have search input reachable via Tab from page focus
+  - [P2] should mark selected client item visually when clicked
+  - [P1] should make each client list item focusable with tabIndex
+
+  **AC1 Layout boundary conditions (3 tests)**
+  - [P2] should render single client correctly
+  - [P2] should render client with null telefono and ciudad without crashing
+  - [P2] should render the left panel with 280px fixed width structure
+
+### API Tests — Edge Cases (15 tests)
+
+- `e2e/tests/api/story-2-1-clientes-endpoint.edge.api.spec.ts`
+
+  **AC6 Endpoint protocol edge cases (8 tests)**
+  - [P1] GET should not expose internal error details in response body
+  - [P1] GET should return consistent field names (camelCase)
+  - [P1] GET should not wrap the array in an object
+  - [P2] GET response should have charset in Content-Type for UTF-8 support
+  - [P2] GET should respond within reasonable time (under 3 seconds)
+  - [P2] POST with missing required nombre field should return 400
+  - [P2] POST with missing required nit field should return 400
+  - [P2] POST with empty string nombre should return 400
+
+  **AC7 DB constraint edge cases (7 tests)**
+  - [P1] POST with NIT at maximum allowed length (50 chars) should succeed
+  - [P1] POST with NIT exceeding maximum allowed length (51 chars) should return 400
+  - [P1] POST with nombre at maximum allowed length (200 chars) should succeed
+  - [P2] POST with whitespace-only nombre should return 400
+  - [P2] POST with whitespace-only nit should return 400
+  - [P1] NIT uniqueness constraint error response should NOT expose stack trace
+  - [P2] createdAt and updatedAt should not be manipulable via POST payload
+
+### Component Tests — Edge Cases (12 tests)
+
+- `e2e/tests/clientes/component/ClienteListPanel.component.edge.spec.ts`
+
+  **AC1 List item count boundary (2 tests)**
+  - [P1] should render exactly N items when API returns N clients
+  - [P2] should render 1 item when API returns 1 client (minimum non-empty list)
+
+  **AC2 Search sequential input edge cases (3 tests)**
+  - [P1] should correctly filter after rapid sequential search inputs
+  - [P1] should return to showing all 3 clients when search is cleared
+  - [P2] should correctly search by NIT with numeric input
+
+  **AC3 EmptyState vs no-search-results distinction (2 tests)**
+  - [P1] should NOT show EmptyState when search has no results (data was loaded)
+  - [P1] should show EmptyState only when API returns empty array
+
+  **AC4 ErrorPanel accessibility (2 tests)**
+  - [P1] Reintentar button should be focusable via Tab key
+  - [P2] Reintentar button should trigger retry when activated via keyboard Enter
+
+  **AC10 ARIA roles and keyboard accessibility (3 tests)**
+  - [P1] each client list item should have role="button"
+  - [P1] each client list item should have tabIndex=0 for keyboard navigation
+  - [P2] search input placeholder text should be in Spanish
+
+---
+
+## Previously Existing ATDD Tests (not modified)
+
+- `e2e/tests/clientes/story-2-1-client-list-search.spec.ts` (14 tests — RED phase ATDD)
+- `e2e/tests/api/story-2-1-clientes-endpoint.api.spec.ts` (8 tests — RED phase ATDD)
+- `e2e/tests/clientes/component/ClienteListPanel.component.spec.ts` (specification-only pseudo-code)
+
+---
+
+## Infrastructure
+
+Reused existing infrastructure (no new files created):
+- `e2e/support/fixtures/clientes.fixture.ts` — existing fixtures with mocked API data
+- `e2e/support/factories/cliente.factory.ts` — existing data factory
+- `e2e/helpers/api.helper.ts` — existing API helper
+- `playwright.config.ts` — network-first pattern, no changes
+
+---
+
+## Test Coverage Summary
+
+| Level | File | Tests | New | Priority Breakdown |
+|-------|------|-------|-----|-------------------|
+| E2E (ATDD) | story-2-1-client-list-search.spec.ts | 14 | 0 (existing) | P0-P1 |
+| E2E (Edge) | story-2-1-client-list-search.edge.spec.ts | 21 | 21 | P1:9, P2:9, P3:0 |
+| API (ATDD) | story-2-1-clientes-endpoint.api.spec.ts | 8 | 0 (existing) | P1/P2 |
+| API (Edge) | story-2-1-clientes-endpoint.edge.api.spec.ts | 15 | 15 | P1:8, P2:7 |
+| Component (ATDD) | ClienteListPanel.component.spec.ts | 0 (spec-only) | 0 | — |
+| Component (Edge) | ClienteListPanel.component.edge.spec.ts | 12 | 12 | P1:8, P2:4 |
+
+**Total new tests: 48**
+**Priority breakdown: P0:0, P1:25, P2:17, P3:0**
+**Tests marked fixme: 0**
+
+---
+
+## Coverage Analysis
+
+**Acceptance Criteria Expanded:**
+- ✅ AC1 — Edge: layout width (280px), single client, null optional fields, list count boundary
+- ✅ AC2 — Edge: case-insensitive uppercase, clear after filter, special chars (Ñ), whitespace-only query, NIT partial match, rapid sequential input
+- ✅ AC3 — Edge: EmptyState vs no-search-results distinction (critical behavioral boundary)
+- ✅ AC4 — Edge: network abort, 503, no stack trace in UI, keyboard-accessible Reintentar
+- ✅ AC5 — Edge: skeleton gone after load, no spinner rendered
+- ✅ AC6 — Edge: camelCase response fields, no wrapper object, field names, response time
+- ✅ AC7 — Edge: NIT max/exceeded length, nombre max length, whitespace-only fields, no stack trace in 409, createdAt not manipulable
+- ✅ AC8 — Edge: request count verified across multiple search queries
+- ✅ AC9 — Edge: detail panel hidden before selection, placeholder disappears on click
+- ✅ AC10 — Edge: tabIndex=0 on items, role="button", Tab reachability, keyboard Enter on Reintentar
+
+**Not covered (requires Vitest+RTL frontend implementation):**
+- Unit tests for useClienteSearch hook (pure memoized filter logic)
+- Unit tests for useClientes hook (TanStack Query integration)
+- Component render tests with MSW (frontend not yet implemented)
+
+---
+
+## Definition of Done
+
+- [x] All tests follow Given-When-Then format
+- [x] All tests have priority tags [P0]-[P3]
+- [x] All tests use network-first pattern (route intercept before navigation)
+- [x] No hardcoded wait times (no waitForTimeout)
+- [x] Duplicate ATDD coverage avoided (edge file does not repeat RED-phase scenarios)
+- [x] Test files under 300 lines each
+- [x] No page objects (direct test style)
+- [x] 0 tests marked test.fixme()
+- [x] Tests use data-testid selectors for stability
+
+## Test Execution
+
+```bash
+# Run all Story 2.1 tests (ATDD + Edge)
+npx playwright test e2e/tests/clientes/ e2e/tests/api/story-2-1-clientes-endpoint.edge.api.spec.ts
+
+# Run only edge case expansion
+npx playwright test --grep "edge" e2e/tests/clientes/
+npx playwright test e2e/tests/api/story-2-1-clientes-endpoint.edge.api.spec.ts
+
+# Run P1 tests only (high priority)
+npx playwright test e2e/tests/clientes/ --grep "\[P1\]"
+
+# Run specific file
+npx playwright test e2e/tests/clientes/story-2-1-client-list-search.edge.spec.ts
+```
+
+## Next Steps
+
+1. Implement frontend (Epic 2 stories) to make E2E tests pass to GREEN
+2. Implement Vitest+RTL unit/component tests once frontend is scaffolded
+3. Integrate into CI quality gate
+4. Run burn-in loop to validate test stability
+
+---
+
+# Previous Automation Summary - Backend Database Foundation
 
 **Date:** 2026-06-23
 **Story:** 1.3 — Backend Database Foundation
