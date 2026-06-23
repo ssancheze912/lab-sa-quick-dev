@@ -8,10 +8,6 @@
 
 let counter = 0;
 
-function uniqueId(): string {
-  return `${++counter}`;
-}
-
 /** Generates a valid v4-format UUID using a padded counter for test stability. */
 function buildUuid(n: number): string {
   const hex = n.toString(16).padStart(12, '0').slice(-12);
@@ -99,11 +95,12 @@ export function buildClienteFixtures(count: number, overrides: Partial<ClienteFi
  *   const response = await apiHelper.createCliente(input);
  */
 export function buildCreateClienteInput(overrides: Partial<CreateClienteInput> = {}): CreateClienteInput {
-  const id = uniqueId();
+  const n = ++counter;
+  const nPadded = String(n).padStart(8, '0');
   return {
-    nombre: `Cliente Test ${id}`,
-    nit: `9${id.slice(-8).padStart(8, '0')}`,
-    telefono: `300${id.slice(-7).padStart(7, '0')}`,
+    nombre: `Cliente Test ${n}`,
+    nit: `9${nPadded}`,
+    telefono: `300${nPadded.slice(-7).padStart(7, '0')}`,
     ciudad: 'Bogotá',
     ...overrides,
   };
@@ -121,7 +118,7 @@ export function buildCreateClienteInput(overrides: Partial<CreateClienteInput> =
  */
 export function buildBulkClienteFixtures(): ClienteFixture[] {
   return Array.from({ length: 500 }, (_, i) => ({
-    id: `00000000-0000-0000-0000-${String(i + 1).padStart(12, '0')}`,
+    id: buildUuid(i + 1),
     nombre: `Empresa Bulk ${String(i + 1).padStart(3, '0')} SAS`,
     nit: `${String(900000000 + i)}`,
     telefono: `300${String(i).padStart(7, '0')}`,
