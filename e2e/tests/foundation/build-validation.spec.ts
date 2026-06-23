@@ -26,6 +26,13 @@ const FRONTEND_DIR = path.join(PROJECT_ROOT, 'frontend');
 const BACKEND_DIR = path.join(PROJECT_ROOT, 'backend');
 const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
 
+/** Resolves the effective tsconfig path: prefers tsconfig.app.json over tsconfig.json */
+function resolveTsconfigPath(): string {
+  const tsconfigAppPath = path.join(FRONTEND_DIR, 'tsconfig.app.json');
+  const tsconfigPath = path.join(FRONTEND_DIR, 'tsconfig.json');
+  return fs.existsSync(tsconfigAppPath) ? tsconfigAppPath : tsconfigPath;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AC4: TypeScript strict mode in tsconfig.json
 // ─────────────────────────────────────────────────────────────────────────────
@@ -34,10 +41,7 @@ test.describe('AC4 — TypeScript strict mode configuration', () => {
   test('should have tsconfig.json with strict: true in the frontend project', () => {
     // GIVEN: The frontend project is initialized with Vite react-ts template
     // WHEN: The tsconfig.json (or tsconfig.app.json) is read
-    const tsconfigAppPath = path.join(FRONTEND_DIR, 'tsconfig.app.json');
-    const tsconfigPath = path.join(FRONTEND_DIR, 'tsconfig.json');
-
-    const filePath = fs.existsSync(tsconfigAppPath) ? tsconfigAppPath : tsconfigPath;
+    const filePath = resolveTsconfigPath();
 
     // THEN: The file exists
     expect(fs.existsSync(filePath), `Expected tsconfig at ${filePath} to exist`).toBe(true);
@@ -51,9 +55,7 @@ test.describe('AC4 — TypeScript strict mode configuration', () => {
   test('should have noUnusedLocals: true in tsconfig to enforce clean code', () => {
     // GIVEN: Company standards require no unused locals
     // WHEN: The tsconfig.app.json is read
-    const tsconfigAppPath = path.join(FRONTEND_DIR, 'tsconfig.app.json');
-    const tsconfigPath = path.join(FRONTEND_DIR, 'tsconfig.json');
-    const filePath = fs.existsSync(tsconfigAppPath) ? tsconfigAppPath : tsconfigPath;
+    const filePath = resolveTsconfigPath();
 
     expect(fs.existsSync(filePath), `Expected tsconfig at ${filePath} to exist`).toBe(true);
     const content = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
@@ -68,9 +70,7 @@ test.describe('AC4 — TypeScript strict mode configuration', () => {
   test('should have noUnusedParameters: true in tsconfig to enforce clean code', () => {
     // GIVEN: Company standards require no unused parameters
     // WHEN: The tsconfig.app.json is read
-    const tsconfigAppPath = path.join(FRONTEND_DIR, 'tsconfig.app.json');
-    const tsconfigPath = path.join(FRONTEND_DIR, 'tsconfig.json');
-    const filePath = fs.existsSync(tsconfigAppPath) ? tsconfigAppPath : tsconfigPath;
+    const filePath = resolveTsconfigPath();
 
     expect(fs.existsSync(filePath), `Expected tsconfig at ${filePath} to exist`).toBe(true);
     const content = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
