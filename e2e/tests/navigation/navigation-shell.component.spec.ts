@@ -163,10 +163,12 @@ test.describe('Navigation Shell — Mobile layout DOM', () => {
     // We verify by checking the bounding box Y position relative to viewport height
     const boundingBox = await navBar.boundingBox();
     const viewportSize = page.viewportSize();
-    if (boundingBox && viewportSize) {
-      // Bottom bar should be in the lower half of the screen
-      expect(boundingBox.y).toBeGreaterThan(viewportSize.height / 2);
-    }
+    // TODO (TEA Review): boundingBox() and viewportSize() must be non-null since navBar is visible above.
+    // Using non-null assertion to prevent silent assertion skip (flakiness risk).
+    expect(boundingBox, 'NavigationBar bounding box must be obtainable').not.toBeNull();
+    expect(viewportSize, 'Viewport size must be available').not.toBeNull();
+    // Bottom bar should be in the lower half of the screen
+    expect(boundingBox!.y).toBeGreaterThan(viewportSize!.height / 2);
   });
 
   test('should render exactly two nav items in the mobile NavigationBar', async ({ page }) => {

@@ -499,11 +499,14 @@ test.describe('Mobile layout edge — Content scrollability above NavigationBar'
     const navBox = await navBar.boundingBox();
     const viewport = page.viewportSize();
 
-    if (mainBox && navBox && viewport) {
-      // Main content should start above where navigation bar begins
-      // (not fully hidden behind the nav bar)
-      expect(mainBox.y, 'Main content area should start near the top of viewport').toBeLessThan(navBox.y);
-    }
+    // TODO (TEA Review): Guard removed — elements confirmed visible above, so boundingBox() must be non-null.
+    // Unconditional assertions prevent silent assertion skips (flakiness risk).
+    expect(mainBox, 'Main content bounding box must be obtainable').not.toBeNull();
+    expect(navBox, 'NavigationBar bounding box must be obtainable').not.toBeNull();
+    expect(viewport, 'Viewport size must be available').not.toBeNull();
+    // Main content should start above where navigation bar begins
+    // (not fully hidden behind the nav bar)
+    expect(mainBox!.y, 'Main content area should start near the top of viewport').toBeLessThan(navBox!.y);
   });
 });
 
