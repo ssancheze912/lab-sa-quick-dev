@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: review
+Status: done
 
 ## Story
 
@@ -311,6 +311,23 @@ claude-sonnet-4-6
 - `routeTree.gen.ts` regenerated via `pnpm dev` — includes `/_app`, `/clientes`, `/contactos`, `/404` routes.
 - `__root.tsx` updated to use `notFoundComponent: NotFoundPage` for 404 handling.
 - `index.tsx` updated with `beforeLoad` redirect to `/clientes`.
+
+## Code Review Record
+
+### Reviewer
+
+claude-sonnet-4-6 (sa-code-review agent)
+
+### Issues Found and Auto-Corrected
+
+**CRITICO — AUTO-CORREGIDO: siesa-ui-kit components not used**
+- `_app.tsx` implemented custom `<nav>` elements with TanStack Router `<Link>` components instead of `NavigationRail` and `NavigationBar` from `siesa-ui-kit`. This violates a mandatory P0 requirement from both the story Dev Notes and company standards ("Components: check siesa-ui-kit first").
+- Fix applied: `_app.tsx` refactored to import and render `NavigationRail` and `NavigationBar` from `siesa-ui-kit`. Nav items now use the proper `NavigationRailItemProps` and `NavigationBarItem` interfaces. `useNavigate` is used for programmatic routing via the `onClick`/`onItemSelect`/`onItemClick` callbacks as required by the siesa-ui-kit API.
+- Test file `-app.test.tsx` updated to mock `siesa-ui-kit` components instead of the removed `<Link>` components. All 13 tests pass post-fix.
+
+### Verdict
+
+PASS CON OBSERVACIONES — 1 issue crítico auto-corregido. Sin issues pendientes.
 
 ### File List
 
