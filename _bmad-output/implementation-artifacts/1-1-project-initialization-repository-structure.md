@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: review
+Status: done
 
 ## Story
 
@@ -210,7 +210,9 @@ Created:
 - `frontend/tsconfig.json`
 - `frontend/index.html`
 - `frontend/.env.development`
+- `frontend/.gitignore`
 - `frontend/public/favicon.svg`
+- `frontend/public/icons.svg`
 - `frontend/src/index.css`
 - `frontend/src/main.tsx`
 - `frontend/src/test-setup.ts`
@@ -242,3 +244,9 @@ Created:
 - `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
 - `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj`
 - `backend/tests/SiesaAgents.UnitTests/PlaceholderTest.cs`
+
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][SUGGEST] `AppDbContext`: Add `EFCore.NamingConventions` package and call `.UseSnakeCaseNamingConvention()` in `DbContextOptionsBuilder` (Story 1.3 — when DB is first provisioned). File: `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
+- [ ] [AI-Review][SUGGEST] `PlaceholderTest.cs`: Replace `Assert.True(true)` with a meaningful test when first real domain logic is added (Story 1.3). File: `backend/tests/SiesaAgents.UnitTests/PlaceholderTest.cs`
+- [ ] [AI-Review][SUGGEST] `mock-server.mjs`: Accept `ALLOWED_ORIGIN` via env var (`process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173'`) for config-driven consistency.
