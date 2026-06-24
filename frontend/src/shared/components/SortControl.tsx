@@ -1,5 +1,3 @@
-import { Select } from 'siesa-ui-kit'
-
 export type SortOption = 'nombre-asc' | 'nombre-desc' | 'fecha-desc' | 'fecha-asc'
 
 interface SortControlProps {
@@ -16,15 +14,18 @@ export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 
 export function SortControl({ value, onChange }: SortControlProps) {
   return (
-    <div data-testid="sort-control" aria-label="Ordenar clientes">
-      <Select
-        options={SORT_OPTIONS}
-        value={value}
-        onChange={(selected) => onChange(selected as SortOption)}
-        ariaLabel="Ordenar clientes"
-        showLabel={false}
-        selectSize="sm"
-      />
-    </div>
+    <select
+      data-testid="sort-control"
+      aria-label="Ordenar clientes"
+      value={value}
+      onChange={(e) => onChange(e.target.value as SortOption)}
+      className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+    >
+      {SORT_OPTIONS.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   )
 }
