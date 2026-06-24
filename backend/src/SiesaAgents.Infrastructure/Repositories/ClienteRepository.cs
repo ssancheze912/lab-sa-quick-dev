@@ -20,4 +20,14 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id, ct);
     }
+
+    public async Task AddAsync(ClienteEntity entity, CancellationToken ct = default)
+    {
+        await dbContext.Clientes.AddAsync(entity, ct);
+    }
+
+    public async Task SaveChangesAsync(CancellationToken ct = default)
+    {
+        await dbContext.SaveChangesAsync(ct);
+    }
 }

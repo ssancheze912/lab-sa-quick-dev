@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Scalar.AspNetCore" Version="2.*" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.*" />
+    <PackageReference Include="FluentValidation" Version="11.*" />
   </ItemGroup>
 
   <ItemGroup>

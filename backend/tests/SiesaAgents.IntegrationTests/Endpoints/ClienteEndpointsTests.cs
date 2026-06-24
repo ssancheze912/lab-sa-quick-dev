@@ -10,6 +10,7 @@ using SiesaAgents.Domain.Entities;
 using SiesaAgents.Infrastructure.Data;
 using Testcontainers.PostgreSql;
 using Xunit;
+// CreateClienteRequest is in SiesaAgents.Application.Clientes.DTOs (already imported above)
 
 namespace SiesaAgents.IntegrationTests.Endpoints;
 
@@ -183,6 +184,67 @@ public sealed class ClienteEndpointsTests : IAsyncLifetime
         Assert.NotEqual(default, content.Id);
         Assert.NotEqual(default, content.CreatedAt);
         Assert.NotEqual(default, content.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task PostCliente_Returns201Created_WithClienteJson_WhenRequestIsValid()
+    {
+        // Arrange
+        await ClearClientesAsync();
+        var request = new CreateClienteRequest("Empresa Zeta", "111222333-0", "3001112222", "Bucaramanga");
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var content = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        Assert.NotNull(content);
+        Assert.Equal("Empresa Zeta", content.Nombre);
+        Assert.Equal("111222333-0", content.Nit);
+        Assert.Equal("3001112222", content.Telefono);
+        Assert.Equal("Bucaramanga", content.Ciudad);
+        Assert.NotEqual(default, content.Id);
+        Assert.NotEqual(default, content.CreatedAt);
+        Assert.NotEqual(default, content.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task PostCliente_Returns400BadRequest_WhenRequiredFieldIsMissing()
+    {
+        // Arrange
+        var request = new { nombre = "", nit = "", telefono = "", ciudad = "" };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("nombre", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task PostCliente_Returns409Conflict_WhenNitAlreadyExists()
+    {
+        // Arrange
+        await ClearClientesAsync();
+        // Seed a cliente with the same NIT
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var existing = ClienteEntity.Create("Empresa Existing", "999888777-6", "3000000001", "Cali");
+        db.Clientes.Add(existing);
+        await db.SaveChangesAsync();
+
+        var request = new CreateClienteRequest("Empresa Duplicate", "999888777-6", "3000000002", "Bogotá");
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("NIT", body, StringComparison.OrdinalIgnoreCase);
     }
 
     public async Task DisposeAsync()

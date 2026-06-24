@@ -84,20 +84,44 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // POST /api/v1/clientes — create client (Story 2.1 API contract tests)
+  // POST /api/v1/clientes — create client (Stories 2.1, 2.3)
   if (method === 'POST' && url === '/api/v1/clientes') {
     let body = '';
     req.on('data', (chunk) => { body += chunk; });
     req.on('end', () => {
       try {
         const payload = JSON.parse(body);
+        // 400 validation: required fields
+        const missing = ['nombre', 'nit', 'telefono', 'ciudad'].filter(f => !payload[f]);
+        if (missing.length > 0) {
+          res.writeHead(400, { 'Content-Type': 'application/problem+json' });
+          res.end(JSON.stringify({
+            type: 'https://tools.ietf.org/html/rfc7807',
+            title: 'Validation failed',
+            status: 400,
+            errors: Object.fromEntries(missing.map(f => [f, [`The ${f} field is required.`]])),
+          }));
+          return;
+        }
+        // 409 conflict: duplicate NIT
+        const duplicate = [...clientesStore.values()].find(c => c.nit === payload.nit);
+        if (duplicate) {
+          res.writeHead(409, { 'Content-Type': 'application/problem+json' });
+          res.end(JSON.stringify({
+            type: 'https://tools.ietf.org/html/rfc7807',
+            title: 'Conflict',
+            status: 409,
+            detail: 'El NIT/RUC ya está registrado.',
+          }));
+          return;
+        }
         const now = new Date().toISOString();
         const newCliente = {
           id: newGuid(),
-          nombre: payload.nombre ?? '',
-          nit: payload.nit ?? '',
-          telefono: payload.telefono ?? '',
-          ciudad: payload.ciudad ?? '',
+          nombre: payload.nombre,
+          nit: payload.nit,
+          telefono: payload.telefono,
+          ciudad: payload.ciudad,
           createdAt: now,
           updatedAt: now,
         };
