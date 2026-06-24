@@ -158,6 +158,13 @@ const server = http.createServer((req, res) => {
   // PUT /api/v1/clientes/:id — update client (Story 2.4)
   if (method === 'PUT' && url.match(/^\/api\/v1\/clientes\/[^/]+$/)) {
     const id = url.split('/').pop();
+    // 400 for invalid UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id ?? '')) {
+      res.writeHead(400, { 'Content-Type': 'application/problem+json' });
+      res.end(JSON.stringify({ type: 'https://tools.ietf.org/html/rfc7807', title: 'Bad Request', status: 400, detail: `'${id}' is not a valid GUID.` }));
+      return;
+    }
     let body = '';
     req.on('data', (chunk) => { body += chunk; });
     req.on('end', () => {

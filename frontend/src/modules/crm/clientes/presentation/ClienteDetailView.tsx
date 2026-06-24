@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { PencilSquareIcon } from '@heroicons/react/24/outline'
-import { AlertDialog, Button } from 'siesa-ui-kit'
+import { Button } from 'siesa-ui-kit'
 import { useCliente } from '../application/useCliente'
 import { ClienteForm } from './ClienteForm'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
@@ -84,56 +84,50 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
         </Button>
       </div>
 
-      <div className="space-y-1">
-        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Nombre</p>
-        <p data-testid="cliente-detail-nombre" className="text-sm text-slate-800">
-          {data.nombre}
-        </p>
-      </div>
+      {!isEditFormOpen ? (
+        <>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Nombre</p>
+            <p data-testid="cliente-detail-nombre" className="text-sm text-slate-800">
+              {data.nombre}
+            </p>
+          </div>
 
-      <div className="space-y-1">
-        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">NIT/RUC</p>
-        <p data-testid="cliente-detail-nit" className="text-sm text-slate-800">
-          {data.nit}
-        </p>
-      </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">NIT/RUC</p>
+            <p data-testid="cliente-detail-nit" className="text-sm text-slate-800">
+              {data.nit}
+            </p>
+          </div>
 
-      <div className="space-y-1">
-        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Teléfono</p>
-        <p data-testid="cliente-detail-telefono" className="text-sm text-slate-800">
-          {data.telefono}
-        </p>
-      </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Teléfono</p>
+            <p data-testid="cliente-detail-telefono" className="text-sm text-slate-800">
+              {data.telefono}
+            </p>
+          </div>
 
-      <div className="space-y-1">
-        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Ciudad</p>
-        <p data-testid="cliente-detail-ciudad" className="text-sm text-slate-800">
-          {data.ciudad}
-        </p>
-      </div>
-
-      {isEditFormOpen && (
-        <AlertDialog
-          title="Editar cliente"
-          isOpen={isEditFormOpen}
-          onCancel={() => setIsEditFormOpen(false)}
-          showCloseButton
-          hideCancel
-          size="max-w-lg"
-          actions={
-            <ClienteForm
-              clienteId={data.id}
-              defaultValues={{
-                nombre: data.nombre,
-                nit: data.nit,
-                telefono: data.telefono,
-                ciudad: data.ciudad,
-              }}
-              onSuccess={() => setIsEditFormOpen(false)}
-              onCancel={() => setIsEditFormOpen(false)}
-            />
-          }
-        />
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Ciudad</p>
+            <p data-testid="cliente-detail-ciudad" className="text-sm text-slate-800">
+              {data.ciudad}
+            </p>
+          </div>
+        </>
+      ) : (
+        <div data-testid="cliente-edit-form-container">
+          <ClienteForm
+            clienteId={data.id}
+            defaultValues={{
+              nombre: data.nombre,
+              nit: data.nit,
+              telefono: data.telefono,
+              ciudad: data.ciudad,
+            }}
+            onSuccess={() => setIsEditFormOpen(false)}
+            onCancel={() => setIsEditFormOpen(false)}
+          />
+        </div>
       )}
     </section>
   )
