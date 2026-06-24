@@ -5,4 +5,5 @@ export interface IClienteRepository {
   getById(id: string): Promise<Cliente>
   create(data: Omit<Cliente, 'id' | 'createdAt' | 'updatedAt'>): Promise<Cliente>
   update(id: string, data: Partial<Omit<Cliente, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Cliente>
+  deleteById(id: string): Promise<void>
 }

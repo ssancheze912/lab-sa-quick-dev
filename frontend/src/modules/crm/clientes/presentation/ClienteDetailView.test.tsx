@@ -101,6 +101,15 @@ const mockCliente: Cliente = {
   updatedAt: '2026-01-01T00:00:00Z',
 }
 
+const mockNavigate = vi.fn()
+vi.mock('@tanstack/react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-router')>()
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  }
+})
+
 const server = setupServer(
   http.get('*/api/v1/clientes/:id', ({ params }) => {
     if (params.id === '11111111-1111-1111-1111-111111111111') {
@@ -116,6 +125,9 @@ const server = setupServer(
       { ...mockCliente, nombre: 'Empresa Test Editada', updatedAt: '2026-06-24T00:00:00Z' },
       { status: 200 },
     )
+  }),
+  http.delete('*/api/v1/clientes/:id', () => {
+    return new HttpResponse(null, { status: 204 })
   }),
 )
 
@@ -457,5 +469,111 @@ describe('ClienteDetailView', () => {
       expect(screen.queryByTestId('alert-dialog')).not.toBeInTheDocument()
     })
     expect(mockToastSuccess).not.toHaveBeenCalled()
+  })
+
+  it('renders "Eliminar" button in detail view when data is loaded', async () => {
+    // Arrange & Act
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('eliminar-cliente-button')).toBeInTheDocument()
+    })
+  })
+
+  it('clicking "Eliminar" opens confirmation dialog with expected text', async () => {
+    // Arrange
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+    await waitFor(() => {
+      expect(screen.getByTestId('eliminar-cliente-button')).toBeInTheDocument()
+    })
+
+    // Act
+    fireEvent.click(screen.getByTestId('eliminar-cliente-button'))
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('alert-dialog')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('confirmar-eliminacion-button')).toBeInTheDocument()
+    expect(screen.getByTestId('cancelar-eliminacion-button')).toBeInTheDocument()
+  })
+
+  it('clicking "Cancelar" in delete dialog closes it without API call', async () => {
+    // Arrange
+    let deleteCallCount = 0
+    server.use(
+      http.delete('*/api/v1/clientes/:id', () => {
+        deleteCallCount++
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+    await waitFor(() => {
+      expect(screen.getByTestId('eliminar-cliente-button')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByTestId('eliminar-cliente-button'))
+    await waitFor(() => {
+      expect(screen.getByTestId('cancelar-eliminacion-button')).toBeInTheDocument()
+    })
+
+    // Act
+    fireEvent.click(screen.getByTestId('cancelar-eliminacion-button'))
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.queryByTestId('confirmar-eliminacion-button')).not.toBeInTheDocument()
+    })
+    expect(deleteCallCount).toBe(0)
+    expect(mockToastSuccess).not.toHaveBeenCalled()
+  })
+
+  it('clicking "Confirmar" calls delete mutation and navigates to /clientes on success', async () => {
+    // Arrange
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+    await waitFor(() => {
+      expect(screen.getByTestId('eliminar-cliente-button')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByTestId('eliminar-cliente-button'))
+    await waitFor(() => {
+      expect(screen.getByTestId('confirmar-eliminacion-button')).toBeInTheDocument()
+    })
+
+    // Act
+    fireEvent.click(screen.getByTestId('confirmar-eliminacion-button'))
+
+    // Assert
+    await waitFor(() => {
+      expect(mockToastSuccess).toHaveBeenCalledWith('Cliente eliminado correctamente')
+    })
+    expect(mockNavigate).toHaveBeenCalledWith({ to: '/clientes' })
+  })
+
+  it('"Confirmar" button shows "Eliminando..." and is disabled when mutation is pending', async () => {
+    // Arrange — delay DELETE to keep mutation in-flight
+    server.use(
+      http.delete('*/api/v1/clientes/:id', async () => {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+    await waitFor(() => {
+      expect(screen.getByTestId('eliminar-cliente-button')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByTestId('eliminar-cliente-button'))
+    await waitFor(() => {
+      expect(screen.getByTestId('confirmar-eliminacion-button')).toBeInTheDocument()
+    })
+
+    // Act
+    fireEvent.click(screen.getByTestId('confirmar-eliminacion-button'))
+
+    // Assert — button becomes disabled with pending text
+    await waitFor(() => {
+      const confirmBtn = screen.getByTestId('confirmar-eliminacion-button')
+      expect(confirmBtn).toBeDisabled()
+      expect(confirmBtn).toHaveTextContent('Eliminando...')
+    })
   })
 })

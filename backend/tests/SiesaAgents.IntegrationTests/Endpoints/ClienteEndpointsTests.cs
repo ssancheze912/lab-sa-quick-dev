@@ -333,6 +333,62 @@ public sealed class ClienteEndpointsTests : IAsyncLifetime
         Assert.Contains("NIT", body, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task DeleteCliente_Returns204NoContent_WhenClienteExists()
+    {
+        // Arrange
+        await ClearClientesAsync();
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entity = ClienteEntity.Create("Empresa Para Eliminar", "333444555-6", "3003334444", "Medellín");
+        db.Clientes.Add(entity);
+        await db.SaveChangesAsync();
+
+        // Act
+        var response = await _client.DeleteAsync($"/api/v1/clientes/{entity.Id}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Empty(body);
+    }
+
+    [Fact]
+    public async Task DeleteCliente_RemovesEntityFromDatabase_WhenClienteExists()
+    {
+        // Arrange
+        await ClearClientesAsync();
+        using var seedScope = _factory.Services.CreateScope();
+        var db = seedScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entity = ClienteEntity.Create("Empresa Eliminar Check", "888777666-5", "3008887777", "Cali");
+        db.Clientes.Add(entity);
+        await db.SaveChangesAsync();
+
+        // Act
+        await _client.DeleteAsync($"/api/v1/clientes/{entity.Id}");
+
+        // Assert — entity is gone from DB
+        using var verifyScope = _factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var deleted = await verifyDb.Clientes.FindAsync(entity.Id);
+        Assert.Null(deleted);
+    }
+
+    [Fact]
+    public async Task DeleteCliente_Returns404ProblemDetails_WhenClienteIdDoesNotExist()
+    {
+        // Arrange
+        var nonExistentId = Guid.NewGuid();
+
+        // Act
+        var response = await _client.DeleteAsync($"/api/v1/clientes/{nonExistentId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Not Found", body, StringComparison.OrdinalIgnoreCase);
+    }
+
     public async Task DisposeAsync()
     {
         _client.Dispose();

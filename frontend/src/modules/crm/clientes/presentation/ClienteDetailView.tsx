@@ -2,9 +2,11 @@ import { useState } from 'react'
 import type { AxiosError } from 'axios'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
-import { PencilSquareIcon } from '@heroicons/react/24/outline'
-import { Button } from 'siesa-ui-kit'
+import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { AlertDialog, Button } from 'siesa-ui-kit'
+import { useNavigate } from '@tanstack/react-router'
 import { useCliente } from '../application/useCliente'
+import { useDeleteCliente } from '../application/useDeleteCliente'
 import { ClienteForm } from './ClienteForm'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 
@@ -15,8 +17,24 @@ interface ClienteDetailViewProps {
 export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   const { data, isLoading, isError, error, refetch } = useCliente(clienteId)
   const [isEditFormOpen, setIsEditFormOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const navigate = useNavigate()
+
+  const { mutate: deleteCliente, isPending: isDeleting } = useDeleteCliente()
 
   const isNotFound = isError && (error as AxiosError)?.response?.status === 404
+
+  const handleConfirmDelete = () => {
+    deleteCliente(
+      { id: clienteId, hasContacts: false },
+      {
+        onSuccess: () => {
+          setIsDeleteDialogOpen(false)
+          void navigate({ to: '/clientes' })
+        },
+      },
+    )
+  }
 
   if (isLoading) {
     return (
@@ -73,62 +91,105 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
     >
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-slate-700">Información del cliente</p>
-        <Button
-          htmlType="button"
-          type="outline"
-          data-testid="editar-cliente-button"
-          onClick={() => setIsEditFormOpen(true)}
-        >
-          <PencilSquareIcon className="h-4 w-4 mr-1" />
-          Editar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            htmlType="button"
+            type="outline"
+            data-testid="editar-cliente-button"
+            onClick={() => setIsEditFormOpen(true)}
+          >
+            <PencilSquareIcon className="h-4 w-4 mr-1" />
+            Editar
+          </Button>
+          <Button
+            htmlType="button"
+            type="outline"
+            data-testid="eliminar-cliente-button"
+            aria-label="Eliminar cliente"
+            onClick={() => setIsDeleteDialogOpen(true)}
+          >
+            <TrashIcon className="h-4 w-4 mr-1" />
+            Eliminar
+          </Button>
+        </div>
       </div>
 
-      {!isEditFormOpen ? (
-        <>
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Nombre</p>
-            <p data-testid="cliente-detail-nombre" className="text-sm text-slate-800">
-              {data.nombre}
-            </p>
-          </div>
+      <AlertDialog
+        title="Editar cliente"
+        isOpen={isEditFormOpen}
+        onCancel={() => setIsEditFormOpen(false)}
+        showCloseButton
+      >
+        <ClienteForm
+          clienteId={data.id}
+          defaultValues={{
+            nombre: data.nombre,
+            nit: data.nit,
+            telefono: data.telefono,
+            ciudad: data.ciudad,
+          }}
+          onSuccess={() => setIsEditFormOpen(false)}
+          onCancel={() => setIsEditFormOpen(false)}
+        />
+      </AlertDialog>
 
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">NIT/RUC</p>
-            <p data-testid="cliente-detail-nit" className="text-sm text-slate-800">
-              {data.nit}
-            </p>
+      <AlertDialog
+        title="¿Eliminar este cliente?"
+        isOpen={isDeleteDialogOpen}
+        onCancel={() => setIsDeleteDialogOpen(false)}
+        actions={
+          <div className="flex justify-end gap-2">
+            <Button
+              htmlType="button"
+              type="outline"
+              data-testid="cancelar-eliminacion-button"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              htmlType="button"
+              type="default"
+              data-testid="confirmar-eliminacion-button"
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Eliminando...' : 'Confirmar'}
+            </Button>
           </div>
+        }
+      >
+        <p className="text-sm text-slate-600">Esta acción no se puede deshacer.</p>
+      </AlertDialog>
 
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Teléfono</p>
-            <p data-testid="cliente-detail-telefono" className="text-sm text-slate-800">
-              {data.telefono}
-            </p>
-          </div>
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Nombre</p>
+        <p data-testid="cliente-detail-nombre" className="text-sm text-slate-800">
+          {data.nombre}
+        </p>
+      </div>
 
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Ciudad</p>
-            <p data-testid="cliente-detail-ciudad" className="text-sm text-slate-800">
-              {data.ciudad}
-            </p>
-          </div>
-        </>
-      ) : (
-        <div data-testid="cliente-edit-form-container">
-          <ClienteForm
-            clienteId={data.id}
-            defaultValues={{
-              nombre: data.nombre,
-              nit: data.nit,
-              telefono: data.telefono,
-              ciudad: data.ciudad,
-            }}
-            onSuccess={() => setIsEditFormOpen(false)}
-            onCancel={() => setIsEditFormOpen(false)}
-          />
-        </div>
-      )}
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">NIT/RUC</p>
+        <p data-testid="cliente-detail-nit" className="text-sm text-slate-800">
+          {data.nit}
+        </p>
+      </div>
+
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Teléfono</p>
+        <p data-testid="cliente-detail-telefono" className="text-sm text-slate-800">
+          {data.telefono}
+        </p>
+      </div>
+
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Ciudad</p>
+        <p data-testid="cliente-detail-ciudad" className="text-sm text-slate-800">
+          {data.ciudad}
+        </p>
+      </div>
     </section>
   )
 }

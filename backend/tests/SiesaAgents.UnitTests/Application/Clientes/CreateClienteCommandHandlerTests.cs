@@ -119,6 +119,9 @@ public class CreateClienteCommandHandlerTests
             return Task.CompletedTask;
         }
 
+        public Task DeleteAsync(ClienteEntity entity, CancellationToken ct = default)
+            => Task.CompletedTask;
+
         public Task SaveChangesAsync(CancellationToken ct = default)
             => Task.FromException(exceptionToThrow);
     }

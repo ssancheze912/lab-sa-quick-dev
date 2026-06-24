@@ -25,10 +25,46 @@ import { ClienteDetailView } from './ClienteDetailView'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 import type { Cliente } from '../domain/Cliente'
 
-// Mock siesa-ui-kit Button component used in ErrorPanel
+vi.mock('@tanstack/react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-router')>()
+  return {
+    ...actual,
+    useNavigate: () => vi.fn(),
+  }
+})
+
+// Mock siesa-ui-kit components used in ClienteDetailView and ErrorPanel
 vi.mock('siesa-ui-kit', () => ({
-  Button: ({ children, onClick, ...props }: { children: React.ReactNode; onClick?: () => void; [key: string]: unknown }) =>
-    createElement('button', { onClick, ...props }, children),
+  Button: ({ children, onClick, disabled, htmlType, type: _type, inputSize: _inputSize, ...props }: {
+    children: React.ReactNode
+    onClick?: () => void
+    disabled?: boolean
+    htmlType?: string
+    type?: string
+    inputSize?: string
+    [key: string]: unknown
+  }) =>
+    createElement('button', { onClick, disabled, type: htmlType ?? 'button', ...props }, children),
+  AlertDialog: ({ title, isOpen, onCancel, actions, showCloseButton, children }: {
+    title?: string
+    isOpen?: boolean
+    onCancel?: () => void
+    actions?: React.ReactNode
+    showCloseButton?: boolean
+    children?: React.ReactNode
+  }) => {
+    if (!isOpen) return null
+    return createElement(
+      'div',
+      { role: 'dialog', 'aria-label': title, 'data-testid': 'alert-dialog' },
+      showCloseButton && createElement('button', { onClick: onCancel, 'data-testid': 'close-dialog-button' }, 'X'),
+      actions ?? children,
+    )
+  },
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }))
 
 const mockCliente: Cliente = {
