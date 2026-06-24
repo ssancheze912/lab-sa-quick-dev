@@ -73,6 +73,29 @@ vi.mock('siesa-ui-kit', () => ({
       createElement('input', { id, ...props }),
       errorMessage && createElement('p', { role: 'alert' }, errorMessage),
     ),
+  Select: ({
+    options,
+    value,
+    onChange,
+    ariaLabel,
+  }: {
+    options: { value: string; label: string }[]
+    value?: string
+    onChange?: (value: string) => void
+    ariaLabel?: string
+  }) =>
+    createElement(
+      'select',
+      {
+        'aria-label': ariaLabel,
+        value,
+        onChange: (e: React.ChangeEvent<HTMLSelectElement>) => onChange?.(e.target.value),
+        'data-testid': 'sort-select',
+      },
+      ...options.map((opt) =>
+        createElement('option', { key: opt.value, value: opt.value }, opt.label),
+      ),
+    ),
   toast: {
     success: vi.fn(),
     error: vi.fn(),
@@ -317,5 +340,73 @@ describe('ClienteListView', () => {
       expect(screen.getByText('No se encontraron clientes que coincidan con la búsqueda.')).toBeInTheDocument()
       expect(screen.queryByText('No hay clientes registrados. Crea el primero.')).not.toBeInTheDocument()
     })
+  })
+
+  it('SortControl is rendered in the list view (AC#6 — sort-control present)', async () => {
+    // Arrange & Act
+    renderClienteListView()
+
+    // Assert — sort control present after router initialization
+    await waitFor(() => {
+      expect(screen.getByTestId('sort-control')).toBeInTheDocument()
+    })
+  })
+
+  it('changing sort via SortControl reorders the displayed client list (AC#1)', async () => {
+    // Arrange — mockClientes: Alpha (2026-01-01), Beta (2026-01-02)
+    // Default sort: fecha-desc → Beta first (newest)
+    renderClienteListView()
+
+    await waitFor(() => {
+      expect(screen.getByText('Empresa Beta')).toBeInTheDocument()
+    })
+
+    // Verify default fecha-desc order: Beta (newest) appears before Alpha (oldest)
+    // Use client-list-item test ids for precise ordering (not <option> elements from select)
+    const betaItem = screen.getByTestId(`client-list-item-${mockClientes[1].id}`)
+    const alphaItem = screen.getByTestId(`client-list-item-${mockClientes[0].id}`)
+    const list = screen.getByRole('listbox')
+    const allItems = Array.from(list.querySelectorAll('[role="option"]'))
+    expect(allItems.indexOf(betaItem)).toBeLessThan(allItems.indexOf(alphaItem))
+
+    // Act — change to nombre-asc: Alpha should appear first
+    const sortSelect = screen.getByTestId('sort-select')
+    act(() => {
+      fireEvent.change(sortSelect, { target: { value: 'nombre-asc' } })
+    })
+
+    // Assert — Alpha (A) before Beta (B)
+    const allItemsAfter = Array.from(list.querySelectorAll('[role="option"]'))
+    const alphaIndex = allItemsAfter.findIndex((el) => el.getAttribute('data-testid') === `client-list-item-${mockClientes[0].id}`)
+    const betaIndex = allItemsAfter.findIndex((el) => el.getAttribute('data-testid') === `client-list-item-${mockClientes[1].id}`)
+    expect(alphaIndex).toBeLessThan(betaIndex)
+  })
+
+  it('search filter and sort coexist — filtered + sorted result renders correctly (AC#5)', async () => {
+    // Arrange — server returns both clientes
+    renderClienteListView()
+
+    await waitFor(() => {
+      expect(screen.getByText('Empresa Alpha')).toBeInTheDocument()
+    })
+
+    // Act — apply search filter (only Alpha matches)
+    const searchInput = screen.getByTestId('client-search-input')
+    fireEvent.change(searchInput, { target: { value: 'alpha' } })
+
+    // Assert — only Alpha shown
+    expect(screen.getByText('Empresa Alpha')).toBeInTheDocument()
+    expect(screen.queryByText('Empresa Beta')).not.toBeInTheDocument()
+
+    // Act — change sort order (should not clear filter)
+    const sortSelect = screen.getByTestId('sort-select')
+    act(() => {
+      fireEvent.change(sortSelect, { target: { value: 'nombre-desc' } })
+    })
+
+    // Assert — Alpha still shown, Beta still absent, search input not cleared
+    expect(screen.getByText('Empresa Alpha')).toBeInTheDocument()
+    expect(screen.queryByText('Empresa Beta')).not.toBeInTheDocument()
+    expect((searchInput as HTMLInputElement).value).toBe('alpha')
   })
 })

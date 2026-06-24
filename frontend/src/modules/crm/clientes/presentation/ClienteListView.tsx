@@ -5,9 +5,11 @@ import 'react-loading-skeleton/dist/skeleton.css'
 import { PlusIcon } from '@heroicons/react/24/outline'
 import { AlertDialog, Button } from 'siesa-ui-kit'
 import { useClientes } from '../application/useClientes'
+import { useSortClientes } from '../application/useSortClientes'
 import { ClientListItem } from '../../../../shared/components/ClientListItem'
 import { EmptyState } from '../../../../shared/components/EmptyState'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
+import { SortControl } from '../../../../shared/components/SortControl'
 import { ClienteForm } from './ClienteForm'
 
 export function ClienteListView() {
@@ -27,6 +29,8 @@ export function ClienteListView() {
         c.nombre.toLowerCase().includes(q) || c.nit.toLowerCase().includes(q),
     )
   }, [data, searchQuery])
+
+  const { sortedClientes, sortOption, setSortOption } = useSortClientes(filteredClientes)
 
   return (
     <aside
@@ -54,6 +58,7 @@ export function ClienteListView() {
           data-testid="client-search-input"
           className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-primary-500"
         />
+        <SortControl value={sortOption} onChange={setSortOption} />
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -65,7 +70,7 @@ export function ClienteListView() {
 
         {isError && <ErrorPanel onRetry={() => void refetch()} />}
 
-        {!isLoading && !isError && filteredClientes.length === 0 && (
+        {!isLoading && !isError && sortedClientes.length === 0 && (
           <EmptyState
             message={
               searchQuery.trim()
@@ -75,9 +80,9 @@ export function ClienteListView() {
           />
         )}
 
-        {!isLoading && !isError && filteredClientes.length > 0 && (
+        {!isLoading && !isError && sortedClientes.length > 0 && (
           <ul role="listbox" aria-label="Lista de clientes">
-            {filteredClientes.map((cliente) => (
+            {sortedClientes.map((cliente) => (
               <ClientListItem
                 key={cliente.id}
                 cliente={cliente}
