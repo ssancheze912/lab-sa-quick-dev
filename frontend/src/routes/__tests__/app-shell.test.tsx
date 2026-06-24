@@ -47,6 +47,9 @@ async function renderWithRouter(initialPath: string) {
   const memoryHistory = createMemoryHistory({ initialEntries: [initialPath] })
   const router = createRouter({ routeTree, history: memoryHistory })
 
+  // Load the router before rendering so the initial route is resolved synchronously
+  await router.load()
+
   return render(<RouterProvider router={router} />)
 }
 
