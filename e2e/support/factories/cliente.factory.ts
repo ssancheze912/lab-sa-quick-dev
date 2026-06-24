@@ -6,7 +6,7 @@
  * light while still producing unique, deterministic values per test run.
  */
 
-let seq = Date.now();
+let seq = Date.now() + Math.floor(Math.random() * 1_000_000) * 10_000;
 
 function next(): string {
   return String(++seq);

@@ -126,7 +126,7 @@ const server = http.createServer((req, res) => {
           updatedAt: now,
         };
         clientesStore.set(newCliente.id, newCliente);
-        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.writeHead(201, { 'Content-Type': 'application/json', 'Location': `/api/v1/clientes/${newCliente.id}` });
         res.end(JSON.stringify(newCliente));
       } catch {
         res.writeHead(400, { 'Content-Type': 'application/json' });
