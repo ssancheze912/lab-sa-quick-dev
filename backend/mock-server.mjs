@@ -63,6 +63,53 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // GET /api/v1/clientes — client list (Story 2.1)
+  if (method === 'GET' && url === '/api/v1/clientes') {
+    const now = new Date().toISOString();
+    const clientes = [
+      { id: '11111111-1111-1111-1111-111111111111', nombre: 'Empresa Alpha SA', nit: '900123456', telefono: '3001234567', ciudad: 'Bogotá', createdAt: now, updatedAt: now },
+      { id: '22222222-2222-2222-2222-222222222222', nombre: 'Beta Industries Ltda', nit: '800987654', telefono: '3109876543', ciudad: 'Medellín', createdAt: now, updatedAt: now },
+      { id: '33333333-3333-3333-3333-333333333333', nombre: 'Gamma Servicios SAS', nit: '700456789', telefono: '3204567890', ciudad: 'Cali', createdAt: now, updatedAt: now },
+    ];
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(clientes));
+    return;
+  }
+
+  // POST /api/v1/clientes — create client (Story 2.1 API contract tests)
+  if (method === 'POST' && url === '/api/v1/clientes') {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body);
+        const now = new Date().toISOString();
+        const newCliente = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}-0000-0000-000000000000`.slice(0, 36),
+          nombre: payload.nombre ?? '',
+          nit: payload.nit ?? '',
+          telefono: payload.telefono ?? '',
+          ciudad: payload.ciudad ?? '',
+          createdAt: now,
+          updatedAt: now,
+        };
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(newCliente));
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ title: 'Bad Request', status: 400 }));
+      }
+    });
+    return;
+  }
+
+  // DELETE /api/v1/clientes/:id — cleanup for API contract tests
+  if (method === 'DELETE' && url.startsWith('/api/v1/clientes/')) {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   // /swagger must NOT return 200 (Swashbuckle forbidden)
   if (url.startsWith('/swagger')) {
     res.writeHead(404, { 'Content-Type': 'application/json' });
