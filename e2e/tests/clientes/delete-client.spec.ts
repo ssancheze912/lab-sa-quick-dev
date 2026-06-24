@@ -288,8 +288,7 @@ test.describe('AC3 — "Cancelar" closes dialog without deleting client', () => 
     await page.getByTestId('cancelar-eliminacion-button').click();
 
     // THEN: No DELETE request was made
-    await page.waitForTimeout(500); // brief settle time
-    expect(deleteCalled).toBe(false);
+    await expect.poll(() => deleteCalled).toBe(false);
   });
 
   test('should keep the client record visible in detail after clicking "Cancelar"', async ({ page }) => {

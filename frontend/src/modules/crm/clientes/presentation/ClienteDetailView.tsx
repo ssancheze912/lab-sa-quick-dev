@@ -103,7 +103,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
           </Button>
           <Button
             htmlType="button"
-            type="outline"
+            type="destructive"
             data-testid="eliminar-cliente-button"
             aria-label="Eliminar cliente"
             onClick={() => setIsDeleteDialogOpen(true)}
@@ -150,7 +150,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
             </Button>
             <Button
               htmlType="button"
-              type="default"
+              type="destructive"
               data-testid="confirmar-eliminacion-button"
               onClick={handleConfirmDelete}
               disabled={isDeleting}
