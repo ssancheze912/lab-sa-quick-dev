@@ -229,9 +229,12 @@ describe('App Shell — Navigation', () => {
   })
 
   it('clicking mobile Contactos item navigates to /contactos', async () => {
+    setViewport(390)
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    await act(async () => {
+      render(<RouterProvider router={router} />)
+    })
     const mobileContactosBtn = screen.getByTestId('mobile-nav-item-contactos')
     fireEvent.click(mobileContactosBtn)
     await router.invalidate()
@@ -239,9 +242,12 @@ describe('App Shell — Navigation', () => {
   })
 
   it('clicking mobile Clientes item navigates to /clientes from contactos', async () => {
+    setViewport(390)
     const router = buildRouter('/contactos')
     await router.load()
-    render(<RouterProvider router={router} />)
+    await act(async () => {
+      render(<RouterProvider router={router} />)
+    })
     const mobileClientesBtn = screen.getByTestId('mobile-nav-item-clientes')
     fireEvent.click(mobileClientesBtn)
     await router.invalidate()
@@ -249,9 +255,12 @@ describe('App Shell — Navigation', () => {
   })
 
   it('mobile nav bar onItemClick fires navigation', async () => {
+    setViewport(390)
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    await act(async () => {
+      render(<RouterProvider router={router} />)
+    })
     const navBar = screen.getByTestId('navigation-bar')
     const contactosBtn = navBar.querySelector('[data-testid="mobile-nav-item-contactos"]')
     expect(contactosBtn).not.toBeNull()
