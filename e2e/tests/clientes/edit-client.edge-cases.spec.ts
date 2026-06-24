@@ -144,18 +144,25 @@ test.describe('[P2] "Editar" button not accessible during loading and error stat
     await page.route(API_CLIENTES, (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([cliente]) })
     );
+    let releaseDetailResponse!: () => void;
+    const detailResponseHeld = new Promise<void>((resolve) => { releaseDetailResponse = resolve; });
+
     await page.route(API_CLIENTE_BY_ID, async (route) => {
-      // Hold the response for a long time so we can assert skeleton state
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Hold the response indefinitely until released — deterministic skeleton state
+      await detailResponseHeld;
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(cliente) });
     });
 
     // WHEN: User navigates to the client detail
-    await page.goto(`/clientes/${cliente.id}`);
+    const gotoPromise = page.goto(`/clientes/${cliente.id}`);
 
-    // THEN: During loading, "Editar" button is not present or not visible
+    // THEN: During loading (response still pending), "Editar" button is not present or not visible
     const editButton = page.getByTestId('editar-cliente-button');
-    await expect(editButton).not.toBeVisible();
+    await expect(editButton).not.toBeVisible({ timeout: 3000 });
+
+    // Cleanup: release the held response so the page can settle
+    releaseDetailResponse();
+    await gotoPromise;
   });
 
   test('[P2] should NOT show "Editar" button when client detail fails to load (error state)', async ({ page }) => {
