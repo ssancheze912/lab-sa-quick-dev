@@ -28,6 +28,13 @@ const clientesStore = new Map([
   ['33333333-3333-3333-3333-333333333333', { id: '33333333-3333-3333-3333-333333333333', nombre: 'Gamma Servicios SAS', nit: '700456789', telefono: '3204567890', ciudad: 'Cali', createdAt: now0, updatedAt: now0 }],
 ]);
 
+const now1 = new Date().toISOString();
+const contactosStore = new Map([
+  ['aaaaaaaa-0000-0000-0000-000000000001', { id: 'aaaaaaaa-0000-0000-0000-000000000001', nombre: 'Ana García', cargo: 'Gerente Comercial', email: 'ana.garcia@empresa.com', telefono: '3001112233', clienteId: null, createdAt: now1, updatedAt: now1 }],
+  ['aaaaaaaa-0000-0000-0000-000000000002', { id: 'aaaaaaaa-0000-0000-0000-000000000002', nombre: 'Carlos López', cargo: 'Director Técnico', email: 'carlos.lopez@beta.com', telefono: '3104445566', clienteId: null, createdAt: now1, updatedAt: now1 }],
+  ['aaaaaaaa-0000-0000-0000-000000000003', { id: 'aaaaaaaa-0000-0000-0000-000000000003', nombre: 'María Rodríguez', cargo: 'Analista', email: 'maria.rodriguez@gamma.com', telefono: '3207778899', clienteId: null, createdAt: now1, updatedAt: now1 }],
+]);
+
 let idCounter = 0;
 function newGuid() {
   idCounter++;
@@ -206,6 +213,108 @@ const server = http.createServer((req, res) => {
   if (method === 'DELETE' && url.startsWith('/api/v1/clientes/')) {
     const id = url.split('/').pop();
     clientesStore.delete(id);
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  // ── Contactos endpoints (Story 3.x) ──────────────────────────────────────
+
+  // GET /api/v1/contactos — contact list (Story 3.1)
+  if (method === 'GET' && url === '/api/v1/contactos') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify([...contactosStore.values()]));
+    return;
+  }
+
+  // GET /api/v1/contactos/:id — contact detail (Story 3.2)
+  if (method === 'GET' && url.match(/^\/api\/v1\/contactos\/[^/]+$/)) {
+    const id = url.split('/').pop();
+    const contacto = contactosStore.get(id);
+    if (contacto) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(contacto));
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/problem+json' });
+      res.end(JSON.stringify({ type: 'https://tools.ietf.org/html/rfc7807', title: 'Not Found', status: 404, detail: `Contacto con id '${id}' no fue encontrado.` }));
+    }
+    return;
+  }
+
+  // POST /api/v1/contactos — create contact (Story 3.3)
+  if (method === 'POST' && url === '/api/v1/contactos') {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body);
+        const missing = ['nombre', 'cargo', 'email'].filter(f => !payload[f]);
+        if (missing.length > 0) {
+          res.writeHead(400, { 'Content-Type': 'application/problem+json' });
+          res.end(JSON.stringify({ type: 'https://tools.ietf.org/html/rfc7807', title: 'Validation failed', status: 400, errors: Object.fromEntries(missing.map(f => [f, [`The ${f} field is required.`]])) }));
+          return;
+        }
+        const duplicate = [...contactosStore.values()].find(c => c.email === payload.email);
+        if (duplicate) {
+          res.writeHead(409, { 'Content-Type': 'application/problem+json' });
+          res.end(JSON.stringify({ type: 'https://tools.ietf.org/html/rfc7807', title: 'Conflict', status: 409, detail: 'El email ya está registrado.' }));
+          return;
+        }
+        const now = new Date().toISOString();
+        const newContacto = { id: newGuid(), nombre: payload.nombre, cargo: payload.cargo, email: payload.email, telefono: payload.telefono || null, clienteId: payload.clienteId || null, createdAt: now, updatedAt: now };
+        contactosStore.set(newContacto.id, newContacto);
+        res.writeHead(201, { 'Content-Type': 'application/json', 'Location': `/api/v1/contactos/${newContacto.id}` });
+        res.end(JSON.stringify(newContacto));
+      } catch { res.writeHead(400); res.end(); }
+    });
+    return;
+  }
+
+  // PUT /api/v1/contactos/:id — update contact (Story 3.4)
+  if (method === 'PUT' && url.match(/^\/api\/v1\/contactos\/[^/]+$/)) {
+    const id = url.split('/').pop();
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id ?? '')) {
+      res.writeHead(400, { 'Content-Type': 'application/problem+json' });
+      res.end(JSON.stringify({ type: 'https://tools.ietf.org/html/rfc7807', title: 'Bad Request', status: 400, detail: `'${id}' is not a valid GUID.` }));
+      return;
+    }
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body);
+        const existing = contactosStore.get(id);
+        if (!existing) {
+          res.writeHead(404, { 'Content-Type': 'application/problem+json' });
+          res.end(JSON.stringify({ type: 'https://tools.ietf.org/html/rfc7807', title: 'Not Found', status: 404, detail: `Contacto con id '${id}' no fue encontrado.` }));
+          return;
+        }
+        const missing = ['nombre', 'cargo', 'email'].filter(f => !payload[f]);
+        if (missing.length > 0) {
+          res.writeHead(400, { 'Content-Type': 'application/problem+json' });
+          res.end(JSON.stringify({ type: 'https://tools.ietf.org/html/rfc7807', title: 'Validation failed', status: 400, errors: Object.fromEntries(missing.map(f => [f, [`The ${f} field is required.`]])) }));
+          return;
+        }
+        const duplicate = [...contactosStore.values()].find(c => c.email === payload.email && c.id !== id);
+        if (duplicate) {
+          res.writeHead(409, { 'Content-Type': 'application/problem+json' });
+          res.end(JSON.stringify({ type: 'https://tools.ietf.org/html/rfc7807', title: 'Conflict', status: 409, detail: 'El email ya está registrado.' }));
+          return;
+        }
+        const updated = { ...existing, nombre: payload.nombre, cargo: payload.cargo, email: payload.email, telefono: payload.telefono ?? existing.telefono, updatedAt: new Date().toISOString() };
+        contactosStore.set(id, updated);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(updated));
+      } catch { res.writeHead(400); res.end(); }
+    });
+    return;
+  }
+
+  // DELETE /api/v1/contactos/:id — delete contact (Story 3.5)
+  if (method === 'DELETE' && url.startsWith('/api/v1/contactos/')) {
+    const id = url.split('/').pop();
+    contactosStore.delete(id);
     res.writeHead(204);
     res.end();
     return;

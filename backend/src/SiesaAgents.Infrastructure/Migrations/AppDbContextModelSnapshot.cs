@@ -70,6 +70,70 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
 
             b.ToTable("clientes");
         });
+
+        modelBuilder.Entity("SiesaAgents.Domain.Entities.ContactoEntity", b =>
+        {
+            b.Property<Guid>("Id")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("uuid")
+                .HasColumnName("id");
+
+            b.Property<string>("Nombre")
+                .IsRequired()
+                .HasMaxLength(200)
+                .HasColumnType("character varying(200)")
+                .HasColumnName("nombre");
+
+            b.Property<string>("Cargo")
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasColumnType("character varying(100)")
+                .HasColumnName("cargo");
+
+            b.Property<string>("Telefono")
+                .IsRequired()
+                .HasMaxLength(30)
+                .HasColumnType("character varying(30)")
+                .HasColumnName("telefono");
+
+            b.Property<string>("Email")
+                .IsRequired()
+                .HasMaxLength(200)
+                .HasColumnType("character varying(200)")
+                .HasColumnName("email");
+
+            b.Property<Guid?>("ClienteId")
+                .HasColumnType("uuid")
+                .HasColumnName("cliente_id");
+
+            b.Property<DateTimeOffset>("CreatedAt")
+                .HasColumnType("timestamp with time zone")
+                .HasColumnName("created_at");
+
+            b.Property<DateTimeOffset>("UpdatedAt")
+                .HasColumnType("timestamp with time zone")
+                .HasColumnName("updated_at");
+
+            b.HasKey("Id")
+                .HasName("pk_contactos");
+
+            b.HasIndex("Email")
+                .HasDatabaseName("ix_contactos_email");
+
+            b.HasIndex("ClienteId")
+                .HasDatabaseName("ix_contactos_cliente_id");
+
+            b.ToTable("contactos");
+        });
+
+        modelBuilder.Entity("SiesaAgents.Domain.Entities.ContactoEntity", b =>
+        {
+            b.HasOne("SiesaAgents.Domain.Entities.ClienteEntity", null)
+                .WithMany()
+                .HasForeignKey("ClienteId")
+                .HasConstraintName("fk_contactos_clientes")
+                .OnDelete(DeleteBehavior.SetNull);
+        });
 #pragma warning restore 612, 618
     }
 }
