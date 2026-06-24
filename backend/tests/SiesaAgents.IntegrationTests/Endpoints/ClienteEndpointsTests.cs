@@ -17,7 +17,7 @@ namespace SiesaAgents.IntegrationTests.Endpoints;
 public sealed class ClienteEndpointsTests : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
+        .WithImage("postgres:18-alpine")
         .WithDatabase("siesa_agents_test")
         .WithUsername("postgres")
         .WithPassword("postgres")
