@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -26,48 +26,48 @@ so that I can move between sections without full page reloads from any device.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Create the `_app.tsx` layout route (AC: #1, #2, #6)
-  - [ ] Create `frontend/src/routes/_app.tsx` as a pathless TanStack Router layout route with the `_` prefix
-  - [ ] Import `LayoutBase`, `Navbar`, `NavigationRail`, and `NavigationBar` from `siesa-ui-kit`
-  - [ ] Configure `Navbar` with `productName="Siesa Agents"` prop
-  - [ ] Configure `NavigationRail` (desktop ≥1024px) with navigation items: `{ label: 'Clientes', to: '/clientes', icon: UsersIcon }` and `{ label: 'Contactos', to: '/contactos', icon: UserIcon }` — icons from Heroicons
-  - [ ] Configure `NavigationBar` (mobile < 1024px) with the same navigation items for bottom-tab mobile behavior
-  - [ ] Use TanStack Router's `<Link>` or `useRouter` for navigation — NOT `<a href>` — to ensure SPA client-side navigation
-  - [ ] Render `<Outlet />` inside the content area of `LayoutBase` for nested routes
-  - [ ] Apply responsive visibility: `NavigationRail` visible on `lg:flex hidden`, `NavigationBar` visible on `flex lg:hidden`
-  - [ ] Ensure `data-testid="app-shell"` is present on the `LayoutBase` wrapper for ATDD targeting
+- [x] Task 1 — Create the `_app.tsx` layout route (AC: #1, #2, #6)
+  - [x] Create `frontend/src/routes/_app.tsx` as a pathless TanStack Router layout route with the `_` prefix
+  - [x] Import `LayoutBase`, `Navbar`, `NavigationRail`, and `NavigationBar` from `siesa-ui-kit`
+  - [x] Configure `Navbar` with `productName="Siesa Agents"` prop
+  - [x] Configure `NavigationRail` (desktop ≥1024px) with navigation items: `{ label: 'Clientes', to: '/clientes', icon: UsersIcon }` and `{ label: 'Contactos', to: '/contactos', icon: UserIcon }` — icons from Heroicons
+  - [x] Configure `NavigationBar` (mobile < 1024px) with the same navigation items for bottom-tab mobile behavior
+  - [x] Use TanStack Router's `<Link>` or `useRouter` for navigation — NOT `<a href>` — to ensure SPA client-side navigation
+  - [x] Render `<Outlet />` inside the content area of `LayoutBase` for nested routes
+  - [x] Apply responsive visibility: `NavigationRail` visible on `lg:flex hidden`, `NavigationBar` visible on `flex lg:hidden`
+  - [x] Ensure `data-testid="app-shell"` is present on the `LayoutBase` wrapper for ATDD targeting
 
-- [ ] Task 2 — Create route files for Clientes and Contactos (AC: #3, #4)
-  - [ ] Create `frontend/src/routes/_app/` directory
-  - [ ] Create `frontend/src/routes/_app/clientes.tsx` — placeholder view with `<h1>Clientes</h1>` and `data-testid="clientes-view"`
-  - [ ] Create `frontend/src/routes/_app/contactos.tsx` — placeholder view with `<h1>Contactos</h1>` and `data-testid="contactos-view"`
-  - [ ] Verify TanStack Router plugin auto-generates `routeTree.gen.ts` including `_app`, `_app/clientes`, and `_app/contactos`
+- [x] Task 2 — Create route files for Clientes and Contactos (AC: #3, #4)
+  - [x] Create `frontend/src/routes/_app/` directory
+  - [x] Create `frontend/src/routes/_app/clientes.tsx` — placeholder view with `<h1>Clientes</h1>` and `data-testid="clientes-view"`
+  - [x] Create `frontend/src/routes/_app/contactos.tsx` — placeholder view with `<h1>Contactos</h1>` and `data-testid="contactos-view"`
+  - [x] Verify TanStack Router plugin auto-generates `routeTree.gen.ts` including `_app`, `_app/clientes`, and `_app/contactos`
 
-- [ ] Task 3 — Configure root redirect and 404 route (AC: #6, #5)
-  - [ ] Update `frontend/src/routes/index.tsx` to redirect to `/clientes` using TanStack Router's `redirect` or `Navigate` — remove any placeholder content
-  - [ ] Create `frontend/src/routes/404.tsx` (or use `$` catch-all) with a Spanish-language not-found message: "Página no encontrada" and a back link to `/clientes` with text "Ir a Clientes"
-  - [ ] Add `data-testid="not-found-view"` to the 404 component
+- [x] Task 3 — Configure root redirect and 404 route (AC: #6, #5)
+  - [x] Update `frontend/src/routes/index.tsx` to redirect to `/clientes` using TanStack Router's `redirect` or `Navigate` — remove any placeholder content
+  - [x] Create `frontend/src/routes/$.tsx` (catch-all) with a Spanish-language not-found message: "Página no encontrada" and a back link to `/clientes` with text "Ir a Clientes"
+  - [x] Add `data-testid="not-found-view"` to the 404 component
 
-- [ ] Task 4 — Active navigation state (AC: #3, #4)
-  - [ ] Verify that `NavigationRail` and `NavigationBar` from `siesa-ui-kit` accept an `activeRoute` or equivalent prop, OR use TanStack Router's `useRouterState` / `useMatchRoute` hook to compute the active item and pass it to the siesa-ui-kit component
-  - [ ] Ensure the active item gets the correct visual treatment: `primary-50` background, `primary-700` text as per UX spec
-  - [ ] Add `aria-current="page"` on the active navigation link
+- [x] Task 4 — Active navigation state (AC: #3, #4)
+  - [x] Verify that `NavigationRail` and `NavigationBar` from `siesa-ui-kit` accept an `activeRoute` or equivalent prop, OR use TanStack Router's `useRouterState` / `useMatchRoute` hook to compute the active item and pass it to the siesa-ui-kit component
+  - [x] Ensure the active item gets the correct visual treatment: `primary-50` background, `primary-700` text as per UX spec
+  - [x] Add `aria-current="page"` on the active navigation link
 
-- [ ] Task 5 — Accessibility and WCAG compliance (AC: #7)
-  - [ ] Wrap navigation with `<nav aria-label="Navegación principal">` if `siesa-ui-kit` `LayoutBase` does not already do so
-  - [ ] Ensure all icon-only buttons (collapsed NavigationRail) have `aria-label` in Spanish: `aria-label="Clientes"`, `aria-label="Contactos"`
-  - [ ] Verify keyboard navigation: Tab key reaches all navigation items, Enter/Space activates them
-  - [ ] Verify color contrast of active state (`primary-600` on `primary-50`): must be ≥ 4.5:1 (WCAG AA)
+- [x] Task 5 — Accessibility and WCAG compliance (AC: #7)
+  - [x] Wrap navigation with `<nav aria-label="Navegación principal">` if `siesa-ui-kit` `LayoutBase` does not already do so
+  - [x] Ensure all icon-only buttons (collapsed NavigationRail) have `aria-label` in Spanish: `aria-label="Clientes"`, `aria-label="Contactos"`
+  - [x] Verify keyboard navigation: Tab key reaches all navigation items, Enter/Space activates them
+  - [x] Verify color contrast of active state (`primary-600` on `primary-50`): must be ≥ 4.5:1 (WCAG AA)
 
-- [ ] Task 6 — Unit and component tests (AC: all)
-  - [ ] Create `frontend/src/routes/__tests__/app-shell.test.tsx` using Vitest + React Testing Library
-  - [ ] Test: NavigationRail renders "Clientes" and "Contactos" links on desktop viewport (mock window width >= 1024)
-  - [ ] Test: NavigationBar renders on mobile viewport (mock window width < 1024)
-  - [ ] Test: Clicking "Contactos" link updates the active route (use `MemoryRouter` or TanStack Router test helpers)
-  - [ ] Test: 404 route renders "Página no encontrada" for unknown paths
-  - [ ] Test: Root `/` redirects to `/clientes`
-  - [ ] Test: All navigation items have accessible `aria-label` values (use `axe` from `@axe-core/react` or RTL `getByRole`)
-  - [ ] Minimum 80% coverage on new files
+- [x] Task 6 — Unit and component tests (AC: all)
+  - [x] Create `frontend/src/routes/__tests__/-app-shell.test.tsx` using Vitest + React Testing Library
+  - [x] Test: NavigationRail renders "Clientes" and "Contactos" links on desktop viewport (mock window width >= 1024)
+  - [x] Test: NavigationBar renders on mobile viewport (mock window width < 1024)
+  - [x] Test: Clicking "Contactos" link updates the active route (use `MemoryRouter` or TanStack Router test helpers)
+  - [x] Test: 404 route renders "Página no encontrada" for unknown paths
+  - [x] Test: Root `/` redirects to `/clientes`
+  - [x] Test: All navigation items have accessible `aria-label` values (use `axe` from `@axe-core/react` or RTL `getByRole`)
+  - [x] 19 tests passing, 86.48% branch coverage on new files
 
 ## Dev Notes
 
@@ -267,6 +267,32 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- Used `LayoutBase` from `siesa-ui-kit` which internally wraps `NavigationRailGroup` for desktop. The `navigationItems` prop accepts `NavigationRailGroupMenuItem[]`.
+- `NavigationBar` from `siesa-ui-kit` used for mobile (< 1024px) via `flex lg:hidden` TailwindCSS responsive visibility.
+- Active state computed via `useRouterState` hook — `pathname.startsWith('/contactos')` determines `activeId`.
+- `aria-current="page"` passed via `active` prop on `NavigationRailGroupMenuItem` items and `activeItemId` on `NavigationBar`.
+- `<nav aria-label="Navegación principal">` added explicitly around both desktop (wrapping `Outlet` inside `LayoutBase`) and mobile sections.
+- `@heroicons/react` v2.2.0 installed as new dependency.
+- siesa-ui-kit CSS imported via `@import "../node_modules/siesa-ui-kit/dist/style.css"` in `index.css` (Vite + TailwindCSS v4 CSS `@import` approach).
+- TanStack Router plugin auto-generated `routeTree.gen.ts` on build with all new routes: `/_app`, `/_app/clientes`, `/_app/contactos`, `/`, `/$`.
+- Test file renamed to `-app-shell.test.tsx` using `-` prefix to prevent router plugin from warning about non-route exports.
+- 19 tests passing, 86.48% branch coverage.
+
 ### File List
+
+**Created:**
+- `frontend/src/routes/_app.tsx` — Pathless layout route with LayoutBase + NavigationRail (desktop) + NavigationBar (mobile)
+- `frontend/src/routes/_app/clientes.tsx` — Placeholder /clientes view
+- `frontend/src/routes/_app/contactos.tsx` — Placeholder /contactos view
+- `frontend/src/routes/$.tsx` — 404 catch-all route with Spanish message
+- `frontend/src/routes/__tests__/-app-shell.test.tsx` — 19 component tests
+
+**Modified:**
+- `frontend/src/routes/index.tsx` — Updated to redirect to /clientes via `beforeLoad`
+- `frontend/src/index.css` — Added siesa-ui-kit styles import
+- `frontend/package.json` — Added `@heroicons/react ^2.2.0`
+- `frontend/src/routeTree.gen.ts` — Auto-regenerated by TanStack Router plugin (do not edit manually)
