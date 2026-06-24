@@ -77,13 +77,12 @@ test.describe('[P1] AC3 — Problem Details response body is bounded and consist
     const response = await request.get(`${API_BASE_URL}/api/v1/atdd-status-match-probe`);
     const httpStatus = response.status();
 
-    // THEN: If the body has a 'status' field, it equals the HTTP status code
-    if (httpStatus !== 200) {
-      const body = await response.json().catch(() => null);
-      if (body && typeof body.status === 'number') {
-        expect(body.status).toBe(httpStatus);
-      }
-    }
+    // THEN: The endpoint must return an error response (not 200) — this is an error probe endpoint
+    expect(httpStatus).not.toBe(200);
+    // AND: The body must be valid JSON with a numeric 'status' field matching the HTTP status code (RFC 7807)
+    const body = await response.json();
+    expect(typeof body.status).toBe('number');
+    expect(body.status).toBe(httpStatus);
   });
 });
 
@@ -278,13 +277,12 @@ test.describe('[P2] AC3 — Problem Details RFC 7807 type field is an absolute U
     const response = await request.get(`${API_BASE_URL}/api/v1/atdd-rfc-type-probe`);
     const httpStatus = response.status();
 
-    if (httpStatus !== 200) {
-      const body = await response.json().catch(() => null);
-      if (body && typeof body.type === 'string') {
-        // THEN: The 'type' field starts with 'http' (is an absolute URI)
-        expect(body.type).toMatch(/^https?:\/\//);
-      }
-    }
+    // THEN: The endpoint must return an error response (not 200) — this is an error probe endpoint
+    expect(httpStatus).not.toBe(200);
+    // AND: The body must be valid JSON with a 'type' field that is an absolute URI (RFC 7807)
+    const body = await response.json();
+    expect(typeof body.type).toBe('string');
+    expect(body.type).toMatch(/^https?:\/\//);
   });
 
   test('[P2] 404 response body does NOT contain StackTrace, at , or System.', async ({

@@ -95,13 +95,12 @@ test.describe('AC4 — Domain validation failures return correct HTTP status cod
     const response = await request.get(`${API_BASE_URL}/api/v1/atdd-error-probe-1-3`);
     const httpStatus = response.status();
 
-    if (httpStatus !== 200) {
-      const body = await response.json().catch(() => null);
-      if (body && typeof body.status === 'number') {
-        // THEN: The 'status' field in the body matches the HTTP status code (RFC 7807 requirement)
-        expect(body.status).toBe(httpStatus);
-      }
-    }
+    // THEN: The endpoint must return an error response (not 200) — this is an error probe endpoint
+    expect(httpStatus).not.toBe(200);
+    // AND: The body must be valid JSON with a numeric 'status' field matching the HTTP status code (RFC 7807)
+    const body = await response.json();
+    expect(typeof body.status).toBe('number');
+    expect(body.status).toBe(httpStatus);
   });
 });
 
