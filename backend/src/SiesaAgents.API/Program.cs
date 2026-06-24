@@ -1,9 +1,20 @@
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails();
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];

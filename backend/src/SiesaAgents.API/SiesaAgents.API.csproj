@@ -8,10 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="Scalar.AspNetCore" Version="2.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.*" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SiesaAgents.Application\SiesaAgents.Application.csproj" />
+    <ProjectReference Include="..\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
     <ProjectReference Include="..\SiesaAgents.Infrastructure\SiesaAgents.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
