@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -379,6 +379,7 @@ None.
 ### Completion Notes List
 
 - `ClienteEntity.Update()` method was already present from a prior story implementation. No changes needed to the domain entity.
+- **[Code Review Fix]** Removed `AsNoTracking()` from `ClienteRepository.GetByIdAsync` — it prevented EF Core from tracking the entity during updates, causing `SaveChangesAsync` to silently persist 0 rows. The fix enables change tracking so `entity.Update()` mutations are correctly detected and persisted.
 - `siesa-ui-kit` exports `AlertDialog` (with `isOpen`, `onCancel`, `actions`, `showCloseButton` props) but does NOT export Dialog or Sheet. Used `AlertDialog` consistently with Story 2.3 pattern.
 - `IClienteRepository` and `ClienteRepository` already had `GetByIdAsync` and `SaveChangesAsync` from Story 2.2. No new repository interface methods needed for update — EF Core tracked entity pattern via `SaveChangesAsync` is sufficient.
 - `ClienteListView.test.tsx` has one pre-existing failing test unrelated to Story 2.4.
@@ -410,4 +411,5 @@ None.
 **Backend — Modified:**
 - `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
 - `backend/src/SiesaAgents.API/Program.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — removed AsNoTracking from GetByIdAsync (code review fix)
 - `backend/tests/SiesaAgents.IntegrationTests/Endpoints/ClienteEndpointsTests.cs`
