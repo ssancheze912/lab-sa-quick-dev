@@ -545,12 +545,13 @@ test.describe('AC6 — Single API request on mount with TanStack Query caching',
 
 test.describe('AC7 — Skeleton loader during data fetch', () => {
   test('should render the skeleton loader while the API request is in flight', async ({ page }) => {
-    // GIVEN: API is delayed (simulates in-flight request)
+    // GIVEN: API is held pending via a deferred resolver (no hard wait — release-controlled)
     const clientes = createClienteDtos(3);
+    let releaseRoute!: () => void;
+    const routeHeld = new Promise<void>((resolve) => { releaseRoute = resolve; });
 
     await page.route(API_CLIENTES, async (route) => {
-      // Add delay so we can observe loading state
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await routeHeld; // blocks until released by the test
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -558,26 +559,37 @@ test.describe('AC7 — Skeleton loader during data fetch', () => {
       });
     });
 
-    // WHEN: User navigates to /clientes
-    await page.goto('/clientes');
+    // WHEN: User navigates to /clientes (route is still held — loading state active)
+    const gotoPromise = page.goto('/clientes');
 
     // THEN: Skeleton is visible before data arrives
     await expect(page.getByTestId('cliente-list-skeleton')).toBeVisible();
+
+    // Cleanup: release the route and wait for navigation to complete
+    releaseRoute();
+    await gotoPromise;
   });
 
   test('should NOT render a spinner during loading (skeleton only, no spinner)', async ({ page }) => {
-    // GIVEN: API is delayed
+    // GIVEN: API is held pending via deferred resolver (no hard wait)
+    let releaseRoute!: () => void;
+    const routeHeld = new Promise<void>((resolve) => { releaseRoute = resolve; });
+
     await page.route(API_CLIENTES, async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await routeHeld;
       return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
     });
 
-    // WHEN: User navigates to /clientes
-    await page.goto('/clientes');
+    // WHEN: User navigates to /clientes (loading state active)
+    const gotoPromise = page.goto('/clientes');
 
     // THEN: No spinner element in the DOM while loading
     const spinner = page.locator('[role="progressbar"], .spinner, [data-testid="spinner"]');
     await expect(spinner).toHaveCount(0);
+
+    // Cleanup
+    releaseRoute();
+    await gotoPromise;
   });
 
   test('should hide the skeleton loader once data is fully loaded', async ({ page }) => {
