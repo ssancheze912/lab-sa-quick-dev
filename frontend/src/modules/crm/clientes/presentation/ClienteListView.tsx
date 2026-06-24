@@ -2,13 +2,17 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
+import { PlusIcon } from '@heroicons/react/24/outline'
+import { AlertDialog, Button } from 'siesa-ui-kit'
 import { useClientes } from '../application/useClientes'
 import { ClientListItem } from '../../../../shared/components/ClientListItem'
 import { EmptyState } from '../../../../shared/components/EmptyState'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
+import { ClienteForm } from './ClienteForm'
 
 export function ClienteListView() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
   const { data, isLoading, isError, refetch } = useClientes()
   const navigate = useNavigate()
   const params = useParams({ strict: false })
@@ -30,7 +34,18 @@ export function ClienteListView() {
       data-testid="cliente-list-view"
       className="w-[280px] border-r border-slate-200 flex flex-col h-full"
     >
-      <div className="p-3 border-b border-slate-200">
+      <div className="p-3 border-b border-slate-200 flex flex-col gap-2">
+        <Button
+          htmlType="button"
+          type="default"
+          size="sm"
+          fullWidth
+          data-testid="nuevo-cliente-button"
+          leftIcon={<PlusIcon className="w-4 h-4" />}
+          onClick={() => setIsCreateFormOpen(true)}
+        >
+          Nuevo cliente
+        </Button>
         <input
           type="text"
           placeholder="Buscar por nombre o NIT/RUC..."
@@ -78,6 +93,23 @@ export function ClienteListView() {
           </ul>
         )}
       </div>
+
+      <AlertDialog
+        isOpen={isCreateFormOpen}
+        title="Nuevo cliente"
+        showCloseButton
+        hideCancel
+        size="max-w-lg"
+        preventCloseOnOverlayClick={false}
+        onCancel={() => setIsCreateFormOpen(false)}
+        description={
+          <ClienteForm
+            onSuccess={() => setIsCreateFormOpen(false)}
+            onCancel={() => setIsCreateFormOpen(false)}
+          />
+        }
+        actions={<></>}
+      />
     </aside>
   )
 }

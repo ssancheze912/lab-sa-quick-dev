@@ -14,10 +14,69 @@ import { createElement } from 'react'
 import { ClienteListView } from './ClienteListView'
 import type { Cliente } from '../domain/Cliente'
 
-// Mock siesa-ui-kit Button component
+// Mock siesa-ui-kit components
 vi.mock('siesa-ui-kit', () => ({
-  Button: ({ children, onClick, ...props }: { children: React.ReactNode; onClick?: () => void; [key: string]: unknown }) =>
-    createElement('button', { onClick, ...props }, children),
+  Button: ({
+    children,
+    onClick,
+    htmlType,
+    disabled,
+    ...props
+  }: {
+    children: React.ReactNode
+    onClick?: () => void
+    htmlType?: string
+    disabled?: boolean
+    [key: string]: unknown
+  }) =>
+    createElement('button', { onClick, type: htmlType ?? 'button', disabled, ...props }, children),
+  AlertDialog: ({
+    isOpen,
+    title,
+    description,
+    onCancel,
+    showCloseButton,
+  }: {
+    isOpen?: boolean
+    title?: string
+    description?: React.ReactNode
+    onCancel?: () => void
+    showCloseButton?: boolean
+    [key: string]: unknown
+  }) => {
+    if (!isOpen) return null
+    return createElement(
+      'div',
+      { role: 'dialog', 'aria-label': title },
+      showCloseButton &&
+        createElement('button', { onClick: onCancel, 'aria-label': 'Cerrar' }, 'X'),
+      description,
+    )
+  },
+  Input: ({
+    label,
+    id,
+    errorMessage,
+    error: _error,
+    ...props
+  }: {
+    label?: string
+    id?: string
+    errorMessage?: string
+    error?: boolean
+    [key: string]: unknown
+  }) =>
+    createElement(
+      'div',
+      null,
+      label && createElement('label', { htmlFor: id }, label),
+      createElement('input', { id, ...props }),
+      errorMessage && createElement('p', { role: 'alert' }, errorMessage),
+    ),
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }))
 
 const mockClientes: Cliente[] = [

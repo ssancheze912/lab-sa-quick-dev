@@ -45,6 +45,46 @@ afterAll(() => server.close())
 
 // Mock siesa-ui-kit — same contract as the primary test file
 vi.mock('siesa-ui-kit', () => ({
+  Button: ({
+    children,
+    onClick,
+    htmlType,
+    disabled,
+  }: {
+    children: React.ReactNode
+    onClick?: () => void
+    htmlType?: string
+    disabled?: boolean
+    [key: string]: unknown
+  }) => <button type={(htmlType as 'button' | 'submit' | 'reset') ?? 'button'} onClick={onClick} disabled={disabled}>{children}</button>,
+  AlertDialog: ({
+    isOpen,
+    description,
+  }: {
+    isOpen?: boolean
+    description?: React.ReactNode
+    [key: string]: unknown
+  }) => isOpen ? <div role="dialog">{description}</div> : null,
+  Input: ({
+    label,
+    id,
+    errorMessage,
+  }: {
+    label?: string
+    id?: string
+    errorMessage?: string
+    [key: string]: unknown
+  }) => (
+    <div>
+      {label && <label htmlFor={id}>{label}</label>}
+      <input id={id} />
+      {errorMessage && <p role="alert">{errorMessage}</p>}
+    </div>
+  ),
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
   LayoutBase: ({ children, navigationItems, productName }: {
     children: React.ReactNode
     navigationItems?: Array<{ id: string; label: string; active?: boolean; onClick?: () => void }>
