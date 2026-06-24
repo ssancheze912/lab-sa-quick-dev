@@ -386,8 +386,8 @@ test.describe('AC3 — Client-side validation: empty fields show inline errors w
     await page.getByTestId('submit-button').click();
 
     // THEN: No POST call was made to the backend
-    // Wait briefly to confirm no network call occurs
-    await page.waitForTimeout(300);
+    // Validate no POST occurred by checking form still shows validation errors (Zod prevents submission)
+    await expect(page.getByText('El nombre es requerido')).toBeVisible();
     expect(postCalled).toBe(false);
   });
 
