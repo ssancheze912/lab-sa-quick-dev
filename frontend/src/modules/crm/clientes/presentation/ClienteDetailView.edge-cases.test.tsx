@@ -194,6 +194,8 @@ describe('ClienteDetailView — edge: correct HTML section element', () => {
     // Arrange: Delay response to ensure skeleton renders
     server.use(
       http.get('*/api/v1/clientes/:id', async () => {
+        // Justified: MSW delay holds the response in-flight so the synchronous
+        // assertion below can observe the section element during skeleton state.
         await new Promise((resolve) => setTimeout(resolve, 300))
         return HttpResponse.json(mockCliente)
       }),
@@ -223,6 +225,8 @@ describe('ClienteDetailView — edge: skeleton has 4 rows matching field count',
     // Arrange: Delayed response
     server.use(
       http.get('*/api/v1/clientes/:id', async () => {
+        // Justified: MSW delay holds the response in-flight to verify that
+        // the skeleton container renders during the loading window.
         await new Promise((resolve) => setTimeout(resolve, 300))
         return HttpResponse.json(mockCliente)
       }),

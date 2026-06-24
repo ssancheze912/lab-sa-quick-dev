@@ -146,6 +146,10 @@ describe('ClienteDetailView', () => {
     // Arrange — delay response so component stays in loading state
     server.use(
       http.get('*/api/v1/clientes/:id', async () => {
+        // Justified: 300ms MSW delay holds the response in-flight so the
+        // synchronous assertion below can observe the skeleton loading state.
+        // This is NOT a hard wait for timing — it simulates network latency
+        // to create a testable loading window before the skeleton disappears.
         await new Promise((resolve) => setTimeout(resolve, 300))
         return HttpResponse.json(mockCliente)
       }),
@@ -166,6 +170,8 @@ describe('ClienteDetailView', () => {
     // Arrange — delay response
     server.use(
       http.get('*/api/v1/clientes/:id', async () => {
+        // Justified: MSW delay holds the response in-flight to verify no
+        // spinner is rendered during the loading window (skeleton-only requirement).
         await new Promise((resolve) => setTimeout(resolve, 300))
         return HttpResponse.json(mockCliente)
       }),
