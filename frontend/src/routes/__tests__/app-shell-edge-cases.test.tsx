@@ -18,7 +18,7 @@
  *   - app-shell wrapper present on both layouts (mobile + desktop)
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import {
   createRouter,
@@ -27,11 +27,21 @@ import {
   createRootRoute,
   createRoute,
 } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { http, HttpResponse } from 'msw'
+import { setupServer } from 'msw/node'
 import { Route as AppRoute } from '../_app'
 import { Route as ClientesRoute } from '../_app/clientes'
 import { Route as ContactosRoute } from '../_app/contactos'
 import { Route as SplatRoute } from '../$'
 import { Route as IndexRoute } from '../index'
+
+// MSW server — intercept API calls from ClienteListView
+const server = setupServer(
+  http.get('*/api/v1/clientes', () => HttpResponse.json([])),
+)
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
+afterAll(() => server.close())
 
 // Mock siesa-ui-kit — same contract as the primary test file
 vi.mock('siesa-ui-kit', () => ({
@@ -131,6 +141,15 @@ function buildRouter(initialUrl: string) {
   return createRouter({ routeTree, history: memoryHistory })
 }
 
+function renderWithQuery(router: ReturnType<typeof buildRouter>) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  )
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // activeId Logic — Edge-Case Pathname Handling
 // ─────────────────────────────────────────────────────────────────────────────
@@ -148,7 +167,7 @@ describe('activeId logic — pathname edge cases', () => {
     // GIVEN: Route is exactly /clientes
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: Clientes nav item has aria-current="page"
     const item = screen.getByTestId('nav-item-clientes')
@@ -159,7 +178,7 @@ describe('activeId logic — pathname edge cases', () => {
     // GIVEN: Route is exactly /contactos
     const router = buildRouter('/contactos')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: Contactos nav item has aria-current="page"
     const item = screen.getByTestId('nav-item-contactos')
@@ -170,7 +189,7 @@ describe('activeId logic — pathname edge cases', () => {
     // GIVEN: Route is /clientes
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: Contactos nav item does NOT have aria-current="page"
     const item = screen.getByTestId('nav-item-contactos')
@@ -181,7 +200,7 @@ describe('activeId logic — pathname edge cases', () => {
     // GIVEN: Route is /contactos
     const router = buildRouter('/contactos')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: Clientes nav item does NOT have aria-current="page"
     const item = screen.getByTestId('nav-item-clientes')
@@ -203,7 +222,7 @@ describe('Responsive layout — resize event handling', () => {
     setViewportWidth(390)
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: Navigation bar is present (mobile layout)
     expect(screen.getByTestId('navigation-bar')).toBeDefined()
@@ -214,7 +233,7 @@ describe('Responsive layout — resize event handling', () => {
     setViewportWidth(1280)
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: Navigation rail is present (desktop layout)
     expect(screen.getByTestId('nav-item-clientes')).toBeDefined()
@@ -226,7 +245,7 @@ describe('Responsive layout — resize event handling', () => {
     setViewportWidth(1280)
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     expect(screen.getByTestId('nav-item-clientes')).toBeDefined()
 
     // WHEN: Viewport is resized to mobile width
@@ -244,7 +263,7 @@ describe('Responsive layout — resize event handling', () => {
     setViewportWidth(390)
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     expect(screen.getByTestId('navigation-bar')).toBeDefined()
 
     // WHEN: Viewport is resized to desktop width
@@ -275,7 +294,7 @@ describe('Mobile NavigationBar — active state after click navigation', () => {
     // GIVEN: Mobile layout on /clientes
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // WHEN: User clicks the mobile Contactos item
     const contactosBtn = screen.getByTestId('mobile-nav-item-contactos')
@@ -290,7 +309,7 @@ describe('Mobile NavigationBar — active state after click navigation', () => {
     // GIVEN: Mobile layout on /contactos
     const router = buildRouter('/contactos')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // WHEN: User clicks the mobile Clientes item
     const clientesBtn = screen.getByTestId('mobile-nav-item-clientes')
@@ -311,7 +330,7 @@ describe('404 NotFoundView — content and structural edge cases', () => {
     // GIVEN: A deeply nested path that does not match any route
     const router = buildRouter('/nivel/sub-nivel/hoja')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: The not-found-view is rendered
     expect(screen.getByTestId('not-found-view')).toBeDefined()
@@ -321,7 +340,7 @@ describe('404 NotFoundView — content and structural edge cases', () => {
     // GIVEN: An unknown route
     const router = buildRouter('/no-existe')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: The main heading text is the Spanish not-found message
     expect(screen.getByText('Página no encontrada')).toBeDefined()
@@ -331,7 +350,7 @@ describe('404 NotFoundView — content and structural edge cases', () => {
     // GIVEN: An unknown route renders the not-found view
     const router = buildRouter('/no-existe')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: A secondary descriptive message is present
     expect(screen.getByText(/La ruta que buscas no existe/i)).toBeDefined()
@@ -341,7 +360,7 @@ describe('404 NotFoundView — content and structural edge cases', () => {
     // GIVEN: An unknown route renders the not-found view
     const router = buildRouter('/no-existe')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: The link to go back has the Spanish label "Ir a Clientes"
     expect(screen.getByText('Ir a Clientes')).toBeDefined()
@@ -351,7 +370,7 @@ describe('404 NotFoundView — content and structural edge cases', () => {
     // GIVEN: An unknown route renders the not-found view
     const router = buildRouter('/no-existe')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: A link element pointing to /clientes is present inside not-found-view
     const notFoundView = screen.getByTestId('not-found-view')
@@ -363,7 +382,7 @@ describe('404 NotFoundView — content and structural edge cases', () => {
     // GIVEN: An unknown route (catch-all $)
     const router = buildRouter('/no-existe')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: The 404 view renders and not-found-view is present
     // The catch-all is at root level (not inside _app layout), so app-shell is not expected
@@ -389,7 +408,7 @@ describe('Navigation item data contract validation', () => {
     // GIVEN: Desktop viewport on /clientes
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: Exactly two nav items are present in the rail (Clientes + Contactos)
     const navItemClientes = screen.queryByTestId('nav-item-clientes')
@@ -406,7 +425,7 @@ describe('Navigation item data contract validation', () => {
     setViewportWidth(390)
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: Exactly two mobile nav items are present (Clientes + Contactos)
     const mobileNavItems = document.querySelectorAll('[data-testid^="mobile-nav-item-"]')
@@ -417,7 +436,7 @@ describe('Navigation item data contract validation', () => {
     // GIVEN: Desktop viewport on /clientes
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: The Clientes nav item has visible label text "Clientes"
     const item = screen.getByTestId('nav-item-clientes')
@@ -428,7 +447,7 @@ describe('Navigation item data contract validation', () => {
     // GIVEN: Desktop viewport on /clientes
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: The Contactos nav item has visible label text "Contactos"
     const item = screen.getByTestId('nav-item-contactos')
@@ -450,7 +469,7 @@ describe('App shell structural integrity', () => {
     setViewportWidth(1280)
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: app-shell is present
     expect(screen.getByTestId('app-shell')).toBeDefined()
@@ -461,7 +480,7 @@ describe('App shell structural integrity', () => {
     setViewportWidth(390)
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: app-shell is still present (same testid, different inner layout)
     expect(screen.getByTestId('app-shell')).toBeDefined()
@@ -472,7 +491,7 @@ describe('App shell structural integrity', () => {
     setViewportWidth(1280)
     const router = buildRouter('/contactos')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: app-shell wrapper exists for /contactos too
     expect(screen.getByTestId('app-shell')).toBeDefined()
@@ -483,7 +502,7 @@ describe('App shell structural integrity', () => {
     setViewportWidth(1280)
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: Only one app-shell is present (no duplicated wrappers)
     const shells = document.querySelectorAll('[data-testid="app-shell"]')
@@ -517,7 +536,7 @@ describe('Root redirect — boundary conditions', () => {
     // GIVEN: Root path / is accessed
     const router = buildRouter('/')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
 
     // THEN: The clientes-view content is visible
     const views = screen.getAllByTestId('clientes-view')

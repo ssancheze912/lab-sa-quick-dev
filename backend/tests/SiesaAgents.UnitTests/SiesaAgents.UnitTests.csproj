@@ -13,6 +13,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.*" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,5 +24,6 @@
     <ProjectReference Include="..\..\src\SiesaAgents.API\SiesaAgents.API.csproj" />
     <ProjectReference Include="..\..\src\SiesaAgents.Application\SiesaAgents.Application.csproj" />
     <ProjectReference Include="..\..\src\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
+    <ProjectReference Include="..\..\src\SiesaAgents.Infrastructure\SiesaAgents.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

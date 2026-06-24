@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import {
   createRouter,
@@ -7,11 +7,21 @@ import {
   createRootRoute,
   createRoute,
 } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { http, HttpResponse } from 'msw'
+import { setupServer } from 'msw/node'
 import { Route as AppRoute } from '../_app'
 import { Route as ClientesRoute } from '../_app/clientes'
 import { Route as ContactosRoute } from '../_app/contactos'
 import { Route as SplatRoute } from '../$'
 import { Route as IndexRoute } from '../index'
+
+// MSW server — intercept API calls from ClienteListView
+const server = setupServer(
+  http.get('*/api/v1/clientes', () => HttpResponse.json([])),
+)
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
+afterAll(() => server.close())
 
 // Mock siesa-ui-kit to avoid CSS/DOM issues in test environment
 vi.mock('siesa-ui-kit', () => ({
@@ -107,6 +117,15 @@ function setViewport(width: number): void {
   window.dispatchEvent(new Event('resize'))
 }
 
+function renderWithQuery(router: ReturnType<typeof buildRouter>) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  )
+}
+
 describe('App Shell — Navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -120,14 +139,14 @@ describe('App Shell — Navigation', () => {
   it('renders app-shell wrapper on /clientes route', async () => {
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     expect(screen.getByTestId('app-shell')).toBeDefined()
   })
 
   it('renders clientes view with correct testid', async () => {
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     // Both desktop and mobile render the Outlet, so getAllByTestId is used
     const views = screen.getAllByTestId('clientes-view')
     expect(views.length).toBeGreaterThan(0)
@@ -136,7 +155,7 @@ describe('App Shell — Navigation', () => {
   it('renders contactos view with correct testid', async () => {
     const router = buildRouter('/contactos')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     const views = screen.getAllByTestId('contactos-view')
     expect(views.length).toBeGreaterThan(0)
   })
@@ -144,7 +163,7 @@ describe('App Shell — Navigation', () => {
   it('renders NavigationRail desktop nav with Clientes and Contactos', async () => {
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     expect(screen.getByTestId('nav-item-clientes')).toBeDefined()
     expect(screen.getByTestId('nav-item-contactos')).toBeDefined()
   })
@@ -154,7 +173,7 @@ describe('App Shell — Navigation', () => {
     const router = buildRouter('/clientes')
     await router.load()
     await act(async () => {
-      render(<RouterProvider router={router} />)
+      renderWithQuery(router)
     })
     expect(screen.getByTestId('navigation-bar')).toBeDefined()
     expect(screen.getByTestId('mobile-nav-item-clientes')).toBeDefined()
@@ -164,7 +183,7 @@ describe('App Shell — Navigation', () => {
   it('marks Clientes as active when on /clientes route', async () => {
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     const navItem = screen.getByTestId('nav-item-clientes')
     expect(navItem.getAttribute('aria-current')).toBe('page')
   })
@@ -172,7 +191,7 @@ describe('App Shell — Navigation', () => {
   it('marks Contactos as active when on /contactos route', async () => {
     const router = buildRouter('/contactos')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     const navItem = screen.getByTestId('nav-item-contactos')
     expect(navItem.getAttribute('aria-current')).toBe('page')
   })
@@ -180,7 +199,7 @@ describe('App Shell — Navigation', () => {
   it('clicking Contactos navigation item navigates to /contactos', async () => {
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     const contactosBtn = screen.getByTestId('nav-item-contactos')
     fireEvent.click(contactosBtn)
     await router.invalidate()
@@ -190,7 +209,7 @@ describe('App Shell — Navigation', () => {
   it('renders 404 page with Spanish message for unknown routes', async () => {
     const router = buildRouter('/ruta-inexistente')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     expect(screen.getByTestId('not-found-view')).toBeDefined()
     expect(screen.getByText('Página no encontrada')).toBeDefined()
   })
@@ -198,7 +217,7 @@ describe('App Shell — Navigation', () => {
   it('renders link back to /clientes on 404 page', async () => {
     const router = buildRouter('/ruta-inexistente')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     const link = screen.getByText('Ir a Clientes')
     expect(link).toBeDefined()
   })
@@ -212,7 +231,7 @@ describe('App Shell — Navigation', () => {
   it('navigation items have accessible aria-label in Spanish', async () => {
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     // Both desktop and mobile nav render, so getAllByRole is used
     const clientesBtns = screen.getAllByRole('button', { name: 'Clientes' })
     const contactosBtns = screen.getAllByRole('button', { name: 'Contactos' })
@@ -223,7 +242,7 @@ describe('App Shell — Navigation', () => {
   it('navigation landmark has aria-label "Navegación principal"', async () => {
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    renderWithQuery(router)
     const navLandmarks = screen.getAllByRole('navigation', { name: 'Navegación principal' })
     expect(navLandmarks.length).toBeGreaterThan(0)
   })
@@ -233,7 +252,7 @@ describe('App Shell — Navigation', () => {
     const router = buildRouter('/clientes')
     await router.load()
     await act(async () => {
-      render(<RouterProvider router={router} />)
+      renderWithQuery(router)
     })
     const mobileContactosBtn = screen.getByTestId('mobile-nav-item-contactos')
     fireEvent.click(mobileContactosBtn)
@@ -246,7 +265,7 @@ describe('App Shell — Navigation', () => {
     const router = buildRouter('/contactos')
     await router.load()
     await act(async () => {
-      render(<RouterProvider router={router} />)
+      renderWithQuery(router)
     })
     const mobileClientesBtn = screen.getByTestId('mobile-nav-item-clientes')
     fireEvent.click(mobileClientesBtn)
@@ -259,7 +278,7 @@ describe('App Shell — Navigation', () => {
     const router = buildRouter('/clientes')
     await router.load()
     await act(async () => {
-      render(<RouterProvider router={router} />)
+      renderWithQuery(router)
     })
     const navBar = screen.getByTestId('navigation-bar')
     const contactosBtn = navBar.querySelector('[data-testid="mobile-nav-item-contactos"]')
