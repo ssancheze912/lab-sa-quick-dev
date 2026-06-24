@@ -3,3 +3,4 @@ playwright-results/
 test-results/
 dist/
 .env.local
+playwright-report/
