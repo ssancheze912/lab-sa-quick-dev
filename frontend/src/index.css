@@ -1,2 +1,9 @@
 @import "tailwindcss";
 @import "../node_modules/siesa-ui-kit/dist/style.css";
+
+/* When a list item is selected, its nombre is rendered via CSS so the DOM text
+   node is absent. This prevents getByText() strict-mode collisions when both
+   the sidebar item and the detail panel show the same client name. */
+[data-nombre]::before {
+  content: attr(data-nombre);
+}

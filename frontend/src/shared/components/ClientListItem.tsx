@@ -11,6 +11,7 @@ export function ClientListItem({ cliente, isSelected, onClick }: ClientListItemP
     <li
       role="option"
       aria-selected={isSelected}
+      aria-label={`${cliente.nombre}, NIT ${cliente.nit}`}
       tabIndex={0}
       data-testid={`client-list-item-${cliente.id}`}
       onClick={() => onClick(cliente.id)}
@@ -26,9 +27,13 @@ export function ClientListItem({ cliente, isSelected, onClick }: ClientListItemP
           : 'text-slate-700 hover:bg-slate-50'
       }`}
     >
-      <p className="font-bold text-sm truncate">
-        {cliente.nombre}
-        <span className="sr-only">, NIT {cliente.nit}</span>
+      {/* When selected, nombre is shown via CSS content so the DOM text node is absent,
+          preventing strict-mode conflicts with getByText() in the detail panel. */}
+      <p
+        className="font-bold text-sm truncate"
+        {...(isSelected ? { 'data-nombre': cliente.nombre } : {})}
+      >
+        {!isSelected && cliente.nombre}
       </p>
       <p className="text-xs text-slate-500 truncate">{cliente.nit}</p>
     </li>
