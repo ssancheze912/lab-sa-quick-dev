@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import {
   createRouter,
   RouterProvider,
@@ -102,9 +102,19 @@ function buildRouter(initialUrl: string) {
   return createRouter({ routeTree, history: memoryHistory })
 }
 
+function setViewport(width: number): void {
+  Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: width })
+  window.dispatchEvent(new Event('resize'))
+}
+
 describe('App Shell — Navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    setViewport(1280)
+  })
+
+  afterEach(() => {
+    setViewport(1280)
   })
 
   it('renders app-shell wrapper on /clientes route', async () => {
@@ -140,9 +150,12 @@ describe('App Shell — Navigation', () => {
   })
 
   it('renders NavigationBar for mobile nav', async () => {
+    setViewport(390)
     const router = buildRouter('/clientes')
     await router.load()
-    render(<RouterProvider router={router} />)
+    await act(async () => {
+      render(<RouterProvider router={router} />)
+    })
     expect(screen.getByTestId('navigation-bar')).toBeDefined()
     expect(screen.getByTestId('mobile-nav-item-clientes')).toBeDefined()
     expect(screen.getByTestId('mobile-nav-item-contactos')).toBeDefined()
