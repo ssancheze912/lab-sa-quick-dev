@@ -20,6 +20,20 @@ const SCALAR_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+// In-memory store for ATDD test data
+const now0 = new Date().toISOString();
+const clientesStore = new Map([
+  ['11111111-1111-1111-1111-111111111111', { id: '11111111-1111-1111-1111-111111111111', nombre: 'Empresa Alpha SA', nit: '900123456', telefono: '3001234567', ciudad: 'Bogotá', createdAt: now0, updatedAt: now0 }],
+  ['22222222-2222-2222-2222-222222222222', { id: '22222222-2222-2222-2222-222222222222', nombre: 'Beta Industries Ltda', nit: '800987654', telefono: '3109876543', ciudad: 'Medellín', createdAt: now0, updatedAt: now0 }],
+  ['33333333-3333-3333-3333-333333333333', { id: '33333333-3333-3333-3333-333333333333', nombre: 'Gamma Servicios SAS', nit: '700456789', telefono: '3204567890', ciudad: 'Cali', createdAt: now0, updatedAt: now0 }],
+]);
+
+let idCounter = 0;
+function newGuid() {
+  idCounter++;
+  return `aaaaaaaa-bbbb-cccc-dddd-${String(idCounter).padStart(12, '0')}`;
+}
+
 function setCorsHeaders(req, res) {
   const origin = req.headers['origin'];
   if (origin === ALLOWED_ORIGIN) {
@@ -65,14 +79,8 @@ const server = http.createServer((req, res) => {
 
   // GET /api/v1/clientes — client list (Story 2.1)
   if (method === 'GET' && url === '/api/v1/clientes') {
-    const now = new Date().toISOString();
-    const clientes = [
-      { id: '11111111-1111-1111-1111-111111111111', nombre: 'Empresa Alpha SA', nit: '900123456', telefono: '3001234567', ciudad: 'Bogotá', createdAt: now, updatedAt: now },
-      { id: '22222222-2222-2222-2222-222222222222', nombre: 'Beta Industries Ltda', nit: '800987654', telefono: '3109876543', ciudad: 'Medellín', createdAt: now, updatedAt: now },
-      { id: '33333333-3333-3333-3333-333333333333', nombre: 'Gamma Servicios SAS', nit: '700456789', telefono: '3204567890', ciudad: 'Cali', createdAt: now, updatedAt: now },
-    ];
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(clientes));
+    res.end(JSON.stringify([...clientesStore.values()]));
     return;
   }
 
@@ -85,7 +93,7 @@ const server = http.createServer((req, res) => {
         const payload = JSON.parse(body);
         const now = new Date().toISOString();
         const newCliente = {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2)}-0000-0000-000000000000`.slice(0, 36),
+          id: newGuid(),
           nombre: payload.nombre ?? '',
           nit: payload.nit ?? '',
           telefono: payload.telefono ?? '',
@@ -93,6 +101,7 @@ const server = http.createServer((req, res) => {
           createdAt: now,
           updatedAt: now,
         };
+        clientesStore.set(newCliente.id, newCliente);
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(newCliente));
       } catch {
@@ -106,13 +115,7 @@ const server = http.createServer((req, res) => {
   // GET /api/v1/clientes/:id — client detail (Story 2.2)
   if (method === 'GET' && url.match(/^\/api\/v1\/clientes\/[^/]+$/)) {
     const id = url.split('/').pop();
-    const now = new Date().toISOString();
-    const clientes = {
-      '11111111-1111-1111-1111-111111111111': { id: '11111111-1111-1111-1111-111111111111', nombre: 'Empresa Alpha SA', nit: '900123456', telefono: '3001234567', ciudad: 'Bogotá', createdAt: now, updatedAt: now },
-      '22222222-2222-2222-2222-222222222222': { id: '22222222-2222-2222-2222-222222222222', nombre: 'Beta Industries Ltda', nit: '800987654', telefono: '3109876543', ciudad: 'Medellín', createdAt: now, updatedAt: now },
-      '33333333-3333-3333-3333-333333333333': { id: '33333333-3333-3333-3333-333333333333', nombre: 'Gamma Servicios SAS', nit: '700456789', telefono: '3204567890', ciudad: 'Cali', createdAt: now, updatedAt: now },
-    };
-    const cliente = clientes[id];
+    const cliente = clientesStore.get(id);
     if (cliente) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(cliente));
@@ -122,7 +125,7 @@ const server = http.createServer((req, res) => {
         type: 'https://tools.ietf.org/html/rfc7807',
         title: 'Not Found',
         status: 404,
-        detail: 'The requested client was not found.',
+        detail: `Cliente con id '${id}' no fue encontrado.`,
       }));
     }
     return;
@@ -130,6 +133,8 @@ const server = http.createServer((req, res) => {
 
   // DELETE /api/v1/clientes/:id — cleanup for API contract tests
   if (method === 'DELETE' && url.startsWith('/api/v1/clientes/')) {
+    const id = url.split('/').pop();
+    clientesStore.delete(id);
     res.writeHead(204);
     res.end();
     return;
