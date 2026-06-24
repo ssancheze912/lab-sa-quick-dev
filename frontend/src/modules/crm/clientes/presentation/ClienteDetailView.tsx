@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import type { AxiosError } from 'axios'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
+import { PencilSquareIcon } from '@heroicons/react/24/outline'
+import { AlertDialog, Button } from 'siesa-ui-kit'
 import { useCliente } from '../application/useCliente'
+import { ClienteForm } from './ClienteForm'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 
 interface ClienteDetailViewProps {
@@ -10,6 +14,7 @@ interface ClienteDetailViewProps {
 
 export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   const { data, isLoading, isError, error, refetch } = useCliente(clienteId)
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false)
 
   const isNotFound = isError && (error as AxiosError)?.response?.status === 404
 
@@ -66,6 +71,19 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
       aria-label="Detalle del cliente"
       className="flex-1 p-6 space-y-4"
     >
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-slate-700">Información del cliente</p>
+        <Button
+          htmlType="button"
+          type="outline"
+          data-testid="editar-cliente-button"
+          onClick={() => setIsEditFormOpen(true)}
+        >
+          <PencilSquareIcon className="h-4 w-4 mr-1" />
+          Editar
+        </Button>
+      </div>
+
       <div className="space-y-1">
         <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Nombre</p>
         <p data-testid="cliente-detail-nombre" className="text-sm text-slate-800">
@@ -93,6 +111,30 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
           {data.ciudad}
         </p>
       </div>
+
+      {isEditFormOpen && (
+        <AlertDialog
+          title="Editar cliente"
+          isOpen={isEditFormOpen}
+          onCancel={() => setIsEditFormOpen(false)}
+          showCloseButton
+          hideCancel
+          size="max-w-lg"
+          actions={
+            <ClienteForm
+              clienteId={data.id}
+              defaultValues={{
+                nombre: data.nombre,
+                nit: data.nit,
+                telefono: data.telefono,
+                ciudad: data.ciudad,
+              }}
+              onSuccess={() => setIsEditFormOpen(false)}
+              onCancel={() => setIsEditFormOpen(false)}
+            />
+          }
+        />
+      )}
     </section>
   )
 }

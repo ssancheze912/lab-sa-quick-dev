@@ -7,10 +7,88 @@ import { createElement } from 'react'
 import { ClienteDetailView } from './ClienteDetailView'
 import type { Cliente } from '../domain/Cliente'
 
-// Mock siesa-ui-kit Button component used in ErrorPanel
+// Mock siesa-ui-kit components used in ClienteDetailView and ClienteForm
+const mockToastSuccess = vi.fn()
+const mockToastError = vi.fn()
 vi.mock('siesa-ui-kit', () => ({
-  Button: ({ children, onClick, ...props }: { children: React.ReactNode; onClick?: () => void; [key: string]: unknown }) =>
-    createElement('button', { onClick, ...props }, children),
+  Button: ({
+    children,
+    onClick,
+    disabled,
+    htmlType,
+    type: _type,
+    inputSize: _inputSize,
+    ...props
+  }: {
+    children: React.ReactNode
+    onClick?: () => void
+    disabled?: boolean
+    htmlType?: string
+    type?: string
+    inputSize?: string
+    [key: string]: unknown
+  }) =>
+    createElement(
+      'button',
+      { onClick, disabled, type: htmlType ?? 'button', ...props },
+      children,
+    ),
+  Input: ({
+    label,
+    id,
+    errorMessage,
+    error: _error,
+    inputSize: _inputSize,
+    actionText: _actionText,
+    startIcon: _startIcon,
+    endIcon: _endIcon,
+    ...props
+  }: {
+    label?: string
+    id?: string
+    errorMessage?: string
+    error?: boolean
+    inputSize?: string
+    actionText?: string
+    startIcon?: React.ReactNode
+    endIcon?: React.ReactNode
+    [key: string]: unknown
+  }) =>
+    createElement(
+      'div',
+      null,
+      label && createElement('label', { htmlFor: id }, label),
+      createElement('input', { id, ...props }),
+      errorMessage && createElement('p', { role: 'alert' }, errorMessage),
+    ),
+  AlertDialog: ({
+    title,
+    isOpen,
+    onCancel,
+    actions,
+    showCloseButton,
+    children,
+  }: {
+    title?: string
+    isOpen?: boolean
+    onCancel?: () => void
+    actions?: React.ReactNode
+    showCloseButton?: boolean
+    children?: React.ReactNode
+  }) => {
+    if (!isOpen) return null
+    return createElement(
+      'div',
+      { role: 'dialog', 'aria-label': title, 'data-testid': 'alert-dialog' },
+      showCloseButton &&
+        createElement('button', { onClick: onCancel, 'data-testid': 'close-dialog-button' }, 'X'),
+      actions ?? children,
+    )
+  },
+  toast: {
+    success: (msg: string) => mockToastSuccess(msg),
+    error: (msg: string) => mockToastError(msg),
+  },
 }))
 
 const mockCliente: Cliente = {
@@ -33,10 +111,19 @@ const server = setupServer(
       { status: 404, headers: { 'Content-Type': 'application/json' } },
     )
   }),
+  http.put('*/api/v1/clientes/:id', () => {
+    return HttpResponse.json(
+      { ...mockCliente, nombre: 'Empresa Test Editada', updatedAt: '2026-06-24T00:00:00Z' },
+      { status: 200 },
+    )
+  }),
 )
 
 beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  vi.clearAllMocks()
+})
 afterAll(() => server.close())
 
 function renderClienteDetailView(clienteId: string) {
@@ -146,10 +233,6 @@ describe('ClienteDetailView', () => {
     // Arrange — delay response so component stays in loading state
     server.use(
       http.get('*/api/v1/clientes/:id', async () => {
-        // Justified: 300ms MSW delay holds the response in-flight so the
-        // synchronous assertion below can observe the skeleton loading state.
-        // This is NOT a hard wait for timing — it simulates network latency
-        // to create a testable loading window before the skeleton disappears.
         await new Promise((resolve) => setTimeout(resolve, 300))
         return HttpResponse.json(mockCliente)
       }),
@@ -170,8 +253,6 @@ describe('ClienteDetailView', () => {
     // Arrange — delay response
     server.use(
       http.get('*/api/v1/clientes/:id', async () => {
-        // Justified: MSW delay holds the response in-flight to verify no
-        // spinner is rendered during the loading window (skeleton-only requirement).
         await new Promise((resolve) => setTimeout(resolve, 300))
         return HttpResponse.json(mockCliente)
       }),
@@ -308,5 +389,73 @@ describe('ClienteDetailView', () => {
     await waitFor(() => {
       expect(screen.getByTestId('error-panel')).toBeInTheDocument()
     })
+  })
+
+  it('renders "Editar" button in detail view when data is loaded', async () => {
+    // Arrange & Act
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('editar-cliente-button')).toBeInTheDocument()
+    })
+  })
+
+  it('opens edit form dialog when "Editar" button is clicked', async () => {
+    // Arrange
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+    await waitFor(() => {
+      expect(screen.getByTestId('editar-cliente-button')).toBeInTheDocument()
+    })
+
+    // Act
+    fireEvent.click(screen.getByTestId('editar-cliente-button'))
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('alert-dialog')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('cliente-form')).toBeInTheDocument()
+  })
+
+  it('pre-fills the edit form with the current client data', async () => {
+    // Arrange
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+    await waitFor(() => {
+      expect(screen.getByTestId('editar-cliente-button')).toBeInTheDocument()
+    })
+
+    // Act
+    fireEvent.click(screen.getByTestId('editar-cliente-button'))
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-form')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('field-nombre')).toHaveValue('Empresa Test')
+    expect(screen.getByTestId('field-nit')).toHaveValue('900123456-1')
+    expect(screen.getByTestId('field-telefono')).toHaveValue('3001234567')
+    expect(screen.getByTestId('field-ciudad')).toHaveValue('Bogotá')
+  })
+
+  it('closes the edit form when "Cancelar" is clicked without making API calls', async () => {
+    // Arrange
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+    await waitFor(() => {
+      expect(screen.getByTestId('editar-cliente-button')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByTestId('editar-cliente-button'))
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-form')).toBeInTheDocument()
+    })
+
+    // Act
+    fireEvent.click(screen.getByTestId('cancel-button'))
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.queryByTestId('alert-dialog')).not.toBeInTheDocument()
+    })
+    expect(mockToastSuccess).not.toHaveBeenCalled()
   })
 })

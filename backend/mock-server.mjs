@@ -155,6 +155,46 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // PUT /api/v1/clientes/:id — update client (Story 2.4)
+  if (method === 'PUT' && url.match(/^\/api\/v1\/clientes\/[^/]+$/)) {
+    const id = url.split('/').pop();
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body);
+        const existing = clientesStore.get(id);
+        if (!existing) {
+          res.writeHead(404, { 'Content-Type': 'application/problem+json' });
+          res.end(JSON.stringify({ type: 'https://tools.ietf.org/html/rfc7807', title: 'Not Found', status: 404, detail: `Cliente con id '${id}' no fue encontrado.` }));
+          return;
+        }
+        // 400 validation
+        const missing = ['nombre', 'nit', 'telefono', 'ciudad'].filter(f => !payload[f]);
+        if (missing.length > 0) {
+          res.writeHead(400, { 'Content-Type': 'application/problem+json' });
+          res.end(JSON.stringify({ type: 'https://tools.ietf.org/html/rfc7807', title: 'Validation failed', status: 400, errors: Object.fromEntries(missing.map(f => [f, [`The ${f} field is required.`]])) }));
+          return;
+        }
+        // 409 conflict: duplicate NIT (excluding self)
+        const duplicate = [...clientesStore.values()].find(c => c.nit === payload.nit && c.id !== id);
+        if (duplicate) {
+          res.writeHead(409, { 'Content-Type': 'application/problem+json' });
+          res.end(JSON.stringify({ type: 'https://tools.ietf.org/html/rfc7807', title: 'Conflict', status: 409, detail: 'El NIT/RUC ya está registrado.' }));
+          return;
+        }
+        const updated = { ...existing, nombre: payload.nombre, nit: payload.nit, telefono: payload.telefono, ciudad: payload.ciudad, updatedAt: new Date().toISOString() };
+        clientesStore.set(id, updated);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(updated));
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ title: 'Bad Request', status: 400 }));
+      }
+    });
+    return;
+  }
+
   // DELETE /api/v1/clientes/:id — cleanup for API contract tests
   if (method === 'DELETE' && url.startsWith('/api/v1/clientes/')) {
     const id = url.split('/').pop();

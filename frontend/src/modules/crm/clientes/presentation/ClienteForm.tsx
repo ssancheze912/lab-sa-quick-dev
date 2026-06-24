@@ -3,14 +3,18 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Button, Input } from 'siesa-ui-kit'
 import { clienteSchema, type ClienteFormValues } from '../application/clienteSchema'
 import { useCreateCliente } from '../application/useCreateCliente'
+import { useUpdateCliente } from '../application/useUpdateCliente'
 
 interface ClienteFormProps {
+  clienteId?: string
+  defaultValues?: Partial<ClienteFormValues>
   onSuccess?: () => void
   onCancel?: () => void
-  defaultValues?: Partial<ClienteFormValues>
 }
 
-export function ClienteForm({ onSuccess, onCancel, defaultValues }: ClienteFormProps) {
+export function ClienteForm({ clienteId, defaultValues, onSuccess, onCancel }: ClienteFormProps) {
+  const isEditMode = Boolean(clienteId)
+
   const {
     register,
     handleSubmit,
@@ -21,21 +25,32 @@ export function ClienteForm({ onSuccess, onCancel, defaultValues }: ClienteFormP
     defaultValues,
   })
 
-  const { mutate, isPending } = useCreateCliente()
+  const createMutation = useCreateCliente()
+  const updateMutation = useUpdateCliente()
+  const isPending = isEditMode ? updateMutation.isPending : createMutation.isPending
 
   const onSubmit = (values: ClienteFormValues) => {
-    mutate(values, {
-      onSuccess: () => {
-        reset()
-        onSuccess?.()
-      },
-    })
+    if (isEditMode) {
+      updateMutation.mutate(
+        { id: clienteId!, data: values },
+        {
+          onSuccess: () => onSuccess?.(),
+        },
+      )
+    } else {
+      createMutation.mutate(values, {
+        onSuccess: () => {
+          reset()
+          onSuccess?.()
+        },
+      })
+    }
   }
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      aria-label="Crear nuevo cliente"
+      aria-label={isEditMode ? 'Editar cliente' : 'Crear nuevo cliente'}
       data-testid="cliente-form"
       className="flex flex-col gap-4"
     >

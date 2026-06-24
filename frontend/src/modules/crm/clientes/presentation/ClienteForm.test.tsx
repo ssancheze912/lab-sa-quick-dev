@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 import { ClienteForm } from './ClienteForm'
 import type { Cliente } from '../domain/Cliente'
+import type { ClienteFormValues } from '../application/clienteSchema'
 
 // Mock siesa-ui-kit components
 const mockToastSuccess = vi.fn()
@@ -16,12 +17,16 @@ vi.mock('siesa-ui-kit', () => ({
     onClick,
     disabled,
     htmlType,
+    type: _type,
+    inputSize: _inputSize,
     ...props
   }: {
     children: React.ReactNode
     onClick?: () => void
     disabled?: boolean
     htmlType?: string
+    type?: string
+    inputSize?: string
     [key: string]: unknown
   }) =>
     createElement(
@@ -73,9 +78,22 @@ const createdCliente: Cliente = {
   updatedAt: '2026-01-01T00:00:00Z',
 }
 
+const updatedCliente: Cliente = {
+  id: '11111111-1111-1111-1111-111111111111',
+  nombre: 'Empresa Alpha Editada',
+  nit: '900123456-1',
+  telefono: '3001234568',
+  ciudad: 'Medellín',
+  createdAt: '2026-01-01T00:00:00Z',
+  updatedAt: '2026-06-24T00:00:00Z',
+}
+
 const server = setupServer(
   http.post('*/api/v1/clientes', () => {
     return HttpResponse.json(createdCliente, { status: 201 })
+  }),
+  http.put('*/api/v1/clientes/:id', () => {
+    return HttpResponse.json(updatedCliente, { status: 200 })
   }),
 )
 
@@ -86,7 +104,14 @@ afterEach(() => {
 })
 afterAll(() => server.close())
 
-function renderClienteForm(props: { onSuccess?: () => void; onCancel?: () => void } = {}) {
+function renderClienteForm(
+  props: {
+    onSuccess?: () => void
+    onCancel?: () => void
+    clienteId?: string
+    defaultValues?: Partial<ClienteFormValues>
+  } = {},
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
@@ -236,5 +261,109 @@ describe('ClienteForm', () => {
     // Assert
     const form = screen.getByTestId('cliente-form')
     expect(form).toHaveAttribute('aria-label', 'Crear nuevo cliente')
+  })
+})
+
+describe('ClienteForm — edit mode', () => {
+  const editProps = {
+    clienteId: '11111111-1111-1111-1111-111111111111',
+    defaultValues: {
+      nombre: 'Empresa Alpha',
+      nit: '900123456-1',
+      telefono: '3001234567',
+      ciudad: 'Bogotá',
+    },
+  }
+
+  it('renders in edit mode with pre-filled defaultValues', () => {
+    // Arrange & Act
+    renderClienteForm(editProps)
+
+    // Assert
+    expect(screen.getByTestId('field-nombre')).toHaveValue('Empresa Alpha')
+    expect(screen.getByTestId('field-nit')).toHaveValue('900123456-1')
+    expect(screen.getByTestId('field-telefono')).toHaveValue('3001234567')
+    expect(screen.getByTestId('field-ciudad')).toHaveValue('Bogotá')
+  })
+
+  it('has aria-label "Editar cliente" in edit mode', () => {
+    // Arrange & Act
+    renderClienteForm(editProps)
+
+    // Assert
+    const form = screen.getByTestId('cliente-form')
+    expect(form).toHaveAttribute('aria-label', 'Editar cliente')
+  })
+
+  it('calls update mutation and onSuccess on valid submit in edit mode', async () => {
+    // Arrange
+    const onSuccess = vi.fn()
+    renderClienteForm({ ...editProps, onSuccess })
+
+    // Act — submit without changing (values already pre-filled)
+    fireEvent.click(screen.getByTestId('submit-button'))
+
+    // Assert
+    await waitFor(() => {
+      expect(onSuccess).toHaveBeenCalledOnce()
+    })
+    expect(mockToastSuccess).toHaveBeenCalledWith('Cliente actualizado correctamente')
+  })
+
+  it('calls onCancel without submitting in edit mode', () => {
+    // Arrange
+    const onCancel = vi.fn()
+    renderClienteForm({ ...editProps, onCancel })
+
+    // Act
+    fireEvent.click(screen.getByTestId('cancel-button'))
+
+    // Assert
+    expect(onCancel).toHaveBeenCalledOnce()
+  })
+
+  it('shows 409 conflict toast in edit mode on NIT conflict', async () => {
+    // Arrange
+    server.use(
+      http.put('*/api/v1/clientes/:id', () => {
+        return HttpResponse.json(
+          { status: 409, title: 'Conflict', detail: 'El NIT/RUC ya está registrado.' },
+          { status: 409 },
+        )
+      }),
+    )
+    const onSuccess = vi.fn()
+    renderClienteForm({ ...editProps, onSuccess })
+
+    // Act
+    fireEvent.click(screen.getByTestId('submit-button'))
+
+    // Assert
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith('El NIT/RUC ya está registrado')
+    })
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('shows "Guardando..." and disables submit while mutation is pending in edit mode', async () => {
+    // Arrange
+    server.use(
+      http.put('*/api/v1/clientes/:id', async () => {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        return HttpResponse.json(updatedCliente, { status: 200 })
+      }),
+    )
+    renderClienteForm(editProps)
+
+    // Act
+    fireEvent.click(screen.getByTestId('submit-button'))
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('submit-button')).toBeDisabled()
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Guardando...')).toBeInTheDocument()
+    })
   })
 })

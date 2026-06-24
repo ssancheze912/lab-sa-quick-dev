@@ -2,6 +2,7 @@ using FluentValidation;
 using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.DTOs;
 using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Application.Clientes.Validators;
 
 namespace SiesaAgents.API.Endpoints;
 
@@ -43,5 +44,25 @@ public static class ClienteEndpoints
         })
         .WithName("CreateCliente")
         .WithSummary("Create a new client");
+
+        app.MapPut("/api/v1/clientes/{id:guid}", async (
+            Guid id,
+            UpdateClienteRequest request,
+            IValidator<UpdateClienteRequest> validator,
+            UpdateClienteCommandHandler handler,
+            CancellationToken ct) =>
+        {
+            var validation = await validator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+            {
+                return Results.ValidationProblem(validation.ToDictionary());
+            }
+
+            var command = new UpdateClienteCommand(id, request.Nombre, request.Nit, request.Telefono, request.Ciudad);
+            var result = await handler.HandleAsync(command, ct);
+            return Results.Ok(result);
+        })
+        .WithName("UpdateCliente")
+        .WithSummary("Update an existing client");
     }
 }

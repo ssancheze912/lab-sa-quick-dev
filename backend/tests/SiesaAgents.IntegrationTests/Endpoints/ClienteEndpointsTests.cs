@@ -247,6 +247,92 @@ public sealed class ClienteEndpointsTests : IAsyncLifetime
         Assert.Contains("NIT", body, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task PutCliente_Returns200_WithUpdatedClienteJson_WhenRequestIsValid()
+    {
+        // Arrange
+        await ClearClientesAsync();
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entity = ClienteEntity.Create("Empresa Original", "222333444-5", "3002223333", "Cali");
+        db.Clientes.Add(entity);
+        await db.SaveChangesAsync();
+
+        var request = new UpdateClienteRequest("Empresa Actualizada", "222333444-5", "3002229999", "Medellín");
+
+        // Act
+        var response = await _client.PutAsJsonAsync($"/api/v1/clientes/{entity.Id}", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var content = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        Assert.NotNull(content);
+        Assert.Equal("Empresa Actualizada", content.Nombre);
+        Assert.Equal("222333444-5", content.Nit);
+        Assert.Equal("3002229999", content.Telefono);
+        Assert.Equal("Medellín", content.Ciudad);
+        Assert.Equal(entity.Id, content.Id);
+        Assert.NotEqual(default, content.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task PutCliente_Returns400BadRequest_WhenRequiredFieldIsMissing()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var request = new { nombre = "", nit = "", telefono = "", ciudad = "" };
+
+        // Act
+        var response = await _client.PutAsJsonAsync($"/api/v1/clientes/{id}", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("nombre", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task PutCliente_Returns404NotFound_WhenClienteIdDoesNotExist()
+    {
+        // Arrange
+        var nonExistentId = Guid.NewGuid();
+        var request = new UpdateClienteRequest("Empresa", "123456789-0", "3001234567", "Bogotá");
+
+        // Act
+        var response = await _client.PutAsJsonAsync($"/api/v1/clientes/{nonExistentId}", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Not Found", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task PutCliente_Returns409Conflict_WhenNitConflictsWithAnotherCliente()
+    {
+        // Arrange
+        await ClearClientesAsync();
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        // Seed two clients with different NITs
+        var existing = ClienteEntity.Create("Empresa Existing", "444555666-7", "3004445555", "Bogotá");
+        var toUpdate = ClienteEntity.Create("Empresa To Update", "777888999-8", "3007778888", "Cali");
+        db.Clientes.AddRange(existing, toUpdate);
+        await db.SaveChangesAsync();
+
+        // Try to update toUpdate's NIT to existing's NIT
+        var request = new UpdateClienteRequest("Empresa To Update", "444555666-7", "3007778888", "Cali");
+
+        // Act
+        var response = await _client.PutAsJsonAsync($"/api/v1/clientes/{toUpdate.Id}", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("NIT", body, StringComparison.OrdinalIgnoreCase);
+    }
+
     public async Task DisposeAsync()
     {
         _client.Dispose();

@@ -17,6 +17,11 @@ class ClienteApiRepository implements IClienteRepository {
     const response = await apiClient.post<Cliente>('/api/v1/clientes', data)
     return response.data
   }
+
+  async update(id: string, data: Partial<Omit<Cliente, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Cliente> {
+    const response = await apiClient.put<Cliente>(`/api/v1/clientes/${id}`, data)
+    return response.data
+  }
 }
 
 export const clienteApiRepository = new ClienteApiRepository()

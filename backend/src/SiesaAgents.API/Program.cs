@@ -28,6 +28,8 @@ builder.Services.AddTransient<GetClientesQueryHandler>();
 builder.Services.AddTransient<GetClienteByIdQueryHandler>();
 builder.Services.AddTransient<CreateClienteCommandHandler>();
 builder.Services.AddTransient<IValidator<CreateClienteRequest>, CreateClienteRequestValidator>();
+builder.Services.AddTransient<UpdateClienteCommandHandler>();
+builder.Services.AddTransient<IValidator<UpdateClienteRequest>, UpdateClienteRequestValidator>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];
