@@ -43,7 +43,7 @@ export function ClienteListView() {
 
       <div className="flex-1 overflow-y-auto">
         {isLoading && (
-          <div className="p-3 space-y-2">
+          <div data-testid="cliente-list-skeleton" className="p-3 space-y-2">
             <Skeleton height={48} count={5} />
           </div>
         )}

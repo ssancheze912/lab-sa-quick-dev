@@ -33,6 +33,12 @@ import { render, screen, waitFor, within, fireEvent } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+// Mock TanStack Router hooks so the component renders without a RouterProvider
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => vi.fn(),
+  useParams: () => ({}),
+}));
+
 // NOTE: These imports will FAIL (RED phase) until the files are created.
 // Implementation paths defined in story Dev Notes.
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -74,7 +80,7 @@ function makeClientes(count: number): ClienteDto[] {
 
 /**
  * Renders ClienteListView inside a fresh QueryClient provider.
- * MSW intercepts the underlying fetch calls.
+ * TanStack Router hooks (useNavigate, useParams) are mocked at the module level.
  */
 function renderClienteListView(queryClient?: QueryClient) {
   const qc = queryClient ?? new QueryClient({
@@ -86,16 +92,12 @@ function renderClienteListView(queryClient?: QueryClient) {
     },
   });
 
-  // Mock navigate function (TanStack Router navigate not available in Vitest jsdom)
-  const mockNavigate = vi.fn();
-
   return {
     ...render(
       <QueryClientProvider client={qc}>
-        <ClienteListView navigate={mockNavigate} />
+        <ClienteListView />
       </QueryClientProvider>
     ),
-    mockNavigate,
     qc,
   };
 }
