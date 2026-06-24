@@ -15,9 +15,19 @@
  *   AC7 — ARIA labels in Spanish, nav landmark present
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { http, HttpResponse } from 'msw'
+import { setupServer } from 'msw/node'
+
+// MSW server — intercept API calls from ClienteListView
+const server = setupServer(
+  http.get('*/api/v1/clientes', () => HttpResponse.json([])),
+)
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
+afterAll(() => server.close())
 
 // NOTE: These imports will fail (RED phase) until the route files are created.
 // Implementation requires:
@@ -50,7 +60,12 @@ async function renderWithRouter(initialPath: string) {
   // Load the router before rendering so the initial route is resolved synchronously
   await router.load()
 
-  return render(<RouterProvider router={router} />)
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

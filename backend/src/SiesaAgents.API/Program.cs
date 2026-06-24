@@ -1,7 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Interfaces;
+using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +19,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddTransient<GetClientesQueryHandler>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];
@@ -32,4 +38,9 @@ app.UseCors("DevCors");
 app.MapOpenApi();
 app.MapScalarApiReference();
 
+app.MapClienteEndpoints();
+
 app.Run();
+
+// Required for WebApplicationFactory in integration tests
+public partial class Program { }

@@ -13,13 +13,16 @@
     <PackageReference Include="xunit" Version="2.*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.*" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
-    <!-- Testcontainers for PostgreSQL isolation (AC1, AC6, AC7) -->
+    <!-- Testcontainers for PostgreSQL isolation -->
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.*" />
     <!-- EF Core for DbContext in integration tests -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.*" />
+    <!-- WebApplicationFactory for HTTP-level endpoint tests -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.*" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SiesaAgents.API\SiesaAgents.API.csproj" />
     <ProjectReference Include="..\..\src\SiesaAgents.Infrastructure\SiesaAgents.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
   </ItemGroup>
