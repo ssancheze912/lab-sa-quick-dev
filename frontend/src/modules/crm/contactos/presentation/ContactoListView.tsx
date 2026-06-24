@@ -38,7 +38,7 @@ export function ContactoListView() {
 
       <div className="flex-1 overflow-y-auto">
         {isLoading && (
-          <div className="p-4 space-y-2">
+          <div data-testid="contacto-list-skeleton" className="p-4 space-y-2">
             <Skeleton height={48} count={5} />
           </div>
         )}
