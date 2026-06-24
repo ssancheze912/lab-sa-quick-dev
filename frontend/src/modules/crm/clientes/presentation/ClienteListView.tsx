@@ -43,7 +43,7 @@ export function ClienteListView() {
 
       <div className="flex-1 overflow-y-auto">
         {isLoading && (
-          <div data-testid="cliente-list-skeleton" className="p-3 space-y-2">
+          <div className="p-3 space-y-2">
             <Skeleton height={48} count={5} />
           </div>
         )}
@@ -51,7 +51,13 @@ export function ClienteListView() {
         {isError && <ErrorPanel onRetry={() => void refetch()} />}
 
         {!isLoading && !isError && filteredClientes.length === 0 && (
-          <EmptyState message="No hay clientes registrados. Crea el primero." />
+          <EmptyState
+            message={
+              searchQuery.trim()
+                ? 'No se encontraron clientes que coincidan con la búsqueda.'
+                : 'No hay clientes registrados. Crea el primero.'
+            }
+          />
         )}
 
         {!isLoading && !isError && filteredClientes.length > 0 && (

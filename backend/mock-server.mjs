@@ -103,6 +103,31 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // GET /api/v1/clientes/:id — client detail (Story 2.2)
+  if (method === 'GET' && url.match(/^\/api\/v1\/clientes\/[^/]+$/)) {
+    const id = url.split('/').pop();
+    const now = new Date().toISOString();
+    const clientes = {
+      '11111111-1111-1111-1111-111111111111': { id: '11111111-1111-1111-1111-111111111111', nombre: 'Empresa Alpha SA', nit: '900123456', telefono: '3001234567', ciudad: 'Bogotá', createdAt: now, updatedAt: now },
+      '22222222-2222-2222-2222-222222222222': { id: '22222222-2222-2222-2222-222222222222', nombre: 'Beta Industries Ltda', nit: '800987654', telefono: '3109876543', ciudad: 'Medellín', createdAt: now, updatedAt: now },
+      '33333333-3333-3333-3333-333333333333': { id: '33333333-3333-3333-3333-333333333333', nombre: 'Gamma Servicios SAS', nit: '700456789', telefono: '3204567890', ciudad: 'Cali', createdAt: now, updatedAt: now },
+    };
+    const cliente = clientes[id];
+    if (cliente) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(cliente));
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/problem+json' });
+      res.end(JSON.stringify({
+        type: 'https://tools.ietf.org/html/rfc7807',
+        title: 'Not Found',
+        status: 404,
+        detail: 'The requested client was not found.',
+      }));
+    }
+    return;
+  }
+
   // DELETE /api/v1/clientes/:id — cleanup for API contract tests
   if (method === 'DELETE' && url.startsWith('/api/v1/clientes/')) {
     res.writeHead(204);

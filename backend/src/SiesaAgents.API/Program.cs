@@ -21,6 +21,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddTransient<GetClientesQueryHandler>();
+builder.Services.AddTransient<GetClienteByIdQueryHandler>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];

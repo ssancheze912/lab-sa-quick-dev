@@ -11,9 +11,16 @@ export function ClientListItem({ cliente, isSelected, onClick }: ClientListItemP
     <li
       role="option"
       aria-selected={isSelected}
+      tabIndex={0}
       data-testid={`client-list-item-${cliente.id}`}
       onClick={() => onClick(cliente.id)}
-      className={`px-4 py-3 cursor-pointer select-none ${
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick(cliente.id)
+        }
+      }}
+      className={`px-4 py-3 cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-primary-500 ${
         isSelected
           ? 'bg-primary-50 text-primary-700'
           : 'text-slate-700 hover:bg-slate-50'

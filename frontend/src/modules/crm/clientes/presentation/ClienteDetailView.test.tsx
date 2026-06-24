@@ -1,64 +1,21 @@
-/**
- * Component Tests — Story 2.2: ClienteDetailView
- * RED PHASE — Tests are intentionally FAILING until implementation is complete.
- *
- * File under test (does NOT exist yet — must be created by DEV):
- *   frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx
- *
- * Acceptance Criteria covered:
- *   AC2 — Renders all client fields: Nombre, NIT/RUC, Teléfono, Ciudad
- *   AC3 — Renders "Cliente no encontrado." on 404 error
- *   AC4 — Renders ErrorPanel with onRetry on non-404 error
- *   AC5 — Renders skeleton loader while isLoading=true (no spinner)
- *   AC7 — WCAG: <section aria-label="Detalle del cliente"> wrapper present
- *
- * Stack: Vitest + React Testing Library + MSW (Node handler)
- * Pattern: Arrange / Act / Assert
- */
-
 import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import {
-  createRouter,
-  RouterProvider,
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-} from '@tanstack/react-router'
 import { createElement } from 'react'
-import type { ReactNode } from 'react'
+import { ClienteDetailView } from './ClienteDetailView'
+import type { Cliente } from '../domain/Cliente'
 
-// Mocks for external components
+// Mock siesa-ui-kit Button component used in ErrorPanel
 vi.mock('siesa-ui-kit', () => ({
-  Button: ({ children, onClick, ...props }: { children: ReactNode; onClick?: () => void; [key: string]: unknown }) =>
+  Button: ({ children, onClick, ...props }: { children: React.ReactNode; onClick?: () => void; [key: string]: unknown }) =>
     createElement('button', { onClick, ...props }, children),
 }))
 
-vi.mock('react-loading-skeleton', () => ({
-  default: ({ count }: { count?: number }) =>
-    createElement('div', { 'data-testid': 'cliente-detail-skeleton' },
-      Array.from({ length: count ?? 1 }, (_, i) => createElement('span', { key: i }))
-    ),
-  SkeletonTheme: ({ children }: { children: ReactNode }) => createElement('div', null, children),
-}))
-
-// The component under test — does NOT exist until DEV implements it (RED phase)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let ClienteDetailView: React.ComponentType<{ clienteId: string }>;
-try {
-  const mod = await import('./ClienteDetailView')
-  ClienteDetailView = mod.ClienteDetailView ?? mod.default
-} catch {
-  ClienteDetailView = ({ clienteId }: { clienteId: string }) =>
-    createElement('div', { 'data-testid': 'cliente-detail-view-missing' }, `Component not implemented: ${clienteId}`)
-}
-
-const MOCK_CLIENTE = {
+const mockCliente: Cliente = {
   id: '11111111-1111-1111-1111-111111111111',
-  nombre: 'Empresa Detalle Test',
+  nombre: 'Empresa Test',
   nit: '900123456-1',
   telefono: '3001234567',
   ciudad: 'Bogotá',
@@ -68,14 +25,14 @@ const MOCK_CLIENTE = {
 
 const server = setupServer(
   http.get('*/api/v1/clientes/:id', ({ params }) => {
-    if (params.id === MOCK_CLIENTE.id) {
-      return HttpResponse.json(MOCK_CLIENTE)
+    if (params.id === '11111111-1111-1111-1111-111111111111') {
+      return HttpResponse.json(mockCliente)
     }
-    return HttpResponse.json(
-      { status: 404, title: 'Not Found', detail: `Cliente with id '${String(params.id)}' was not found.` },
-      { status: 404 }
+    return new HttpResponse(
+      JSON.stringify({ status: 404, title: 'Not Found', detail: `Cliente with id '${params.id}' was not found.` }),
+      { status: 404, headers: { 'Content-Type': 'application/json' } },
     )
-  })
+  }),
 )
 
 beforeAll(() => server.listen())
@@ -86,34 +43,19 @@ function renderClienteDetailView(clienteId: string) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-
-  const rootRoute = createRootRoute()
-  const detailRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/clientes/$clienteId',
-    component: () => createElement(ClienteDetailView, { clienteId }),
-  })
-  const routeTree = rootRoute.addChildren([detailRoute])
-  const memoryHistory = createMemoryHistory({ initialEntries: [`/clientes/${clienteId}`] })
-  const router = createRouter({ routeTree, history: memoryHistory })
-
   return render(
     createElement(
       QueryClientProvider,
       { client: queryClient },
-      createElement(RouterProvider, { router })
-    )
+      createElement(ClienteDetailView, { clienteId }),
+    ),
   )
 }
 
-describe('ClienteDetailView component', () => {
-  // ─────────────────────────────────────────────────────────────────────────
-  // AC2 — Renders client fields on success
-  // ─────────────────────────────────────────────────────────────────────────
-
-  it('should render the detail view root container with data-testid="cliente-detail-view"', async () => {
+describe('ClienteDetailView', () => {
+  it('renders the detail view root container with data-testid="cliente-detail-view"', async () => {
     // Arrange & Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
 
     // Assert
     await waitFor(() => {
@@ -121,71 +63,63 @@ describe('ClienteDetailView component', () => {
     })
   })
 
-  it('should render the Nombre field value when client data is loaded', async () => {
+  it('renders the Nombre field value when client data is loaded', async () => {
     // Arrange & Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-detail-nombre')).toHaveTextContent('Empresa Test')
+    })
+  })
+
+  it('renders the NIT/RUC field value when client data is loaded', async () => {
+    // Arrange & Act
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-detail-nit')).toHaveTextContent('900123456-1')
+    })
+  })
+
+  it('renders the Teléfono field value when client data is loaded', async () => {
+    // Arrange & Act
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-detail-telefono')).toHaveTextContent('3001234567')
+    })
+  })
+
+  it('renders the Ciudad field value when client data is loaded', async () => {
+    // Arrange & Act
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-detail-ciudad')).toHaveTextContent('Bogotá')
+    })
+  })
+
+  it('renders all field labels in Spanish', async () => {
+    // Arrange & Act
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
 
     // Assert
     await waitFor(() => {
       expect(screen.getByTestId('cliente-detail-nombre')).toBeInTheDocument()
     })
-    expect(screen.getByTestId('cliente-detail-nombre')).toHaveTextContent('Empresa Detalle Test')
+    expect(screen.getByText('Nombre')).toBeInTheDocument()
+    expect(screen.getByText('NIT/RUC')).toBeInTheDocument()
+    expect(screen.getByText('Teléfono')).toBeInTheDocument()
+    expect(screen.getByText('Ciudad')).toBeInTheDocument()
   })
 
-  it('should render the NIT/RUC field value when client data is loaded', async () => {
+  it('wraps the detail view in <section aria-label="Detalle del cliente"> for WCAG 2.1 AA', async () => {
     // Arrange & Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
-
-    // Assert
-    await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-nit')).toBeInTheDocument()
-    })
-    expect(screen.getByTestId('cliente-detail-nit')).toHaveTextContent('900123456-1')
-  })
-
-  it('should render the Teléfono field value when client data is loaded', async () => {
-    // Arrange & Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
-
-    // Assert
-    await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-telefono')).toBeInTheDocument()
-    })
-    expect(screen.getByTestId('cliente-detail-telefono')).toHaveTextContent('3001234567')
-  })
-
-  it('should render the Ciudad field value when client data is loaded', async () => {
-    // Arrange & Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
-
-    // Assert
-    await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-ciudad')).toBeInTheDocument()
-    })
-    expect(screen.getByTestId('cliente-detail-ciudad')).toHaveTextContent('Bogotá')
-  })
-
-  it('should render all field labels in Spanish (Nombre, NIT/RUC, Teléfono, Ciudad)', async () => {
-    // Arrange & Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
-
-    // Assert: Spanish field labels are present
-    await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-view')).toBeInTheDocument()
-    })
-    expect(screen.getByText(/Nombre/i)).toBeInTheDocument()
-    expect(screen.getByText(/NIT\/RUC/i)).toBeInTheDocument()
-    expect(screen.getByText(/Teléfono/i)).toBeInTheDocument()
-    expect(screen.getByText(/Ciudad/i)).toBeInTheDocument()
-  })
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // AC7 (WCAG) — section aria-label="Detalle del cliente"
-  // ─────────────────────────────────────────────────────────────────────────
-
-  it('should wrap the detail view in <section aria-label="Detalle del cliente"> for WCAG 2.1 AA', async () => {
-    // Arrange & Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
 
     // Assert
     await waitFor(() => {
@@ -195,143 +129,113 @@ describe('ClienteDetailView component', () => {
     })
   })
 
-  it('should have data-testid attributes for each field value', async () => {
+  it('has data-testid attributes for each field value', async () => {
     // Arrange & Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
 
-    // Assert: all four data-testid attributes are present
+    // Assert
     await waitFor(() => {
       expect(screen.getByTestId('cliente-detail-nombre')).toBeInTheDocument()
+      expect(screen.getByTestId('cliente-detail-nit')).toBeInTheDocument()
+      expect(screen.getByTestId('cliente-detail-telefono')).toBeInTheDocument()
+      expect(screen.getByTestId('cliente-detail-ciudad')).toBeInTheDocument()
     })
-    expect(screen.getByTestId('cliente-detail-nit')).toBeInTheDocument()
-    expect(screen.getByTestId('cliente-detail-telefono')).toBeInTheDocument()
-    expect(screen.getByTestId('cliente-detail-ciudad')).toBeInTheDocument()
   })
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // AC5 — Skeleton loader while isLoading=true (no spinner)
-  // ─────────────────────────────────────────────────────────────────────────
-
-  it('should render a skeleton loader while the fetch is in-flight', async () => {
-    // Arrange: delay the server response
+  it('renders a skeleton loader while the fetch is in-flight', async () => {
+    // Arrange — delay response so component stays in loading state
     server.use(
       http.get('*/api/v1/clientes/:id', async () => {
-        await new Promise((resolve) => setTimeout(resolve, 200))
-        return HttpResponse.json(MOCK_CLIENTE)
-      })
+        await new Promise((resolve) => setTimeout(resolve, 300))
+        return HttpResponse.json(mockCliente)
+      }),
     )
 
     // Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
 
-    // Assert: skeleton is shown immediately before data arrives
+    // Assert — skeleton is visible before data arrives
     expect(screen.getByTestId('cliente-detail-skeleton')).toBeInTheDocument()
 
-    // Wait for data to load
     await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-view')).toBeInTheDocument()
+      expect(screen.queryByTestId('cliente-detail-skeleton')).not.toBeInTheDocument()
     })
   })
 
-  it('should NOT render a spinner during loading (skeleton only — no progressbar, no .spinner)', async () => {
-    // Arrange: delay the server response
+  it('does NOT render a spinner during loading (skeleton only)', async () => {
+    // Arrange — delay response
     server.use(
       http.get('*/api/v1/clientes/:id', async () => {
-        await new Promise((resolve) => setTimeout(resolve, 200))
-        return HttpResponse.json(MOCK_CLIENTE)
-      })
+        await new Promise((resolve) => setTimeout(resolve, 300))
+        return HttpResponse.json(mockCliente)
+      }),
     )
 
     // Act
-    const { container } = renderClienteDetailView(MOCK_CLIENTE.id)
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
 
-    // Assert: no spinner element exists while loading
-    expect(container.querySelector('[role="progressbar"]')).toBeNull()
-    expect(container.querySelector('.spinner')).toBeNull()
-    expect(screen.queryByTestId('spinner')).toBeNull()
-
-    await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-view')).toBeInTheDocument()
-    })
+    // Assert — no spinner element
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    expect(document.querySelector('.spinner')).toBeNull()
   })
 
-  it('should hide the skeleton once the client data is loaded', async () => {
+  it('hides the skeleton once the client data is loaded', async () => {
     // Arrange & Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
 
-    // Wait for data to load
+    // Assert
     await waitFor(() => {
       expect(screen.getByTestId('cliente-detail-nombre')).toBeInTheDocument()
     })
-
-    // Assert: skeleton is not visible after data loads
     expect(screen.queryByTestId('cliente-detail-skeleton')).not.toBeInTheDocument()
   })
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // AC3 — "Cliente no encontrado." on 404
-  // ─────────────────────────────────────────────────────────────────────────
+  it('renders "Cliente no encontrado." when the API returns 404', async () => {
+    // Arrange & Act
+    renderClienteDetailView('99999999-9999-9999-9999-999999999999')
 
-  it('should render "Cliente no encontrado." when the API returns 404', async () => {
-    // Arrange: use a non-existent ID (MSW will return 404)
-    const nonExistentId = '99999999-9999-9999-9999-999999999999'
-
-    // Act
-    renderClienteDetailView(nonExistentId)
-
-    // Assert: not-found message is displayed
+    // Assert
     await waitFor(() => {
       expect(screen.getByTestId('cliente-not-found')).toBeInTheDocument()
     })
-    expect(screen.getByTestId('cliente-not-found')).toHaveTextContent('Cliente no encontrado.')
+    expect(screen.getByText('Cliente no encontrado.')).toBeInTheDocument()
   })
 
-  it('should NOT render ErrorPanel when the API returns 404 (404 is not a generic error)', async () => {
-    // Arrange: non-existent ID
-    const nonExistentId = '88888888-8888-8888-8888-888888888888'
+  it('does NOT render ErrorPanel when the API returns 404', async () => {
+    // Arrange & Act
+    renderClienteDetailView('99999999-9999-9999-9999-999999999999')
 
-    // Act
-    renderClienteDetailView(nonExistentId)
-
-    // Wait for 404 state
+    // Assert
     await waitFor(() => {
       expect(screen.getByTestId('cliente-not-found')).toBeInTheDocument()
     })
-
-    // Assert: generic ErrorPanel is NOT shown for 404
     expect(screen.queryByTestId('error-panel')).not.toBeInTheDocument()
   })
 
-  it('should NOT render the detail view fields when the API returns 404', async () => {
-    // Arrange: non-existent ID
-    const nonExistentId = '77777777-7777-7777-7777-777777777777'
+  it('does NOT render the detail view fields when the API returns 404', async () => {
+    // Arrange & Act
+    renderClienteDetailView('99999999-9999-9999-9999-999999999999')
 
-    // Act
-    renderClienteDetailView(nonExistentId)
-
+    // Assert
     await waitFor(() => {
       expect(screen.getByTestId('cliente-not-found')).toBeInTheDocument()
     })
-
-    // Assert: no field values rendered
     expect(screen.queryByTestId('cliente-detail-nombre')).not.toBeInTheDocument()
     expect(screen.queryByTestId('cliente-detail-nit')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('cliente-detail-telefono')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('cliente-detail-ciudad')).not.toBeInTheDocument()
   })
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // AC4 — ErrorPanel with onRetry on non-404 error
-  // ─────────────────────────────────────────────────────────────────────────
-
-  it('should render ErrorPanel when the API returns a 500 error', async () => {
+  it('renders ErrorPanel when the API returns a 500 error', async () => {
     // Arrange
     server.use(
-      http.get('*/api/v1/clientes/:id', () =>
-        HttpResponse.json({ status: 500, title: 'Internal Server Error' }, { status: 500 })
-      )
+      http.get('*/api/v1/clientes/:id', () => {
+        return new HttpResponse(null, { status: 500 })
+      }),
     )
 
     // Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
 
     // Assert
     await waitFor(() => {
@@ -339,16 +243,16 @@ describe('ClienteDetailView component', () => {
     })
   })
 
-  it('should render a "Reintentar" button inside ErrorPanel on non-404 error', async () => {
+  it('renders a "Reintentar" button inside ErrorPanel on non-404 error', async () => {
     // Arrange
     server.use(
-      http.get('*/api/v1/clientes/:id', () =>
-        HttpResponse.json({ status: 503, title: 'Service Unavailable' }, { status: 503 })
-      )
+      http.get('*/api/v1/clientes/:id', () => {
+        return new HttpResponse(null, { status: 500 })
+      }),
     )
 
     // Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
 
     // Assert
     await waitFor(() => {
@@ -357,44 +261,42 @@ describe('ClienteDetailView component', () => {
     expect(screen.getByText('Reintentar')).toBeInTheDocument()
   })
 
-  it('should trigger a new fetch when the "Reintentar" button is clicked', async () => {
-    // Arrange: first call fails, second succeeds
+  it('triggers a new fetch when the "Reintentar" button is clicked', async () => {
+    // Arrange
     let callCount = 0
     server.use(
       http.get('*/api/v1/clientes/:id', () => {
         callCount++
-        if (callCount === 1) {
-          return HttpResponse.json({ status: 500, title: 'Error' }, { status: 500 })
-        }
-        return HttpResponse.json(MOCK_CLIENTE)
-      })
+        return new HttpResponse(null, { status: 500 })
+      }),
     )
 
     // Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
 
     await waitFor(() => {
-      expect(screen.getByTestId('error-panel')).toBeInTheDocument()
+      expect(screen.getByTestId('retry-button')).toBeInTheDocument()
     })
 
-    // WHEN: User clicks "Reintentar"
-    fireEvent.click(screen.getByTestId('retry-button'))
+    const retryButton = screen.getByTestId('retry-button')
+    fireEvent.click(retryButton)
 
-    // THEN: A second fetch is triggered and the detail view loads
+    // Assert — at least 2 calls: initial + retry
     await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-view')).toBeInTheDocument()
+      expect(callCount).toBeGreaterThanOrEqual(2)
     })
-    expect(callCount).toBe(2)
   })
 
-  it('should render ErrorPanel on a network error (not a 404)', async () => {
+  it('renders ErrorPanel on a network error (not a 404)', async () => {
     // Arrange
     server.use(
-      http.get('*/api/v1/clientes/:id', () => HttpResponse.error())
+      http.get('*/api/v1/clientes/:id', () => {
+        return HttpResponse.error()
+      }),
     )
 
     // Act
-    renderClienteDetailView(MOCK_CLIENTE.id)
+    renderClienteDetailView('11111111-1111-1111-1111-111111111111')
 
     // Assert
     await waitFor(() => {

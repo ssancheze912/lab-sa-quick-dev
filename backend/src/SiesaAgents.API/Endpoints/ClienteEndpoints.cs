@@ -13,5 +13,13 @@ public static class ClienteEndpoints
         })
         .WithName("GetClientes")
         .WithSummary("List all clients");
+
+        app.MapGet("/api/v1/clientes/{id:guid}", async (Guid id, GetClienteByIdQueryHandler handler, CancellationToken ct) =>
+        {
+            var result = await handler.HandleAsync(new GetClienteByIdQuery(id), ct);
+            return Results.Ok(result);
+        })
+        .WithName("GetClienteById")
+        .WithSummary("Get client by ID");
     }
 }

@@ -5,4 +5,5 @@ namespace SiesaAgents.Application.Clientes.Interfaces;
 public interface IClienteRepository
 {
     Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken ct = default);
+    Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct = default);
 }

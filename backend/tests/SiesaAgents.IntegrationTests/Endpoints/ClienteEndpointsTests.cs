@@ -54,10 +54,19 @@ public sealed class ClienteEndpointsTests : IAsyncLifetime
         await db.Database.MigrateAsync();
     }
 
+    private async Task ClearClientesAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Clientes.RemoveRange(db.Clientes);
+        await db.SaveChangesAsync();
+    }
+
     [Fact]
     public async Task GetClientes_Returns200_WithJsonArray()
     {
         // Arrange — no seeding (empty)
+        await ClearClientesAsync();
 
         // Act
         var response = await _client.GetAsync("/api/v1/clientes");
@@ -71,7 +80,8 @@ public sealed class ClienteEndpointsTests : IAsyncLifetime
     [Fact]
     public async Task GetClientes_ReturnsEmptyArray_WhenNoClientesSeeded()
     {
-        // Arrange — no seeding
+        // Arrange — ensure clean state
+        await ClearClientesAsync();
 
         // Act
         var response = await _client.GetAsync("/api/v1/clientes");
@@ -86,7 +96,8 @@ public sealed class ClienteEndpointsTests : IAsyncLifetime
     [Fact]
     public async Task GetClientes_ReturnsSeededData_WithCorrectCamelCaseFields()
     {
-        // Arrange
+        // Arrange — clean state before seeding
+        await ClearClientesAsync();
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var cliente = ClienteEntity.Create("Empresa Gamma", "700111222-3", "3201112222", "Cali");
@@ -109,6 +120,69 @@ public sealed class ClienteEndpointsTests : IAsyncLifetime
         Assert.NotEqual(default, found.Id);
         Assert.NotEqual(default, found.CreatedAt);
         Assert.NotEqual(default, found.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task GetClienteById_Returns200_WithClienteJson_WhenClienteExists()
+    {
+        // Arrange
+        await ClearClientesAsync();
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var cliente = ClienteEntity.Create("Empresa Delta", "600555444-5", "3150001111", "Barranquilla");
+        db.Clientes.Add(cliente);
+        await db.SaveChangesAsync();
+
+        // Act
+        var response = await _client.GetAsync($"/api/v1/clientes/{cliente.Id}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var content = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        Assert.NotNull(content);
+        Assert.Equal(cliente.Id, content.Id);
+        Assert.Equal("Empresa Delta", content.Nombre);
+        Assert.Equal("600555444-5", content.Nit);
+        Assert.Equal("3150001111", content.Telefono);
+        Assert.Equal("Barranquilla", content.Ciudad);
+    }
+
+    [Fact]
+    public async Task GetClienteById_Returns404ProblemDetails_WhenClienteDoesNotExist()
+    {
+        // Arrange
+        var nonExistentId = Guid.NewGuid();
+
+        // Act
+        var response = await _client.GetAsync($"/api/v1/clientes/{nonExistentId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Not Found", body);
+    }
+
+    [Fact]
+    public async Task GetClienteById_ResponseHasCamelCaseFields_WhenClienteExists()
+    {
+        // Arrange
+        await ClearClientesAsync();
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var cliente = ClienteEntity.Create("Empresa Epsilon", "500333222-6", "3167778888", "Cartagena");
+        db.Clientes.Add(cliente);
+        await db.SaveChangesAsync();
+
+        // Act
+        var response = await _client.GetAsync($"/api/v1/clientes/{cliente.Id}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var content = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        Assert.NotNull(content);
+        Assert.NotEqual(default, content.Id);
+        Assert.NotEqual(default, content.CreatedAt);
+        Assert.NotEqual(default, content.UpdatedAt);
     }
 
     public async Task DisposeAsync()

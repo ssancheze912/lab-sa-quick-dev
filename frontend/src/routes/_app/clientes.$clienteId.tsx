@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ClienteDetailView } from '../../modules/crm/clientes/presentation/ClienteDetailView'
 
 export const Route = createFileRoute('/_app/clientes/$clienteId')({
-  component: ClienteDetailStub,
+  component: ClienteDetailPage,
 })
 
-function ClienteDetailStub() {
-  // Story 2.2 will implement the detail view
-  return null
+function ClienteDetailPage() {
+  const { clienteId } = Route.useParams()
+  return <ClienteDetailView clienteId={clienteId} />
 }
