@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: review
+Status: done
 
 ## Story
 
@@ -365,6 +365,8 @@ N/A - dotnet CLI not available in this environment; migration files created manu
 - `backend/tests/SiesaAgents.UnitTests/API/Middleware/ExceptionHandlingMiddlewareTests.cs`
 - `backend/tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj`
 - `backend/tests/SiesaAgents.IntegrationTests/Infrastructure/DatabaseConnectivityTests.cs`
+
+**Note:** `backend/src/SiesaAgents.Domain/Entities/Entity.cs` was pre-existing from Story 1.1 (NOT created here). Story Dev Notes reference to `Common/Entity.cs` is a documentation error — actual path is `Entities/Entity.cs`.
 
 **Modified:**
 - `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` — added ApplySnakeCaseNaming()
