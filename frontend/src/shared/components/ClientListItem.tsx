@@ -26,7 +26,10 @@ export function ClientListItem({ cliente, isSelected, onClick }: ClientListItemP
           : 'text-slate-700 hover:bg-slate-50'
       }`}
     >
-      <p className="font-bold text-sm truncate">{cliente.nombre}</p>
+      <p className="font-bold text-sm truncate">
+        {cliente.nombre}
+        <span className="sr-only">, NIT {cliente.nit}</span>
+      </p>
       <p className="text-xs text-slate-500 truncate">{cliente.nit}</p>
     </li>
   )
