@@ -22,6 +22,9 @@ file sealed class FakeClienteRepository(IEnumerable<ClienteEntity>? items = null
 
     public Task<ClienteEntity?> GetByIdAsync(Guid id)
         => Task.FromResult(_items.FirstOrDefault(e => e.Id == id));
+
+    public Task<ClienteEntity> CreateAsync(ClienteEntity entity)
+        => Task.FromResult(entity);
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

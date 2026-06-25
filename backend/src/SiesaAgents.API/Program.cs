@@ -1,7 +1,9 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
@@ -23,6 +25,12 @@ builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 // Query handlers
 builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<GetClienteByIdQueryHandler>();
+
+// Command handlers
+builder.Services.AddScoped<CreateClienteCommandHandler>();
+
+// Validators
+builder.Services.AddScoped<IValidator<CreateClienteCommand>, CreateClienteCommandValidator>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];
