@@ -131,4 +131,99 @@ public class ClienteEndpointsTests
         json.Should().Contain("\"createdAt\"");
         json.Should().Contain("\"updatedAt\"");
     }
+
+    // ─── GET /api/v1/clientes/{id} — new endpoint tests ─────────────────────────
+
+    [Fact]
+    public async Task GetClienteById_ReturnsOkWithClientData_WhenClientExists()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        ClienteEntity? seededCliente = null;
+        await factory.SeedAsync(db =>
+        {
+            seededCliente = ClienteEntity.Create("Empresa Ejemplo S.A.", "900123456-7", "6011234567", "Bogotá");
+            db.Clientes.Add(seededCliente);
+        });
+
+        var client = factory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync($"/api/v1/clientes/{seededCliente!.Id}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        body.Should().NotBeNull();
+        body!.Id.Should().Be(seededCliente.Id);
+        body.Nombre.Should().Be("Empresa Ejemplo S.A.");
+        body.Nit.Should().Be("900123456-7");
+        body.Telefono.Should().Be("6011234567");
+        body.Ciudad.Should().Be("Bogotá");
+    }
+
+    [Fact]
+    public async Task GetClienteById_Returns404WithProblemDetails_WhenClientDoesNotExist()
+    {
+        // Arrange — empty DB, unknown ID
+        await using var factory = CreateFactory();
+        var client = factory.CreateClient();
+        var unknownId = Guid.NewGuid();
+
+        // Act
+        var response = await client.GetAsync($"/api/v1/clientes/{unknownId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().Contain("404");
+        json.Should().Contain(unknownId.ToString());
+    }
+
+    [Fact]
+    public async Task GetClienteById_ReturnsApplicationJson_WhenClientExists()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        ClienteEntity? seededCliente = null;
+        await factory.SeedAsync(db =>
+        {
+            seededCliente = ClienteEntity.Create("Content Type Corp", "111111111-1", "3109876543", "Cali");
+            db.Clientes.Add(seededCliente);
+        });
+
+        var client = factory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync($"/api/v1/clientes/{seededCliente!.Id}");
+
+        // Assert
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+    }
+
+    [Fact]
+    public async Task GetClienteById_ResponseContainsCamelCaseFields()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        ClienteEntity? seededCliente = null;
+        await factory.SeedAsync(db =>
+        {
+            seededCliente = ClienteEntity.Create("CamelCase Cliente", "222222222-2", "3009876543", "Medellín");
+            db.Clientes.Add(seededCliente);
+        });
+
+        var client = factory.CreateClient();
+
+        // Act
+        var json = await client.GetStringAsync($"/api/v1/clientes/{seededCliente!.Id}");
+
+        // Assert — camelCase fields are present in JSON response
+        json.Should().Contain("\"nombre\"");
+        json.Should().Contain("\"nit\"");
+        json.Should().Contain("\"createdAt\"");
+        json.Should().Contain("\"updatedAt\"");
+    }
 }

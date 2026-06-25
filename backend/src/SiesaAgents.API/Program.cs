@@ -22,6 +22,7 @@ builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 
 // Query handlers
 builder.Services.AddScoped<GetClientesQueryHandler>();
+builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];

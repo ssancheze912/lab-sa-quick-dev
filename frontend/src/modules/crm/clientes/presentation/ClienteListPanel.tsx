@@ -6,10 +6,14 @@ import { EmptyState } from '@/shared/components/EmptyState';
 import { ErrorPanel } from '@/shared/components/ErrorPanel';
 import { ClientListItem } from '@/shared/components/ClientListItem';
 
-export function ClienteListPanel() {
+interface ClienteListPanelProps {
+  activeClienteId?: string;
+  onClienteSelect?: (id: string) => void;
+}
+
+export function ClienteListPanel({ activeClienteId, onClienteSelect }: ClienteListPanelProps = {}) {
   const { data, isLoading, isError, refetch } = useClientes();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeId, setActiveId] = useState<string | null>(null);
 
   const filtered = useMemo(
     () =>
@@ -66,8 +70,8 @@ export function ClienteListPanel() {
               <ClientListItem
                 key={cliente.id}
                 cliente={cliente}
-                isActive={activeId === cliente.id}
-                onClick={() => setActiveId(cliente.id)}
+                isActive={activeClienteId === cliente.id}
+                onClick={() => onClienteSelect?.(cliente.id)}
               />
             ))}
           </ul>

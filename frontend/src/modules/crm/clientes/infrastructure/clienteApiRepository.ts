@@ -7,4 +7,8 @@ export const clienteApiRepository: IClienteRepository = {
     const { data } = await apiClient.get<Cliente[]>('/api/v1/clientes');
     return data;
   },
+  getById: async (id: string) => {
+    const { data } = await apiClient.get<Cliente>(`/api/v1/clientes/${id}`);
+    return data;
+  },
 };
