@@ -12,7 +12,8 @@ development_status:
   # Epic statuses
   epic-1: in-progress
   epic-2: done
-  epic-3: pending
+  epic-3: in-progress
+  epic-3-last-update: 25-06-2026
   epic-4: pending
 
   # Epic 1 — Project Foundation & Application Shell
@@ -29,7 +30,7 @@ development_status:
   2-6-sort-client-list: done
 
   # Epic 3 — Contact Management
-  3-1-contact-list-search: pending
+  3-1-contact-list-search: ready-for-dev
   3-2-contact-detail-view: pending
   3-3-create-contact: pending
   3-4-edit-contact: pending
