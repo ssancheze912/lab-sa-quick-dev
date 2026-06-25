@@ -10,25 +10,21 @@ function ClientesPage() {
   const navigate = useNavigate();
   const childMatches = useChildMatches();
 
-  // Extract active clienteId from child route if present
-  const activeClienteId = childMatches.length > 0
-    ? (childMatches[0].params as { clienteId?: string }).clienteId
-    : undefined;
+  // If a child route ($clienteId) is matched, delegate rendering entirely to Outlet.
+  // The child route (clientes.$clienteId.tsx) manages its own layout and active state.
+  if (childMatches.length > 0) {
+    return <Outlet />;
+  }
 
   function handleClienteSelect(id: string) {
     navigate({ to: '/clientes/$clienteId', params: { clienteId: id } });
-  }
-
-  // If a child route ($clienteId) is matched, render the Outlet (it handles its own layout)
-  if (childMatches.length > 0) {
-    return <Outlet />;
   }
 
   return (
     <div className="flex h-full">
       {/* Left panel — fixed 280px scrollable list, no active client */}
       <ClienteListPanel
-        activeClienteId={activeClienteId}
+        activeClienteId={undefined}
         onClienteSelect={handleClienteSelect}
       />
 

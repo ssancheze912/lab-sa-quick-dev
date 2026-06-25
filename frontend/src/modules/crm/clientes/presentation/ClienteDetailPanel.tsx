@@ -1,7 +1,7 @@
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
-import type { AxiosError } from 'axios';
+import axios from 'axios';
 import { useCliente } from '../application/useCliente';
 import { ErrorPanel } from '@/shared/components/ErrorPanel';
 
@@ -62,7 +62,8 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   }
 
   // 404 — client not found (distinct from generic error)
-  const is404 = isError && (error as AxiosError)?.response?.status === 404;
+  // Use axios.isAxiosError() type guard instead of an unsafe cast
+  const is404 = isError && axios.isAxiosError(error) && error.response?.status === 404;
   if (is404) {
     return (
       <div

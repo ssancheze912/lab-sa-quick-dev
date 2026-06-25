@@ -1,6 +1,6 @@
 /**
  * Story 2.2: ClienteDetailPanel component — Component Tests
- * ATDD — RED Phase (Tests intentionally failing — no implementation yet)
+ * ATDD — GREEN Phase (All tests passing post-implementation)
  *
  * Acceptance Criteria covered:
  * - AC1: Detail panel renders Nombre, NIT/RUC, Teléfono, Ciudad when client is loaded

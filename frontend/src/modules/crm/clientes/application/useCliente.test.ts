@@ -1,6 +1,6 @@
 /**
  * Story 2.2: useCliente hook — Unit Tests
- * ATDD — RED Phase (Tests intentionally failing — no implementation yet)
+ * ATDD — GREEN Phase (All tests passing post-implementation)
  *
  * Acceptance Criteria covered:
  * - AC3: useCliente(id) fetches from GET /api/v1/clientes/{id}, queryKey: ['clientes', id]
