@@ -21,10 +21,12 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { buildClienteResponse } from '../../support/factories/cliente.factory';
 
 const API_CLIENTES_LIST = '**/api/v1/clientes';
 const API_CLIENTE_DETAIL = '**/api/v1/clientes/*';
 
+/** Convenience alias using the shared factory with a stable UUID for deep-link tests */
 function buildClienteStub(overrides: Partial<{
   id: string;
   nombre: string;
@@ -34,17 +36,14 @@ function buildClienteStub(overrides: Partial<{
   createdAt: string;
   updatedAt: string;
 }> = {}) {
-  const ts = new Date().toISOString();
-  return {
+  return buildClienteResponse({
     id: '550e8400-e29b-41d4-a716-446655440001',
     nombre: 'Empresa Ejemplo S.A.',
     nit: '900123456-7',
     telefono: '6011234567',
     ciudad: 'Bogotá',
-    createdAt: ts,
-    updatedAt: ts,
     ...overrides,
-  };
+  });
 }
 
 // ─── Keyboard navigation ──────────────────────────────────────────────────────

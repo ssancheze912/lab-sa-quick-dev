@@ -16,12 +16,14 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { buildClienteResponse } from '../../support/factories/cliente.factory';
 
 const API_CLIENTES_LIST = '**/api/v1/clientes';
 const API_CLIENTE_DETAIL = '**/api/v1/clientes/*';
 
 // ─── Shared stubs ─────────────────────────────────────────────────────────────
 
+/** Convenience alias using the shared factory with a stable UUID for deep-link tests */
 function buildClienteStub(overrides: Partial<{
   id: string;
   nombre: string;
@@ -31,17 +33,14 @@ function buildClienteStub(overrides: Partial<{
   createdAt: string;
   updatedAt: string;
 }> = {}) {
-  const ts = new Date().toISOString();
-  return {
+  return buildClienteResponse({
     id: '550e8400-e29b-41d4-a716-446655440001',
     nombre: 'Empresa Ejemplo S.A.',
     nit: '900123456-7',
     telefono: '6011234567',
     ciudad: 'Bogotá',
-    createdAt: ts,
-    updatedAt: ts,
     ...overrides,
-  };
+  });
 }
 
 // ─── AC1: Clicking a client renders full detail in right panel + highlights ────
@@ -583,8 +582,8 @@ test.describe('AC7 — /clientes sin clienteId seleccionado muestra placeholder'
 
     // WHEN: User navigates to /clientes without selecting a client
     await page.goto('/clientes');
-    // Brief wait to ensure any unintended calls would have fired
-    await page.waitForTimeout(300);
+    // Wait for page to settle (network idle) before asserting no detail call was made
+    await page.waitForLoadState('networkidle');
 
     // THEN: No detail API call was made
     expect(detailCallMade).toBe(false);
