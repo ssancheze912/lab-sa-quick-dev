@@ -17,15 +17,12 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-            await context.Response.WriteAsJsonAsync(
-                new ProblemDetails
-                {
-                    Status = StatusCodes.Status500InternalServerError,
-                    Title  = "An unexpected error occurred.",
-                    Detail = null   // Never expose ex.Message or stack traces
-                },
-                options: null,
-                contentType: "application/problem+json");
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Status  = StatusCodes.Status500InternalServerError,
+                Title   = "An unexpected error occurred.",
+                Detail  = null   // Never expose ex.Message or stack traces
+            }, contentType: "application/problem+json");
         }
     }
 }

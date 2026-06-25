@@ -76,7 +76,8 @@ public class ExceptionHandlingMiddlewareTests : IClassFixture<ExceptionHandlingM
 
                 // Replace with in-memory database so no real connection is needed
                 services.AddDbContext<AppDbContext>(options =>
-                    options.UseInMemoryDatabase("TestDb_ExceptionMiddleware"));
+                    options.UseInMemoryDatabase("TestDb_ExceptionMiddleware")
+                           .UseSnakeCaseNamingConvention());
             });
 
             builder.Configure(app =>
