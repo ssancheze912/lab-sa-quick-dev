@@ -40,7 +40,7 @@ export function ClienteListPanel() {
       </div>
 
       {/* List area */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div data-testid="clientes-list-container" className="flex-1 overflow-y-auto p-2">
         {isLoading && (
           <div className="space-y-2 px-1">
             {Array.from({ length: 5 }).map((_, i) => (

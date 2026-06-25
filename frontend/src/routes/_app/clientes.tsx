@@ -12,8 +12,13 @@ function ClientesPage() {
       <ClienteListPanel />
 
       {/* Right panel — placeholder until a client is selected (Story 2.2) */}
-      <div className="flex flex-1 items-center justify-center text-slate-400 text-sm">
-        Selecciona un cliente para ver el detalle
+      <div
+        data-testid="cliente-detail-panel"
+        className="flex flex-1 items-center justify-center text-slate-400 text-sm"
+      >
+        <span data-testid="detail-panel-placeholder">
+          Selecciona un cliente para ver el detalle
+        </span>
       </div>
     </div>
   );

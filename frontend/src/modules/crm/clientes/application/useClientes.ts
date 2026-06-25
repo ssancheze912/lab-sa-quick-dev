@@ -6,5 +6,6 @@ export function useClientes() {
     queryKey: ['clientes'],
     queryFn: clienteApiRepository.getAll,
     staleTime: 30_000,
+    retry: 0,
   });
 }
