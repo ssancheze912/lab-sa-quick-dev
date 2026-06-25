@@ -1,7 +1,7 @@
 import { apiClient } from '@/shared/lib/apiClient';
 import type { IClienteRepository } from '../domain/IClienteRepository';
 import type { Cliente } from '../domain/Cliente';
-import type { CreateClienteData } from '../application/clienteSchema';
+import type { CreateClienteInput } from '../domain/CreateClienteInput';
 
 export const clienteApiRepository: IClienteRepository = {
   getAll: async () => {
@@ -12,7 +12,7 @@ export const clienteApiRepository: IClienteRepository = {
     const { data } = await apiClient.get<Cliente>(`/api/v1/clientes/${id}`);
     return data;
   },
-  create: async (payload: CreateClienteData) => {
+  create: async (payload: CreateClienteInput) => {
     const { data: created } = await apiClient.post<Cliente>('/api/v1/clientes', payload);
     return created;
   },

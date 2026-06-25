@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { AxiosError } from 'axios';
+import axios from 'axios';
 import { toast } from 'siesa-ui-kit';
 import { createClienteSchema, type CreateClienteData } from '../application/clienteSchema';
 import { useCreateCliente } from '../application/useCreateCliente';
@@ -32,8 +32,7 @@ export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps)
         onSuccess();
       },
       onError: (error: unknown) => {
-        const axiosError = error as AxiosError<{ status: number }>;
-        if (axiosError.response?.status === 409) {
+        if (axios.isAxiosError(error) && error.response?.status === 409) {
           setError('nit', { type: 'server', message: 'El NIT/RUC ya está registrado' });
         } else {
           const msg = 'No se pudo crear el cliente. Intenta de nuevo.';

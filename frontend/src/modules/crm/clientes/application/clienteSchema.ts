@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { CreateClienteInput } from '../domain/CreateClienteInput';
 
 export const createClienteSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido').max(200),
@@ -7,4 +8,5 @@ export const createClienteSchema = z.object({
   ciudad: z.string().min(1, 'La ciudad es requerida').max(200),
 });
 
-export type CreateClienteData = z.infer<typeof createClienteSchema>;
+// CreateClienteData satisfies CreateClienteInput — same shape, validated by Zod
+export type CreateClienteData = z.infer<typeof createClienteSchema> & CreateClienteInput;

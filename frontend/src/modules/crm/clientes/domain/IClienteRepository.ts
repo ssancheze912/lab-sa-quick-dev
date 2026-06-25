@@ -1,8 +1,8 @@
 import type { Cliente } from './Cliente';
-import type { CreateClienteData } from '../application/clienteSchema';
+import type { CreateClienteInput } from './CreateClienteInput';
 
 export interface IClienteRepository {
   getAll(): Promise<Cliente[]>;
   getById(id: string): Promise<Cliente>;
-  create(data: CreateClienteData): Promise<Cliente>;
+  create(data: CreateClienteInput): Promise<Cliente>;
 }

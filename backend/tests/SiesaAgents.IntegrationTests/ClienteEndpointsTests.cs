@@ -317,4 +317,26 @@ public class ClienteEndpointsTests
         clientes.Should().NotBeNull();
         clientes!.Should().Contain(c => c.Nombre == "Nueva Empresa" && c.Nit == "444444444-4");
     }
+
+    [Fact]
+    public async Task PostCliente_Returns400_WhenFieldsAreWhitespaceOnly()
+    {
+        // Arrange — whitespace-only strings should be rejected by FluentValidation (AC3)
+        await using var factory = CreateFactory();
+        var client = factory.CreateClient();
+        var payload = new { nombre = "   ", nit = "   ", telefono = "   ", ciudad = "   " };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().Contain("400");
+    }
+
+    // NOTE: PostCliente_Returns409_WhenNitAlreadyExists cannot be tested with InMemory EF
+    // because the InMemory provider does not enforce unique constraints (no PostgresException).
+    // This AC4 path is covered at the unit level (CreateClienteCommandHandlerTests.HandleAsync_WhenRepositoryThrowsDbUpdateException_PropagatesException)
+    // and should be validated via a real PostgreSQL test container in a future integration test run.
 }

@@ -167,4 +167,20 @@ public class CreateClienteCommandHandlerTests
         // Assert
         result.IsValid.Should().BeTrue();
     }
+
+    [Fact]
+    public void Validator_WithWhitespaceOnlyNombre_ReturnsValidationError()
+    {
+        // Arrange — whitespace-only strings bypass NotEmpty() in FluentValidation;
+        // the Must() rule catches them.
+        var validator = new CreateClienteCommandValidator();
+        var command = new CreateClienteCommand("   ", "900123456-7", "6011234567", "Bogotá");
+
+        // Act
+        var result = validator.Validate(command);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "Nombre");
+    }
 }
