@@ -143,10 +143,10 @@ test.describe('[P1] AC5 edge — All field values preserved after 5xx error', ()
 test.describe('[P1] AC2 edge — "Guardando…" text is displayed during pending', () => {
   test('[P1] should display "Guardando…" text on the submit button while the mutation is in flight', async ({ page }) => {
     // GIVEN: POST endpoint is slow (network-first intercept before navigation)
-    await page.route('**/api/v1/clientes', async (route) => {
+    await page.route('**/api/v1/clientes', (route) => {
       if (route.request().method() === 'POST') {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify(buildClienteResponse()) });
+        // Use Playwright's built-in delay option instead of raw setTimeout (cleaner, no JS timer leak)
+        route.fulfill({ delay: 3000, status: 201, contentType: 'application/json', body: JSON.stringify(buildClienteResponse()) });
       } else {
         route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
       }

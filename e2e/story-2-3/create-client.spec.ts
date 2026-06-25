@@ -208,10 +208,10 @@ test.describe('AC2 — Crear cliente exitosamente', () => {
 
   test('should disable the submit button and show "Guardando…" while mutation is pending', async ({ page }) => {
     // GIVEN: POST endpoint is slow (network-first intercept before navigation)
-    await page.route('**/api/v1/clientes', async (route) => {
+    await page.route('**/api/v1/clientes', (route) => {
       if (route.request().method() === 'POST') {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify(buildClienteResponse()) });
+        // Use Playwright's built-in delay option instead of raw setTimeout (cleaner, no JS timer leak)
+        route.fulfill({ delay: 3000, status: 201, contentType: 'application/json', body: JSON.stringify(buildClienteResponse()) });
       } else {
         route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
       }
