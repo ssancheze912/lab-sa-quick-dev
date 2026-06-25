@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
-import type { AxiosError } from 'axios';
+import axios from 'axios';
 import { useCliente } from '../application/useCliente';
 import { ErrorPanel } from '@/shared/components/ErrorPanel';
+import { ClienteForm } from './ClienteForm';
 
 interface ClienteDetailPanelProps {
   clienteId: string | undefined;
@@ -33,13 +35,13 @@ function SkeletonDetail() {
 }
 
 export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const { data, isLoading, isError, error, refetch } = useCliente(clienteId);
 
   // Placeholder — no client selected
   if (!clienteId) {
     return (
       <div
-        data-testid="cliente-detail-panel"
         aria-label="Panel de detalle del cliente"
         className="flex flex-1 items-center justify-center text-slate-400 text-sm"
       >
@@ -54,7 +56,6 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   if (isLoading) {
     return (
       <div
-        data-testid="cliente-detail-panel"
         aria-label="Panel de detalle del cliente"
         className="flex-1 overflow-y-auto"
       >
@@ -64,11 +65,10 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   }
 
   // 404 — client not found (distinct from generic error)
-  const is404 = isError && (error as AxiosError)?.response?.status === 404;
+  const is404 = isError && axios.isAxiosError(error) && error.response?.status === 404;
   if (is404) {
     return (
       <div
-        data-testid="cliente-detail-panel"
         aria-label="Panel de detalle del cliente"
         className="flex flex-1 items-center justify-center flex-col gap-3 text-center px-6"
       >
@@ -88,7 +88,6 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   if (isError) {
     return (
       <div
-        data-testid="cliente-detail-panel"
         aria-label="Panel de detalle del cliente"
         className="flex flex-1 items-center justify-center"
       >
@@ -97,13 +96,47 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
     );
   }
 
+  // Edit mode — show ClienteForm with pre-filled data
+  if (isEditing && data) {
+    return (
+      <div
+        aria-label="Panel de detalle del cliente"
+        className="flex-1 overflow-y-auto"
+      >
+        <ClienteForm
+          mode="edit"
+          clienteId={clienteId}
+          initialData={{
+            nombre: data.nombre,
+            nit: data.nit,
+            telefono: data.telefono,
+            ciudad: data.ciudad,
+          }}
+          onSuccess={() => setIsEditing(false)}
+          onCancel={() => setIsEditing(false)}
+        />
+      </div>
+    );
+  }
+
   // Success — render client fields
   return (
     <div
-      data-testid="cliente-detail-panel"
       aria-label="Panel de detalle del cliente"
       className="flex-1 overflow-y-auto p-6"
     >
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-base font-bold text-slate-900">Detalle del cliente</h3>
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          aria-label="Editar cliente"
+          className="rounded-md bg-[#0e79fd] px-4 py-1.5 text-sm font-bold text-white hover:bg-[#154ca9] focus-visible:ring-2 focus-visible:ring-[#0e79fd]"
+        >
+          Editar
+        </button>
+      </div>
+
       <dl
         data-testid="cliente-detail-content"
         className="space-y-5"

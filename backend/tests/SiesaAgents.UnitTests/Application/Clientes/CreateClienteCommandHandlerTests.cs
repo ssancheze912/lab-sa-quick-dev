@@ -32,6 +32,9 @@ file sealed class FakeCreateClienteRepository : IClienteRepository
         _store.Add(entity);
         return Task.FromResult(entity);
     }
+
+    public Task<ClienteEntity> UpdateAsync(ClienteEntity entity)
+        => Task.FromResult(entity);
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

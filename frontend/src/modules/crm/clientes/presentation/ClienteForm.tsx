@@ -2,56 +2,98 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import { toast } from 'siesa-ui-kit';
-import { createClienteSchema, type CreateClienteData } from '../application/clienteSchema';
+import { createClienteSchema, updateClienteSchema, type CreateClienteData, type UpdateClienteData } from '../application/clienteSchema';
 import { useCreateCliente } from '../application/useCreateCliente';
+import { useUpdateCliente } from '../application/useUpdateCliente';
+import type { Cliente } from '../domain/Cliente';
 
-interface ClienteFormProps {
+interface ClienteFormCreateProps {
+  mode: 'create';
+  initialData?: never;
+  clienteId?: never;
   onSuccess: () => void;
   onCancel: () => void;
-  onNotify?: (type: 'success' | 'error', message: string) => void;
 }
 
-export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps) {
-  const { mutate, isPending } = useCreateCliente();
+interface ClienteFormEditProps {
+  mode: 'edit';
+  initialData: Pick<Cliente, 'nombre' | 'nit' | 'telefono' | 'ciudad'>;
+  clienteId: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+type ClienteFormProps = ClienteFormCreateProps | ClienteFormEditProps;
+
+type FormData = CreateClienteData | UpdateClienteData;
+
+export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel }: ClienteFormProps) {
+  const createMutation = useCreateCliente();
+  const updateMutation = useUpdateCliente(clienteId ?? '');
+
+  const { mutate: createMutate, isPending: isCreatePending } = createMutation;
+  const { mutate: updateMutate, isPending: isUpdatePending } = updateMutation;
+
+  const isPending = mode === 'create' ? isCreatePending : isUpdatePending;
 
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<CreateClienteData>({
-    resolver: zodResolver(createClienteSchema),
+  } = useForm<FormData>({
+    resolver: zodResolver(mode === 'create' ? createClienteSchema : updateClienteSchema),
+    defaultValues: initialData,
   });
 
-  function onSubmit(data: CreateClienteData) {
-    mutate(data, {
-      onSuccess: () => {
-        const msg = 'Cliente creado correctamente';
-        toast.success(msg);
-        onNotify?.('success', msg);
-        onSuccess();
-      },
-      onError: (error: unknown) => {
-        if (axios.isAxiosError(error) && error.response?.status === 409) {
-          setError('nit', { type: 'server', message: 'El NIT/RUC ya está registrado' });
-        } else {
-          const msg = 'No se pudo crear el cliente. Intenta de nuevo.';
-          toast.error(msg);
-          onNotify?.('error', msg);
-        }
-      },
-    });
+  function onSubmit(data: FormData) {
+    if (mode === 'create') {
+      createMutate(data as CreateClienteData, {
+        onSuccess: () => {
+          toast.success('Cliente creado correctamente');
+          onSuccess();
+        },
+        onError: (error: unknown) => {
+          if (axios.isAxiosError(error) && error.response?.status === 409) {
+            setError('nit', { type: 'server', message: 'El NIT/RUC ya está registrado' });
+          } else {
+            toast.error('No se pudo crear el cliente. Intenta de nuevo.');
+          }
+        },
+      });
+    } else {
+      updateMutate(data as UpdateClienteData, {
+        onSuccess: () => {
+          toast.success('Cliente actualizado correctamente');
+          onSuccess();
+        },
+        onError: (error: unknown) => {
+          if (axios.isAxiosError(error) && error.response?.status === 409) {
+            setError('nit', { type: 'server', message: 'El NIT/RUC ya está registrado' });
+          } else {
+            toast.error('No se pudo actualizar el cliente. Intenta de nuevo.');
+          }
+        },
+      });
+    }
   }
+
+  const isEditMode = mode === 'edit';
+  const formAriaLabel = isEditMode ? 'Editar cliente' : 'Formulario para crear cliente';
+  const submitLabel = isEditMode ? 'Guardar cambios' : 'Crear cliente';
+  const submitAriaLabel = isPending
+    ? 'Guardando'
+    : (isEditMode ? 'Guardar cambios del cliente' : 'Crear cliente');
+  const headingText = isEditMode ? 'Editar cliente' : 'Nuevo cliente';
 
   return (
     <form
-      data-testid="cliente-form"
       onSubmit={handleSubmit(onSubmit)}
-      aria-label="Formulario para crear cliente"
+      aria-label={formAriaLabel}
       className="flex flex-col gap-4 p-6"
       noValidate
     >
-      <h2 className="text-lg font-bold text-slate-900">Nuevo cliente</h2>
+      <h2 className="text-lg font-bold text-slate-900">{headingText}</h2>
 
       {/* Nombre */}
       <div className="flex flex-col gap-1">
@@ -59,7 +101,6 @@ export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps)
           Nombre
         </label>
         <input
-          data-testid="input-nombre"
           id="nombre"
           type="text"
           placeholder="Nombre de la empresa"
@@ -69,7 +110,7 @@ export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps)
           {...register('nombre')}
         />
         {errors.nombre && (
-          <span data-testid="error-nombre" id="nombre-error" role="alert" className="text-xs text-red-600">
+          <span id="nombre-error" role="alert" className="text-xs text-red-600">
             {errors.nombre.message}
           </span>
         )}
@@ -81,7 +122,6 @@ export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps)
           NIT/RUC
         </label>
         <input
-          data-testid="input-nit"
           id="nit"
           type="text"
           placeholder="Número de identificación tributaria"
@@ -91,7 +131,7 @@ export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps)
           {...register('nit')}
         />
         {errors.nit && (
-          <span data-testid="error-nit" id="nit-error" role="alert" className="text-xs text-red-600">
+          <span id="nit-error" role="alert" className="text-xs text-red-600">
             {errors.nit.message}
           </span>
         )}
@@ -103,7 +143,6 @@ export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps)
           Teléfono
         </label>
         <input
-          data-testid="input-telefono"
           id="telefono"
           type="text"
           placeholder="Número de teléfono"
@@ -113,7 +152,7 @@ export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps)
           {...register('telefono')}
         />
         {errors.telefono && (
-          <span data-testid="error-telefono" id="telefono-error" role="alert" className="text-xs text-red-600">
+          <span id="telefono-error" role="alert" className="text-xs text-red-600">
             {errors.telefono.message}
           </span>
         )}
@@ -125,7 +164,6 @@ export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps)
           Ciudad
         </label>
         <input
-          data-testid="input-ciudad"
           id="ciudad"
           type="text"
           placeholder="Ciudad"
@@ -135,7 +173,7 @@ export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps)
           {...register('ciudad')}
         />
         {errors.ciudad && (
-          <span data-testid="error-ciudad" id="ciudad-error" role="alert" className="text-xs text-red-600">
+          <span id="ciudad-error" role="alert" className="text-xs text-red-600">
             {errors.ciudad.message}
           </span>
         )}
@@ -144,16 +182,14 @@ export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps)
       {/* Actions */}
       <div className="flex gap-3 pt-2">
         <button
-          data-testid="btn-submit-cliente"
           type="submit"
           disabled={isPending}
-          aria-label={isPending ? 'Guardando cliente' : 'Guardar nuevo cliente'}
+          aria-label={submitAriaLabel}
           className="flex-1 rounded-md bg-[#0e79fd] px-4 py-2 text-sm font-bold text-white hover:bg-[#154ca9] focus-visible:ring-2 focus-visible:ring-[#0e79fd] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isPending ? 'Guardando…' : 'Guardar'}
+          {isPending ? 'Guardando…' : submitLabel}
         </button>
         <button
-          data-testid="btn-cancelar-cliente"
           type="button"
           onClick={onCancel}
           aria-label="Cancelar y cerrar formulario"
