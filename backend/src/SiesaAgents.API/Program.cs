@@ -5,7 +5,9 @@ using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
 using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Application.Contactos.Queries;
 using SiesaAgents.Domain.Clientes.Interfaces;
+using SiesaAgents.Domain.Contactos.Interfaces;
 using SiesaAgents.Infrastructure.Data;
 using SiesaAgents.Infrastructure.Repositories;
 
@@ -21,10 +23,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Repositories
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
 
 // Query handlers
 builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<GetClienteByIdQueryHandler>();
+builder.Services.AddScoped<GetContactosQueryHandler>();
 
 // Command handlers
 builder.Services.AddScoped<CreateClienteCommandHandler>();
@@ -53,6 +57,7 @@ app.MapScalarApiReference();
 
 // Endpoints
 app.MapClienteEndpoints();
+app.MapContactoEndpoints();
 
 app.Run();
 

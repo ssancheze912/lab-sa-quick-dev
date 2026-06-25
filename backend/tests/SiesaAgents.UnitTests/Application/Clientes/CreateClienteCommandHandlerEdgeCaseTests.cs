@@ -36,6 +36,12 @@ file sealed class FakeEdgeRepository : IClienteRepository
         _store.Add(entity);
         return Task.FromResult(entity);
     }
+
+    public Task<ClienteEntity> UpdateAsync(ClienteEntity entity)
+        => Task.FromResult(entity);
+
+    public Task<bool> DeleteAsync(Guid id)
+        => Task.FromResult(true);
 }
 
 // ─── Handler Edge Cases ───────────────────────────────────────────────────────

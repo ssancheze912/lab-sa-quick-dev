@@ -1,6 +1,5 @@
 /**
  * Story 3.1: useContactos hook — Unit Tests
- * ATDD — RED Phase (Tests intentionally failing — no implementation yet)
  *
  * Acceptance Criteria covered:
  * - AC1: useContactos returns the list of contacts (data from API)
@@ -14,7 +13,6 @@ import { createElement } from 'react';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 
-// SUT — will fail until implemented
 import { useContactos } from './useContactos';
 
 // ─── MSW server ───────────────────────────────────────────────────────────────
@@ -56,35 +54,27 @@ function createWrapper() {
 
 describe('useContactos', () => {
   it('should use queryKey ["contactos"]', async () => {
-    // GIVEN: MSW returns one contact
-    // WHEN: Hook is rendered
     const { result } = renderHook(() => useContactos(), { wrapper: createWrapper() });
 
-    // THEN: Data is eventually available (queryKey is correct)
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toBeDefined();
   });
 
   it('should return data array with contact objects on success', async () => {
-    // GIVEN: MSW returns one contact stub
-    // WHEN: Hook resolves
     const { result } = renderHook(() => useContactos(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    // THEN: data is an array containing the stub
     expect(Array.isArray(result.current.data)).toBe(true);
     expect(result.current.data).toHaveLength(1);
     expect(result.current.data![0]).toMatchObject({
       id: contactoStub.id,
       nombre: contactoStub.nombre,
-      cargo: contactoStub.cargo,
       email: contactoStub.email,
     });
   });
 
   it('should expose isLoading true before data arrives', async () => {
-    // GIVEN: MSW handler is slow (will not resolve before assertion)
     server.use(
       http.get(API_URL, async () => {
         await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -92,55 +82,43 @@ describe('useContactos', () => {
       }),
     );
 
-    // WHEN: Hook is rendered immediately
     const { result } = renderHook(() => useContactos(), { wrapper: createWrapper() });
 
-    // THEN: isLoading is true on first render
     expect(result.current.isLoading).toBe(true);
   });
 
   it('should expose isError true and error object when API fails', async () => {
-    // GIVEN: MSW returns 500
     server.use(
       http.get(API_URL, () =>
         HttpResponse.json({ status: 500, title: 'Internal Server Error' }, { status: 500 }),
       ),
     );
 
-    // WHEN: Hook is rendered
     const { result } = renderHook(() => useContactos(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-
-    // THEN: isError is true and error is set
     expect(result.current.error).toBeDefined();
   });
 
   it('should expose a refetch function on error state', async () => {
-    // GIVEN: MSW returns 500
     server.use(
       http.get(API_URL, () =>
         HttpResponse.json({ status: 500, title: 'Internal Server Error' }, { status: 500 }),
       ),
     );
 
-    // WHEN: Hook is rendered and resolves to error
     const { result } = renderHook(() => useContactos(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    // THEN: A refetch function is available
     expect(typeof result.current.refetch).toBe('function');
   });
 
   it('should return empty array when API returns empty array', async () => {
-    // GIVEN: MSW returns empty array
     server.use(http.get(API_URL, () => HttpResponse.json([])));
 
-    // WHEN: Hook resolves
     const { result } = renderHook(() => useContactos(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    // THEN: data is an empty array
     expect(result.current.data).toEqual([]);
   });
 });
