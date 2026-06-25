@@ -4,6 +4,9 @@ using SiesaAgents.Application.Clientes.Queries;
 
 namespace SiesaAgents.API.Endpoints;
 
+// Body-only record for PUT /api/v1/clientes/{id} — Id comes from route
+internal record UpdateClienteBody(string Nombre, string Nit, string Telefono, string Ciudad);
+
 public static class ClienteEndpoints
 {
     public static void MapClienteEndpoints(this IEndpointRouteBuilder app)
@@ -37,6 +40,51 @@ public static class ClienteEndpoints
         .WithSummary("Obtiene un cliente por ID")
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status500InternalServerError);
+
+        app.MapPut("/api/v1/clientes/{id:guid}", async (
+            Guid id,
+            UpdateClienteBody body,
+            UpdateClienteCommandHandler handler,
+            IValidator<UpdateClienteCommand> validator) =>
+        {
+            var commandWithId = new UpdateClienteCommand(id, body.Nombre, body.Nit, body.Telefono, body.Ciudad);
+            var validation = await validator.ValidateAsync(commandWithId);
+            if (!validation.IsValid)
+            {
+                var errors = validation.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(e => e.ErrorMessage).ToArray());
+
+                return Results.Problem(
+                    detail: "One or more validation errors occurred.",
+                    title: "Bad Request",
+                    statusCode: StatusCodes.Status400BadRequest,
+                    type: "https://tools.ietf.org/html/rfc7807",
+                    extensions: new Dictionary<string, object?> { ["errors"] = errors });
+            }
+
+            var updated = await handler.HandleAsync(commandWithId);
+
+            if (updated is null)
+            {
+                return Results.Problem(
+                    detail: $"Cliente con id {id} no encontrado.",
+                    title: "Not Found",
+                    statusCode: StatusCodes.Status404NotFound,
+                    type: "https://tools.ietf.org/html/rfc7807");
+            }
+
+            return Results.Ok(updated);
+        })
+        .WithName("UpdateCliente")
+        .WithSummary("Actualiza un cliente existente")
+        .Produces(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status409Conflict)
         .Produces(StatusCodes.Status500InternalServerError);
 
         app.MapPost("/api/v1/clientes", async (

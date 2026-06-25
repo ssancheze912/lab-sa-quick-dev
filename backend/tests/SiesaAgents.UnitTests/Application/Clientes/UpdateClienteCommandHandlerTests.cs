@@ -10,14 +10,15 @@ namespace SiesaAgents.UnitTests.Application.Clientes;
 
 // ─── Fake Repository ──────────────────────────────────────────────────────────
 
-file sealed class FakeCreateClienteRepository : IClienteRepository
+file sealed class FakeUpdateClienteRepository : IClienteRepository
 {
     private readonly List<ClienteEntity> _store = [];
-    private readonly Exception? _createThrows;
+    private readonly Exception? _updateThrows;
 
-    public FakeCreateClienteRepository(Exception? createThrows = null)
+    public FakeUpdateClienteRepository(IEnumerable<ClienteEntity>? seed = null, Exception? updateThrows = null)
     {
-        _createThrows = createThrows;
+        if (seed is not null) _store.AddRange(seed);
+        _updateThrows = updateThrows;
     }
 
     public Task<IEnumerable<ClienteEntity>> GetAllAsync()
@@ -28,28 +29,37 @@ file sealed class FakeCreateClienteRepository : IClienteRepository
 
     public Task<ClienteEntity> CreateAsync(ClienteEntity entity)
     {
-        if (_createThrows is not null) throw _createThrows;
         _store.Add(entity);
         return Task.FromResult(entity);
     }
 
     public Task<ClienteEntity> UpdateAsync(ClienteEntity entity)
-        => Task.FromResult(entity);
+    {
+        if (_updateThrows is not null) throw _updateThrows;
+        return Task.FromResult(entity);
+    }
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-public class CreateClienteCommandHandlerTests
+public class UpdateClienteCommandHandlerTests
 {
-    private static CreateClienteCommandHandler MakeHandler(Exception? createThrows = null)
-        => new(new FakeCreateClienteRepository(createThrows));
+    private static ClienteEntity MakeCliente(
+        string nombre = "Empresa Original S.A.",
+        string nit = "900000001-0",
+        string telefono = "6011234567",
+        string ciudad = "Bogotá")
+        => ClienteEntity.Create(nombre, nit, telefono, ciudad);
 
     [Fact]
-    public async Task HandleAsync_WithValidInput_CreatesEntityAndReturnsClienteDto()
+    public async Task HandleAsync_WithValidInput_UpdatesEntityAndReturnsClienteDto()
     {
         // Arrange
-        var handler = MakeHandler();
-        var command = new CreateClienteCommand("Empresa Ejemplo S.A.", "900123456-7", "6011234567", "Bogotá");
+        var original = MakeCliente();
+        var repo = new FakeUpdateClienteRepository(seed: [original]);
+        var handler = new UpdateClienteCommandHandler(repo);
+        var command = new UpdateClienteCommand(
+            original.Id, "Empresa Actualizada S.A.", "900123456-7", "6019876543", "Medellín");
 
         // Act
         var result = await handler.HandleAsync(command);
@@ -57,22 +67,40 @@ public class CreateClienteCommandHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Should().BeOfType<ClienteDto>();
-        result.Id.Should().NotBeEmpty();
-        result.Nombre.Should().Be("Empresa Ejemplo S.A.");
+        result!.Id.Should().Be(original.Id);
+        result.Nombre.Should().Be("Empresa Actualizada S.A.");
         result.Nit.Should().Be("900123456-7");
-        result.Telefono.Should().Be("6011234567");
-        result.Ciudad.Should().Be("Bogotá");
-        result.CreatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+        result.Telefono.Should().Be("6019876543");
+        result.Ciudad.Should().Be("Medellín");
         result.UpdatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenClientIdDoesNotExist_ReturnsNull()
+    {
+        // Arrange — empty repository, unknown ID
+        var repo = new FakeUpdateClienteRepository();
+        var handler = new UpdateClienteCommandHandler(repo);
+        var command = new UpdateClienteCommand(
+            Guid.NewGuid(), "Empresa", "900000001-1", "3001234567", "Cali");
+
+        // Act
+        var result = await handler.HandleAsync(command);
+
+        // Assert
+        result.Should().BeNull();
     }
 
     [Fact]
     public async Task HandleAsync_WhenRepositoryThrowsDbUpdateException_PropagatesException()
     {
-        // Arrange — simulate a DB unique constraint violation
+        // Arrange — simulate duplicate NIT unique constraint violation
+        var existing = MakeCliente();
         var dbException = new DbUpdateException("Unique constraint violation");
-        var handler = MakeHandler(dbException);
-        var command = new CreateClienteCommand("Empresa", "900123456-7", "6011111111", "Bogotá");
+        var repo = new FakeUpdateClienteRepository(seed: [existing], updateThrows: dbException);
+        var handler = new UpdateClienteCommandHandler(repo);
+        var command = new UpdateClienteCommand(
+            existing.Id, "Empresa", "900000002-2", "3001234567", "Bogotá");
 
         // Act
         Func<Task> act = () => handler.HandleAsync(command);
@@ -85,8 +113,8 @@ public class CreateClienteCommandHandlerTests
     public void Validator_WithEmptyNombre_ReturnsValidationError()
     {
         // Arrange
-        var validator = new CreateClienteCommandValidator();
-        var command = new CreateClienteCommand("", "900123456-7", "6011234567", "Bogotá");
+        var validator = new UpdateClienteCommandValidator();
+        var command = new UpdateClienteCommand(Guid.NewGuid(), "", "900123456-7", "6011234567", "Bogotá");
 
         // Act
         var result = validator.Validate(command);
@@ -100,8 +128,8 @@ public class CreateClienteCommandHandlerTests
     public void Validator_WithEmptyNit_ReturnsValidationError()
     {
         // Arrange
-        var validator = new CreateClienteCommandValidator();
-        var command = new CreateClienteCommand("Empresa", "", "6011234567", "Bogotá");
+        var validator = new UpdateClienteCommandValidator();
+        var command = new UpdateClienteCommand(Guid.NewGuid(), "Empresa", "", "6011234567", "Bogotá");
 
         // Act
         var result = validator.Validate(command);
@@ -115,8 +143,8 @@ public class CreateClienteCommandHandlerTests
     public void Validator_WithEmptyTelefono_ReturnsValidationError()
     {
         // Arrange
-        var validator = new CreateClienteCommandValidator();
-        var command = new CreateClienteCommand("Empresa", "900123456-7", "", "Bogotá");
+        var validator = new UpdateClienteCommandValidator();
+        var command = new UpdateClienteCommand(Guid.NewGuid(), "Empresa", "900123456-7", "", "Bogotá");
 
         // Act
         var result = validator.Validate(command);
@@ -130,8 +158,8 @@ public class CreateClienteCommandHandlerTests
     public void Validator_WithEmptyCiudad_ReturnsValidationError()
     {
         // Arrange
-        var validator = new CreateClienteCommandValidator();
-        var command = new CreateClienteCommand("Empresa", "900123456-7", "6011234567", "");
+        var validator = new UpdateClienteCommandValidator();
+        var command = new UpdateClienteCommand(Guid.NewGuid(), "Empresa", "900123456-7", "6011234567", "");
 
         // Act
         var result = validator.Validate(command);
@@ -145,9 +173,9 @@ public class CreateClienteCommandHandlerTests
     public void Validator_WithFieldExceedingMaxLength_ReturnsValidationError()
     {
         // Arrange
-        var validator = new CreateClienteCommandValidator();
+        var validator = new UpdateClienteCommandValidator();
         var tooLong = new string('x', 201);
-        var command = new CreateClienteCommand(tooLong, "900123456-7", "6011234567", "Bogotá");
+        var command = new UpdateClienteCommand(Guid.NewGuid(), tooLong, "900123456-7", "6011234567", "Bogotá");
 
         // Act
         var result = validator.Validate(command);
@@ -161,8 +189,9 @@ public class CreateClienteCommandHandlerTests
     public void Validator_WithAllValidFields_ReturnsValid()
     {
         // Arrange
-        var validator = new CreateClienteCommandValidator();
-        var command = new CreateClienteCommand("Empresa Ejemplo S.A.", "900123456-7", "6011234567", "Bogotá");
+        var validator = new UpdateClienteCommandValidator();
+        var command = new UpdateClienteCommand(
+            Guid.NewGuid(), "Empresa Actualizada S.A.", "900123456-7", "6011234567", "Bogotá");
 
         // Act
         var result = validator.Validate(command);
@@ -172,18 +201,17 @@ public class CreateClienteCommandHandlerTests
     }
 
     [Fact]
-    public void Validator_WithWhitespaceOnlyNombre_ReturnsValidationError()
+    public void Validator_WithEmptyId_ReturnsValidationError()
     {
-        // Arrange — whitespace-only strings bypass NotEmpty() in FluentValidation;
-        // the Must() rule catches them.
-        var validator = new CreateClienteCommandValidator();
-        var command = new CreateClienteCommand("   ", "900123456-7", "6011234567", "Bogotá");
+        // Arrange
+        var validator = new UpdateClienteCommandValidator();
+        var command = new UpdateClienteCommand(Guid.Empty, "Empresa", "900123456-7", "6011234567", "Bogotá");
 
         // Act
         var result = validator.Validate(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "Nombre");
+        result.Errors.Should().Contain(e => e.PropertyName == "Id");
     }
 }

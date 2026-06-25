@@ -339,4 +339,134 @@ public class ClienteEndpointsTests
     // because the InMemory provider does not enforce unique constraints (no PostgresException).
     // This AC4 path is covered at the unit level (CreateClienteCommandHandlerTests.HandleAsync_WhenRepositoryThrowsDbUpdateException_PropagatesException)
     // and should be validated via a real PostgreSQL test container in a future integration test run.
+
+    // ─── PUT /api/v1/clientes/{id} ────────────────────────────────────────────────
+
+    [Fact]
+    public async Task PutCliente_Returns200Ok_WithUpdatedClienteDto_OnValidPayload()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        ClienteEntity? seededCliente = null;
+        await factory.SeedAsync(db =>
+        {
+            seededCliente = ClienteEntity.Create("Empresa Original S.A.", "900111111-1", "6011234567", "Bogotá");
+            db.Clientes.Add(seededCliente);
+        });
+
+        var client = factory.CreateClient();
+        var payload = new { nombre = "Empresa Actualizada S.A.", nit = "900222222-2", telefono = "6019876543", ciudad = "Medellín" };
+
+        // Act
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seededCliente!.Id}", payload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        body.Should().NotBeNull();
+        body!.Id.Should().Be(seededCliente.Id);
+        body.Nombre.Should().Be("Empresa Actualizada S.A.");
+        body.Nit.Should().Be("900222222-2");
+        body.Telefono.Should().Be("6019876543");
+        body.Ciudad.Should().Be("Medellín");
+    }
+
+    [Fact]
+    public async Task PutCliente_Returns400_WhenRequiredFieldsAreEmpty()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        var client = factory.CreateClient();
+        var unknownId = Guid.NewGuid();
+        var payload = new { nombre = "", nit = "", telefono = "", ciudad = "" };
+
+        // Act
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{unknownId}", payload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().Contain("400");
+    }
+
+    [Fact]
+    public async Task PutCliente_Returns404_WhenClientIdDoesNotExist()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        var client = factory.CreateClient();
+        var unknownId = Guid.NewGuid();
+        var payload = new { nombre = "Empresa", nit = "900333333-3", telefono = "3001234567", ciudad = "Cali" };
+
+        // Act
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{unknownId}", payload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().Contain("404");
+        json.Should().Contain(unknownId.ToString());
+    }
+
+    [Fact]
+    public async Task PutCliente_ReturnsApplicationJsonWithCamelCaseFields_OnSuccess()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        ClienteEntity? seededCliente = null;
+        await factory.SeedAsync(db =>
+        {
+            seededCliente = ClienteEntity.Create("Empresa Original", "900444444-4", "3001111111", "Bogotá");
+            db.Clientes.Add(seededCliente);
+        });
+
+        var client = factory.CreateClient();
+        var payload = new { nombre = "Empresa CamelCase", nit = "900444444-4", telefono = "3001111111", ciudad = "Bogotá" };
+
+        // Act
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seededCliente!.Id}", payload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().Contain("\"nombre\"");
+        json.Should().Contain("\"nit\"");
+        json.Should().Contain("\"createdAt\"");
+        json.Should().Contain("\"updatedAt\"");
+    }
+
+    [Fact]
+    public async Task PutCliente_UpdatedValuesReflectInGetById()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        ClienteEntity? seededCliente = null;
+        await factory.SeedAsync(db =>
+        {
+            seededCliente = ClienteEntity.Create("Empresa Antes", "900555555-5", "3002222222", "Cali");
+            db.Clientes.Add(seededCliente);
+        });
+
+        var client = factory.CreateClient();
+        var payload = new { nombre = "Empresa Después", nit = "900555555-5", telefono = "3002222222", ciudad = "Cali" };
+
+        // Act — update
+        var putResponse = await client.PutAsJsonAsync($"/api/v1/clientes/{seededCliente!.Id}", payload);
+        putResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Act — get by id
+        var getResponse = await client.GetAsync($"/api/v1/clientes/{seededCliente.Id}");
+
+        // Assert — updated values reflected
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await getResponse.Content.ReadFromJsonAsync<ClienteDto>();
+        body.Should().NotBeNull();
+        body!.Nombre.Should().Be("Empresa Después");
+    }
+
+    // NOTE: PutCliente_Returns409_WhenNitAlreadyBelongsToDifferentClient cannot be tested with InMemory EF.
+    // Covered at unit level (UpdateClienteCommandHandlerTests) and requires a real PostgreSQL container.
 }

@@ -27,4 +27,18 @@ public sealed class ClienteEntity
             Ciudad = ciudad,
         };
     }
+
+    public void Update(string nombre, string nit, string telefono, string ciudad)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(nombre);
+        ArgumentException.ThrowIfNullOrWhiteSpace(nit);
+        ArgumentException.ThrowIfNullOrWhiteSpace(telefono);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ciudad);
+
+        Nombre = nombre;
+        Nit = nit;
+        Telefono = telefono;
+        Ciudad = ciudad;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }

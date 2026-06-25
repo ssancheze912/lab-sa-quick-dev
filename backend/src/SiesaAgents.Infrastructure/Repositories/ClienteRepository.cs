@@ -25,4 +25,11 @@ public sealed class ClienteRepository(AppDbContext dbContext) : IClienteReposito
         await dbContext.SaveChangesAsync();
         return entity;
     }
+
+    public async Task<ClienteEntity> UpdateAsync(ClienteEntity entity)
+    {
+        dbContext.Clientes.Update(entity);
+        await dbContext.SaveChangesAsync();
+        return entity;
+    }
 }

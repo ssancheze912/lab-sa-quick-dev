@@ -19,6 +19,9 @@ file sealed class FakeClienteByIdRepository(ClienteEntity? entity = null) : ICli
 
     public Task<ClienteEntity> CreateAsync(ClienteEntity e)
         => Task.FromResult(e);
+
+    public Task<ClienteEntity> UpdateAsync(ClienteEntity e)
+        => Task.FromResult(e);
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

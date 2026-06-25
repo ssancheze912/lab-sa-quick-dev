@@ -23,9 +23,11 @@ import { toast } from 'siesa-ui-kit';
 // ─── MSW server ───────────────────────────────────────────────────────────────
 
 const POST_URL = 'http://localhost:5000/api/v1/clientes';
+const CLIENTE_ID = '550e8400-e29b-41d4-a716-446655440000';
+const PUT_URL = `http://localhost:5000/api/v1/clientes/${CLIENTE_ID}`;
 
 const clienteStub = {
-  id: '550e8400-e29b-41d4-a716-446655440000',
+  id: CLIENTE_ID,
   nombre: 'Empresa Ejemplo S.A.',
   nit: '900123456-7',
   telefono: '6011234567',
@@ -34,8 +36,15 @@ const clienteStub = {
   updatedAt: '2026-03-12T10:30:00Z',
 };
 
+const updatedClienteStub = {
+  ...clienteStub,
+  nombre: 'Empresa Actualizada S.A.',
+  updatedAt: '2026-06-25T11:00:00Z',
+};
+
 const server = setupServer(
   http.post(POST_URL, () => HttpResponse.json(clienteStub, { status: 201 })),
+  http.put(PUT_URL, () => HttpResponse.json(updatedClienteStub, { status: 200 })),
 );
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
@@ -58,27 +67,41 @@ function createWrapper() {
     createElement(QueryClientProvider, { client: queryClient }, children);
 }
 
-function renderForm(onSuccess = vi.fn(), onCancel = vi.fn()) {
+function renderCreateForm(onSuccess = vi.fn(), onCancel = vi.fn()) {
   return render(
     createElement(
       createWrapper(),
       null,
-      createElement(ClienteForm, { onSuccess, onCancel }),
+      createElement(ClienteForm, { mode: 'create', onSuccess, onCancel }),
     ),
   );
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+function renderEditForm(
+  initialData = { nombre: 'Empresa Ejemplo S.A.', nit: '900123456-7', telefono: '6011234567', ciudad: 'Bogotá' },
+  onSuccess = vi.fn(),
+  onCancel = vi.fn(),
+) {
+  return render(
+    createElement(
+      createWrapper(),
+      null,
+      createElement(ClienteForm, { mode: 'edit', clienteId: CLIENTE_ID, initialData, onSuccess, onCancel }),
+    ),
+  );
+}
 
-describe('ClienteForm', () => {
+// ─── Create mode tests (existing) ─────────────────────────────────────────────
+
+describe('ClienteForm (create mode)', () => {
   it('should render all four fields and both buttons', () => {
-    renderForm();
+    renderCreateForm();
 
     expect(screen.getByLabelText('Nombre')).toBeInTheDocument();
     expect(screen.getByLabelText('NIT/RUC')).toBeInTheDocument();
     expect(screen.getByLabelText('Teléfono')).toBeInTheDocument();
     expect(screen.getByLabelText('Ciudad')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /guardar/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /crear cliente/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancelar/i })).toBeInTheDocument();
   });
 
@@ -93,9 +116,9 @@ describe('ClienteForm', () => {
       }),
     );
 
-    renderForm();
+    renderCreateForm();
 
-    await user.click(screen.getByRole('button', { name: /guardar/i }));
+    await user.click(screen.getByRole('button', { name: /crear cliente/i }));
 
     await waitFor(() => {
       expect(screen.getByText('El nombre es requerido')).toBeInTheDocument();
@@ -111,14 +134,14 @@ describe('ClienteForm', () => {
     const user = userEvent.setup();
     const onSuccess = vi.fn();
 
-    renderForm(onSuccess);
+    renderCreateForm(onSuccess);
 
     await user.type(screen.getByLabelText('Nombre'), 'Empresa Ejemplo S.A.');
     await user.type(screen.getByLabelText('NIT/RUC'), '900123456-7');
     await user.type(screen.getByLabelText('Teléfono'), '6011234567');
     await user.type(screen.getByLabelText('Ciudad'), 'Bogotá');
 
-    await user.click(screen.getByRole('button', { name: /guardar/i }));
+    await user.click(screen.getByRole('button', { name: /crear cliente/i }));
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce());
     expect(toast.success).toHaveBeenCalledWith('Cliente creado correctamente');
@@ -127,7 +150,6 @@ describe('ClienteForm', () => {
   it('should show "Guardando…" and disable submit button while pending', async () => {
     const user = userEvent.setup();
 
-    // Delay the server response to observe pending state
     server.use(
       http.post(POST_URL, async () => {
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -135,16 +157,15 @@ describe('ClienteForm', () => {
       }),
     );
 
-    renderForm();
+    renderCreateForm();
 
     await user.type(screen.getByLabelText('Nombre'), 'Empresa');
     await user.type(screen.getByLabelText('NIT/RUC'), '900000000-0');
     await user.type(screen.getByLabelText('Teléfono'), '3001234567');
     await user.type(screen.getByLabelText('Ciudad'), 'Cali');
 
-    await user.click(screen.getByRole('button', { name: /guardar/i }));
+    await user.click(screen.getByRole('button', { name: /crear cliente/i }));
 
-    // The button label changes to "Guardando…" while pending
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /guardando/i })).toBeDisabled();
     });
@@ -162,14 +183,14 @@ describe('ClienteForm', () => {
       ),
     );
 
-    renderForm();
+    renderCreateForm();
 
     await user.type(screen.getByLabelText('Nombre'), 'Empresa');
     await user.type(screen.getByLabelText('NIT/RUC'), '900123456-7');
     await user.type(screen.getByLabelText('Teléfono'), '6011234567');
     await user.type(screen.getByLabelText('Ciudad'), 'Bogotá');
 
-    await user.click(screen.getByRole('button', { name: /guardar/i }));
+    await user.click(screen.getByRole('button', { name: /crear cliente/i }));
 
     await waitFor(() => {
       expect(screen.getByText('El NIT/RUC ya está registrado')).toBeInTheDocument();
@@ -186,14 +207,14 @@ describe('ClienteForm', () => {
       ),
     );
 
-    renderForm(onSuccess);
+    renderCreateForm(onSuccess);
 
     await user.type(screen.getByLabelText('Nombre'), 'Empresa');
     await user.type(screen.getByLabelText('NIT/RUC'), '900000001-1');
     await user.type(screen.getByLabelText('Teléfono'), '3001234567');
     await user.type(screen.getByLabelText('Ciudad'), 'Medellín');
 
-    await user.click(screen.getByRole('button', { name: /guardar/i }));
+    await user.click(screen.getByRole('button', { name: /crear cliente/i }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
@@ -201,7 +222,6 @@ describe('ClienteForm', () => {
       );
     });
 
-    // Form stays open — onSuccess not called
     expect(onSuccess).not.toHaveBeenCalled();
     expect(screen.getByLabelText('Nombre')).toBeInTheDocument();
   });
@@ -218,7 +238,155 @@ describe('ClienteForm', () => {
       }),
     );
 
-    renderForm(vi.fn(), onCancel);
+    renderCreateForm(vi.fn(), onCancel);
+
+    await user.click(screen.getByRole('button', { name: /cancelar/i }));
+
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(apiCalled).toBe(false);
+  });
+});
+
+// ─── Edit mode tests ──────────────────────────────────────────────────────────
+
+describe('ClienteForm (edit mode)', () => {
+  const initialData = {
+    nombre: 'Empresa Ejemplo S.A.',
+    nit: '900123456-7',
+    telefono: '6011234567',
+    ciudad: 'Bogotá',
+  };
+
+  it('should pre-fill all form fields when initialData prop is provided', () => {
+    renderEditForm(initialData);
+
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Empresa Ejemplo S.A.');
+    expect(screen.getByLabelText('NIT/RUC')).toHaveValue('900123456-7');
+    expect(screen.getByLabelText('Teléfono')).toHaveValue('6011234567');
+    expect(screen.getByLabelText('Ciudad')).toHaveValue('Bogotá');
+  });
+
+  it('should show "Guardar cambios" as submit button label in edit mode', () => {
+    renderEditForm(initialData);
+
+    expect(screen.getByRole('button', { name: /guardar cambios/i })).toBeInTheDocument();
+  });
+
+  it('should show inline errors for empty required field and NOT call API', async () => {
+    const user = userEvent.setup();
+    let apiCalled = false;
+
+    server.use(
+      http.put(PUT_URL, () => {
+        apiCalled = true;
+        return HttpResponse.json(updatedClienteStub, { status: 200 });
+      }),
+    );
+
+    renderEditForm({ nombre: '', nit: '900123456-7', telefono: '6011234567', ciudad: 'Bogotá' });
+
+    await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('El nombre es requerido')).toBeInTheDocument();
+    });
+
+    expect(apiCalled).toBe(false);
+  });
+
+  it('should call PUT API and fire onSuccess when form is submitted with valid data', async () => {
+    const user = userEvent.setup();
+    const onSuccess = vi.fn();
+
+    renderEditForm(initialData, onSuccess);
+
+    // Clear and re-type the nombre field
+    await user.clear(screen.getByLabelText('Nombre'));
+    await user.type(screen.getByLabelText('Nombre'), 'Empresa Actualizada S.A.');
+
+    await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce());
+    expect(toast.success).toHaveBeenCalledWith('Cliente actualizado correctamente');
+  });
+
+  it('should show "Guardando…" and disable submit button while edit mutation is pending', async () => {
+    const user = userEvent.setup();
+
+    server.use(
+      http.put(PUT_URL, async () => {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return HttpResponse.json(updatedClienteStub, { status: 200 });
+      }),
+    );
+
+    renderEditForm(initialData);
+
+    await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /guardando/i })).toBeDisabled();
+    });
+  });
+
+  it('should set inline NIT error on 409 conflict response in edit mode', async () => {
+    const user = userEvent.setup();
+
+    server.use(
+      http.put(PUT_URL, () =>
+        HttpResponse.json(
+          { status: 409, title: 'Conflict', detail: 'El NIT/RUC ya está registrado.' },
+          { status: 409 },
+        ),
+      ),
+    );
+
+    renderEditForm(initialData);
+
+    await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('El NIT/RUC ya está registrado')).toBeInTheDocument();
+    });
+  });
+
+  it('should show toast error on 5xx response in edit mode and keep form open', async () => {
+    const user = userEvent.setup();
+    const onSuccess = vi.fn();
+
+    server.use(
+      http.put(PUT_URL, () =>
+        HttpResponse.json({ status: 500 }, { status: 500 }),
+      ),
+    );
+
+    renderEditForm(initialData, onSuccess);
+
+    await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'No se pudo actualizar el cliente. Intenta de nuevo.',
+      );
+    });
+
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Nombre')).toBeInTheDocument();
+  });
+
+  it('should call onCancel and NOT send any API request when Cancelar is clicked in edit mode', async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    let apiCalled = false;
+
+    server.use(
+      http.put(PUT_URL, () => {
+        apiCalled = true;
+        return HttpResponse.json(updatedClienteStub, { status: 200 });
+      }),
+    );
+
+    renderEditForm(initialData, vi.fn(), onCancel);
 
     await user.click(screen.getByRole('button', { name: /cancelar/i }));
 

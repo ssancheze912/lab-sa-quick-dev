@@ -2,50 +2,98 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import { toast } from 'siesa-ui-kit';
-import { createClienteSchema, type CreateClienteData } from '../application/clienteSchema';
+import { createClienteSchema, updateClienteSchema, type CreateClienteData, type UpdateClienteData } from '../application/clienteSchema';
 import { useCreateCliente } from '../application/useCreateCliente';
+import { useUpdateCliente } from '../application/useUpdateCliente';
+import type { Cliente } from '../domain/Cliente';
 
-interface ClienteFormProps {
+interface ClienteFormCreateProps {
+  mode: 'create';
+  initialData?: never;
+  clienteId?: never;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
-  const { mutate, isPending } = useCreateCliente();
+interface ClienteFormEditProps {
+  mode: 'edit';
+  initialData: Pick<Cliente, 'nombre' | 'nit' | 'telefono' | 'ciudad'>;
+  clienteId: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+type ClienteFormProps = ClienteFormCreateProps | ClienteFormEditProps;
+
+type FormData = CreateClienteData | UpdateClienteData;
+
+export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel }: ClienteFormProps) {
+  const createMutation = useCreateCliente();
+  const updateMutation = useUpdateCliente(clienteId ?? '');
+
+  const { mutate: createMutate, isPending: isCreatePending } = createMutation;
+  const { mutate: updateMutate, isPending: isUpdatePending } = updateMutation;
+
+  const isPending = mode === 'create' ? isCreatePending : isUpdatePending;
 
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<CreateClienteData>({
-    resolver: zodResolver(createClienteSchema),
+  } = useForm<FormData>({
+    resolver: zodResolver(mode === 'create' ? createClienteSchema : updateClienteSchema),
+    defaultValues: initialData,
   });
 
-  function onSubmit(data: CreateClienteData) {
-    mutate(data, {
-      onSuccess: () => {
-        toast.success('Cliente creado correctamente');
-        onSuccess();
-      },
-      onError: (error: unknown) => {
-        if (axios.isAxiosError(error) && error.response?.status === 409) {
-          setError('nit', { type: 'server', message: 'El NIT/RUC ya está registrado' });
-        } else {
-          toast.error('No se pudo crear el cliente. Intenta de nuevo.');
-        }
-      },
-    });
+  function onSubmit(data: FormData) {
+    if (mode === 'create') {
+      createMutate(data as CreateClienteData, {
+        onSuccess: () => {
+          toast.success('Cliente creado correctamente');
+          onSuccess();
+        },
+        onError: (error: unknown) => {
+          if (axios.isAxiosError(error) && error.response?.status === 409) {
+            setError('nit', { type: 'server', message: 'El NIT/RUC ya está registrado' });
+          } else {
+            toast.error('No se pudo crear el cliente. Intenta de nuevo.');
+          }
+        },
+      });
+    } else {
+      updateMutate(data as UpdateClienteData, {
+        onSuccess: () => {
+          toast.success('Cliente actualizado correctamente');
+          onSuccess();
+        },
+        onError: (error: unknown) => {
+          if (axios.isAxiosError(error) && error.response?.status === 409) {
+            setError('nit', { type: 'server', message: 'El NIT/RUC ya está registrado' });
+          } else {
+            toast.error('No se pudo actualizar el cliente. Intenta de nuevo.');
+          }
+        },
+      });
+    }
   }
+
+  const isEditMode = mode === 'edit';
+  const formAriaLabel = isEditMode ? 'Editar cliente' : 'Formulario para crear cliente';
+  const submitLabel = isEditMode ? 'Guardar cambios' : 'Crear cliente';
+  const submitAriaLabel = isPending
+    ? 'Guardando'
+    : (isEditMode ? 'Guardar cambios del cliente' : 'Crear cliente');
+  const headingText = isEditMode ? 'Editar cliente' : 'Nuevo cliente';
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      aria-label="Formulario para crear cliente"
+      aria-label={formAriaLabel}
       className="flex flex-col gap-4 p-6"
       noValidate
     >
-      <h2 className="text-lg font-bold text-slate-900">Nuevo cliente</h2>
+      <h2 className="text-lg font-bold text-slate-900">{headingText}</h2>
 
       {/* Nombre */}
       <div className="flex flex-col gap-1">
@@ -136,10 +184,10 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
         <button
           type="submit"
           disabled={isPending}
-          aria-label={isPending ? 'Guardando cliente' : 'Guardar nuevo cliente'}
+          aria-label={submitAriaLabel}
           className="flex-1 rounded-md bg-[#0e79fd] px-4 py-2 text-sm font-bold text-white hover:bg-[#154ca9] focus-visible:ring-2 focus-visible:ring-[#0e79fd] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isPending ? 'Guardando…' : 'Guardar'}
+          {isPending ? 'Guardando…' : submitLabel}
         </button>
         <button
           type="button"

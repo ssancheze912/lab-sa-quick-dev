@@ -12,7 +12,7 @@
  * Framework: Vitest + React Testing Library + MSW (matching Story 2.1 patterns)
  */
 
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -22,6 +22,16 @@ import { http, HttpResponse } from 'msw';
 
 // SUT — will fail until ClienteDetailPanel is implemented
 import { ClienteDetailPanel } from './ClienteDetailPanel';
+
+// Mock siesa-ui-kit toast (needed for ClienteForm in edit mode)
+vi.mock('siesa-ui-kit', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+  },
+}));
 
 // ─── MSW server ───────────────────────────────────────────────────────────────
 
@@ -44,6 +54,7 @@ function buildClienteDetail(overrides: Record<string, unknown> = {}) {
 
 const server = setupServer(
   http.get(`${API_BASE}/:id`, () => HttpResponse.json(buildClienteDetail())),
+  http.put(`${API_BASE}/:id`, () => HttpResponse.json(buildClienteDetail({ nombre: 'Empresa Actualizada S.A.' }))),
 );
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
@@ -369,5 +380,99 @@ describe('AC5 — ErrorPanel with Reintentar on 5xx or network error', () => {
 
     // THEN: The not-found message is NOT shown
     expect(screen.queryByTestId('cliente-not-found')).not.toBeInTheDocument();
+  });
+});
+
+// ─── Edit Flow (Story 2.4) ────────────────────────────────────────────────────
+
+describe('Edit Flow — "Editar" button and form toggle', () => {
+  it('should render "Editar" button when client data is loaded', async () => {
+    // GIVEN: API returns client data
+    // WHEN: ClienteDetailPanel is rendered with a valid clienteId
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    // THEN: "Editar" button is visible after data loads
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /editar cliente/i })).toBeInTheDocument();
+    });
+  });
+
+  it('should NOT render "Editar" button during skeleton loading state', async () => {
+    // GIVEN: API is slow
+    server.use(
+      http.get(`${API_BASE}/:id`, async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10_000));
+        return HttpResponse.json(buildClienteDetail());
+      }),
+    );
+
+    // WHEN: ClienteDetailPanel is rendered with a clienteId
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    // THEN: Skeleton is shown, "Editar" button is NOT present
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-detail-skeleton')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('button', { name: /editar cliente/i })).not.toBeInTheDocument();
+  });
+
+  it('should show ClienteForm in edit mode with pre-filled data when "Editar" is clicked', async () => {
+    // GIVEN: API returns client data
+    const user = userEvent.setup();
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-detail-content')).toBeInTheDocument();
+    });
+
+    // WHEN: User clicks "Editar"
+    await user.click(screen.getByRole('button', { name: /editar cliente/i }));
+
+    // THEN: ClienteForm is shown with pre-filled data
+    await waitFor(() => {
+      expect(screen.getByRole('form', { name: /editar cliente/i })).toBeInTheDocument();
+    });
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Empresa Ejemplo S.A.');
+    expect(screen.getByLabelText('NIT/RUC')).toHaveValue('900123456-7');
+    expect(screen.getByLabelText('Teléfono')).toHaveValue('6011234567');
+    expect(screen.getByLabelText('Ciudad')).toHaveValue('Bogotá');
+  });
+
+  it('should hide the edit form and show detail view when "Cancelar" is clicked', async () => {
+    // GIVEN: Edit form is open
+    const user = userEvent.setup();
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    await waitFor(() => expect(screen.getByTestId('cliente-detail-content')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /editar cliente/i }));
+    await waitFor(() => expect(screen.getByRole('form', { name: /editar cliente/i })).toBeInTheDocument());
+
+    // WHEN: User clicks "Cancelar"
+    await user.click(screen.getByRole('button', { name: /cancelar/i }));
+
+    // THEN: Detail view is shown again, form is gone
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-detail-content')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('form', { name: /editar cliente/i })).not.toBeInTheDocument();
+  });
+
+  it('should close edit form and show detail view after successful update', async () => {
+    // GIVEN: Edit form is open and PUT succeeds
+    const user = userEvent.setup();
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    await waitFor(() => expect(screen.getByTestId('cliente-detail-content')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /editar cliente/i }));
+    await waitFor(() => expect(screen.getByRole('form', { name: /editar cliente/i })).toBeInTheDocument());
+
+    // WHEN: User submits the form
+    await user.click(screen.getByRole('button', { name: /guardar cambios/i }));
+
+    // THEN: After success, form is closed and detail view is shown
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-detail-content')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('form', { name: /editar cliente/i })).not.toBeInTheDocument();
   });
 });
