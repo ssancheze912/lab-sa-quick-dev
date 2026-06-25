@@ -87,6 +87,27 @@ public static class ClienteEndpoints
         .Produces(StatusCodes.Status409Conflict)
         .Produces(StatusCodes.Status500InternalServerError);
 
+        app.MapDelete("/api/v1/clientes/{id:guid}", async (Guid id, DeleteClienteCommandHandler handler) =>
+        {
+            var deleted = await handler.HandleAsync(new DeleteClienteCommand(id));
+
+            if (!deleted)
+            {
+                return Results.Problem(
+                    detail: $"Cliente con id {id} no encontrado.",
+                    title: "Not Found",
+                    statusCode: StatusCodes.Status404NotFound,
+                    type: "https://tools.ietf.org/html/rfc7807");
+            }
+
+            return Results.NoContent();
+        })
+        .WithName("DeleteCliente")
+        .WithSummary("Elimina un cliente por ID")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status500InternalServerError);
+
         app.MapPost("/api/v1/clientes", async (
             CreateClienteCommand command,
             CreateClienteCommandHandler handler,

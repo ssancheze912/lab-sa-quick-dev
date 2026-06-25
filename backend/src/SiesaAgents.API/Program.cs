@@ -29,6 +29,7 @@ builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 // Command handlers
 builder.Services.AddScoped<CreateClienteCommandHandler>();
 builder.Services.AddScoped<UpdateClienteCommandHandler>();
+builder.Services.AddScoped<DeleteClienteCommandHandler>();
 
 // Validators
 builder.Services.AddScoped<IValidator<CreateClienteCommand>, CreateClienteCommandValidator>();

@@ -469,4 +469,98 @@ public class ClienteEndpointsTests
 
     // NOTE: PutCliente_Returns409_WhenNitAlreadyBelongsToDifferentClient cannot be tested with InMemory EF.
     // Covered at unit level (UpdateClienteCommandHandlerTests) and requires a real PostgreSQL container.
+
+    // ─── DELETE /api/v1/clientes/{id} ────────────────────────────────────────────
+
+    [Fact]
+    public async Task DeleteCliente_Returns204NoContent_OnValidExistingClient()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        ClienteEntity? seededCliente = null;
+        await factory.SeedAsync(db =>
+        {
+            seededCliente = ClienteEntity.Create("Empresa Eliminable S.A.", "900600001-1", "6011234567", "Bogotá");
+            db.Clientes.Add(seededCliente);
+        });
+
+        var client = factory.CreateClient();
+
+        // Act
+        var response = await client.DeleteAsync($"/api/v1/clientes/{seededCliente!.Id}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task DeleteCliente_Returns404WithProblemDetails_WhenClientIdDoesNotExist()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        var client = factory.CreateClient();
+        var unknownId = Guid.NewGuid();
+
+        // Act
+        var response = await client.DeleteAsync($"/api/v1/clientes/{unknownId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().Contain("404");
+        json.Should().Contain(unknownId.ToString());
+    }
+
+    [Fact]
+    public async Task DeleteCliente_GetByIdAfterDelete_Returns404()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        ClienteEntity? seededCliente = null;
+        await factory.SeedAsync(db =>
+        {
+            seededCliente = ClienteEntity.Create("Empresa Para Borrar", "900600002-2", "3001234567", "Cali");
+            db.Clientes.Add(seededCliente);
+        });
+
+        var client = factory.CreateClient();
+
+        // Act — delete the client
+        var deleteResponse = await client.DeleteAsync($"/api/v1/clientes/{seededCliente!.Id}");
+        deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        // Act — GET by id after deletion
+        var getResponse = await client.GetAsync($"/api/v1/clientes/{seededCliente.Id}");
+
+        // Assert
+        getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DeleteCliente_GetAllAfterDelete_DoesNotContainDeletedClient()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        ClienteEntity? seededCliente = null;
+        await factory.SeedAsync(db =>
+        {
+            seededCliente = ClienteEntity.Create("Empresa Borrada", "900600003-3", "3002345678", "Medellín");
+            db.Clientes.Add(seededCliente);
+        });
+
+        var client = factory.CreateClient();
+
+        // Act — delete
+        var deleteResponse = await client.DeleteAsync($"/api/v1/clientes/{seededCliente!.Id}");
+        deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        // Act — get all
+        var getAllResponse = await client.GetAsync("/api/v1/clientes");
+        getAllResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var clientes = await getAllResponse.Content.ReadFromJsonAsync<List<ClienteDto>>();
+        clientes.Should().NotBeNull();
+        clientes!.Should().NotContain(c => c.Id == seededCliente.Id);
+    }
 }

@@ -38,6 +38,12 @@ file sealed class FakeUpdateClienteRepository : IClienteRepository
         if (_updateThrows is not null) throw _updateThrows;
         return Task.FromResult(entity);
     }
+
+    public Task<bool> DeleteAsync(Guid id)
+    {
+        var removed = _store.RemoveAll(e => e.Id == id) > 0;
+        return Task.FromResult(removed);
+    }
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

@@ -21,4 +21,7 @@ export const clienteApiRepository: IClienteRepository = {
     const { data: updated } = await apiClient.put<Cliente>(`/api/v1/clientes/${id}`, data);
     return updated;
   },
+  delete: async (id: string) => {
+    await apiClient.delete(`/api/v1/clientes/${id}`);
+  },
 };
