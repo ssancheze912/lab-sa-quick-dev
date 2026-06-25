@@ -8,9 +8,10 @@ import { useCreateCliente } from '../application/useCreateCliente';
 interface ClienteFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  onNotify?: (type: 'success' | 'error', message: string) => void;
 }
 
-export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
+export function ClienteForm({ onSuccess, onCancel, onNotify }: ClienteFormProps) {
   const { mutate, isPending } = useCreateCliente();
 
   const {
@@ -25,7 +26,9 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
   function onSubmit(data: CreateClienteData) {
     mutate(data, {
       onSuccess: () => {
-        toast.success('Cliente creado correctamente');
+        const msg = 'Cliente creado correctamente';
+        toast.success(msg);
+        onNotify?.('success', msg);
         onSuccess();
       },
       onError: (error: unknown) => {
@@ -33,7 +36,9 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
         if (axiosError.response?.status === 409) {
           setError('nit', { type: 'server', message: 'El NIT/RUC ya está registrado' });
         } else {
-          toast.error('No se pudo crear el cliente. Intenta de nuevo.');
+          const msg = 'No se pudo crear el cliente. Intenta de nuevo.';
+          toast.error(msg);
+          onNotify?.('error', msg);
         }
       },
     });
@@ -41,6 +46,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
 
   return (
     <form
+      data-testid="cliente-form"
       onSubmit={handleSubmit(onSubmit)}
       aria-label="Formulario para crear cliente"
       className="flex flex-col gap-4 p-6"
@@ -54,6 +60,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
           Nombre
         </label>
         <input
+          data-testid="input-nombre"
           id="nombre"
           type="text"
           placeholder="Nombre de la empresa"
@@ -63,7 +70,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
           {...register('nombre')}
         />
         {errors.nombre && (
-          <span id="nombre-error" role="alert" className="text-xs text-red-600">
+          <span data-testid="error-nombre" id="nombre-error" role="alert" className="text-xs text-red-600">
             {errors.nombre.message}
           </span>
         )}
@@ -75,6 +82,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
           NIT/RUC
         </label>
         <input
+          data-testid="input-nit"
           id="nit"
           type="text"
           placeholder="Número de identificación tributaria"
@@ -84,7 +92,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
           {...register('nit')}
         />
         {errors.nit && (
-          <span id="nit-error" role="alert" className="text-xs text-red-600">
+          <span data-testid="error-nit" id="nit-error" role="alert" className="text-xs text-red-600">
             {errors.nit.message}
           </span>
         )}
@@ -96,6 +104,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
           Teléfono
         </label>
         <input
+          data-testid="input-telefono"
           id="telefono"
           type="text"
           placeholder="Número de teléfono"
@@ -105,7 +114,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
           {...register('telefono')}
         />
         {errors.telefono && (
-          <span id="telefono-error" role="alert" className="text-xs text-red-600">
+          <span data-testid="error-telefono" id="telefono-error" role="alert" className="text-xs text-red-600">
             {errors.telefono.message}
           </span>
         )}
@@ -117,6 +126,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
           Ciudad
         </label>
         <input
+          data-testid="input-ciudad"
           id="ciudad"
           type="text"
           placeholder="Ciudad"
@@ -126,7 +136,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
           {...register('ciudad')}
         />
         {errors.ciudad && (
-          <span id="ciudad-error" role="alert" className="text-xs text-red-600">
+          <span data-testid="error-ciudad" id="ciudad-error" role="alert" className="text-xs text-red-600">
             {errors.ciudad.message}
           </span>
         )}
@@ -135,6 +145,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
       {/* Actions */}
       <div className="flex gap-3 pt-2">
         <button
+          data-testid="btn-submit-cliente"
           type="submit"
           disabled={isPending}
           aria-label={isPending ? 'Guardando cliente' : 'Guardar nuevo cliente'}
@@ -143,6 +154,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
           {isPending ? 'Guardando…' : 'Guardar'}
         </button>
         <button
+          data-testid="btn-cancelar-cliente"
           type="button"
           onClick={onCancel}
           aria-label="Cancelar y cerrar formulario"
