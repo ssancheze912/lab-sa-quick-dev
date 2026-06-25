@@ -15,11 +15,23 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
+import { createElement } from 'react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
 
 import { routeTree } from '../../routeTree.gen';
+
+// ─── MSW server — stub API calls made by ClienteListPanel ────────────────────
+
+const server = setupServer(
+  http.get('http://localhost:5000/api/v1/clientes', () => HttpResponse.json([])),
+);
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
+afterAll(() => server.close());
 
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
 
@@ -29,10 +41,15 @@ function createTestRouter(initialPath: string) {
 }
 
 async function renderAtPath(path: string) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createTestRouter(path);
   await router.load();
   await act(async () => {
-    render(<RouterProvider router={router} />);
+    render(
+      createElement(QueryClientProvider, { client: queryClient },
+        createElement(RouterProvider, { router }),
+      ),
+    );
   });
 }
 
@@ -150,13 +167,13 @@ describe('AC2 - Mobile NavigationBar (viewport <1024px)', () => {
 // ─── AC3: Deep Linking ────────────────────────────────────────────────────────
 
 describe('AC3 - Deep Linking to /clientes and /contactos (FR30)', () => {
-  it('should render ClientesPlaceholder when navigating directly to /clientes', async () => {
+  it('should render ClienteListPanel when navigating directly to /clientes', async () => {
     // GIVEN: User navigates directly to /clientes
     // WHEN: The page renders
     await renderAtPath('/clientes');
 
-    // THEN: ClientesPlaceholder is displayed (heading "Clientes")
-    expect(screen.getByTestId('clientes-placeholder')).toBeInTheDocument();
+    // THEN: ClienteListPanel container is displayed (Story 2.1 replaces placeholder)
+    expect(await screen.findByTestId('clientes-list-panel')).toBeInTheDocument();
   });
 
   it('should render ContactosPlaceholder when navigating directly to /contactos', async () => {
@@ -168,12 +185,12 @@ describe('AC3 - Deep Linking to /clientes and /contactos (FR30)', () => {
     expect(screen.getByTestId('contactos-placeholder')).toBeInTheDocument();
   });
 
-  it('should display Spanish heading "Clientes" in the Clientes view', async () => {
+  it('should display clientes-search-input in the Clientes view', async () => {
     // GIVEN: User is on /clientes
     await renderAtPath('/clientes');
 
-    // THEN: Spanish heading is rendered
-    expect(screen.getByRole('heading', { name: /clientes/i })).toBeInTheDocument();
+    // THEN: Search input is rendered (Story 2.1 — ClienteListPanel)
+    expect(await screen.findByTestId('clientes-search-input')).toBeInTheDocument();
   });
 
   it('should display Spanish heading "Contactos" in the Contactos view', async () => {
@@ -324,10 +341,15 @@ describe('AC6 - Active route link is highlighted', () => {
 describe('Root redirect to /clientes', () => {
   it('should redirect from / to /clientes', async () => {
     // GIVEN: User navigates to the root URL
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const router = createTestRouter('/');
-    render(<RouterProvider router={router} />);
+    render(
+      createElement(QueryClientProvider, { client: queryClient },
+        createElement(RouterProvider, { router }),
+      ),
+    );
 
-    // THEN: Router redirects to /clientes and renders the Clientes view
-    expect(await screen.findByTestId('clientes-placeholder')).toBeInTheDocument();
+    // THEN: Router redirects to /clientes and renders the ClienteListPanel (Story 2.1)
+    expect(await screen.findByTestId('clientes-list-panel')).toBeInTheDocument();
   });
 });

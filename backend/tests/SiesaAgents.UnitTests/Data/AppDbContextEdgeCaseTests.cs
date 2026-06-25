@@ -29,17 +29,17 @@ public class AppDbContextEdgeCaseTests
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void GivenAppDbContext_WhenModelInspected_ThenEntityTypeListIsEmpty()
+    public void GivenAppDbContext_WhenModelInspected_ThenEntityTypeListContainsDomainEntities()
     {
         // GIVEN: AppDbContext configured with InMemory provider
-        using var context = BuildContext("test_empty_entities_edge");
+        using var context = BuildContext("test_entities_edge");
 
         // WHEN: Model entity types are queried
-        var entityTypes = context.Model.GetEntityTypes().ToList();
+        var entityTypes = context.Model.GetEntityTypes().Select(e => e.ClrType.Name).ToList();
 
-        // THEN: List is empty (no ClienteEntity, ContactoEntity, or any domain entity)
-        entityTypes.Should().BeEmpty(
-            because: "Story 1.3 scope forbids any domain entities; only __EFMigrationsHistory is expected after migration");
+        // THEN: ClienteEntity is registered (Story 2.1 adds it; Story 1.3 had no entities)
+        entityTypes.Should().Contain("ClienteEntity",
+            because: "Story 2.1 adds ClienteEntity to AppDbContext");
     }
 
     // -------------------------------------------------------------------------
@@ -200,12 +200,12 @@ public class AppDbContextEdgeCaseTests
         using var context2 = BuildContext("test_isolation_2");
 
         // WHEN: Both models are inspected
-        var entities1 = context1.Model.GetEntityTypes().ToList();
-        var entities2 = context2.Model.GetEntityTypes().ToList();
+        var entities1 = context1.Model.GetEntityTypes().Select(e => e.ClrType.Name).ToList();
+        var entities2 = context2.Model.GetEntityTypes().Select(e => e.ClrType.Name).ToList();
 
-        // THEN: Both have empty entity sets (no cross-contamination between instances)
-        entities1.Should().BeEmpty(because: "context1 should have no domain entities");
-        entities2.Should().BeEmpty(because: "context2 should have no domain entities");
+        // THEN: Both have the same entity sets (model is shared, not cross-contaminated via data)
+        entities1.Should().BeEquivalentTo(entities2,
+            because: "both context instances share the same EF Core model configuration");
     }
 }
 

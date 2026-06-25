@@ -14,11 +14,23 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
+import { createElement } from 'react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
 
 import { routeTree } from '../../routeTree.gen';
+
+// ─── MSW server — stub API calls made by ClienteListPanel ────────────────────
+
+const server = setupServer(
+  http.get('http://localhost:5000/api/v1/clientes', () => HttpResponse.json([])),
+);
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
+afterAll(() => server.close());
 
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
 
@@ -28,10 +40,15 @@ function createTestRouter(initialPath: string) {
 }
 
 async function renderAtPath(path: string) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createTestRouter(path);
   await router.load();
   await act(async () => {
-    render(<RouterProvider router={router} />);
+    render(
+      createElement(QueryClientProvider, { client: queryClient },
+        createElement(RouterProvider, { router }),
+      ),
+    );
   });
   return router;
 }
@@ -140,7 +157,7 @@ describe('Keyboard navigation: Enter key activates nav links', () => {
     const router = await renderAtPath('/clientes');
 
     // Verify initial state
-    expect(screen.getByTestId('clientes-placeholder')).toBeInTheDocument();
+    expect(screen.getByTestId('clientes-list-panel')).toBeInTheDocument();
 
     const contactosLink = screen.getByTestId('nav-item-contactos');
 
@@ -174,7 +191,7 @@ describe('Keyboard navigation: Enter key activates nav links', () => {
 
     // THEN: Navigation updates to /clientes
     await waitFor(() => {
-      expect(screen.getByTestId('clientes-placeholder')).toBeInTheDocument();
+      expect(screen.getByTestId('clientes-list-panel')).toBeInTheDocument();
     });
     expect(router.state.location.pathname).toBe('/clientes');
   });
@@ -210,7 +227,7 @@ describe('Not-found view: back link navigates correctly', () => {
 
     // THEN: Clientes placeholder is shown
     await waitFor(() => {
-      expect(screen.getByTestId('clientes-placeholder')).toBeInTheDocument();
+      expect(screen.getByTestId('clientes-list-panel')).toBeInTheDocument();
     });
   });
 
@@ -318,7 +335,7 @@ describe('DOM structural invariants', () => {
 
     const appRoot = screen.getByTestId('app-root');
     const navRail = screen.getByTestId('navigation-rail');
-    const content = screen.getByTestId('clientes-placeholder');
+    const content = screen.getByTestId('clientes-list-panel');
 
     // THEN: Both navigation and content are inside the app root
     expect(appRoot).toContainElement(navRail);
@@ -354,20 +371,25 @@ describe('DOM structural invariants', () => {
 // ─── Error Path: Initial State Edge Cases ─────────────────────────────────────
 
 describe('Initial state edge cases', () => {
-  it('root "/" redirect should render clientes-placeholder, not a blank screen', async () => {
+  it('root "/" redirect should render clientes-list-panel, not a blank screen', async () => {
     // GIVEN: User navigates to root
     setViewportWidth(1280);
 
     // WHEN: Router resolves the root redirect
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const router = createTestRouter('/');
     await router.load();
     await act(async () => {
-      render(<RouterProvider router={router} />);
+      render(
+        createElement(QueryClientProvider, { client: queryClient },
+          createElement(RouterProvider, { router }),
+        ),
+      );
     });
 
     // THEN: Content is rendered (no blank screen)
     await waitFor(() => {
-      expect(screen.getByTestId('clientes-placeholder')).toBeInTheDocument();
+      expect(screen.getByTestId('clientes-list-panel')).toBeInTheDocument();
     });
   });
 
@@ -375,29 +397,39 @@ describe('Initial state edge cases', () => {
     // GIVEN: First render at /clientes
     setViewportWidth(1280);
     const { unmount } = await (async () => {
+      const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
       const router = createTestRouter('/clientes');
       await router.load();
       let result!: ReturnType<typeof render>;
       await act(async () => {
-        result = render(<RouterProvider router={router} />);
+        result = render(
+          createElement(QueryClientProvider, { client: qc },
+            createElement(RouterProvider, { router }),
+          ),
+        );
       });
       return result;
     })();
 
-    expect(screen.getByTestId('clientes-placeholder')).toBeInTheDocument();
+    expect(screen.getByTestId('clientes-list-panel')).toBeInTheDocument();
 
     // WHEN: Component unmounts and re-renders (simulates navigating away and back)
     unmount();
 
     setViewportWidth(1280);
+    const qc2 = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const router2 = createTestRouter('/clientes');
     await router2.load();
     await act(async () => {
-      render(<RouterProvider router={router2} />);
+      render(
+        createElement(QueryClientProvider, { client: qc2 },
+          createElement(RouterProvider, { router: router2 }),
+        ),
+      );
     });
 
     // THEN: Clientes placeholder is still correctly rendered (no stale state from prior render)
-    expect(screen.getByTestId('clientes-placeholder')).toBeInTheDocument();
+    expect(screen.getByTestId('clientes-list-panel')).toBeInTheDocument();
     expect(screen.getByTestId('nav-item-clientes')).toHaveAttribute('aria-current', 'page');
   });
 });

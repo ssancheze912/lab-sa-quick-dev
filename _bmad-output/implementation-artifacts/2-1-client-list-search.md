@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,24 +24,24 @@ So that I can quickly find the client I'm looking for.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: Create `clientes` table via EF Core migration (AC: #1, #4)
-  - [ ] Create `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs` with properties: `Guid Id` (PK, `Guid.NewGuid()`), `string Nombre`, `string Nit`, `string Telefono`, `string Ciudad`, `DateTimeOffset CreatedAt`, `DateTimeOffset UpdatedAt`. Use private setters + static `Create()` factory pattern.
-  - [ ] Create `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` with methods: `Task<IEnumerable<ClienteDto>> GetAllAsync()`, `Task<ClienteDto?> GetByIdAsync(Guid id)`.
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs` implementing `IEntityTypeConfiguration<ClienteEntity>`: configure `uk_clientes_nit` unique index on `Nit`, set `not null` on `Nombre`, `Nit`, `Telefono`, `Ciudad`. EF Core auto-maps table name to `clientes` and columns to snake_case via `ApplySnakeCaseNaming()` (no `[Table]`/`[Column]` attributes).
-  - [ ] Register `DbSet<ClienteEntity> Clientes` in `AppDbContext.cs`.
-  - [ ] Create and run EF Core migration: `dotnet ef migrations add AddClientesTable --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API --output-dir Data/Migrations`
-  - [ ] Verify `clientes` table in `siesa_agents_db` with columns: `id` (uuid PK), `nombre`, `nit` (unique), `telefono`, `ciudad`, `created_at`, `updated_at`.
+- [x] Task 1 — Backend: Create `clientes` table via EF Core migration (AC: #1, #4)
+  - [x] Create `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs` with properties: `Guid Id` (PK, `Guid.NewGuid()`), `string Nombre`, `string Nit`, `string Telefono`, `string Ciudad`, `DateTimeOffset CreatedAt`, `DateTimeOffset UpdatedAt`. Use private setters + static `Create()` factory pattern.
+  - [x] Create `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` with methods: `Task<IEnumerable<ClienteDto>> GetAllAsync()`, `Task<ClienteDto?> GetByIdAsync(Guid id)`.
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs` implementing `IEntityTypeConfiguration<ClienteEntity>`: configure `uk_clientes_nit` unique index on `Nit`, set `not null` on `Nombre`, `Nit`, `Telefono`, `Ciudad`. EF Core auto-maps table name to `clientes` and columns to snake_case via `ApplySnakeCaseNaming()` (no `[Table]`/`[Column]` attributes).
+  - [x] Register `DbSet<ClienteEntity> Clientes` in `AppDbContext.cs`.
+  - [x] Create and run EF Core migration: `dotnet ef migrations add AddClientesTable --project src/SiesaAgents.Infrastructure --startup-project src/SiesaAgents.API --output-dir Data/Migrations`
+  - [x] Verify `clientes` table in `siesa_agents_db` with columns: `id` (uuid PK), `nombre`, `nit` (unique), `telefono`, `ciudad`, `created_at`, `updated_at`.
 
-- [ ] Task 2 — Backend: Implement `GET /api/v1/clientes` query and endpoint (AC: #1, #4)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs`: `record ClienteDto(Guid Id, string Nombre, string Nit, string Telefono, string Ciudad, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt)`.
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQuery.cs` (empty marker record) and `GetClientesQueryHandler.cs` that calls `IClienteRepository.GetAllAsync()` and returns `IEnumerable<ClienteDto>`.
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` implementing `IClienteRepository`: `GetAllAsync()` queries `AppDbContext.Clientes` ordered by `CreatedAt` descending, projects to `ClienteDto`.
-  - [ ] Register `IClienteRepository` → `ClienteRepository` in DI container in `Program.cs`.
-  - [ ] Create `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — map `GET /api/v1/clientes` → calls `GetClientesQueryHandler`, returns `200 OK` with direct array (no wrapper). Wire endpoint registration in `Program.cs`.
-  - [ ] Verify API returns `application/json` array with camelCase fields; empty array `[]` when no clients exist.
+- [x] Task 2 — Backend: Implement `GET /api/v1/clientes` query and endpoint (AC: #1, #4)
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs`: `record ClienteDto(Guid Id, string Nombre, string Nit, string Telefono, string Ciudad, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt)`.
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQuery.cs` (empty marker record) and `GetClientesQueryHandler.cs` that calls `IClienteRepository.GetAllAsync()` and returns `IEnumerable<ClienteDto>`.
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` implementing `IClienteRepository`: `GetAllAsync()` queries `AppDbContext.Clientes` ordered by `CreatedAt` descending, projects to `ClienteDto`.
+  - [x] Register `IClienteRepository` → `ClienteRepository` in DI container in `Program.cs`.
+  - [x] Create `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — map `GET /api/v1/clientes` → calls `GetClientesQueryHandler`, returns `200 OK` with direct array (no wrapper). Wire endpoint registration in `Program.cs`.
+  - [x] Verify API returns `application/json` array with camelCase fields; empty array `[]` when no clients exist.
 
-- [ ] Task 3 — Frontend: Define `Cliente` domain entity and repository interface (AC: #1, #2)
-  - [ ] Create `frontend/src/modules/crm/clientes/domain/Cliente.ts`:
+- [x] Task 3 — Frontend: Define `Cliente` domain entity and repository interface (AC: #1, #2)
+  - [x] Create `frontend/src/modules/crm/clientes/domain/Cliente.ts`:
     ```typescript
     export interface Cliente {
       id: string;
@@ -53,16 +53,16 @@ So that I can quickly find the client I'm looking for.
       updatedAt: string;
     }
     ```
-  - [ ] Create `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`:
+  - [x] Create `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`:
     ```typescript
     export interface IClienteRepository {
       getAll(): Promise<Cliente[]>;
     }
     ```
 
-- [ ] Task 4 — Frontend: Implement infrastructure layer (AC: #1, #4)
-  - [ ] Verify `frontend/src/shared/lib/apiClient.ts` Axios instance exists (created in Story 1.1/1.2) with `baseURL: import.meta.env.VITE_API_URL`.
-  - [ ] Create `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` implementing `IClienteRepository`:
+- [x] Task 4 — Frontend: Implement infrastructure layer (AC: #1, #4)
+  - [x] Verify `frontend/src/shared/lib/apiClient.ts` Axios instance exists (created in Story 1.1/1.2) with `baseURL: import.meta.env.VITE_API_URL`.
+  - [x] Create `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` implementing `IClienteRepository`:
     ```typescript
     import apiClient from '@/shared/lib/apiClient';
     import type { IClienteRepository } from '../domain/IClienteRepository';
@@ -76,8 +76,8 @@ So that I can quickly find the client I'm looking for.
     };
     ```
 
-- [ ] Task 5 — Frontend: Implement application layer hook `useClientes` (AC: #1, #2, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useClientes.ts`:
+- [x] Task 5 — Frontend: Implement application layer hook `useClientes` (AC: #1, #2, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useClientes.ts`:
     ```typescript
     import { useQuery } from '@tanstack/react-query';
     import { clienteApiRepository } from '../infrastructure/clienteApiRepository';
@@ -91,22 +91,22 @@ So that I can quickly find the client I'm looking for.
     }
     ```
 
-- [ ] Task 6 — Frontend: Create shared `EmptyState` and `ErrorPanel` components (AC: #3, #4)
-  - [ ] Check siesa-ui-kit catalog for empty state and error panel components first; if not available, create custom:
-  - [ ] Create `frontend/src/shared/components/EmptyState.tsx`:
+- [x] Task 6 — Frontend: Create shared `EmptyState` and `ErrorPanel` components (AC: #3, #4)
+  - [x] Check siesa-ui-kit catalog for empty state and error panel components first; if not available, create custom:
+  - [x] Create `frontend/src/shared/components/EmptyState.tsx`:
     ```typescript
     interface EmptyStateProps { message: string; }
     // Renders centered message with Heroicons `InboxIcon` and Spanish text
     ```
-  - [ ] Create `frontend/src/shared/components/ErrorPanel.tsx`:
+  - [x] Create `frontend/src/shared/components/ErrorPanel.tsx`:
     ```typescript
     interface ErrorPanelProps { onRetry: () => void; }
     // Renders error icon + "Ocurrió un error al cargar los datos." + "Reintentar" button
     // All user-facing text in Spanish, WCAG 2.1 AA compliant
     ```
 
-- [ ] Task 7 — Frontend: Create `ClienteListPanel` presentation component (AC: #1, #2, #3, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.tsx`:
+- [x] Task 7 — Frontend: Create `ClienteListPanel` presentation component (AC: #1, #2, #3, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.tsx`:
     - Use `useClientes()` hook for server state.
     - Manage `searchQuery: string` with local `useState('')`.
     - Filter clients with `useMemo`: case-insensitive match on `nombre` and `nit`.
@@ -117,7 +117,7 @@ So that I can quickly find the client I'm looking for.
     - Search input: `<input type="search" placeholder="Buscar por nombre o NIT/RUC..." />` with `aria-label` in Spanish.
     - Each list item: keyboard accessible, `role="option"`, highlights active selection.
     - All text labels in Spanish.
-  - [ ] Create `frontend/src/shared/components/ClientListItem.tsx`:
+  - [x] Create `frontend/src/shared/components/ClientListItem.tsx`:
     ```typescript
     interface ClientListItemProps {
       cliente: Cliente;
@@ -127,18 +127,18 @@ So that I can quickly find the client I'm looking for.
     // Renders nombre (bold) + nit (secondary text), Siesa Blue (#0e79fd) highlight when active
     ```
 
-- [ ] Task 8 — Frontend: Wire TanStack Router route `/clientes` (AC: #1, #5)
-  - [ ] Verify or create `frontend/src/routes/_app/clientes.tsx` (TanStack Router file-based route):
+- [x] Task 8 — Frontend: Wire TanStack Router route `/clientes` (AC: #1, #5)
+  - [x] Verify or create `frontend/src/routes/_app/clientes.tsx` (TanStack Router file-based route):
     - Renders split-panel layout: `ClienteListPanel` (280px left) + right panel placeholder.
     - Right panel shows placeholder text "Selecciona un cliente para ver el detalle" when no client selected.
     - Route stays at `/clientes` with no client ID segment until a client is selected.
 
-- [ ] Task 9 — Frontend: Write unit and component tests (AC: #1, #2, #3, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useClientes.test.ts`:
+- [x] Task 9 — Frontend: Write unit and component tests (AC: #1, #2, #3, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useClientes.test.ts`:
     - Mock `clienteApiRepository.getAll` with MSW.
     - Assert `queryKey: ['clientes']` is used.
     - Test loading, success, and error states.
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.test.tsx` with RTL:
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.test.tsx` with RTL:
     - Test: list renders when data present.
     - Test: `EmptyState` shown when array empty.
     - Test: `ErrorPanel` shown on fetch failure, "Reintentar" triggers refetch.
@@ -146,15 +146,15 @@ So that I can quickly find the client I'm looking for.
     - Test: filtering by NIT narrows list.
     - Test: filter is case-insensitive.
     - Include axe accessibility check.
-  - [ ] Create `frontend/src/shared/components/EmptyState.test.tsx` and `ErrorPanel.test.tsx` with basic render + snapshot tests.
+  - [x] Create `frontend/src/shared/components/EmptyState.test.tsx` and `ErrorPanel.test.tsx` with basic render + snapshot tests.
 
-- [ ] Task 10 — Backend: Write unit tests for `GetClientesQueryHandler` (AC: #1, #4)
-  - [ ] Create `tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`:
+- [x] Task 10 — Backend: Write unit tests for `GetClientesQueryHandler` (AC: #1, #4)
+  - [x] Create `tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`:
     - Mock `IClienteRepository`.
     - Test: returns empty list when no clients.
     - Test: returns mapped `ClienteDto` list ordered by `CreatedAt` descending.
     - Test: handler propagates repository exceptions (for middleware to catch).
-  - [ ] Create `tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs`:
+  - [x] Create `tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs`:
     - Test `GET /api/v1/clientes` returns `200 OK` with empty array.
     - Test `GET /api/v1/clientes` returns clients after seeding.
     - Test response is `application/json` with camelCase fields.
@@ -308,6 +308,60 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None — implementation completed without blocking issues.
+
 ### Completion Notes List
 
+1. Pre-existing bug fixed in `ExceptionHandlingMiddleware.cs`: `WriteAsJsonAsync` with contentType argument not supported in .NET 10; replaced with `JsonSerializer.Serialize` + `WriteAsync` to control `Content-Type: application/problem+json` manually.
+2. Domain `IClienteRepository.cs` returns `IEnumerable<ClienteEntity>` (not `ClienteDto`) to preserve Clean Architecture — Application layer cannot be referenced from Domain.
+3. `AppDbContextEdgeCaseTests` (Story 1.3) had 2 tests asserting no domain entities existed; updated assertions after `ClienteEntity` was added to model.
+4. `AppDbContextSnakeCaseTests` (Story 1.3) had 1 test asserting empty DbSets; updated to assert `ClienteEntity` registered.
+5. Integration tests use per-test `InMemoryClienteFactory` instances with unique DB names to prevent data leakage across tests.
+6. `navigation.test.tsx` and `navigation-edge-cases.test.tsx` (Story 1.2) updated: added MSW stub for `GET /api/v1/clientes`, wrapped `RouterProvider` with `QueryClientProvider`, corrected `createElement` import (from `react`, not `@testing-library/react`), and replaced `clientes-placeholder` testid with `clientes-list-panel`.
+7. `@/` path alias configured in `vite.config.ts` (`resolve.alias`) and `tsconfig.json` (`baseUrl` + `paths`).
+8. `siesa-ui-kit` does not export `EmptyState` or `ErrorPanel`; custom components created per company standards.
+
 ### File List
+
+**Backend — created:**
+- `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs`
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
+- `backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQuery.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQueryHandler.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260625051618_AddClientesTable.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260625051618_AddClientesTable.Designer.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`
+- `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs`
+
+**Backend — modified:**
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
+- `backend/src/SiesaAgents.API/Program.cs`
+- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj`
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs`
+- `backend/tests/SiesaAgents.UnitTests/Data/AppDbContextEdgeCaseTests.cs`
+- `backend/tests/SiesaAgents.IntegrationTests/Data/AppDbContextSnakeCaseTests.cs`
+
+**Frontend — created:**
+- `frontend/src/modules/crm/clientes/domain/Cliente.ts`
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`
+- `frontend/src/modules/crm/clientes/application/useClientes.ts`
+- `frontend/src/modules/crm/clientes/application/useClientes.test.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.test.tsx`
+- `frontend/src/shared/components/ClientListItem.tsx`
+- `frontend/src/shared/components/EmptyState.tsx`
+- `frontend/src/shared/components/EmptyState.test.tsx`
+- `frontend/src/shared/components/ErrorPanel.tsx`
+- `frontend/src/shared/components/ErrorPanel.test.tsx`
+
+**Frontend — modified:**
+- `frontend/src/routes/_app/clientes.tsx`
+- `frontend/src/routes/__tests__/navigation.test.tsx`
+- `frontend/src/routes/__tests__/navigation-edge-cases.test.tsx`
+- `frontend/vite.config.ts`
+- `frontend/tsconfig.json`

@@ -1,13 +1,20 @@
-import { createFileRoute } from '@tanstack/react-router'
-
-function ClientesPlaceholder() {
-  return (
-    <div data-testid="clientes-placeholder" className="p-8">
-      <h1 className="text-2xl font-bold text-slate-900">Clientes</h1>
-    </div>
-  )
-}
+import { createFileRoute } from '@tanstack/react-router';
+import { ClienteListPanel } from '@/modules/crm/clientes/presentation/ClienteListPanel';
 
 export const Route = createFileRoute('/_app/clientes')({
-  component: ClientesPlaceholder,
-})
+  component: ClientesPage,
+});
+
+function ClientesPage() {
+  return (
+    <div className="flex h-full">
+      {/* Left panel — fixed 280px scrollable list */}
+      <ClienteListPanel />
+
+      {/* Right panel — placeholder until a client is selected (Story 2.2) */}
+      <div className="flex flex-1 items-center justify-center text-slate-400 text-sm">
+        Selecciona un cliente para ver el detalle
+      </div>
+    </div>
+  );
+}

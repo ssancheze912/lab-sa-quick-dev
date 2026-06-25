@@ -51,7 +51,7 @@ public class AppDbContextSnakeCaseTests
     }
 
     [Fact]
-    public void GivenAppDbContextConfigured_WhenInspectingModel_ThenNoDbSetsAreRegistered()
+    public void GivenAppDbContextConfigured_WhenInspectingModel_ThenClienteEntityIsRegistered()
     {
         // GIVEN: DbContext options configured for model inspection
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -60,11 +60,10 @@ public class AppDbContextSnakeCaseTests
 
         // WHEN: AppDbContext is instantiated and the model is inspected
         using var context = new AppDbContext(options);
-        var entityTypes = context.Model.GetEntityTypes().ToList();
+        var entityTypeNames = context.Model.GetEntityTypes().Select(e => e.ClrType.Name).ToList();
 
-        // THEN: No domain entity types are registered in this story
-        //       (AC #4: only __EFMigrationsHistory should exist; domain tables belong to Epic 2/3)
-        entityTypes.Should().BeEmpty(
-            "because no domain entities (ClienteEntity, ContactoEntity) should be registered in Story 1.3");
+        // THEN: ClienteEntity is registered (added in Story 2.1)
+        entityTypeNames.Should().Contain("ClienteEntity",
+            "because Story 2.1 registers ClienteEntity in AppDbContext");
     }
 }
