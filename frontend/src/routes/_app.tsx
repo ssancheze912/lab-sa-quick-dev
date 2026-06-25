@@ -69,7 +69,7 @@ function AppLayout() {
 
   return (
     <>
-      <nav aria-label="Navegación principal" role="navigation">
+      <nav aria-label="Navegación principal">
         {isDesktop ? (
           /* Desktop: NavigationRail (left side, lg+) */
           <div

@@ -17,14 +17,14 @@
  */
 
 // Re-export everything from the real @tanstack/react-router package
-export * from '/home/user/lab-sa-quick-dev/frontend/node_modules/.pnpm/@tanstack+react-router@1.170.16_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/@tanstack/react-router/dist/esm/index.js'
+export * from '@tanstack/react-router'
 
 import {
   RouterProvider as RealRouterProvider,
   createRouter as realCreateRouter,
-} from '/home/user/lab-sa-quick-dev/frontend/node_modules/.pnpm/@tanstack+react-router@1.170.16_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/@tanstack/react-router/dist/esm/index.js'
+} from '@tanstack/react-router'
 
-import type { RouterProps } from '/home/user/lab-sa-quick-dev/frontend/node_modules/.pnpm/@tanstack+react-router@1.170.16_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/@tanstack/react-router/dist/esm/index.js'
+import type { RouterProps } from '@tanstack/react-router'
 
 import React, { Suspense } from 'react'
 
@@ -52,7 +52,7 @@ function createSuspenseResource<T>(promise: Promise<T>): Resource<T> {
   }
 }
 
-// Map of router → its eagerly-started load resource
+// Map of router -> its eagerly-started load resource
 const loadResources = new WeakMap<object, Resource<void>>()
 
 /**
