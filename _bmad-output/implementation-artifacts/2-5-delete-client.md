@@ -1,6 +1,6 @@
 # Story 2.5: Delete Client
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,41 +24,41 @@ So that the client list only contains active and relevant records.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: Implement `DELETE /api/v1/clientes/{id}` command, handler, and endpoint (AC: #2, #4, #5)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommand.cs`: `record DeleteClienteCommand(Guid Id)`.
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommandHandler.cs`: accepts `DeleteClienteCommand`, calls `IClienteRepository.GetByIdAsync(id)` → if null returns `false` (endpoint sends 404), then calls `IClienteRepository.DeleteAsync(entity)`, returns `true`. The database `ON DELETE SET NULL` constraint on `contactos.cliente_id` handles contact disassociation automatically — no application-level contact update needed.
-  - [ ] Update `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`: add `Task<bool> DeleteAsync(Guid id)`.
-  - [ ] Update `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`: implement `DeleteAsync` — call `FindAsync(id)`, if null return false, call `_context.Clientes.Remove(entity)` + `SaveChangesAsync()`, return true. EF Core will execute `DELETE FROM clientes WHERE id = @id`; PostgreSQL `ON DELETE SET NULL` on `contactos.cliente_id` triggers automatically.
-  - [ ] Update `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`: map `DELETE /api/v1/clientes/{id:guid}` → calls `DeleteClienteCommandHandler`, returns `204 No Content` on success, `404 Not Found` Problem Details if client not found.
-  - [ ] Register `DeleteClienteCommandHandler` in `backend/src/SiesaAgents.API/Program.cs`.
+- [x] Task 1 — Backend: Implement `DELETE /api/v1/clientes/{id}` command, handler, and endpoint (AC: #2, #4, #5)
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommand.cs`: `record DeleteClienteCommand(Guid Id)`.
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommandHandler.cs`: accepts `DeleteClienteCommand`, calls `IClienteRepository.GetByIdAsync(id)` → if null returns `false` (endpoint sends 404), then calls `IClienteRepository.DeleteAsync(entity)`, returns `true`. The database `ON DELETE SET NULL` constraint on `contactos.cliente_id` handles contact disassociation automatically — no application-level contact update needed.
+  - [x] Update `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`: add `Task<bool> DeleteAsync(Guid id)`.
+  - [x] Update `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`: implement `DeleteAsync` — call `FindAsync(id)`, if null return false, call `_context.Clientes.Remove(entity)` + `SaveChangesAsync()`, return true. EF Core will execute `DELETE FROM clientes WHERE id = @id`; PostgreSQL `ON DELETE SET NULL` on `contactos.cliente_id` triggers automatically.
+  - [x] Update `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`: map `DELETE /api/v1/clientes/{id:guid}` → calls `DeleteClienteCommandHandler`, returns `204 No Content` on success, `404 Not Found` Problem Details if client not found.
+  - [x] Register `DeleteClienteCommandHandler` in `backend/src/SiesaAgents.API/Program.cs`.
 
-- [ ] Task 2 — Backend: Write unit and integration tests for `DeleteCliente` (AC: #2, #4, #5)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/DeleteClienteCommandHandlerTests.cs`:
+- [x] Task 2 — Backend: Write unit and integration tests for `DeleteCliente` (AC: #2, #4, #5)
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/DeleteClienteCommandHandlerTests.cs`:
     - Test: handler returns `true` when client exists and deletion succeeds.
     - Test: handler returns `false` when client ID does not exist.
     - Test: validator (if added) rejects empty `Id`.
-  - [ ] Extend `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs`:
+  - [x] Extend `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs`:
     - Test `DELETE /api/v1/clientes/{id}` returns `204 No Content` on valid existing client.
     - Test `DELETE /api/v1/clientes/{id}` returns `404 Not Found` (Problem Details) when client ID does not exist.
     - Test `GET /api/v1/clientes/{id}` after successful delete returns `404`.
     - Test `GET /api/v1/clientes` after successful delete no longer contains the deleted client.
-  - [ ] Update fake repository implementations in all existing unit test files to implement the new `DeleteAsync` method:
+  - [x] Update fake repository implementations in all existing unit test files to implement the new `DeleteAsync` method:
     - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`
     - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
     - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs`
     - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/UpdateClienteCommandHandlerTests.cs`
 
-- [ ] Task 3 — Frontend: Extend domain and infrastructure layers for delete (AC: #2, #5)
-  - [ ] Update `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`: add `delete(id: string): Promise<void>`.
-  - [ ] Update `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: add `delete` method:
+- [x] Task 3 — Frontend: Extend domain and infrastructure layers for delete (AC: #2, #5)
+  - [x] Update `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`: add `delete(id: string): Promise<void>`.
+  - [x] Update `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: add `delete` method:
     ```typescript
     delete: async (id: string) => {
       await apiClient.delete(`/api/v1/clientes/${id}`);
     },
     ```
 
-- [ ] Task 4 — Frontend: Implement `useDeleteCliente` mutation hook (AC: #2, #5)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts`:
+- [x] Task 4 — Frontend: Implement `useDeleteCliente` mutation hook (AC: #2, #5)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts`:
     ```typescript
     import { useMutation, useQueryClient } from '@tanstack/react-query';
     import { clienteApiRepository } from '../infrastructure/clienteApiRepository';
@@ -75,7 +75,7 @@ So that the client list only contains active and relevant records.
     ```
   - Note: Toast notifications and navigation after deletion are handled in the presentation layer. The hook stays generic.
 
-- [ ] Task 5 — Frontend: Add confirmation dialog and "Eliminar" button to `ClienteDetailPanel` (AC: #1, #2, #3, #4, #5)
+- [x] Task 5 — Frontend: Add confirmation dialog and "Eliminar" button to `ClienteDetailPanel` (AC: #1, #2, #3, #4, #5)
   - [ ] Install shadcn AlertDialog component via MCP if not already present: check `frontend/src/components/ui/alert-dialog.tsx`. If missing, install via `npx shadcn@latest add alert-dialog`.
   - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.tsx`:
     - Import `AlertDialog`, `AlertDialogAction`, `AlertDialogCancel`, `AlertDialogContent`, `AlertDialogDescription`, `AlertDialogFooter`, `AlertDialogHeader`, `AlertDialogTitle`, `AlertDialogTrigger` from `@/components/ui/alert-dialog`.
@@ -102,14 +102,14 @@ So that the client list only contains active and relevant records.
   - If cache is not populated, default to the standard toast "Cliente eliminado correctamente" (safe fallback).
   - Alternatively, the backend can return a custom `204` header `X-Associated-Contacts-Count` to signal this — but since the architecture specifies `204 No Content`, the cache-based approach is preferred.
 
-- [ ] Task 6 — Frontend: Write unit and component tests (AC: #1, #2, #3, #4, #5)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useDeleteCliente.test.ts`:
+- [x] Task 6 — Frontend: Write unit and component tests (AC: #1, #2, #3, #4, #5)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useDeleteCliente.test.ts`:
     - Mock `clienteApiRepository.delete` with MSW.
     - Test: mutation calls `DELETE /api/v1/clientes/{id}` with correct id.
     - Test: on success, `invalidateQueries(['clientes'])` is called.
     - Test: on 404, mutation `isError` is true.
     - Test: on 5xx, mutation `isError` is true.
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.test.tsx`:
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.test.tsx`:
     - Test: "Eliminar" button renders when client data is loaded.
     - Test: "Eliminar" button is NOT present during skeleton loading state.
     - Test: "Eliminar" button is NOT present while `isEditing` is true.
@@ -299,6 +299,42 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+N/A — no unexpected issues. `ON DELETE SET NULL` in DB handled at PostgreSQL level, no application cascade needed. InMemory EF does not simulate FK cascades (noted in tests). `useNavigate` mocked via `vi.mock('@tanstack/react-router', ...)` for component tests. `@radix-ui/react-alert-dialog` installed directly (no existing shadcn setup). `src/components/ui/alert-dialog.tsx` created manually following shadcn pattern without `cn` utility.
+
 ### Completion Notes List
 
+1. Backend `DELETE /api/v1/clientes/{id}` endpoint returns `204 No Content` on success, `404 Not Found` Problem Details when client not found — fully aligned with architecture.
+2. `ON DELETE SET NULL` on `contactos.cliente_id` is a DB-level cascade — `DeleteClienteCommandHandler` only deletes the `ClienteEntity`, no contact update logic needed.
+3. AlertDialog installed via `@radix-ui/react-alert-dialog` directly since no shadcn components.json config existed. Component created at `src/components/ui/alert-dialog.tsx`.
+4. Toast differentiation for AC#4 (associated contacts case) uses cache-based approach per story notes; defaulting to standard "Cliente eliminado correctamente" when cache is empty — safe fallback as documented.
+5. `useNavigate` from `@tanstack/react-router` used directly in `ClienteDetailPanel.tsx` for post-deletion navigation to `/clientes`.
+6. All 4 existing unit test fake repositories updated with `DeleteAsync` — no compilation errors.
+
 ### File List
+
+**Backend — new:**
+- `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommand.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommandHandler.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/DeleteClienteCommandHandlerTests.cs`
+
+**Backend — modified:**
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
+- `backend/src/SiesaAgents.API/Program.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/UpdateClienteCommandHandlerTests.cs`
+- `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs`
+
+**Frontend — new:**
+- `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts`
+- `frontend/src/modules/crm/clientes/application/useDeleteCliente.test.ts`
+- `frontend/src/components/ui/alert-dialog.tsx`
+
+**Frontend — modified:**
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.test.tsx`
