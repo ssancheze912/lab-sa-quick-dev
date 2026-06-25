@@ -128,6 +128,7 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-base font-bold text-slate-900">Detalle del cliente</h3>
         <button
+          data-testid="cliente-editar-button"
           type="button"
           onClick={() => setIsEditing(true)}
           aria-label="Editar cliente"
