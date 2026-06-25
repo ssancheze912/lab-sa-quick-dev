@@ -17,15 +17,15 @@ const SORT_OPTIONS: SelectOption[] = [
 
 export function SortControl({ value, onChange }: SortControlProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div data-testid="sort-control" className="flex items-center gap-2">
       <label
-        htmlFor="sort-control"
+        htmlFor="sort-control-select"
         className="text-sm font-normal text-slate-600 whitespace-nowrap"
       >
         Ordenar por:
       </label>
       <Select
-        id="sort-control"
+        id="sort-control-select"
         options={SORT_OPTIONS}
         value={value}
         onChange={(v) => onChange(v as SortOption)}
