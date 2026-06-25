@@ -172,21 +172,23 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
                   Eliminar
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent data-testid="delete-confirmation-dialog">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>¿Eliminar este cliente?</AlertDialogTitle>
+                  <AlertDialogTitle data-testid="delete-dialog-title">¿Eliminar este cliente?</AlertDialogTitle>
                   <AlertDialogDescription>
                     Esta acción no se puede deshacer. El cliente será eliminado permanentemente.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel
+                    data-testid="delete-dialog-cancel"
                     aria-label="Cancelar eliminación"
                     className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
                     Cancelar
                   </AlertDialogCancel>
                   <AlertDialogAction
+                    data-testid="delete-dialog-confirm"
                     aria-label="Confirmar eliminación"
                     disabled={deleteCliente.isPending}
                     onClick={handleConfirmDelete}
