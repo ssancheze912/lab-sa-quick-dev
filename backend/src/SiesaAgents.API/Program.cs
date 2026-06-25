@@ -9,7 +9,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsqlOptions => npgsqlOptions.MigrationsAssembly("SiesaAgents.Infrastructure")));
+        npgsqlOptions => npgsqlOptions.MigrationsAssembly("SiesaAgents.Infrastructure"))
+           .UseSnakeCaseNamingConvention());
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];

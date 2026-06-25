@@ -6,3 +6,7 @@ test-results/
 *.log
 .env.local
 dist/
+
+# .NET build artifacts
+backend/**/bin/
+backend/**/obj/
