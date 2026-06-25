@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7]
 story_path: _bmad-output/implementation-artifacts/2-5-delete-client.md
 story_key: 2-5-delete-client
 status: done
@@ -112,3 +112,20 @@ File: `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.tsx`
 - **Fixed Count**: 4
 - **Manual Issues Remaining**: [MED-1] (architectural refactor — out of story scope), [LOW-1], [LOW-2], [LOW-3]
 - **Recommended Status**: done
+
+## Status Sync
+
+- **Story File Status**: Updated to done
+- **Sprint Status YAML**: Synced
+
+## Jira Sync
+
+- Story status is done. No Jira config found (project_config.yaml missing). Skipping Jira sync.
+
+## Repository Sync
+
+- **Branch**: develop-sa-gaduranb-rq2-epic-02-gestion-de-clientes
+- **Commit**: Performed (ce19df2 — auto-corrections, db5b854 — story status sync)
+- **Push**: Performed — pushed to origin/develop-sa-gaduranb-rq2-epic-02-gestion-de-clientes
+- **GitFlow Compliance**: Verified against git-flow-siesa.md
+- **Status**: Workflow Completed Successfully
