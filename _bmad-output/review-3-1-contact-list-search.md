@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7]
 story_path: _bmad-output/implementation-artifacts/3-1-contact-list-search.md
 story_key: 3-1-contact-list-search
 ---
