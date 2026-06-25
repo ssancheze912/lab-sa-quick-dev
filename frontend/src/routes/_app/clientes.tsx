@@ -78,6 +78,7 @@ function ClientesPage() {
       {isCreating ? (
         <div className="flex-1 overflow-y-auto">
           <ClienteForm
+            mode="create"
             onSuccess={() => setIsCreating(false)}
             onCancel={() => setIsCreating(false)}
             onNotify={handleNotify}
