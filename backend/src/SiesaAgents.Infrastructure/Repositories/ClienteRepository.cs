@@ -18,4 +18,11 @@ public sealed class ClienteRepository(AppDbContext dbContext) : IClienteReposito
     {
         return await dbContext.Clientes.FindAsync(id);
     }
+
+    public async Task<ClienteEntity> CreateAsync(ClienteEntity entity)
+    {
+        dbContext.Clientes.Add(entity);
+        await dbContext.SaveChangesAsync();
+        return entity;
+    }
 }

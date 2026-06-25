@@ -1,0 +1,156 @@
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { AxiosError } from 'axios';
+import { toast } from 'siesa-ui-kit';
+import { createClienteSchema, type CreateClienteData } from '../application/clienteSchema';
+import { useCreateCliente } from '../application/useCreateCliente';
+
+interface ClienteFormProps {
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
+  const { mutate, isPending } = useCreateCliente();
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<CreateClienteData>({
+    resolver: zodResolver(createClienteSchema),
+  });
+
+  function onSubmit(data: CreateClienteData) {
+    mutate(data, {
+      onSuccess: () => {
+        toast.success('Cliente creado correctamente');
+        onSuccess();
+      },
+      onError: (error: unknown) => {
+        const axiosError = error as AxiosError<{ status: number }>;
+        if (axiosError.response?.status === 409) {
+          setError('nit', { type: 'server', message: 'El NIT/RUC ya está registrado' });
+        } else {
+          toast.error('No se pudo crear el cliente. Intenta de nuevo.');
+        }
+      },
+    });
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      aria-label="Formulario para crear cliente"
+      className="flex flex-col gap-4 p-6"
+      noValidate
+    >
+      <h2 className="text-lg font-bold text-slate-900">Nuevo cliente</h2>
+
+      {/* Nombre */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="nombre" className="text-sm font-normal text-slate-700">
+          Nombre
+        </label>
+        <input
+          id="nombre"
+          type="text"
+          placeholder="Nombre de la empresa"
+          aria-describedby={errors.nombre ? 'nombre-error' : undefined}
+          aria-invalid={!!errors.nombre}
+          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm placeholder:text-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd]"
+          {...register('nombre')}
+        />
+        {errors.nombre && (
+          <span id="nombre-error" role="alert" className="text-xs text-red-600">
+            {errors.nombre.message}
+          </span>
+        )}
+      </div>
+
+      {/* NIT/RUC */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="nit" className="text-sm font-normal text-slate-700">
+          NIT/RUC
+        </label>
+        <input
+          id="nit"
+          type="text"
+          placeholder="Número de identificación tributaria"
+          aria-describedby={errors.nit ? 'nit-error' : undefined}
+          aria-invalid={!!errors.nit}
+          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm placeholder:text-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd]"
+          {...register('nit')}
+        />
+        {errors.nit && (
+          <span id="nit-error" role="alert" className="text-xs text-red-600">
+            {errors.nit.message}
+          </span>
+        )}
+      </div>
+
+      {/* Teléfono */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="telefono" className="text-sm font-normal text-slate-700">
+          Teléfono
+        </label>
+        <input
+          id="telefono"
+          type="text"
+          placeholder="Número de teléfono"
+          aria-describedby={errors.telefono ? 'telefono-error' : undefined}
+          aria-invalid={!!errors.telefono}
+          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm placeholder:text-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd]"
+          {...register('telefono')}
+        />
+        {errors.telefono && (
+          <span id="telefono-error" role="alert" className="text-xs text-red-600">
+            {errors.telefono.message}
+          </span>
+        )}
+      </div>
+
+      {/* Ciudad */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="ciudad" className="text-sm font-normal text-slate-700">
+          Ciudad
+        </label>
+        <input
+          id="ciudad"
+          type="text"
+          placeholder="Ciudad"
+          aria-describedby={errors.ciudad ? 'ciudad-error' : undefined}
+          aria-invalid={!!errors.ciudad}
+          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm placeholder:text-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd]"
+          {...register('ciudad')}
+        />
+        {errors.ciudad && (
+          <span id="ciudad-error" role="alert" className="text-xs text-red-600">
+            {errors.ciudad.message}
+          </span>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-3 pt-2">
+        <button
+          type="submit"
+          disabled={isPending}
+          aria-label={isPending ? 'Guardando cliente' : 'Guardar nuevo cliente'}
+          className="flex-1 rounded-md bg-[#0e79fd] px-4 py-2 text-sm font-bold text-white hover:bg-[#154ca9] focus-visible:ring-2 focus-visible:ring-[#0e79fd] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isPending ? 'Guardando…' : 'Guardar'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          aria-label="Cancelar y cerrar formulario"
+          className="flex-1 rounded-md border border-slate-300 px-4 py-2 text-sm font-normal text-slate-700 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-400"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+  );
+}

@@ -226,4 +226,95 @@ public class ClienteEndpointsTests
         json.Should().Contain("\"createdAt\"");
         json.Should().Contain("\"updatedAt\"");
     }
+
+    // ─── POST /api/v1/clientes ───────────────────────────────────────────────────
+
+    [Fact]
+    public async Task PostCliente_Returns201Created_WithClienteDtoBodyAndLocationHeader()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        var client = factory.CreateClient();
+        var payload = new { nombre = "Empresa Ejemplo S.A.", nit = "900123456-7", telefono = "6011234567", ciudad = "Bogotá" };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var body = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        body.Should().NotBeNull();
+        body!.Id.Should().NotBeEmpty();
+        body.Nombre.Should().Be("Empresa Ejemplo S.A.");
+        body.Nit.Should().Be("900123456-7");
+        body.Telefono.Should().Be("6011234567");
+        body.Ciudad.Should().Be("Bogotá");
+
+        response.Headers.Location.Should().NotBeNull();
+        response.Headers.Location!.ToString().Should().Contain($"/api/v1/clientes/{body.Id}");
+    }
+
+    [Fact]
+    public async Task PostCliente_Returns400_WhenRequiredFieldsAreEmpty()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        var client = factory.CreateClient();
+        var payload = new { nombre = "", nit = "", telefono = "", ciudad = "" };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().Contain("400");
+    }
+
+    [Fact]
+    public async Task PostCliente_ReturnsApplicationJsonWithCamelCaseFields()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        var client = factory.CreateClient();
+        var payload = new { nombre = "CamelCase Corp", nit = "333333333-3", telefono = "3001234567", ciudad = "Cali" };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().Contain("\"nombre\"");
+        json.Should().Contain("\"nit\"");
+        json.Should().Contain("\"createdAt\"");
+        json.Should().Contain("\"updatedAt\"");
+    }
+
+    [Fact]
+    public async Task PostCliente_CreatedClientAppearsInGetAll()
+    {
+        // Arrange
+        await using var factory = CreateFactory();
+        var client = factory.CreateClient();
+        var payload = new { nombre = "Nueva Empresa", nit = "444444444-4", telefono = "3219876543", ciudad = "Medellín" };
+
+        // Act — create
+        var postResponse = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+        postResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // Act — get all
+        var getResponse = await client.GetAsync("/api/v1/clientes");
+
+        // Assert
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var clientes = await getResponse.Content.ReadFromJsonAsync<List<ClienteDto>>();
+        clientes.Should().NotBeNull();
+        clientes!.Should().Contain(c => c.Nombre == "Nueva Empresa" && c.Nit == "444444444-4");
+    }
 }
