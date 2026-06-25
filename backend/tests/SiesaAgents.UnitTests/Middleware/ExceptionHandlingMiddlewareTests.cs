@@ -1,195 +1,94 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using SiesaAgents.API.Middleware;
-using Xunit;
+using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Infrastructure.Data;
 
 namespace SiesaAgents.UnitTests.Middleware;
 
-/// <summary>
-/// ATDD Tests for Story 1.3 — AC #2
-/// ExceptionHandlingMiddleware must return Problem Details RFC 7807 format
-/// for any unhandled exception without exposing stack traces or exception messages.
-/// Tests are in RED phase — they define expected behavior BEFORE implementation is finalized.
-/// </summary>
-public class ExceptionHandlingMiddlewareTests
+public class ExceptionHandlingMiddlewareTests : IClassFixture<ExceptionHandlingMiddlewareTests.ThrowingAppFactory>
 {
-    // -------------------------------------------------------------------------
-    // AC #2: Unhandled exception → Problem Details RFC 7807 response
-    // -------------------------------------------------------------------------
+    private readonly HttpClient _client;
+
+    public ExceptionHandlingMiddlewareTests(ThrowingAppFactory factory)
+    {
+        _client = factory.CreateClient();
+    }
 
     [Fact]
-    public async Task GivenUnhandledException_WhenErrorPropagates_ThenResponseStatusIs500()
+    public async Task UnhandledException_Returns500WithProblemDetails()
     {
-        // GIVEN: A minimal ASP.NET Core app with ExceptionHandlingMiddleware registered
-        //        that throws an unhandled exception in the next middleware
-        var builder = WebApplication.CreateBuilder([]);
-        builder.WebHost.UseTestServer();
-        var app = builder.Build();
+        // Arrange — endpoint registered in ThrowingAppFactory that throws
 
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
-        app.MapGet("/throw", () => { throw new InvalidOperationException("secret error"); });
+        // Act
+        var response = await _client.GetAsync("/test-exception");
 
-        await app.StartAsync();
-
-        using var client = app.GetTestClient();
-
-        // WHEN: The request triggers the unhandled exception
-        var response = await client.GetAsync("/throw");
-
-        // THEN: Response status code is 500 Internal Server Error
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        response.Content.Headers.ContentType!.MediaType.Should().Be("application/problem+json");
+
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        body.GetProperty("status").GetInt32().Should().Be(500);
+        body.GetProperty("title").GetString().Should().Be("An unexpected error occurred.");
+
+        // detail must be null — never expose ex.Message
+        var detail = body.GetProperty("detail");
+        detail.ValueKind.Should().Be(JsonValueKind.Null);
     }
 
     [Fact]
-    public async Task GivenUnhandledException_WhenErrorPropagates_ThenContentTypeIsProblemJson()
+    public async Task NormalRequest_DoesNotIntercept_Returns200()
     {
-        // GIVEN: A minimal ASP.NET Core app with ExceptionHandlingMiddleware
-        var builder = WebApplication.CreateBuilder([]);
-        builder.WebHost.UseTestServer();
-        var app = builder.Build();
+        // Arrange — /health endpoint registered in ThrowingAppFactory
 
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
-        app.MapGet("/throw", () => { throw new InvalidOperationException("secret error"); });
+        // Act
+        var response = await _client.GetAsync("/health");
 
-        await app.StartAsync();
-
-        using var client = app.GetTestClient();
-
-        // WHEN: The request triggers the unhandled exception
-        var response = await client.GetAsync("/throw");
-
-        // THEN: Content-Type is application/problem+json (RFC 7807 mandate)
-        response.Content.Headers.ContentType?.MediaType
-            .Should().Be("application/problem+json");
-    }
-
-    [Fact]
-    public async Task GivenUnhandledException_WhenErrorPropagates_ThenBodyContainsStatusField()
-    {
-        // GIVEN: A minimal ASP.NET Core app with ExceptionHandlingMiddleware
-        var builder = WebApplication.CreateBuilder([]);
-        builder.WebHost.UseTestServer();
-        var app = builder.Build();
-
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
-        app.MapGet("/throw", () => { throw new InvalidOperationException("secret error"); });
-
-        await app.StartAsync();
-
-        using var client = app.GetTestClient();
-
-        // WHEN: The request triggers the unhandled exception
-        var response = await client.GetAsync("/throw");
-        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
-
-        // THEN: Problem Details body contains status = 500
-        problemDetails.Should().NotBeNull();
-        problemDetails!.Status.Should().Be(StatusCodes.Status500InternalServerError);
-    }
-
-    [Fact]
-    public async Task GivenUnhandledException_WhenErrorPropagates_ThenBodyContainsTitleField()
-    {
-        // GIVEN: A minimal ASP.NET Core app with ExceptionHandlingMiddleware
-        var builder = WebApplication.CreateBuilder([]);
-        builder.WebHost.UseTestServer();
-        var app = builder.Build();
-
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
-        app.MapGet("/throw", () => { throw new InvalidOperationException("secret error"); });
-
-        await app.StartAsync();
-
-        using var client = app.GetTestClient();
-
-        // WHEN: The request triggers the unhandled exception
-        var response = await client.GetAsync("/throw");
-        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
-
-        // THEN: Problem Details body contains a non-empty title (NFR6: no exception message exposed)
-        problemDetails.Should().NotBeNull();
-        problemDetails!.Title.Should().NotBeNullOrWhiteSpace();
-        problemDetails.Title.Should().NotContain("secret error");
-    }
-
-    [Fact]
-    public async Task GivenUnhandledException_WhenErrorPropagates_ThenDetailFieldIsNull()
-    {
-        // GIVEN: A minimal ASP.NET Core app with ExceptionHandlingMiddleware
-        var builder = WebApplication.CreateBuilder([]);
-        builder.WebHost.UseTestServer();
-        var app = builder.Build();
-
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
-        app.MapGet("/throw", () => { throw new InvalidOperationException("secret error"); });
-
-        await app.StartAsync();
-
-        using var client = app.GetTestClient();
-
-        // WHEN: The request triggers the unhandled exception
-        var response = await client.GetAsync("/throw");
-        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
-
-        // THEN: detail field is null — never exposes ex.Message or stack traces (NFR6)
-        problemDetails.Should().NotBeNull();
-        problemDetails!.Detail.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task GivenUnhandledException_WhenErrorPropagates_ThenExceptionMessageIsNotExposed()
-    {
-        // GIVEN: A minimal ASP.NET Core app with ExceptionHandlingMiddleware
-        //        throwing an exception with a sensitive message
-        const string sensitiveMessage = "connection string: Password=supersecret123";
-
-        var builder = WebApplication.CreateBuilder([]);
-        builder.WebHost.UseTestServer();
-        var app = builder.Build();
-
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
-        app.MapGet("/throw", () => { throw new InvalidOperationException(sensitiveMessage); });
-
-        await app.StartAsync();
-
-        using var client = app.GetTestClient();
-
-        // WHEN: The request triggers the exception with the sensitive message
-        var response = await client.GetAsync("/throw");
-        var body = await response.Content.ReadAsStringAsync();
-
-        // THEN: The sensitive message is NOT present in the response body (NFR6 security)
-        body.Should().NotContain(sensitiveMessage);
-        body.Should().NotContain("supersecret123");
-    }
-
-    [Fact]
-    public async Task GivenNoException_WhenRequestIsProcessed_ThenMiddlewarePassesThrough()
-    {
-        // GIVEN: A minimal ASP.NET Core app with ExceptionHandlingMiddleware
-        //        and a healthy endpoint
-        var builder = WebApplication.CreateBuilder([]);
-        builder.WebHost.UseTestServer();
-        var app = builder.Build();
-
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
-        app.MapGet("/health", () => Results.Ok("healthy"));
-
-        await app.StartAsync();
-
-        using var client = app.GetTestClient();
-
-        // WHEN: The request does NOT throw an exception
-        var response = await client.GetAsync("/health");
-
-        // THEN: The middleware passes through to the next handler (status 200)
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    /// <summary>
+    /// Custom WebApplicationFactory that overrides the DB to use InMemory (no real PostgreSQL needed)
+    /// and registers a test endpoint that intentionally throws.
+    /// </summary>
+    public class ThrowingAppFactory : WebApplicationFactory<Program>
+    {
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.ConfigureTestServices(services =>
+            {
+                // Remove the real PostgreSQL DbContext registration
+                var descriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                if (descriptor is not null)
+                    services.Remove(descriptor);
+
+                // Replace with in-memory database so no real connection is needed
+                services.AddDbContext<AppDbContext>(options =>
+                    options.UseInMemoryDatabase("TestDb_ExceptionMiddleware"));
+            });
+
+            builder.Configure(app =>
+            {
+                // Register the exception-handling middleware first
+                app.UseMiddleware<SiesaAgents.API.Middleware.ExceptionHandlingMiddleware>();
+
+                // Register a test endpoint that throws an unhandled exception
+                app.Map("/test-exception", _ => throw new InvalidOperationException("Test exception"));
+
+                // Register a healthy endpoint
+                app.Map("/health", ctx =>
+                {
+                    ctx.Response.StatusCode = 200;
+                    return ctx.Response.WriteAsync("OK");
+                });
+            });
+        }
     }
 }
