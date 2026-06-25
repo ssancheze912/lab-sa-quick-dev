@@ -94,7 +94,7 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel,
   const submitLabel = isEditMode ? 'Guardar cambios' : 'Guardar';
   const submitAriaLabel = isPending
     ? 'Guardando cliente'
-    : (isEditMode ? 'Guardar cambios del cliente' : 'Guardar nuevo cliente');
+    : (isEditMode ? 'Guardar cambios del cliente' : 'Crear cliente');
   const headingText = isEditMode ? 'Editar cliente' : 'Nuevo cliente';
 
   return (
