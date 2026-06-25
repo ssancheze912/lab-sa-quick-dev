@@ -13,6 +13,7 @@ interface ClienteFormCreateProps {
   clienteId?: never;
   onSuccess: () => void;
   onCancel: () => void;
+  onNotify?: (type: 'success' | 'error', message: string) => void;
 }
 
 interface ClienteFormEditProps {
@@ -21,13 +22,14 @@ interface ClienteFormEditProps {
   clienteId: string;
   onSuccess: () => void;
   onCancel: () => void;
+  onNotify?: (type: 'success' | 'error', message: string) => void;
 }
 
 type ClienteFormProps = ClienteFormCreateProps | ClienteFormEditProps;
 
 type FormData = CreateClienteData | UpdateClienteData;
 
-export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel }: ClienteFormProps) {
+export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel, onNotify }: ClienteFormProps) {
   const createMutation = useCreateCliente();
   const updateMutation = useUpdateCliente(clienteId ?? '');
 
@@ -50,28 +52,36 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
     if (mode === 'create') {
       createMutate(data as CreateClienteData, {
         onSuccess: () => {
-          toast.success('Cliente creado correctamente');
+          const msg = 'Cliente creado correctamente';
+          toast.success(msg);
+          onNotify?.('success', msg);
           onSuccess();
         },
         onError: (error: unknown) => {
           if (axios.isAxiosError(error) && error.response?.status === 409) {
             setError('nit', { type: 'server', message: 'El NIT/RUC ya está registrado' });
           } else {
-            toast.error('No se pudo crear el cliente. Intenta de nuevo.');
+            const msg = 'No se pudo crear el cliente. Intenta de nuevo.';
+            toast.error(msg);
+            onNotify?.('error', msg);
           }
         },
       });
     } else {
       updateMutate(data as UpdateClienteData, {
         onSuccess: () => {
-          toast.success('Cliente actualizado correctamente');
+          const msg = 'Cliente actualizado correctamente';
+          toast.success(msg);
+          onNotify?.('success', msg);
           onSuccess();
         },
         onError: (error: unknown) => {
           if (axios.isAxiosError(error) && error.response?.status === 409) {
             setError('nit', { type: 'server', message: 'El NIT/RUC ya está registrado' });
           } else {
-            toast.error('No se pudo actualizar el cliente. Intenta de nuevo.');
+            const msg = 'No se pudo actualizar el cliente. Intenta de nuevo.';
+            toast.error(msg);
+            onNotify?.('error', msg);
           }
         },
       });
@@ -79,15 +89,17 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
   }
 
   const isEditMode = mode === 'edit';
+  const formTestId = isEditMode ? 'cliente-edit-form' : 'cliente-form';
   const formAriaLabel = isEditMode ? 'Editar cliente' : 'Formulario para crear cliente';
   const submitLabel = isEditMode ? 'Guardar cambios' : 'Crear cliente';
   const submitAriaLabel = isPending
-    ? 'Guardando'
+    ? 'Guardando cliente'
     : (isEditMode ? 'Guardar cambios del cliente' : 'Crear cliente');
   const headingText = isEditMode ? 'Editar cliente' : 'Nuevo cliente';
 
   return (
     <form
+      data-testid={formTestId}
       onSubmit={handleSubmit(onSubmit)}
       aria-label={formAriaLabel}
       className="flex flex-col gap-4 p-6"
@@ -101,6 +113,7 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
           Nombre
         </label>
         <input
+          data-testid="input-nombre"
           id="nombre"
           type="text"
           placeholder="Nombre de la empresa"
@@ -110,7 +123,7 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
           {...register('nombre')}
         />
         {errors.nombre && (
-          <span id="nombre-error" role="alert" className="text-xs text-red-600">
+          <span data-testid="error-nombre" id="nombre-error" role="alert" className="text-xs text-red-600">
             {errors.nombre.message}
           </span>
         )}
@@ -122,6 +135,7 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
           NIT/RUC
         </label>
         <input
+          data-testid="input-nit"
           id="nit"
           type="text"
           placeholder="Número de identificación tributaria"
@@ -131,7 +145,7 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
           {...register('nit')}
         />
         {errors.nit && (
-          <span id="nit-error" role="alert" className="text-xs text-red-600">
+          <span data-testid="error-nit" id="nit-error" role="alert" className="text-xs text-red-600">
             {errors.nit.message}
           </span>
         )}
@@ -143,6 +157,7 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
           Teléfono
         </label>
         <input
+          data-testid="input-telefono"
           id="telefono"
           type="text"
           placeholder="Número de teléfono"
@@ -152,7 +167,7 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
           {...register('telefono')}
         />
         {errors.telefono && (
-          <span id="telefono-error" role="alert" className="text-xs text-red-600">
+          <span data-testid="error-telefono" id="telefono-error" role="alert" className="text-xs text-red-600">
             {errors.telefono.message}
           </span>
         )}
@@ -164,6 +179,7 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
           Ciudad
         </label>
         <input
+          data-testid="input-ciudad"
           id="ciudad"
           type="text"
           placeholder="Ciudad"
@@ -173,7 +189,7 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
           {...register('ciudad')}
         />
         {errors.ciudad && (
-          <span id="ciudad-error" role="alert" className="text-xs text-red-600">
+          <span data-testid="error-ciudad" id="ciudad-error" role="alert" className="text-xs text-red-600">
             {errors.ciudad.message}
           </span>
         )}
@@ -182,6 +198,7 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
       {/* Actions */}
       <div className="flex gap-3 pt-2">
         <button
+          data-testid="btn-submit-cliente"
           type="submit"
           disabled={isPending}
           aria-label={submitAriaLabel}
@@ -190,6 +207,7 @@ export function ClienteForm({ mode, initialData, clienteId, onSuccess, onCancel 
           {isPending ? 'Guardando…' : submitLabel}
         </button>
         <button
+          data-testid="btn-cancelar-cliente"
           type="button"
           onClick={onCancel}
           aria-label="Cancelar y cerrar formulario"
