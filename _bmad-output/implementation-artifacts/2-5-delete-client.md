@@ -1,6 +1,6 @@
 # Story 2.5: Delete Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -76,8 +76,8 @@ So that the client list only contains active and relevant records.
   - Note: Toast notifications and navigation after deletion are handled in the presentation layer. The hook stays generic.
 
 - [x] Task 5 — Frontend: Add confirmation dialog and "Eliminar" button to `ClienteDetailPanel` (AC: #1, #2, #3, #4, #5)
-  - [ ] Install shadcn AlertDialog component via MCP if not already present: check `frontend/src/components/ui/alert-dialog.tsx`. If missing, install via `npx shadcn@latest add alert-dialog`.
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.tsx`:
+  - [x] Install shadcn AlertDialog component via MCP if not already present: check `frontend/src/components/ui/alert-dialog.tsx`. If missing, install via `npx shadcn@latest add alert-dialog`.
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailPanel.tsx`:
     - Import `AlertDialog`, `AlertDialogAction`, `AlertDialogCancel`, `AlertDialogContent`, `AlertDialogDescription`, `AlertDialogFooter`, `AlertDialogHeader`, `AlertDialogTitle`, `AlertDialogTrigger` from `@/components/ui/alert-dialog`.
     - Import `useDeleteCliente` hook.
     - Import `useNavigate` from `@tanstack/react-router` to redirect after deletion.
