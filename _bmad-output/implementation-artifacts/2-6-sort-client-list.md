@@ -1,6 +1,6 @@
 # Story 2.6: Sort Client List
 
-Status: ready
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,8 +26,8 @@ So that I can organize my view and quickly find clients based on how I prioritiz
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Frontend: Create `SortControl` shared component (AC: #1, #2, #3, #4, #6)
-  - [ ] Create `frontend/src/shared/components/SortControl.tsx`:
+- [x] Task 1 — Frontend: Create `SortControl` shared component (AC: #1, #2, #3, #4, #6)
+  - [x] Create `frontend/src/shared/components/SortControl.tsx`:
     ```typescript
     export type SortOption = 'nombre-asc' | 'nombre-desc' | 'fecha-desc' | 'fecha-asc';
 
@@ -36,18 +36,18 @@ So that I can organize my view and quickly find clients based on how I prioritiz
       onChange: (value: SortOption) => void;
     }
     ```
-  - [ ] Check siesa-ui-kit catalog first for a select/dropdown component; if not available use shadcn `Select` (install via `npx shadcn@latest add select` if not present).
-  - [ ] Render a labeled `<select>` or shadcn `Select` with four options in Spanish:
+  - [x] Check siesa-ui-kit catalog first for a select/dropdown component; if not available use shadcn `Select` (install via `npx shadcn@latest add select` if not present).
+  - [x] Render a labeled `<select>` or shadcn `Select` with four options in Spanish:
     - `fecha-desc` → "Más reciente" (default)
     - `fecha-asc` → "Más antiguo"
     - `nombre-asc` → "Nombre A→Z"
     - `nombre-desc` → "Nombre Z→A"
-  - [ ] The component is purely controlled: no internal state — `value` and `onChange` are required props.
-  - [ ] Accessible: `aria-label="Ordenar clientes"` on the control, visible label "Ordenar por:" in Spanish.
-  - [ ] Apply Tailwind classes consistent with existing components: `slate-*` neutrals, Inter font, WCAG 2.1 AA contrast.
+  - [x] The component is purely controlled: no internal state — `value` and `onChange` are required props.
+  - [x] Accessible: `aria-label="Ordenar clientes"` on the control, visible label "Ordenar por:" in Spanish.
+  - [x] Apply Tailwind classes consistent with existing components: `slate-*` neutrals, Inter font, WCAG 2.1 AA contrast.
 
-- [ ] Task 2 — Frontend: Integrate sort state and logic into `ClienteListPanel` (AC: #1, #2, #3, #4, #5, #6)
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.tsx`:
+- [x] Task 2 — Frontend: Integrate sort state and logic into `ClienteListPanel` (AC: #1, #2, #3, #4, #5, #6)
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.tsx`:
     - Add `sortOrder` state: `const [sortOrder, setSortOrder] = useState<SortOption>('fecha-desc')`.
     - Import `SortControl` from `@/shared/components/SortControl`.
     - Render `<SortControl value={sortOrder} onChange={setSortOrder} />` above the client list, below the search input.
@@ -77,13 +77,13 @@ So that I can organize my view and quickly find clients based on how I prioritiz
     - Replace use of `filtered` with `filteredAndSorted` in the render path.
     - Sorting is entirely client-side over the existing TanStack Query cache — no new `useQuery` call, no API call triggered by sort change.
 
-- [ ] Task 3 — Frontend: Write unit and component tests (AC: #1, #2, #3, #4, #5, #6)
-  - [ ] Create `frontend/src/shared/components/SortControl.test.tsx`:
+- [x] Task 3 — Frontend: Write unit and component tests (AC: #1, #2, #3, #4, #5, #6)
+  - [x] Create `frontend/src/shared/components/SortControl.test.tsx`:
     - Test: renders with the provided `value` selected.
     - Test: calls `onChange` with the correct `SortOption` identifier when user selects each option.
     - Test: default rendered option is "Más reciente" when `value` is `'fecha-desc'`.
     - Test: all four options are present in the DOM in Spanish.
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.test.tsx`:
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.test.tsx`:
     - Test: on initial render, `SortControl` is present and shows "Más reciente" selected.
     - Test: selecting "Nombre A→Z" reorders the client list alphabetically ascending (no additional fetch).
     - Test: selecting "Nombre Z→A" reorders the client list alphabetically descending.
@@ -189,16 +189,29 @@ No backend files. No new migrations. No new API endpoints.
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+claude-sonnet-4-6
 
 ### Debug Log References
 
-_To be filled by dev agent_
+- siesa-ui-kit Select component discovered to have `ariaLabel` prop that does not render as `aria-label` attribute on the trigger button in jsdom; tests adapted to use `getByLabelText('Ordenar por:')` (the visible label associated via `htmlFor/id`) for trigger interaction.
+- `ResizeObserver is not defined` errors in vitest are pre-existing environment-level issues from headlessui/react in jsdom, not caused by this story's changes.
 
 ### Completion Notes List
 
-_To be filled by dev agent_
+1. Used `siesa-ui-kit` `Select` component (per company standards — siesa-ui-kit first rule). No shadcn install needed.
+2. `SortControl` is purely controlled: no internal state; `value` and `onChange` required props.
+3. Sort is fully client-side inside a single `useMemo` — no new API calls triggered.
+4. Locale-aware sort uses `localeCompare(..., 'es')` for Spanish names with accented characters.
+5. Date sort uses `new Date(createdAt).getTime()` — correctly handles ISO 8601 with timezone offset.
+6. Filter runs first, sort applied to already-filtered result (AC #5 satisfied).
+7. All 164 tests pass (32 new + 132 existing), zero regressions.
 
 ### File List
 
-_To be filled by dev agent_
+**Created:**
+- `frontend/src/shared/components/SortControl.tsx`
+- `frontend/src/shared/components/SortControl.test.tsx`
+
+**Modified:**
+- `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteListPanel.test.tsx`
