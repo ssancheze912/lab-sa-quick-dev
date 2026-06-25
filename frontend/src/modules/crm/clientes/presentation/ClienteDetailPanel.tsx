@@ -39,6 +39,7 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   if (!clienteId) {
     return (
       <div
+        data-testid="cliente-detail-panel"
         aria-label="Panel de detalle del cliente"
         className="flex flex-1 items-center justify-center text-slate-400 text-sm"
       >
@@ -53,6 +54,7 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   if (isLoading) {
     return (
       <div
+        data-testid="cliente-detail-panel"
         aria-label="Panel de detalle del cliente"
         className="flex-1 overflow-y-auto"
       >
@@ -66,6 +68,7 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   if (is404) {
     return (
       <div
+        data-testid="cliente-detail-panel"
         aria-label="Panel de detalle del cliente"
         className="flex flex-1 items-center justify-center flex-col gap-3 text-center px-6"
       >
@@ -85,6 +88,7 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   if (isError) {
     return (
       <div
+        data-testid="cliente-detail-panel"
         aria-label="Panel de detalle del cliente"
         className="flex flex-1 items-center justify-center"
       >
@@ -96,6 +100,7 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   // Success — render client fields
   return (
     <div
+      data-testid="cliente-detail-panel"
       aria-label="Panel de detalle del cliente"
       className="flex-1 overflow-y-auto p-6"
     >

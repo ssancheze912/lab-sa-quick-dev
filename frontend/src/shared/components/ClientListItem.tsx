@@ -10,6 +10,7 @@ export function ClientListItem({ cliente, isActive, onClick }: ClientListItemPro
   return (
     <li
       data-testid="cliente-list-item"
+      data-active={isActive ? 'true' : undefined}
       role="option"
       aria-selected={isActive}
       onClick={onClick}
