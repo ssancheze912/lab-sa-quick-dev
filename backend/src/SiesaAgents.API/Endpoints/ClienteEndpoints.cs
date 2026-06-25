@@ -15,5 +15,26 @@ public static class ClienteEndpoints
         .WithSummary("Obtiene todos los clientes")
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status500InternalServerError);
+
+        app.MapGet("/api/v1/clientes/{id:guid}", async (Guid id, GetClienteByIdQueryHandler handler) =>
+        {
+            var cliente = await handler.HandleAsync(new GetClienteByIdQuery(id));
+
+            if (cliente is null)
+            {
+                return Results.Problem(
+                    detail: $"Cliente con id {id} no encontrado.",
+                    title: "Not Found",
+                    statusCode: StatusCodes.Status404NotFound,
+                    type: "https://tools.ietf.org/html/rfc7807");
+            }
+
+            return Results.Ok(cliente);
+        })
+        .WithName("GetClienteById")
+        .WithSummary("Obtiene un cliente por ID")
+        .Produces(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status500InternalServerError);
     }
 }
