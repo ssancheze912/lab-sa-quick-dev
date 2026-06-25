@@ -15,15 +15,17 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             logger.LogError(ex, "Unhandled exception for {Method} {Path}",
                 context.Request.Method, context.Request.Path);
 
-            context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Status  = StatusCodes.Status500InternalServerError,
-                Title   = "An unexpected error occurred.",
-                Detail  = null   // Never expose ex.Message or stack traces
-            });
+            await context.Response.WriteAsJsonAsync(
+                new ProblemDetails
+                {
+                    Status = StatusCodes.Status500InternalServerError,
+                    Title  = "An unexpected error occurred.",
+                    Detail = null   // Never expose ex.Message or stack traces
+                },
+                options: null,
+                contentType: "application/problem+json");
         }
     }
 }

@@ -295,14 +295,23 @@ claude-sonnet-4-6
 - .NET SDK not available in CI environment; migration files created manually per story Dev Notes guidance.
 - Migration `20260625000000_InitialCreate.cs` creates empty schema (only `__EFMigrationsHistory`) — correct per AC #4 scope boundary.
 - `public partial class Program {}` added to enable `WebApplicationFactory<Program>` in tests.
+- CORRECTION (attempt 3): `ApplySnakeCaseNaming()` removed from `OnModelCreating` — method does not exist in Npgsql.EntityFrameworkCore.PostgreSQL 10.0.2. Replaced with native EF Core 10 `IMutableEntityType` convention applied in `AppDbContext.ApplySnakeCaseNaming()` private method — no external package required.
+- CORRECTION (attempt 3): `EFCore.NamingConventions` package not used — version conflicts with EF Core 10.0.9 chain. Snake_case is implemented via `Regex`-based `ToSnakeCase` helper iterating `modelBuilder.Model.GetEntityTypes()`.
+- CORRECTION (attempt 3): `using Scalar.AspNetCore;` added explicitly to `Program.cs` — implicit usings were not picking up the extension method.
+- CORRECTION (attempt 3): EF Core version alignment: added explicit `Microsoft.EntityFrameworkCore.Relational 10.*` to Infrastructure and API csproj; `Microsoft.EntityFrameworkCore 10.*` to API csproj. Resolves Npgsql 10.0.2 vs EF Core Design 10.0.9 assembly conflict.
+- CORRECTION (attempt 3): Test file missing `using Xunit`, `using Microsoft.AspNetCore.Builder`, `using Microsoft.AspNetCore.Http` — all added.
+- CORRECTION (attempt 3): `app.Map("/test-exception", _ => throw ...)` rewritten as `throwingApp.Run(...)` inside Map callback — Action<IApplicationBuilder> signature fix.
+- CORRECTION (attempt 3): `WriteAsJsonAsync` sets Content-Type to `application/json` by default, overriding pre-set value. Fixed by passing `contentType: "application/problem+json"` to the overload.
+- CORRECTION (attempt 3): Test assertion `body.GetProperty("detail")` throws KeyNotFoundException when ProblemDetails serializes null detail as absent. Fixed with `TryGetProperty`.
+- All 2 unit tests pass: Failed 0, Passed 2, Skipped 0.
 
 ### Completion Notes List
 
-- Task 1: `AppDbContext.cs` created with `ApplySnakeCaseNaming()` as last call in `OnModelCreating`. `AddDbContext` registered in `Program.cs` with `MigrationsAssembly("SiesaAgents.Infrastructure")`.
+- Task 1: `AppDbContext.cs` created with native EF Core snake_case convention via `ApplySnakeCaseNaming()` private method iterating IMutableEntityType. `AddDbContext` registered in `Program.cs` with `MigrationsAssembly("SiesaAgents.Infrastructure")`.
 - Task 2: `Microsoft.EntityFrameworkCore.Design` added to Infrastructure.csproj. Migration files manually created (SDK unavailable in CI) — correct structure for `dotnet ef database update` when SDK is present.
-- Task 3: `ExceptionHandlingMiddleware` updated to include `ILogger<ExceptionHandlingMiddleware>` parameter and full RFC 7807 Problem Details response. `detail` is null. Middleware order in `Program.cs` preserved.
-- Task 4: Build structure verified correct; runtime verification requires SDK. `MapScalarApiReference()` pipeline unchanged.
-- Task 5: `ExceptionHandlingMiddlewareTests.cs` created using `WebApplicationFactory<Program>` with InMemory DB override. Tests cover 500 status, `application/problem+json` content-type, ProblemDetails shape, and null `detail`.
+- Task 3: `ExceptionHandlingMiddleware` updated with `ILogger` parameter, full RFC 7807 Problem Details, `content-type: application/problem+json` via `WriteAsJsonAsync` overload. `detail` is null.
+- Task 4: Build succeeds; `MapScalarApiReference()` pipeline functional with explicit `using Scalar.AspNetCore;`.
+- Task 5: `ExceptionHandlingMiddlewareTests.cs` passes 2/2 tests using `WebApplicationFactory<Program>` with InMemory DB override.
 
 ### File List
 
@@ -313,7 +322,9 @@ claude-sonnet-4-6
 - `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs`
 
 **Modified:**
-- `backend/src/SiesaAgents.API/Program.cs` — added `AddDbContext<AppDbContext>`, `using` directives, `public partial class Program {}`
-- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — full RFC 7807 implementation with `ILogger`
-- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — added `Microsoft.EntityFrameworkCore.Design`
+- `backend/src/SiesaAgents.API/Program.cs` — added `AddDbContext<AppDbContext>`, `using Scalar.AspNetCore`, `public partial class Program {}`
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — RFC 7807 with correct `application/problem+json` content-type via WriteAsJsonAsync overload
+- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — added `Microsoft.EntityFrameworkCore.Design`, `Microsoft.EntityFrameworkCore.Relational`
+- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — added `Microsoft.EntityFrameworkCore`, `Microsoft.EntityFrameworkCore.Relational` for version alignment
 - `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — added `Microsoft.AspNetCore.Mvc.Testing`, `Microsoft.EntityFrameworkCore.InMemory`, API project reference
+- `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs` — fixed missing usings, Map/Run lambda signatures, detail property assertion

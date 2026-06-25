@@ -2,12 +2,15 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using SiesaAgents.Infrastructure.Data;
+using Xunit;
 
 namespace SiesaAgents.UnitTests.Middleware;
 
@@ -36,9 +39,11 @@ public class ExceptionHandlingMiddlewareTests : IClassFixture<ExceptionHandlingM
         body.GetProperty("status").GetInt32().Should().Be(500);
         body.GetProperty("title").GetString().Should().Be("An unexpected error occurred.");
 
-        // detail must be null — never expose ex.Message
-        var detail = body.GetProperty("detail");
-        detail.ValueKind.Should().Be(JsonValueKind.Null);
+        // detail must be null or absent — never expose ex.Message
+        if (body.TryGetProperty("detail", out var detail))
+        {
+            detail.ValueKind.Should().Be(JsonValueKind.Null);
+        }
     }
 
     [Fact]
@@ -80,14 +85,16 @@ public class ExceptionHandlingMiddlewareTests : IClassFixture<ExceptionHandlingM
                 app.UseMiddleware<SiesaAgents.API.Middleware.ExceptionHandlingMiddleware>();
 
                 // Register a test endpoint that throws an unhandled exception
-                app.Map("/test-exception", _ => throw new InvalidOperationException("Test exception"));
+                app.Map("/test-exception", throwingApp =>
+                    throwingApp.Run(_ => throw new InvalidOperationException("Test exception")));
 
                 // Register a healthy endpoint
-                app.Map("/health", ctx =>
-                {
-                    ctx.Response.StatusCode = 200;
-                    return ctx.Response.WriteAsync("OK");
-                });
+                app.Map("/health", healthApp =>
+                    healthApp.Run(ctx =>
+                    {
+                        ctx.Response.StatusCode = 200;
+                        return ctx.Response.WriteAsync("OK");
+                    }));
             });
         }
     }
