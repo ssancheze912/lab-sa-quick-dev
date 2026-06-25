@@ -4,6 +4,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import { useNavigate } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'siesa-ui-kit';
 import { useCliente } from '../application/useCliente';
 import { useDeleteCliente } from '../application/useDeleteCliente';
@@ -53,6 +54,7 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   const { data, isLoading, isError, error, refetch } = useCliente(clienteId);
   const deleteCliente = useDeleteCliente();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Placeholder — no client selected
   if (!clienteId) {
@@ -138,15 +140,19 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   function handleConfirmDelete() {
     if (!clienteId) return;
 
-    // Check cache for associated contacts to decide which toast to show
-    // (per story 2.5 dev notes — cache-based approach)
     deleteCliente.mutate(clienteId, {
       onSuccess: () => {
+        const cachedContacts = queryClient.getQueryData<unknown[]>(['contactos', { clienteId }]);
+        const hasContacts = Array.isArray(cachedContacts) && cachedContacts.length > 0;
+        const msg = hasContacts
+          ? 'Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado.'
+          : 'Cliente eliminado correctamente';
+        toast.success(msg);
         navigate({ to: '/clientes' });
-        toast.success('Cliente eliminado correctamente');
       },
       onError: () => {
-        toast.error('No se pudo eliminar el cliente. Intenta de nuevo.');
+        const msg = 'No se pudo eliminar el cliente. Intenta de nuevo.';
+        toast.error(msg);
       },
     });
   }
@@ -172,21 +178,23 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
                   Eliminar
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent data-testid="delete-confirmation-dialog">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>¿Eliminar este cliente?</AlertDialogTitle>
+                  <AlertDialogTitle data-testid="delete-dialog-title">¿Eliminar este cliente?</AlertDialogTitle>
                   <AlertDialogDescription>
                     Esta acción no se puede deshacer. El cliente será eliminado permanentemente.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel
+                    data-testid="delete-dialog-cancel"
                     aria-label="Cancelar eliminación"
                     className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
                     Cancelar
                   </AlertDialogCancel>
                   <AlertDialogAction
+                    data-testid="delete-dialog-confirm"
                     aria-label="Confirmar eliminación"
                     disabled={deleteCliente.isPending}
                     onClick={handleConfirmDelete}
