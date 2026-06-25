@@ -24,7 +24,6 @@ import {
 
 interface ClienteDetailPanelProps {
   clienteId: string | undefined;
-  onNotify?: (type: 'success' | 'error', message: string) => void;
 }
 
 function SkeletonDetail() {
@@ -50,7 +49,7 @@ function SkeletonDetail() {
   );
 }
 
-export function ClienteDetailPanel({ clienteId, onNotify }: ClienteDetailPanelProps) {
+export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   const [isEditing, setIsEditing] = useState(false);
   const { data, isLoading, isError, error, refetch } = useCliente(clienteId);
   const deleteCliente = useDeleteCliente();
@@ -149,13 +148,11 @@ export function ClienteDetailPanel({ clienteId, onNotify }: ClienteDetailPanelPr
           ? 'Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado.'
           : 'Cliente eliminado correctamente';
         toast.success(msg);
-        onNotify?.('success', msg);
         navigate({ to: '/clientes' });
       },
       onError: () => {
         const msg = 'No se pudo eliminar el cliente. Intenta de nuevo.';
         toast.error(msg);
-        onNotify?.('error', msg);
       },
     });
   }
