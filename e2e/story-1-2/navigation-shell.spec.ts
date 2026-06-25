@@ -47,19 +47,24 @@ test.describe('AC1 - Desktop NavigationRail (viewport >=1024px)', () => {
   test('should navigate to /clientes without a full page reload when Clientes is clicked', async ({
     page,
   }) => {
-    // GIVEN: Application is loaded at root and user is on desktop
+    // GIVEN: Application is loaded at /contactos on desktop
     await page.goto('/contactos');
 
     // WHEN: User clicks on "Clientes" in the NavigationRail
-    // Track navigation type: a full reload would reset the page, a SPA navigation would not
-    let navigationCount = 0;
-    page.on('framenavigated', () => { navigationCount++; });
+    // Detect a real full-page reload by tracking document-type requests.
+    // A SPA pushState navigation does NOT trigger a new document fetch.
+    let fullPageReloadCount = 0;
+    page.on('request', (request) => {
+      if (request.resourceType() === 'document') {
+        fullPageReloadCount++;
+      }
+    });
 
     await page.locator('[data-testid="nav-item-clientes"]').click();
 
-    // THEN: URL changes to /clientes without a full page reload (no extra frame navigations)
+    // THEN: URL changes to /clientes without a full page reload (no document request fired)
     await expect(page).toHaveURL('/clientes');
-    expect(navigationCount).toBe(0);
+    expect(fullPageReloadCount).toBe(0);
   });
 
   test('should navigate to /contactos without a full page reload when Contactos is clicked', async ({
@@ -68,15 +73,21 @@ test.describe('AC1 - Desktop NavigationRail (viewport >=1024px)', () => {
     // GIVEN: Application is loaded at /clientes on desktop
     await page.goto('/clientes');
 
-    let navigationCount = 0;
-    page.on('framenavigated', () => { navigationCount++; });
+    // Detect a real full-page reload by tracking document-type requests.
+    // A SPA pushState navigation does NOT trigger a new document fetch.
+    let fullPageReloadCount = 0;
+    page.on('request', (request) => {
+      if (request.resourceType() === 'document') {
+        fullPageReloadCount++;
+      }
+    });
 
     // WHEN: User clicks on "Contactos" in the NavigationRail
     await page.locator('[data-testid="nav-item-contactos"]').click();
 
-    // THEN: URL changes to /contactos without a full page reload
+    // THEN: URL changes to /contactos without a full page reload (no document request fired)
     await expect(page).toHaveURL('/contactos');
-    expect(navigationCount).toBe(0);
+    expect(fullPageReloadCount).toBe(0);
   });
 
   test('should NOT display NavigationBar at the bottom on desktop viewport', async ({ page }) => {
@@ -129,8 +140,11 @@ test.describe('AC2 - Mobile NavigationBar (viewport <1024px)', () => {
     // GIVEN: Mobile user is on /clientes
     await page.goto('/clientes');
 
-    // WHEN: User taps the Contactos item in the NavigationBar
-    await page.locator('[data-testid="nav-item-contactos"]').tap();
+    // WHEN: User taps (clicks) the Contactos item in the NavigationBar.
+    // Using click() instead of tap() ensures cross-browser compatibility
+    // (tap() requires hasTouch:true which is absent in the chromium project).
+    // The AC verifies navigation behaviour, not the input modality.
+    await page.locator('[data-testid="nav-item-contactos"]').click();
 
     // THEN: URL changes to /contactos
     await expect(page).toHaveURL('/contactos');
