@@ -28,6 +28,9 @@ file sealed class FakeClienteRepository(IEnumerable<ClienteEntity>? items = null
 
     public Task<ClienteEntity> UpdateAsync(ClienteEntity entity)
         => Task.FromResult(entity);
+
+    public Task<bool> DeleteAsync(Guid id)
+        => Task.FromResult(true);
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

@@ -23,7 +23,7 @@ import { http, HttpResponse } from 'msw';
 // SUT — will fail until ClienteDetailPanel is implemented
 import { ClienteDetailPanel } from './ClienteDetailPanel';
 
-// Mock siesa-ui-kit toast (needed for ClienteForm in edit mode)
+// Mock siesa-ui-kit toast (needed for ClienteForm in edit mode and delete flow)
 vi.mock('siesa-ui-kit', () => ({
   toast: {
     success: vi.fn(),
@@ -32,6 +32,16 @@ vi.mock('siesa-ui-kit', () => ({
     info: vi.fn(),
   },
 }));
+
+// Mock @tanstack/react-router for useNavigate
+const mockNavigate = vi.fn();
+vi.mock('@tanstack/react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-router')>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 // ─── MSW server ───────────────────────────────────────────────────────────────
 
@@ -55,6 +65,7 @@ function buildClienteDetail(overrides: Record<string, unknown> = {}) {
 const server = setupServer(
   http.get(`${API_BASE}/:id`, () => HttpResponse.json(buildClienteDetail())),
   http.put(`${API_BASE}/:id`, () => HttpResponse.json(buildClienteDetail({ nombre: 'Empresa Actualizada S.A.' }))),
+  http.delete(`${API_BASE}/:id`, () => new HttpResponse(null, { status: 204 })),
 );
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
@@ -474,5 +485,186 @@ describe('Edit Flow — "Editar" button and form toggle', () => {
       expect(screen.getByTestId('cliente-detail-content')).toBeInTheDocument();
     });
     expect(screen.queryByRole('form', { name: /editar cliente/i })).not.toBeInTheDocument();
+  });
+});
+
+// ─── Delete Flow (Story 2.5) ──────────────────────────────────────────────────
+
+describe('Delete Flow — "Eliminar" button and AlertDialog', () => {
+  it('should render "Eliminar" button when client data is loaded', async () => {
+    // GIVEN: API returns client data
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    // THEN: "Eliminar" button is visible after data loads
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /eliminar cliente/i })).toBeInTheDocument();
+    });
+  });
+
+  it('should NOT render "Eliminar" button during skeleton loading state', async () => {
+    // GIVEN: API is slow
+    server.use(
+      http.get(`${API_BASE}/:id`, async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10_000));
+        return HttpResponse.json(buildClienteDetail());
+      }),
+    );
+
+    // WHEN: ClienteDetailPanel is rendered with a clienteId
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    // THEN: Skeleton is shown, "Eliminar" button is NOT present
+    await waitFor(() => {
+      expect(screen.getByTestId('cliente-detail-skeleton')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('button', { name: /eliminar cliente/i })).not.toBeInTheDocument();
+  });
+
+  it('should NOT render "Eliminar" button while isEditing is true', async () => {
+    // GIVEN: Client is loaded
+    const user = userEvent.setup();
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    await waitFor(() => expect(screen.getByTestId('cliente-detail-content')).toBeInTheDocument());
+
+    // WHEN: User clicks "Editar"
+    await user.click(screen.getByRole('button', { name: /editar cliente/i }));
+    await waitFor(() => expect(screen.getByRole('form', { name: /editar cliente/i })).toBeInTheDocument());
+
+    // THEN: "Eliminar" button is not present while editing
+    expect(screen.queryByRole('button', { name: /eliminar cliente/i })).not.toBeInTheDocument();
+  });
+
+  it('should open AlertDialog with "¿Eliminar este cliente?" when "Eliminar" is clicked', async () => {
+    // GIVEN: Client data is loaded
+    const user = userEvent.setup();
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /eliminar cliente/i })).toBeInTheDocument());
+
+    // WHEN: User clicks "Eliminar"
+    await user.click(screen.getByRole('button', { name: /eliminar cliente/i }));
+
+    // THEN: AlertDialog shows with correct title
+    await waitFor(() => {
+      expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument();
+    });
+  });
+
+  it('should close the dialog without making an API call when "Cancelar" is clicked', async () => {
+    // GIVEN: AlertDialog is open
+    let deleteCallCount = 0;
+    server.use(
+      http.delete(`${API_BASE}/:id`, () => {
+        deleteCallCount++;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /eliminar cliente/i })).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /eliminar cliente/i }));
+    await waitFor(() => expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument());
+
+    // WHEN: User clicks "Cancelar"
+    await user.click(screen.getByRole('button', { name: /cancelar eliminación/i }));
+
+    // THEN: No DELETE request was sent
+    await waitFor(() => {
+      expect(screen.queryByText('¿Eliminar este cliente?')).not.toBeInTheDocument();
+    });
+    expect(deleteCallCount).toBe(0);
+  });
+
+  it('should call DELETE /api/v1/clientes/{id} via mutation when "Confirmar" is clicked', async () => {
+    // GIVEN: AlertDialog is open
+    let capturedDeleteId: string | null = null;
+    server.use(
+      http.delete(`${API_BASE}/:id`, ({ params }) => {
+        capturedDeleteId = params.id as string;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /eliminar cliente/i })).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /eliminar cliente/i }));
+    await waitFor(() => expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument());
+
+    // WHEN: User clicks "Confirmar"
+    await user.click(screen.getByRole('button', { name: /confirmar eliminación/i }));
+
+    // THEN: DELETE request was sent with the correct id
+    await waitFor(() => {
+      expect(capturedDeleteId).toBe(KNOWN_ID);
+    });
+  });
+
+  it('should navigate to /clientes after successful delete', async () => {
+    // GIVEN: DELETE succeeds
+    const user = userEvent.setup();
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /eliminar cliente/i })).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /eliminar cliente/i }));
+    await waitFor(() => expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument());
+
+    // WHEN: User confirms deletion
+    await user.click(screen.getByRole('button', { name: /confirmar eliminación/i }));
+
+    // THEN: Navigate to /clientes is called
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith({ to: '/clientes' });
+    });
+  });
+
+  it('should show success toast "Cliente eliminado correctamente" after successful delete (no contacts)', async () => {
+    // GIVEN: DELETE succeeds, no associated contacts in cache
+    const { toast } = await import('siesa-ui-kit');
+    const user = userEvent.setup();
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /eliminar cliente/i })).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /eliminar cliente/i }));
+    await waitFor(() => expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument());
+
+    // WHEN: User confirms
+    await user.click(screen.getByRole('button', { name: /confirmar eliminación/i }));
+
+    // THEN: Success toast is shown
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('Cliente eliminado correctamente');
+    });
+  });
+
+  it('should show error toast on 5xx error when confirming deletion', async () => {
+    // GIVEN: DELETE returns 500
+    server.use(
+      http.delete(`${API_BASE}/:id`, () =>
+        HttpResponse.json({ status: 500 }, { status: 500 }),
+      ),
+    );
+
+    const { toast } = await import('siesa-ui-kit');
+    const user = userEvent.setup();
+    renderWithQuery(createElement(ClienteDetailPanel, { clienteId: KNOWN_ID }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /eliminar cliente/i })).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /eliminar cliente/i }));
+    await waitFor(() => expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument());
+
+    // WHEN: User confirms but server returns 5xx
+    await user.click(screen.getByRole('button', { name: /confirmar eliminación/i }));
+
+    // THEN: Error toast is shown
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'No se pudo eliminar el cliente. Intenta de nuevo.',
+      );
+    });
   });
 });

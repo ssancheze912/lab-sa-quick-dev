@@ -32,4 +32,15 @@ public sealed class ClienteRepository(AppDbContext dbContext) : IClienteReposito
         await dbContext.SaveChangesAsync();
         return entity;
     }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        var entity = await dbContext.Clientes.FindAsync(id);
+        if (entity is null)
+            return false;
+
+        dbContext.Clientes.Remove(entity);
+        await dbContext.SaveChangesAsync();
+        return true;
+    }
 }

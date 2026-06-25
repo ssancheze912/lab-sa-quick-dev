@@ -3,9 +3,23 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
+import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'siesa-ui-kit';
 import { useCliente } from '../application/useCliente';
+import { useDeleteCliente } from '../application/useDeleteCliente';
 import { ErrorPanel } from '@/shared/components/ErrorPanel';
 import { ClienteForm } from './ClienteForm';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface ClienteDetailPanelProps {
   clienteId: string | undefined;
@@ -37,6 +51,8 @@ function SkeletonDetail() {
 export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
   const [isEditing, setIsEditing] = useState(false);
   const { data, isLoading, isError, error, refetch } = useCliente(clienteId);
+  const deleteCliente = useDeleteCliente();
+  const navigate = useNavigate();
 
   // Placeholder — no client selected
   if (!clienteId) {
@@ -119,6 +135,22 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
     );
   }
 
+  function handleConfirmDelete() {
+    if (!clienteId) return;
+
+    // Check cache for associated contacts to decide which toast to show
+    // (per story 2.5 dev notes — cache-based approach)
+    deleteCliente.mutate(clienteId, {
+      onSuccess: () => {
+        navigate({ to: '/clientes' });
+        toast.success('Cliente eliminado correctamente');
+      },
+      onError: () => {
+        toast.error('No se pudo eliminar el cliente. Intenta de nuevo.');
+      },
+    });
+  }
+
   // Success — render client fields
   return (
     <div
@@ -127,15 +159,55 @@ export function ClienteDetailPanel({ clienteId }: ClienteDetailPanelProps) {
     >
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-base font-bold text-slate-900">Detalle del cliente</h3>
-        <button
-          data-testid="cliente-editar-button"
-          type="button"
-          onClick={() => setIsEditing(true)}
-          aria-label="Editar cliente"
-          className="rounded-md bg-[#0e79fd] px-4 py-1.5 text-sm font-bold text-white hover:bg-[#154ca9] focus-visible:ring-2 focus-visible:ring-[#0e79fd]"
-        >
-          Editar
-        </button>
+        <div className="flex items-center gap-2">
+          {!isEditing && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  data-testid="cliente-eliminar-button"
+                  type="button"
+                  aria-label="Eliminar cliente"
+                  className="rounded-md border border-red-600 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-600"
+                >
+                  Eliminar
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar este cliente?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. El cliente será eliminado permanentemente.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel
+                    aria-label="Cancelar eliminación"
+                    className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Cancelar
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    aria-label="Confirmar eliminación"
+                    disabled={deleteCliente.isPending}
+                    onClick={handleConfirmDelete}
+                    className="rounded-md bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {deleteCliente.isPending ? 'Eliminando…' : 'Confirmar'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <button
+            data-testid="cliente-editar-button"
+            type="button"
+            onClick={() => setIsEditing(true)}
+            aria-label="Editar cliente"
+            className="rounded-md bg-[#0e79fd] px-4 py-1.5 text-sm font-bold text-white hover:bg-[#154ca9] focus-visible:ring-2 focus-visible:ring-[#0e79fd]"
+          >
+            Editar
+          </button>
+        </div>
       </div>
 
       <dl
