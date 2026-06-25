@@ -1,6 +1,6 @@
 # Story 3.1: Contact List & Search
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -87,7 +87,7 @@ Backend layers:
 
 ### Search Implementation (NFR1 — < 1 second with up to 1,000 records)
 
-Search is **client-side only** for this MVP (architecture decision). The API always returns the full list; the frontend filters via `useMemo` with a 150ms debounce. Dataset is larger than clients (1,000 vs 500 records) — performance test is mandatory per R-001.
+Search is **client-side only** for this MVP (architecture decision). The API always returns the full list; the frontend filters via `useMemo` on each keystroke (no debounce — NFR1 passes without it for up to 1,000 records). Dataset is larger than clients (1,000 vs 500 records) — performance test is mandatory per R-001.
 
 ```typescript
 const filtered = useMemo(() =>

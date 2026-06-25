@@ -10,6 +10,7 @@ public sealed class ContactoRepository(AppDbContext dbContext) : IContactoReposi
     public async Task<IEnumerable<ContactoEntity>> GetAllAsync()
     {
         return await dbContext.Contactos
+            .AsNoTracking()
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync();
     }

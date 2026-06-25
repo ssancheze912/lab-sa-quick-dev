@@ -9,7 +9,6 @@ public sealed class GetContactosQueryHandler(IContactoRepository repository)
     {
         var entities = await repository.GetAllAsync();
         return entities
-            .OrderByDescending(e => e.CreatedAt)
             .Select(e => new ContactoDto(
                 e.Id,
                 e.Nombre,
