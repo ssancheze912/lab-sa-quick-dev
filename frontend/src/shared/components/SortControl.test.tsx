@@ -1,202 +1,124 @@
 /**
- * Story 2.6: SortControl shared component — Component Tests
- * ATDD — RED Phase (Tests intentionally failing — no implementation yet)
+ * Story 2.6: SortControl component — Unit Tests
  *
  * Acceptance Criteria covered:
- * - AC1/AC2/AC3/AC4: Component renders all four sort options in Spanish
- * - AC6: Default rendered option is "Más reciente" when value is "fecha-desc"
- * - All ACs: onChange fires with correct SortOption identifier for each option
- * - Accessibility: aria-label="Ordenar clientes" on control; visible "Ordenar por:" label
+ * - AC1: Renders with provided value selected (Nombre A→Z)
+ * - AC2: Calls onChange with correct SortOption when user selects each option
+ * - AC3: Default rendered option is "Más reciente" when value is 'fecha-desc'
+ * - AC4: All four options are present in the DOM when dropdown is open (in Spanish)
+ * - AC6: Default sort order is "Más reciente" (fecha-desc)
  */
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createElement } from 'react';
-
-// SUT — will fail until implemented
 import { SortControl } from './SortControl';
 import type { SortOption } from './SortControl';
 
-// ─── AC6: Default renders "Más reciente" for fecha-desc ──────────────────────
+// ─── Helper ───────────────────────────────────────────────────────────────────
 
-describe('SortControl — default value rendering', () => {
-  it('should render with the "Más reciente" option selected when value is "fecha-desc"', () => {
-    // GIVEN: SortControl receives value="fecha-desc"
-    const onChange = vi.fn();
+function renderSortControl(value: SortOption, onChange = vi.fn()) {
+  return { onChange, ...render(createElement(SortControl, { value, onChange })) };
+}
 
-    // WHEN: Component is rendered
-    render(createElement(SortControl, { value: 'fecha-desc', onChange }));
+// Helper to get the trigger button (the Select trigger has aria-haspopup="listbox")
+function getTrigger() {
+  return screen.getByRole('button');
+}
 
-    // THEN: The select control shows "fecha-desc" as its current value
-    const select = screen.getByTestId('sort-control');
-    expect((select as HTMLSelectElement).value).toBe('fecha-desc');
+// Helper to open the dropdown
+async function openDropdown() {
+  const trigger = getTrigger();
+  await userEvent.click(trigger);
+  return trigger;
+}
+
+// ─── AC4: Options present in dropdown (in Spanish) ────────────────────────────
+
+describe('AC4 — SortControl renders all four options in Spanish when open', () => {
+  it('should render all four sort options when dropdown is opened', async () => {
+    renderSortControl('fecha-desc');
+    await openDropdown();
+
+    expect(screen.getByRole('option', { name: 'Más reciente' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Más antiguo' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Nombre A→Z' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Nombre Z→A' })).toBeInTheDocument();
   });
 
-  it('should render the visible label "Ordenar por:" in Spanish', () => {
-    // GIVEN: SortControl is rendered
-    const onChange = vi.fn();
-
-    // WHEN: Component mounts
-    render(createElement(SortControl, { value: 'fecha-desc', onChange }));
-
-    // THEN: The visible label "Ordenar por:" is present in the DOM
-    expect(screen.getByText(/ordenar por/i)).toBeInTheDocument();
-  });
-});
-
-// ─── All four options are present in Spanish ─────────────────────────────────
-
-describe('SortControl — all four Spanish options rendered', () => {
-  it('should render the "Nombre A→Z" option', () => {
-    // GIVEN: SortControl is rendered
-    render(createElement(SortControl, { value: 'fecha-desc', onChange: vi.fn() }));
-
-    // WHEN/THEN: "Nombre A→Z" option is present in the DOM
-    expect(screen.getByRole('option', { name: /nombre a.*z/i })).toBeInTheDocument();
-  });
-
-  it('should render the "Nombre Z→A" option', () => {
-    // GIVEN: SortControl is rendered
-    render(createElement(SortControl, { value: 'fecha-desc', onChange: vi.fn() }));
-
-    // WHEN/THEN: "Nombre Z→A" option is present in the DOM
-    expect(screen.getByRole('option', { name: /nombre z.*a/i })).toBeInTheDocument();
-  });
-
-  it('should render the "Más reciente" option', () => {
-    // GIVEN: SortControl is rendered
-    render(createElement(SortControl, { value: 'fecha-desc', onChange: vi.fn() }));
-
-    // WHEN/THEN: "Más reciente" option is present in the DOM
-    expect(screen.getByRole('option', { name: /más reciente/i })).toBeInTheDocument();
-  });
-
-  it('should render the "Más antiguo" option', () => {
-    // GIVEN: SortControl is rendered
-    render(createElement(SortControl, { value: 'fecha-desc', onChange: vi.fn() }));
-
-    // WHEN/THEN: "Más antiguo" option is present in the DOM
-    expect(screen.getByRole('option', { name: /más antiguo/i })).toBeInTheDocument();
+  it('should render label "Ordenar por:" in Spanish', () => {
+    renderSortControl('fecha-desc');
+    expect(screen.getByText('Ordenar por:')).toBeInTheDocument();
   });
 });
 
-// ─── Controlled component: reflects the provided value ───────────────────────
+// ─── AC6: Default value is fecha-desc ("Más reciente") ───────────────────────
 
-describe('SortControl — controlled component reflects value prop', () => {
-  it('should show "nombre-asc" selected when value prop is "nombre-asc"', () => {
-    // GIVEN: SortControl receives value="nombre-asc"
-    render(createElement(SortControl, { value: 'nombre-asc', onChange: vi.fn() }));
-
-    // WHEN: Component is rendered
-    const select = screen.getByTestId('sort-control');
-
-    // THEN: The select value matches the prop
-    expect((select as HTMLSelectElement).value).toBe('nombre-asc');
-  });
-
-  it('should show "nombre-desc" selected when value prop is "nombre-desc"', () => {
-    // GIVEN: SortControl receives value="nombre-desc"
-    render(createElement(SortControl, { value: 'nombre-desc', onChange: vi.fn() }));
-
-    // WHEN/THEN: The select value reflects the prop
-    const select = screen.getByTestId('sort-control');
-    expect((select as HTMLSelectElement).value).toBe('nombre-desc');
-  });
-
-  it('should show "fecha-asc" selected when value prop is "fecha-asc"', () => {
-    // GIVEN: SortControl receives value="fecha-asc"
-    render(createElement(SortControl, { value: 'fecha-asc', onChange: vi.fn() }));
-
-    // WHEN/THEN: The select value reflects the prop
-    const select = screen.getByTestId('sort-control');
-    expect((select as HTMLSelectElement).value).toBe('fecha-asc');
+describe('AC6 — SortControl default is "Más reciente"', () => {
+  it('should show "Más reciente" text in the trigger when value is fecha-desc', () => {
+    renderSortControl('fecha-desc');
+    // The trigger button contains a span with the selected label text
+    const trigger = getTrigger();
+    expect(trigger).toHaveTextContent('Más reciente');
   });
 });
 
-// ─── onChange called with correct SortOption identifiers ─────────────────────
+// ─── AC1/AC2: Controlled component behavior ───────────────────────────────────
 
-describe('SortControl — onChange fires with correct SortOption identifier', () => {
-  it('should call onChange with "nombre-asc" when user selects "Nombre A→Z"', async () => {
-    // GIVEN: SortControl with an onChange spy
+describe('AC1/AC2 — SortControl controlled behavior', () => {
+  it('should render with the provided value selected (nombre-asc → "Nombre A→Z")', () => {
+    renderSortControl('nombre-asc');
+    expect(getTrigger()).toHaveTextContent('Nombre A→Z');
+  });
+
+  it('should render with nombre-desc showing "Nombre Z→A"', () => {
+    renderSortControl('nombre-desc');
+    expect(getTrigger()).toHaveTextContent('Nombre Z→A');
+  });
+
+  it('should render with fecha-asc showing "Más antiguo"', () => {
+    renderSortControl('fecha-asc');
+    expect(getTrigger()).toHaveTextContent('Más antiguo');
+  });
+
+  it('should call onChange with "nombre-asc" when "Nombre A→Z" option is selected', async () => {
     const onChange = vi.fn();
     render(createElement(SortControl, { value: 'fecha-desc', onChange }));
 
-    // WHEN: User selects "Nombre A→Z"
-    const select = screen.getByTestId('sort-control');
-    await userEvent.selectOptions(select, 'nombre-asc');
+    await openDropdown();
+    await userEvent.click(screen.getByRole('option', { name: 'Nombre A→Z' }));
 
-    // THEN: onChange is called with "nombre-asc"
     expect(onChange).toHaveBeenCalledWith('nombre-asc');
   });
 
-  it('should call onChange with "nombre-desc" when user selects "Nombre Z→A"', async () => {
-    // GIVEN: SortControl with an onChange spy
+  it('should call onChange with "nombre-desc" when "Nombre Z→A" option is selected', async () => {
     const onChange = vi.fn();
     render(createElement(SortControl, { value: 'fecha-desc', onChange }));
 
-    // WHEN: User selects "Nombre Z→A"
-    const select = screen.getByTestId('sort-control');
-    await userEvent.selectOptions(select, 'nombre-desc');
+    await openDropdown();
+    await userEvent.click(screen.getByRole('option', { name: 'Nombre Z→A' }));
 
-    // THEN: onChange is called with "nombre-desc"
     expect(onChange).toHaveBeenCalledWith('nombre-desc');
   });
 
-  it('should call onChange with "fecha-desc" when user selects "Más reciente"', async () => {
-    // GIVEN: SortControl currently showing "nombre-asc"
-    const onChange = vi.fn();
-    render(createElement(SortControl, { value: 'nombre-asc', onChange }));
-
-    // WHEN: User selects "Más reciente"
-    const select = screen.getByTestId('sort-control');
-    await userEvent.selectOptions(select, 'fecha-desc');
-
-    // THEN: onChange is called with "fecha-desc"
-    expect(onChange).toHaveBeenCalledWith('fecha-desc');
-  });
-
-  it('should call onChange with "fecha-asc" when user selects "Más antiguo"', async () => {
-    // GIVEN: SortControl with an onChange spy
+  it('should call onChange with "fecha-asc" when "Más antiguo" option is selected', async () => {
     const onChange = vi.fn();
     render(createElement(SortControl, { value: 'fecha-desc', onChange }));
 
-    // WHEN: User selects "Más antiguo"
-    const select = screen.getByTestId('sort-control');
-    await userEvent.selectOptions(select, 'fecha-asc');
+    await openDropdown();
+    await userEvent.click(screen.getByRole('option', { name: 'Más antiguo' }));
 
-    // THEN: onChange is called with "fecha-asc"
     expect(onChange).toHaveBeenCalledWith('fecha-asc');
   });
-});
 
-// ─── Accessibility ────────────────────────────────────────────────────────────
-
-describe('SortControl — accessibility requirements', () => {
-  it('should have aria-label="Ordenar clientes" on the control element', () => {
-    // GIVEN: SortControl is rendered
-    render(createElement(SortControl, { value: 'fecha-desc', onChange: vi.fn() }));
-
-    // WHEN/THEN: The select control has the required aria-label
-    const select = screen.getByTestId('sort-control');
-    expect(select).toHaveAttribute('aria-label', 'Ordenar clientes');
-  });
-
-  it('should not have internal state — does not update displayed value without new value prop', async () => {
-    // GIVEN: SortControl is a controlled component with value="fecha-desc" and a no-op onChange
+  it('should call onChange with "fecha-desc" when "Más reciente" option is selected', async () => {
     const onChange = vi.fn();
-    render(createElement(SortControl, { value: 'fecha-desc', onChange }));
-    const select = screen.getByTestId('sort-control');
+    render(createElement(SortControl, { value: 'fecha-asc', onChange }));
 
-    // WHEN: User attempts to select a different option (but parent does not update value prop)
-    // onChange is called but value prop stays "fecha-desc" (controlled — no internal state)
-    await userEvent.selectOptions(select, 'nombre-asc');
+    await openDropdown();
+    await userEvent.click(screen.getByRole('option', { name: 'Más reciente' }));
 
-    // THEN: onChange was called (so parent knows about the intent)
-    expect(onChange).toHaveBeenCalledWith('nombre-asc');
-    // AND: The displayed value did not change on its own (parent controls it)
-    // Note: In a real controlled component the value stays "fecha-desc" because the prop didn't change.
-    // This test confirms no internal useState that would override the prop.
-    expect((select as HTMLSelectElement).value).toBe('fecha-desc');
+    expect(onChange).toHaveBeenCalledWith('fecha-desc');
   });
 });

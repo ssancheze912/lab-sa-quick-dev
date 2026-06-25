@@ -5,6 +5,8 @@ import { useClientes } from '../application/useClientes';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { ErrorPanel } from '@/shared/components/ErrorPanel';
 import { ClientListItem } from '@/shared/components/ClientListItem';
+import { SortControl } from '@/shared/components/SortControl';
+import type { SortOption } from '@/shared/components/SortControl';
 
 interface ClienteListPanelProps {
   activeClienteId?: string;
@@ -14,16 +16,30 @@ interface ClienteListPanelProps {
 export function ClienteListPanel({ activeClienteId, onClienteSelect }: ClienteListPanelProps = {}) {
   const { data, isLoading, isError, refetch } = useClientes();
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<SortOption>('fecha-desc');
 
-  const filtered = useMemo(
-    () =>
+  const filteredAndSorted = useMemo(() => {
+    const filtered =
       data?.filter(
         (c) =>
           c.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
           c.nit.toLowerCase().includes(searchQuery.toLowerCase()),
-      ) ?? [],
-    [data, searchQuery],
-  );
+      ) ?? [];
+
+    return [...filtered].sort((a, b) => {
+      switch (sortOrder) {
+        case 'nombre-asc':
+          return a.nombre.localeCompare(b.nombre, 'es');
+        case 'nombre-desc':
+          return b.nombre.localeCompare(a.nombre, 'es');
+        case 'fecha-asc':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'fecha-desc':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+  }, [data, searchQuery, sortOrder]);
 
   return (
     <div
@@ -41,6 +57,11 @@ export function ClienteListPanel({ activeClienteId, onClienteSelect }: ClienteLi
           aria-label="Buscar cliente por nombre o NIT/RUC"
           className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm placeholder:text-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd]"
         />
+      </div>
+
+      {/* Sort control */}
+      <div className="px-3 py-2 border-b border-slate-100">
+        <SortControl value={sortOrder} onChange={setSortOrder} />
       </div>
 
       {/* List area */}
@@ -64,9 +85,9 @@ export function ClienteListPanel({ activeClienteId, onClienteSelect }: ClienteLi
           <EmptyState message="No hay clientes registrados. Crea el primer cliente." />
         )}
 
-        {!isLoading && !isError && filtered.length > 0 && (
+        {!isLoading && !isError && filteredAndSorted.length > 0 && (
           <ul role="listbox" aria-label="Lista de clientes" className="space-y-0.5">
-            {filtered.map((cliente) => (
+            {filteredAndSorted.map((cliente) => (
               <ClientListItem
                 key={cliente.id}
                 cliente={cliente}

@@ -1,12 +1,12 @@
 /**
- * Story 2.1: ClienteListPanel component — Component Tests
- * ATDD — RED Phase (Tests intentionally failing — no implementation yet)
+ * Story 2.1 + 2.6: ClienteListPanel component — Component Tests
  *
  * Acceptance Criteria covered:
  * - AC1: Panel renders with list of clients (nombre + nit visible)
  * - AC2: Search input filters list in real time, case-insensitive
  * - AC3: EmptyState shown when data array is empty
  * - AC4: ErrorPanel shown on fetch failure; "Reintentar" triggers refetch
+ * - Story 2.6 AC1-6: SortControl integration and sort behavior
  */
 
 import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest';
@@ -308,5 +308,211 @@ describe('AC4 — ErrorPanel on fetch failure', () => {
     await waitFor(() => {
       expect(screen.getByText('Cliente Recuperado')).toBeInTheDocument();
     });
+  });
+});
+
+// ─── Story 2.6: Sort Integration ──────────────────────────────────────────────
+
+describe('Story 2.6 — SortControl integration in ClienteListPanel', () => {
+  it('should render SortControl on initial load', async () => {
+    renderWithQuery(createElement(ClienteListPanel));
+
+    await waitFor(() => {
+      expect(screen.getByText('Ordenar por:')).toBeInTheDocument();
+    });
+  });
+
+  it('should show "Más reciente" selected by default (fecha-desc)', async () => {
+    renderWithQuery(createElement(ClienteListPanel));
+
+    await waitFor(() => {
+      // The siesa-ui-kit Select renders the selected value label
+      expect(screen.getAllByText('Más reciente').length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  it('should reorder list alphabetically ascending when "Nombre A→Z" is selected', async () => {
+    server.use(
+      http.get(API_URL, () =>
+        HttpResponse.json([
+          buildCliente({ id: '1', nombre: 'Zaragoza SA', createdAt: '2026-01-01T00:00:00Z' }),
+          buildCliente({ id: '2', nombre: 'Acme Corp', createdAt: '2026-01-02T00:00:00Z' }),
+          buildCliente({ id: '3', nombre: 'Mundo Tech', createdAt: '2026-01-03T00:00:00Z' }),
+        ]),
+      ),
+    );
+
+    renderWithQuery(createElement(ClienteListPanel));
+    await waitFor(() => expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(3));
+
+    // Click the SortControl trigger to open options
+    // The siesa-ui-kit Select renders options; we look for "Nombre A→Z" option
+    const trigger = screen.getByLabelText('Ordenar por:');
+    await userEvent.click(trigger);
+
+    const option = screen.getByText('Nombre A→Z');
+    await userEvent.click(option);
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId('cliente-list-item');
+      expect(items[0]).toHaveTextContent('Acme Corp');
+      expect(items[1]).toHaveTextContent('Mundo Tech');
+      expect(items[2]).toHaveTextContent('Zaragoza SA');
+    });
+  });
+
+  it('should reorder list alphabetically descending when "Nombre Z→A" is selected', async () => {
+    server.use(
+      http.get(API_URL, () =>
+        HttpResponse.json([
+          buildCliente({ id: '1', nombre: 'Acme Corp', createdAt: '2026-01-01T00:00:00Z' }),
+          buildCliente({ id: '2', nombre: 'Zaragoza SA', createdAt: '2026-01-02T00:00:00Z' }),
+          buildCliente({ id: '3', nombre: 'Mundo Tech', createdAt: '2026-01-03T00:00:00Z' }),
+        ]),
+      ),
+    );
+
+    renderWithQuery(createElement(ClienteListPanel));
+    await waitFor(() => expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(3));
+
+    const trigger = screen.getByLabelText('Ordenar por:');
+    await userEvent.click(trigger);
+    const option = screen.getByText('Nombre Z→A');
+    await userEvent.click(option);
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId('cliente-list-item');
+      expect(items[0]).toHaveTextContent('Zaragoza SA');
+      expect(items[1]).toHaveTextContent('Mundo Tech');
+      expect(items[2]).toHaveTextContent('Acme Corp');
+    });
+  });
+
+  it('should order clients by createdAt ascending when "Más antiguo" is selected', async () => {
+    server.use(
+      http.get(API_URL, () =>
+        HttpResponse.json([
+          buildCliente({ id: '1', nombre: 'Nuevo', createdAt: '2026-06-01T00:00:00Z' }),
+          buildCliente({ id: '2', nombre: 'Antiguo', createdAt: '2024-01-01T00:00:00Z' }),
+          buildCliente({ id: '3', nombre: 'Medio', createdAt: '2025-03-01T00:00:00Z' }),
+        ]),
+      ),
+    );
+
+    renderWithQuery(createElement(ClienteListPanel));
+    await waitFor(() => expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(3));
+
+    const trigger = screen.getByLabelText('Ordenar por:');
+    await userEvent.click(trigger);
+    const option = screen.getByText('Más antiguo');
+    await userEvent.click(option);
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId('cliente-list-item');
+      expect(items[0]).toHaveTextContent('Antiguo');
+      expect(items[1]).toHaveTextContent('Medio');
+      expect(items[2]).toHaveTextContent('Nuevo');
+    });
+  });
+
+  it('should order clients by createdAt descending when "Más reciente" is selected', async () => {
+    server.use(
+      http.get(API_URL, () =>
+        HttpResponse.json([
+          buildCliente({ id: '1', nombre: 'Antiguo', createdAt: '2024-01-01T00:00:00Z' }),
+          buildCliente({ id: '2', nombre: 'Nuevo', createdAt: '2026-06-01T00:00:00Z' }),
+          buildCliente({ id: '3', nombre: 'Medio', createdAt: '2025-03-01T00:00:00Z' }),
+        ]),
+      ),
+    );
+
+    renderWithQuery(createElement(ClienteListPanel));
+    await waitFor(() => expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(3));
+
+    // Select "Más antiguo" first, then switch back to "Más reciente"
+    const trigger = screen.getByLabelText('Ordenar por:');
+    await userEvent.click(trigger);
+    await userEvent.click(screen.getByText('Más antiguo'));
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId('cliente-list-item');
+      expect(items[0]).toHaveTextContent('Antiguo');
+    });
+
+    await userEvent.click(trigger);
+    await userEvent.click(screen.getByText('Más reciente'));
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId('cliente-list-item');
+      expect(items[0]).toHaveTextContent('Nuevo');
+      expect(items[1]).toHaveTextContent('Medio');
+      expect(items[2]).toHaveTextContent('Antiguo');
+    });
+  });
+
+  it('should apply sort to filtered result set without clearing search input (AC5)', async () => {
+    server.use(
+      http.get(API_URL, () =>
+        HttpResponse.json([
+          buildCliente({ id: '1', nombre: 'Zeta Empresa', nit: '111-1', createdAt: '2026-01-01T00:00:00Z' }),
+          buildCliente({ id: '2', nombre: 'Alpha Empresa', nit: '222-2', createdAt: '2026-01-02T00:00:00Z' }),
+          buildCliente({ id: '3', nombre: 'Otro Corp', nit: '333-3', createdAt: '2026-01-03T00:00:00Z' }),
+        ]),
+      ),
+    );
+
+    renderWithQuery(createElement(ClienteListPanel));
+    await waitFor(() => expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(3));
+
+    // Apply search filter (only "Empresa" clients shown)
+    const searchInput = screen.getByTestId('clientes-search-input');
+    await userEvent.type(searchInput, 'Empresa');
+
+    await waitFor(() => expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(2));
+
+    // Now change sort to "Nombre A→Z"
+    const trigger = screen.getByLabelText('Ordenar por:');
+    await userEvent.click(trigger);
+    await userEvent.click(screen.getByText('Nombre A→Z'));
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId('cliente-list-item');
+      // Only 2 filtered items remain (search not cleared)
+      expect(items).toHaveLength(2);
+      expect(items[0]).toHaveTextContent('Alpha Empresa');
+      expect(items[1]).toHaveTextContent('Zeta Empresa');
+    });
+
+    // Search input is NOT cleared
+    expect(screen.getByTestId('clientes-search-input')).toHaveValue('Empresa');
+  });
+
+  it('should not trigger additional API calls when sort order changes (AC1-4)', async () => {
+    let callCount = 0;
+    server.use(
+      http.get(API_URL, () => {
+        callCount++;
+        return HttpResponse.json([
+          buildCliente({ id: '1', nombre: 'Beta', createdAt: '2026-01-01T00:00:00Z' }),
+          buildCliente({ id: '2', nombre: 'Alpha', createdAt: '2026-01-02T00:00:00Z' }),
+        ]);
+      }),
+    );
+
+    renderWithQuery(createElement(ClienteListPanel));
+    await waitFor(() => expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(2));
+
+    const initialCallCount = callCount;
+
+    // Change sort order twice
+    const trigger = screen.getByLabelText('Ordenar por:');
+    await userEvent.click(trigger);
+    await userEvent.click(screen.getByText('Nombre A→Z'));
+
+    await userEvent.click(trigger);
+    await userEvent.click(screen.getByText('Nombre Z→A'));
+
+    // No additional fetch calls should have occurred
+    expect(callCount).toBe(initialCallCount);
   });
 });
