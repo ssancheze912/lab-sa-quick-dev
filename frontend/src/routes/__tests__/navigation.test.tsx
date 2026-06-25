@@ -25,10 +25,11 @@ import { setupServer } from 'msw/node';
 
 import { routeTree } from '../../routeTree.gen';
 
-// ─── MSW server — stub API calls made by ClienteListPanel ────────────────────
+// ─── MSW server — stub API calls made by ClienteListPanel and ContactoListView ──
 
 const server = setupServer(
   http.get('http://localhost:5000/api/v1/clientes', () => HttpResponse.json([])),
+  http.get('http://localhost:5000/api/v1/contactos', () => HttpResponse.json([])),
 );
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
 afterAll(() => server.close());
@@ -176,13 +177,13 @@ describe('AC3 - Deep Linking to /clientes and /contactos (FR30)', () => {
     expect(await screen.findByTestId('clientes-list-panel')).toBeInTheDocument();
   });
 
-  it('should render ContactosPlaceholder when navigating directly to /contactos', async () => {
+  it('should render ContactoListView when navigating directly to /contactos', async () => {
     // GIVEN: User navigates directly to /contactos
     // WHEN: The page renders
     await renderAtPath('/contactos');
 
-    // THEN: ContactosPlaceholder is displayed (heading "Contactos")
-    expect(screen.getByTestId('contactos-placeholder')).toBeInTheDocument();
+    // THEN: ContactoListView container is displayed (Story 3.1 replaces placeholder)
+    expect(await screen.findByTestId('contactos-list-view')).toBeInTheDocument();
   });
 
   it('should display clientes-search-input in the Clientes view', async () => {
@@ -193,12 +194,12 @@ describe('AC3 - Deep Linking to /clientes and /contactos (FR30)', () => {
     expect(await screen.findByTestId('clientes-search-input')).toBeInTheDocument();
   });
 
-  it('should display Spanish heading "Contactos" in the Contactos view', async () => {
+  it('should display search input in the Contactos view', async () => {
     // GIVEN: User is on /contactos
     await renderAtPath('/contactos');
 
-    // THEN: Spanish heading is rendered
-    expect(screen.getByRole('heading', { name: /contactos/i })).toBeInTheDocument();
+    // THEN: ContactoListView search input is rendered (Story 3.1)
+    expect(await screen.findByTestId('contactos-search-input')).toBeInTheDocument();
   });
 });
 
