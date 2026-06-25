@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -53,7 +53,7 @@ So that the client information stays up to date.
   - [x] Update fake repository implementations in all existing unit test files (`GetClientesQueryHandlerTests.cs`, `GetClienteByIdQueryHandlerTests.cs`, `CreateClienteCommandHandlerTests.cs`) to implement the new `UpdateAsync` method.
 
 - [x] Task 3 — Frontend: Extend Zod schema with update variant (AC: #1, #3)
-  - [ ] Update `frontend/src/modules/crm/clientes/application/clienteSchema.ts`: add `updateClienteSchema` (same shape as `createClienteSchema`) and `UpdateClienteData` type:
+  - [x] Update `frontend/src/modules/crm/clientes/application/clienteSchema.ts`: add `updateClienteSchema` (same shape as `createClienteSchema`) and `UpdateClienteData` type:
     ```typescript
     export const updateClienteSchema = z.object({
       nombre: z.string().min(1, 'El nombre es requerido').max(200),
