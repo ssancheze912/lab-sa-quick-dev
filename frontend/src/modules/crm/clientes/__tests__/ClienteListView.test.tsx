@@ -31,6 +31,25 @@ import { buildCliente, buildClientes, resetClienteCounter } from './clienteFacto
 // ClienteListView does NOT exist yet — import will fail (RED phase)
 import { ClienteListView } from '../presentation/ClienteListView';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Suppress console.error for expected React query errors in test environment
+// Must be declared at module scope BEFORE describe blocks so it applies to all tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+const originalConsoleError = console.error;
+vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+  const msg = typeof args[0] === 'string' ? args[0] : '';
+  // Suppress React act() warnings and TanStack Query network errors in tests
+  if (
+    msg.includes('Warning: An update to') ||
+    msg.includes('Error: connect ECONNREFUSED') ||
+    msg.includes('[MSW]')
+  ) {
+    return;
+  }
+  originalConsoleError(...args);
+});
+
 const API_BASE = 'http://localhost:5000';
 const CLIENTES_URL = `${API_BASE}/api/v1/clientes`;
 
@@ -306,12 +325,14 @@ describe('ClienteListView — performance (NFR1)', () => {
     fireEvent.change(searchInput, { target: { value: 'Acme' } });
     const elapsed = performance.now() - start;
 
-    // Wait for React state update to settle
+    // Wait for React state update to settle — DOM must reflect the filtered result
     await waitFor(() => {
-      // The filter must have completed (list updated or empty shown)
+      // After filtering "Acme" across 500 generated records, the list should be shorter
+      // than 500 (buildClientes generates names from EMPRESAS[], "Acme S.A." is index 0)
       const items = screen.queryAllByTestId('cliente-list-item');
       const emptyState = screen.queryByTestId('empty-state');
-      expect(items.length >= 0 || emptyState !== null).toBe(true);
+      // The render must have updated: either <500 items visible or EmptyState shown
+      expect(items.length < 500 || emptyState !== null).toBe(true);
     });
 
     // THEN: Filter execution completed in ≤150ms (NFR1)
@@ -407,20 +428,3 @@ describe('ClienteListView — list panel structure', () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Suppress console.error for expected React query errors in RED phase tests
-// ─────────────────────────────────────────────────────────────────────────────
-
-const originalConsoleError = console.error;
-vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
-  const msg = typeof args[0] === 'string' ? args[0] : '';
-  // Suppress React act() warnings and TanStack Query network errors in tests
-  if (
-    msg.includes('Warning: An update to') ||
-    msg.includes('Error: connect ECONNREFUSED') ||
-    msg.includes('[MSW]')
-  ) {
-    return;
-  }
-  originalConsoleError(...args);
-});
