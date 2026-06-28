@@ -1,6 +1,6 @@
 # Story 2.3: Create Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -25,7 +25,7 @@ so that the client is available in the system immediately for the whole team.
 - [x] Task 1 — Backend: `POST /api/v1/clientes` endpoint with FluentValidation (AC: #1, #2, #3, #4)
   - [x] Create `backend/src/SiesaAgents.Application/Clientes/DTOs/CreateClienteRequest.cs` — record with `string Nombre, string Nit, string Telefono, string Ciudad`
   - [x] Create `backend/src/SiesaAgents.Application/Clientes/Validators/CreateClienteRequestValidator.cs` — FluentValidation: `RuleFor(x => x.Nombre).NotEmpty().MaximumLength(255)`, same for Nit (MaxLength 50), Telefono (MaxLength 50), Ciudad (MaxLength 100)
-  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommand.cs` — record with `CreateClienteRequest Request`
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommand.cs` — record with flat fields `string Nombre, string Nit, string Telefono, string Ciudad` (not wrapping CreateClienteRequest — flat is the correct pattern per Dev Notes)
   - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommandHandler.cs` — validates request via `CreateClienteRequestValidator`, calls `ClienteEntity.Create(...)`, persists via `IClienteRepository.AddAsync`, returns `ClienteDto`
   - [x] Add `Task AddAsync(ClienteEntity entity, CancellationToken ct)` to `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` — already existed; verified
   - [x] Add `AddAsync` implementation to `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — already existed; verified
@@ -495,7 +495,7 @@ claude-sonnet-4-6
 - POST endpoint was partially implemented (no FluentValidation, no 409 handling); replaced with full CQRS pattern.
 - Added FluentValidation package reference to test project (v12.1.1 — TestHelper included in same package).
 - Installed sonner v2.0.7 for toast notifications; added @testing-library/user-event v14.6.1 for test utilities.
-- Toaster component mounted in ClienteForm for test isolation (sonner requires Toaster in render tree); also mounted in main.tsx for production.
+- Toaster component was initially mounted in ClienteForm for test isolation; REMOVED by code review (duplicate with main.tsx Toaster). Tests use QueryClientProvider wrapper which is sufficient — Toaster in main.tsx handles production.
 - Added exclude pattern for test files in tsconfig.app.json to prevent noUnusedLocals errors from ATDD test files.
 - UniqueConstraintViolation detection via reflection on SqlState property (avoids direct Npgsql reference in API layer).
 - E2E test deferred (requires Playwright and running infrastructure).
@@ -525,3 +525,24 @@ claude-sonnet-4-6
 - `/home/user/lab-sa-quick-dev/frontend/src/test-setup.ts`
 - `/home/user/lab-sa-quick-dev/frontend/tsconfig.app.json`
 - `/home/user/lab-sa-quick-dev/frontend/vite.config.ts`
+
+## Senior Developer Review (AI)
+
+**Date**: 2026-06-28
+**Reviewer**: SiesaTeam (AI Agent — Adversarial Senior Developer)
+**Verdict**: PASS CON OBSERVACIONES
+
+### Issues Found: 2 High, 1 Medium (Testcontainers docs), 1 Medium (WCAG), 2 Low
+
+### Auto-Fixed (3 issues)
+- [x] **[HIGH-1] Duplicate Toaster removed from `ClienteForm.tsx`** — `<Toaster />` and its import removed; `main.tsx` already provides the global singleton. Production would have rendered two toasters causing duplicate notifications.
+- [x] **[HIGH-2] Whitespace bypass fixed in `clienteSchema.ts`** — Added `.trim()` to all four field validators. `"   ".trim().length === 0` now correctly fails `min(1)`, consistent with backend `NotEmpty()` and `ClienteEntity.Create()` whitespace rejection.
+- [x] **[MED-3] `aria-describedby` added to all form inputs in `ClienteForm.tsx`** — Each input now has `aria-describedby` pointing to its error span ID. Error spans have matching `id` attributes. WCAG 2.1 AA compliance for programmatic error association.
+
+### Pending Observations (Manual Attention)
+- **[MED-1] API Tests Claim Testcontainers But Use Real PostgreSQL** — `CreateClienteApiTests.cs` header says "WebApplicationFactory + Testcontainers" but the `.csproj` has no Testcontainers dependency and tests connect directly to `localhost:siesa_agents_db`. Tests pass only in environments with running PostgreSQL. Consider adding Testcontainers to CI or updating the documentation. Not blocking for local dev but misleading.
+- **[LOW-2] Custom modal overlay instead of shadcn/ui Dialog** — `clientes.tsx` and `clientes.$clienteId.tsx` implement a custom `role="dialog"` div. Company standard prefers shadcn via MCP before custom implementations. Functionally correct and accessible, but tech debt.
+- **[LOW-3] DELETE endpoint returns 204 for non-existent IDs (pre-existing issue)** — Out of this story's scope but present in modified file. Not blocking.
+
+### Change Log Entry
+- 2026-06-28: Code review completed (sa-code-review). 3 issues auto-fixed: duplicate Toaster removed, Zod whitespace validation hardened, aria-describedby added. Status: done.
