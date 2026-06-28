@@ -9,15 +9,15 @@ public class ExceptionHandlingMiddlewareTests
     [Fact]
     public async Task InvokeAsync_WhenExceptionThrown_Returns500WithProblemDetails()
     {
-        // Arrange
+        // GIVEN: Middleware wraps a delegate that throws
         var middleware = new ExceptionHandlingMiddleware((_) => throw new Exception("Test error"));
         var context = new DefaultHttpContext();
         context.Response.Body = new MemoryStream();
 
-        // Act
+        // WHEN: The middleware executes
         await middleware.InvokeAsync(context);
 
-        // Assert
+        // THEN: HTTP 500 is returned with application/problem+json content type
         Assert.Equal(500, context.Response.StatusCode);
         Assert.Contains("application/problem+json", context.Response.ContentType);
     }
@@ -25,7 +25,7 @@ public class ExceptionHandlingMiddlewareTests
     [Fact]
     public async Task InvokeAsync_WhenNoException_PassesThroughToNextMiddleware()
     {
-        // Arrange
+        // GIVEN: Middleware wraps a delegate that succeeds
         var nextCalled = false;
         var middleware = new ExceptionHandlingMiddleware((ctx) =>
         {
@@ -35,10 +35,10 @@ public class ExceptionHandlingMiddlewareTests
         var context = new DefaultHttpContext();
         context.Response.Body = new MemoryStream();
 
-        // Act
+        // WHEN: The middleware executes without exception
         await middleware.InvokeAsync(context);
 
-        // Assert
+        // THEN: The next delegate was invoked (pass-through)
         Assert.True(nextCalled);
     }
 }

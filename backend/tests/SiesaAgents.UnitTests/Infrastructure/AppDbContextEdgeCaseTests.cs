@@ -383,8 +383,8 @@ public class StatusCodePagesRfc7807Tests : IClassFixture<WebApplicationFactory<P
     [Fact]
     public async Task ExceptionMiddleware_WhenConcurrentErrorRequests_AllReturn500ProblemJson()
     {
-        // GIVEN: Factory with throwing endpoint
-        var throwingFactory = new ThrowingEndpointApplicationFactory();
+        // GIVEN: Factory with throwing endpoint (disposed after test)
+        await using var throwingFactory = new ThrowingEndpointApplicationFactory();
         var client1 = throwingFactory.CreateClient();
         var client2 = throwingFactory.CreateClient();
         var client3 = throwingFactory.CreateClient();
