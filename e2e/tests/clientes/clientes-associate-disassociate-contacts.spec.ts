@@ -255,7 +255,9 @@ test.describe('Story 4.2 — Associate & Disassociate Contacts from Client (E2E)
       }
     });
 
-    // After disassociation, the refetch returns empty list for this client
+    // After disassociation, the refetch returns empty list for this client.
+    // NOTE: disassociated flag is set inside the PUT handler to ensure the GET
+    // refetch that fires immediately after mutation settlement sees the updated flag.
     let disassociated = false;
     await page.route(`**/api/v1/contactos?clienteId=${cliente.id}`, (route) => {
       if (disassociated) {
@@ -296,10 +298,11 @@ test.describe('Story 4.2 — Associate & Disassociate Contacts from Client (E2E)
     // AND: User clicks the disassociate button for the contact
     await page.getByTestId(`disassociate-contact-button-${contacto.id}`).click();
 
-    // AND: User confirms the disassociation in the confirmation dialog
-    await page.getByRole('button', { name: /confirmar|desasociar|aceptar/i }).click();
-
+    // AND: User confirms the disassociation in the confirmation dialog.
+    // Set disassociated=true BEFORE clicking so the GET refetch triggered by
+    // query invalidation sees the updated flag immediately.
     disassociated = true;
+    await page.getByTestId('btn-confirmar-desasociar').click();
 
     // THEN: The contact is removed from the ContactManager list immediately
     await expect(

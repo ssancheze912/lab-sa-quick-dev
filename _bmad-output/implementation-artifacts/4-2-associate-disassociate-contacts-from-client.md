@@ -379,12 +379,15 @@ claude-sonnet-4-6
 
 - TC-E4-4-2-CMP-2 failing: TQ v5 uses `notifyManager.setScheduler(setTimeout)` by default — state updates deferred. Fixed by calling `notifyManager.setScheduler((fn) => fn())` and `notifyManager.setNotifyFunction((fn) => fn())` in `frontend/src/test-setup.ts`.
 - TC-E4-4-2-CMP-5 failing: Per-contact "Desasociar" button aria-label contained the contact name "Desasociar" which matched the test regex `/confirmar|desasociar|aceptar/i`. Fixed by changing button text from "Desasociar" to "Quitar" and removing aria-label.
+- Correction intento 1/3 — API tests (TC-E4-4-2-API-1/2/4/5, idempotent) returning 404: backend binary was stale (not rebuilt after source changes). Fixed by killing old process, rebuilding with `dotnet build SiesaAgents.slnx --configuration Release`, restarting server.
+- Correction intento 1/3 — TC-E4-4-2-E2E-3 strict mode violation: `getByRole('button', { name: /confirmar|desasociar|aceptar/i })` matched 2 elements. Fixed by (a) adding `data-testid="btn-confirmar-desasociar"` to the confirmation button in ContactManager.tsx, (b) updating test to use `getByTestId('btn-confirmar-desasociar')`, and (c) moving `disassociated = true` BEFORE the click (not after) so the GET refetch triggered by query invalidation sees the updated flag immediately.
 
 ### Completion Notes List
 
 - Backend build: 0 errors, 0 warnings.
 - Backend story 4.2 tests: 8 passed (TC-E4-4-2-UNIT-BE-1/2/3, TC-E4-4-2-DOMAIN-1/2, TC-E4-4-2-API-1/2/3).
 - Frontend component tests: 9/9 passed (TC-E4-4-2-CMP-1 through CMP-6).
+- Playwright tests: 11/11 passed (6 API + 5 E2E) after corrections.
 - Pre-existing failures not caused by this story: TC-E4-4-1-CMP-2, DeleteCliente edge (cache eviction P2), ContactoListView heading test — all confirmed pre-existing.
 - `notifyManager` synchronous scheduler fix in `test-setup.ts` also fixed 2 pre-existing test failures (DeleteCliente P2, ContactoListView heading).
 
@@ -409,6 +412,9 @@ claude-sonnet-4-6
 **Frontend — Modified:**
 - `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` (added `assignCliente`)
 - `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts` (implemented `assignCliente`)
-- `frontend/src/modules/crm/shared/components/ContactManager.tsx` (extended with action props)
+- `frontend/src/modules/crm/shared/components/ContactManager.tsx` (extended with action props; added `data-testid="btn-confirmar-desasociar"` on confirm button)
 - `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx` (wired mutation hooks)
 - `frontend/src/test-setup.ts` (added TQ v5 synchronous scheduler for tests)
+
+**E2E Tests — Modified:**
+- `e2e/tests/clientes/clientes-associate-disassociate-contacts.spec.ts` (TC-E4-4-2-E2E-3: selector changed to `getByTestId('btn-confirmar-desasociar')`; `disassociated=true` moved before click)
