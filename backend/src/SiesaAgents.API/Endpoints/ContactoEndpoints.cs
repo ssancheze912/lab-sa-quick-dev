@@ -92,16 +92,19 @@ public static class ContactoEndpoints
             }
         });
 
-        group.MapDelete("/{id:guid}", async (Guid id, IContactoRepository repo, CancellationToken ct) =>
+        group.MapDelete("/{id:guid}", async (
+            Guid id,
+            DeleteContactoCommandHandler handler,
+            CancellationToken ct) =>
         {
-            var contacto = await repo.GetByIdAsync(id, ct);
-            if (contacto is null)
+            var found = await handler.HandleAsync(new DeleteContactoCommand(id), ct);
+
+            if (!found)
                 return Results.Problem(
                     detail: "El contacto solicitado no fue encontrado.",
                     statusCode: 404,
                     title: "Contacto no encontrado");
-            await repo.DeleteAsync(contacto, ct);
-            await repo.SaveChangesAsync(ct);
+
             return Results.NoContent();
         });
 

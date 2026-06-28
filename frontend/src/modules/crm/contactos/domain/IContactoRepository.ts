@@ -6,4 +6,5 @@ export interface IContactoRepository {
   getById(id: string): Promise<Contacto>;
   create(data: ContactoFormData): Promise<Contacto>;
   update(id: string, data: ContactoFormData): Promise<Contacto>;
+  delete(id: string): Promise<void>;
 }
