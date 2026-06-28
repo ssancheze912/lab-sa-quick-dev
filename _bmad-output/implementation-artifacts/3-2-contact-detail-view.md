@@ -1,6 +1,6 @@
 # Story 3.2: Contact Detail View
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -396,6 +396,8 @@ claude-sonnet-4-6
 - `frontend/src/modules/crm/contactos/application/useContacto.ts`
 - `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
 - `backend/tests/SiesaAgents.UnitTests/Contactos/GetContactoByIdApiTests.cs`
+- `e2e/tests/contactos/contactos-detail-view.spec.ts` — E2E Playwright tests for Story 3.2 (TC-E3-3-2-E2E-1, TC-E3-3-2-E2E-2)
+- `e2e/tests/api/contactos-detail.api.spec.ts` — E2E API-layer tests for Story 3.2
 
 **Modified:**
 - `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` — added `getById`
