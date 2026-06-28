@@ -87,10 +87,22 @@ public static class ClienteEndpoints
             }
         });
 
-        group.MapDelete("/{id:guid}", async (Guid id, IClienteRepository repo, CancellationToken ct) =>
+        group.MapDelete("/{id:guid}", async (
+            Guid id,
+            DeleteClienteCommandHandler handler,
+            CancellationToken ct) =>
         {
-            await repo.DeleteAsync(id, ct);
-            await repo.SaveChangesAsync(ct);
+            var result = await handler.Handle(new DeleteClienteCommand(id), ct);
+
+            if (!result.Found)
+                return Results.Problem(
+                    detail: "El cliente solicitado no fue encontrado.",
+                    statusCode: 404,
+                    title: "Cliente no encontrado");
+
+            if (result.HadContacts)
+                return Results.Ok(new { hadContacts = true });
+
             return Results.NoContent();
         });
 

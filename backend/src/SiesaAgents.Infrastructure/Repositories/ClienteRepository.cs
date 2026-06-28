@@ -38,6 +38,19 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
             dbContext.Clientes.Remove(cliente);
     }
 
+    public Task DeleteAsync(ClienteEntity entity, CancellationToken cancellationToken = default)
+    {
+        dbContext.Clientes.Remove(entity);
+        return dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public Task<int> CountContactosByClienteIdAsync(Guid clienteId, CancellationToken cancellationToken = default)
+    {
+        // Epic 3 dependency: Contactos table does not yet exist.
+        // Returns 0 always until Epic 3 is implemented.
+        return Task.FromResult(0);
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await dbContext.SaveChangesAsync(cancellationToken);
