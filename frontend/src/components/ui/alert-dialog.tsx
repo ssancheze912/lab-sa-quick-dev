@@ -43,6 +43,7 @@ export function AlertDialogContent({ children }: AlertDialogChildProps) {
       className="fixed inset-0 z-50 flex items-center justify-center"
       role="alertdialog"
       aria-modal="true"
+      aria-labelledby="alert-dialog-title"
     >
       <div className="fixed inset-0 bg-black/50" />
       <div className="relative z-50 w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
@@ -61,7 +62,7 @@ export function AlertDialogFooter({ children }: AlertDialogChildProps) {
 }
 
 export function AlertDialogTitle({ children }: AlertDialogChildProps) {
-  return <h2 className="text-lg font-semibold text-slate-900">{children}</h2>;
+  return <h2 id="alert-dialog-title" className="text-lg font-semibold text-slate-900">{children}</h2>;
 }
 
 export function AlertDialogDescription({ children }: AlertDialogChildProps) {

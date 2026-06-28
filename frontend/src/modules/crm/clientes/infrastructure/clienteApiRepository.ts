@@ -29,7 +29,11 @@ class ClienteApiRepository implements IClienteRepository {
     // 204 No Content → no contacts associated
     if (response.status === 204) return { hadContacts: false };
     // 200 OK → { hadContacts: true } — client had associated contacts
-    return response.data as { hadContacts: boolean };
+    const data = response.data;
+    const hadContacts = data !== null && typeof data === 'object' && typeof (data as Record<string, unknown>).hadContacts === 'boolean'
+      ? (data as { hadContacts: boolean }).hadContacts
+      : true;
+    return { hadContacts };
   }
 }
 
