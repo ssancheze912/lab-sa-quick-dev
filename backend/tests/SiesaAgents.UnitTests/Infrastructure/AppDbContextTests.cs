@@ -164,15 +164,15 @@ public class AppDbContextTests : IClassFixture<WebApplicationFactory<Program>>
     // ─────────────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// AC5 (P1) — Scope boundary: no domain tables exist after initial migration
-    /// GIVEN the initial migration is applied
+    /// AC5 (P1) — Updated in Story 2.1: clientes table now exists (Epic 2 migration applied).
+    /// GIVEN all migrations are applied (InitialCreate + AddClienteEntity)
     /// WHEN the database schema is inspected
-    /// THEN no domain tables (clientes, contactos) are present — only __ef_migrations_history
+    /// THEN clientes table exists (added by Story 2.1) and contactos table does NOT exist (Epic 3 pending)
     /// </summary>
     [Fact]
-    public async Task AppDbContext_WhenInitialMigrationApplied_NoDomainTablesExist()
+    public async Task AppDbContext_WhenMigrationsApplied_ClientesTableExistsContactosDoesNot()
     {
-        // GIVEN: AppDbContext is configured and initial migration applied
+        // GIVEN: AppDbContext is configured and all migrations applied
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await dbContext.Database.MigrateAsync();
@@ -198,11 +198,12 @@ public class AppDbContextTests : IClassFixture<WebApplicationFactory<Program>>
 
         await connection.CloseAsync();
 
-        // THEN: Domain tables must NOT exist (they belong to Epics 2 and 3)
-        Assert.False(tableNames.Contains("clientes"),
-            "'clientes' table must NOT exist after Story 1.3 migration — domain entities are deferred to Epic 2.");
+        // THEN: clientes table exists (Story 2.1 AddClienteEntity migration)
+        Assert.True(tableNames.Contains("clientes"),
+            "'clientes' table must exist after Story 2.1 AddClienteEntity migration.");
+        // AND: contactos table does NOT exist yet (Epic 3 pending)
         Assert.False(tableNames.Contains("contactos"),
-            "'contactos' table must NOT exist after Story 1.3 migration — domain entities are deferred to Epic 3.");
+            "'contactos' table must NOT exist — domain entities are deferred to Epic 3.");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -1,21 +1,21 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
 
 namespace SiesaAgents.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    // DbSet<> properties will be added in Epics 2 and 3
-    // Example for future stories:
-    // public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Apply entity configurations from assembly (used in future stories)
-        // modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        // Apply entity configurations BEFORE snake_case naming convention
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-        // MANDATORY: Applied via UseSnakeCaseNamingConvention() on DbContextOptionsBuilder in DI registration
-        // This satisfies AC3 — all column names follow snake_case convention
+        // NOTE: UseSnakeCaseNamingConvention() is configured on DbContextOptionsBuilder in DI (Program.cs)
+        // This ensures snake_case naming is applied as the LAST convention
     }
 }
