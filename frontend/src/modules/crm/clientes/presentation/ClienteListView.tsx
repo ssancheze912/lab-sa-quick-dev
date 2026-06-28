@@ -28,7 +28,7 @@ export function ClienteListView({ onClienteSelect, selectedClienteId }: ClienteL
   }, [sortedClientes, searchQuery]);
 
   return (
-    <div className="w-[280px] flex flex-col h-full border-r border-slate-200 bg-white shrink-0">
+    <div data-testid="clientes-list-panel" className="w-[280px] flex flex-col h-full border-r border-slate-200 bg-white shrink-0">
       <div className="px-4 py-3 border-b border-slate-200">
         <h2 className="text-sm font-semibold text-slate-900 mb-2">Clientes</h2>
         <input
