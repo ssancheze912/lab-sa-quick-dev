@@ -23,6 +23,14 @@ class ClienteApiRepository implements IClienteRepository {
     const response = await apiClient.put<Cliente>(`/api/v1/clientes/${id}`, data);
     return response.data;
   }
+
+  async delete(id: string): Promise<{ hadContacts: boolean }> {
+    const response = await apiClient.delete(`/api/v1/clientes/${id}`);
+    // 204 No Content → no contacts associated
+    if (response.status === 204) return { hadContacts: false };
+    // 200 OK → { hadContacts: true } — client had associated contacts
+    return response.data as { hadContacts: boolean };
+  }
 }
 
 export const clienteApiRepository = new ClienteApiRepository();

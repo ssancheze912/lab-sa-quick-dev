@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ClienteListView } from '../../modules/crm/clientes/presentation/ClienteListView';
 import { ClienteDetailView } from '../../modules/crm/clientes/presentation/ClienteDetailView';
 import { ClienteForm } from '../../modules/crm/clientes/presentation/ClienteForm';
@@ -11,6 +11,7 @@ export const Route = createFileRoute('/_app/clientes/$clienteId')({
 function ClienteDetailPage() {
   const { clienteId } = Route.useParams();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="flex h-full">
@@ -27,7 +28,10 @@ function ClienteDetailPage() {
         </div>
         <ClienteListView activeClienteId={clienteId} />
       </div>
-      <ClienteDetailView clienteId={clienteId} />
+      <ClienteDetailView
+        clienteId={clienteId}
+        onClienteDeleted={() => navigate({ to: '/clientes' })}
+      />
       {isFormOpen && (
         <div
           role="dialog"

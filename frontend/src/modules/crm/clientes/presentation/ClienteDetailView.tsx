@@ -2,19 +2,34 @@ import { useState } from 'react';
 import axios from 'axios';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { toast } from 'sonner';
 import { useCliente } from '../application/useCliente';
+import { useDeleteCliente } from '../application/useDeleteCliente';
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel';
 import { NotFoundPanel } from '../../../../shared/components/NotFoundPanel';
 import { ClienteForm } from './ClienteForm';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../../../components/ui/alert-dialog';
 import type { ClienteFormData } from '../application/clienteSchema';
 
 interface ClienteDetailViewProps {
   clienteId: string | undefined;
+  onClienteDeleted?: () => void;
 }
 
-export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
+export function ClienteDetailView({ clienteId, onClienteDeleted }: ClienteDetailViewProps) {
   const { data, isLoading, isError, error, refetch } = useCliente(clienteId);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const deleteMutation = useDeleteCliente();
 
   const isNotFound =
     isError && axios.isAxiosError(error) && error.response?.status === 404;
@@ -73,17 +88,45 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
     ciudad: data.ciudad,
   };
 
+  const handleConfirmDelete = () => {
+    deleteMutation.mutate(data.id, {
+      onSuccess: (result) => {
+        if (result?.hadContacts) {
+          toast.success('Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado.');
+        } else {
+          toast.success('Cliente eliminado correctamente');
+        }
+        setIsDeleteDialogOpen(false);
+        onClienteDeleted?.();
+      },
+      onError: () => {
+        toast.error('No se pudo eliminar el cliente. Intenta de nuevo.');
+        setIsDeleteDialogOpen(false);
+      },
+    });
+  };
+
   return (
     <div data-testid="cliente-detail-panel" className="flex-1 p-6 overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-slate-900">{data.nombre}</h2>
-        <button
-          onClick={() => setIsEditFormOpen(true)}
-          data-testid="btn-editar"
-          className="px-3 py-1.5 text-sm font-medium text-white bg-[#0e79fd] rounded-md hover:bg-[#154ca9] transition-colors"
-        >
-          Editar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsEditFormOpen(true)}
+            data-testid="btn-editar"
+            className="px-3 py-1.5 text-sm font-medium text-white bg-[#0e79fd] rounded-md hover:bg-[#154ca9] transition-colors"
+          >
+            Editar
+          </button>
+          <button
+            onClick={() => setIsDeleteDialogOpen(true)}
+            data-testid="btn-eliminar"
+            aria-label="Eliminar cliente"
+            className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+          >
+            Eliminar
+          </button>
+        </div>
       </div>
       <dl className="space-y-4">
         <div>
@@ -99,6 +142,27 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
           <dd className="mt-1 text-sm text-slate-900">{data.ciudad}</dd>
         </div>
       </dl>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="btn-cancel-delete">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="btn-confirm-delete"
+              disabled={deleteMutation.isPending}
+              onClick={handleConfirmDelete}
+            >
+              {deleteMutation.isPending ? 'Eliminando...' : 'Confirmar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {isEditFormOpen && (
         <div
