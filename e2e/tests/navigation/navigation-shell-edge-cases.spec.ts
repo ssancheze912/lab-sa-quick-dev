@@ -342,17 +342,31 @@ test.describe('AC4 Edge Cases — Not-found view boundary conditions', () => {
     await expect(page.locator('[data-testid="navigation-rail"]')).toBeVisible();
   });
 
-  test('[P2] not-found view should display Spanish text "Página no encontrada" for various unknown routes', async ({ page }) => {
+  test('[P2] not-found view should display "Página no encontrada" for route /ruta-uno', async ({ page }) => {
     // GIVEN: Not-found handling is generic and language must be Spanish
-    const unknownRoutes = ['/ruta-uno', '/ruta-dos', '/ruta/con/segments'];
+    // WHEN: Unknown route /ruta-uno is visited
+    await page.goto('/ruta-uno');
 
-    for (const route of unknownRoutes) {
-      // WHEN: Each unknown route is visited
-      await page.goto(route);
+    // THEN: Spanish not-found text is shown
+    await expect(page.locator('[data-testid="not-found-view"]')).toContainText('Página no encontrada');
+  });
 
-      // THEN: Spanish not-found text is shown
-      await expect(page.locator('[data-testid="not-found-view"]')).toContainText('Página no encontrada');
-    }
+  test('[P2] not-found view should display "Página no encontrada" for route /ruta-dos', async ({ page }) => {
+    // GIVEN: Not-found handling is generic and language must be Spanish
+    // WHEN: Unknown route /ruta-dos is visited
+    await page.goto('/ruta-dos');
+
+    // THEN: Spanish not-found text is shown
+    await expect(page.locator('[data-testid="not-found-view"]')).toContainText('Página no encontrada');
+  });
+
+  test('[P2] not-found view should display "Página no encontrada" for route /ruta/con/segments', async ({ page }) => {
+    // GIVEN: Not-found handling is generic and language must be Spanish
+    // WHEN: Unknown route /ruta/con/segments is visited
+    await page.goto('/ruta/con/segments');
+
+    // THEN: Spanish not-found text is shown
+    await expect(page.locator('[data-testid="not-found-view"]')).toContainText('Página no encontrada');
   });
 
   test('[P2] not-found view text should not be empty', async ({ page }) => {
