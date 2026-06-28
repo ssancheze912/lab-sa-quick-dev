@@ -12,7 +12,7 @@ function ContactosPage() {
 
   return (
     <div className="flex h-full">
-      <div className="w-72 shrink-0 border-r border-slate-200 overflow-y-auto">
+      <div className="w-72 shrink-0 border-r border-slate-200 overflow-y-auto overflow-x-hidden">
         <div className="flex items-center justify-between p-4 border-b border-slate-200">
           <h1 className="text-base font-bold text-slate-900">Contactos</h1>
           <button

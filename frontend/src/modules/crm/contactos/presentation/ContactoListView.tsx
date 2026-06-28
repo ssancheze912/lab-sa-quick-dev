@@ -27,7 +27,7 @@ export function ContactoListView() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4 p-4" aria-label="Cargando contactos...">
+      <div className="flex flex-col gap-4 p-4 w-full min-w-0" aria-label="Cargando contactos...">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i}>
             <Skeleton height={16} width="70%" />
@@ -49,7 +49,7 @@ export function ContactoListView() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-4 p-4 w-full min-w-0">
       <input
         type="text"
         placeholder="Buscar por nombre o email..."
