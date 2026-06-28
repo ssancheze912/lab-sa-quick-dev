@@ -7,7 +7,9 @@ using SiesaAgents.API.Middleware;
 using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Application.Clientes.Validators;
+using SiesaAgents.Application.Contactos.Queries;
 using SiesaAgents.Domain.Clientes.Interfaces;
+using SiesaAgents.Domain.Contactos.Interfaces;
 using SiesaAgents.Infrastructure.Data;
 using SiesaAgents.Infrastructure.Repositories;
 
@@ -28,6 +30,9 @@ builder.Services.AddScoped<CreateClienteRequestValidator>();
 builder.Services.AddScoped<UpdateClienteCommandHandler>();
 builder.Services.AddScoped<UpdateClienteRequestValidator>();
 builder.Services.AddScoped<DeleteClienteCommandHandler>();
+// Contactos DI
+builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
+builder.Services.AddScoped<GetContactosQueryHandler>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];
@@ -75,6 +80,7 @@ app.UseStatusCodePages(async statusCodeContext =>
 app.MapOpenApi();
 app.MapScalarApiReference();
 app.MapClienteEndpoints();
+app.MapContactoEndpoints();
 
 app.Run();
 
