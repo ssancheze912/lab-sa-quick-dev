@@ -1,14 +1,6 @@
 /**
  * ATDD component tests — Story 3.1: ContactoListView (RED phase)
- *
- * Tests fail until the following are implemented:
- *   - frontend/src/modules/crm/contactos/domain/Contacto.ts
- *   - frontend/src/modules/crm/contactos/application/useContactos.ts
- *   - frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts
- *   - frontend/src/modules/crm/contactos/presentation/ContactoListView.tsx
- *   - frontend/src/modules/crm/contactos/presentation/ContactoListItem.tsx
- *   - frontend/src/shared/components/EmptyState.tsx (from Story 2.1; verify exists)
- *   - frontend/src/shared/components/ErrorPanel.tsx (from Story 2.1; verify exists)
+ * Updated in Story 3.2: ContactoListItem now uses TanStack Router Link.
  *
  * Test IDs:
  *   TC-E3-3-1-CMP-1 (P0) — 1,000 records — search filter executes ≤150ms (NFR1 R-003)
@@ -26,10 +18,9 @@ import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
+import { createRouter, createRootRoute, createRoute, RouterProvider } from '@tanstack/react-router';
 
 import { buildContacto, buildContactoList, resetContactoCounter } from './contactoFactory';
-
-// ContactoListView does NOT exist yet — import will fail (RED phase)
 import { ContactoListView } from '../presentation/ContactoListView';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -66,7 +57,7 @@ afterEach(() => {
 afterAll(() => server.close());
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Test helper: render ContactoListView with isolated QueryClient
+// Test helper: render ContactoListView with isolated QueryClient + Router
 // ─────────────────────────────────────────────────────────────────────────────
 
 function renderContactoListView() {
@@ -79,11 +70,27 @@ function renderContactoListView() {
     },
   });
 
-  const result = render(
-    <QueryClientProvider client={queryClient}>
-      <ContactoListView />
-    </QueryClientProvider>
-  );
+  const rootRoute = createRootRoute();
+  const indexRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/',
+    component: () => (
+      <QueryClientProvider client={queryClient}>
+        <ContactoListView />
+      </QueryClientProvider>
+    ),
+  });
+  const contactosDetailRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/contactos/$contactoId',
+    component: () => null,
+  });
+
+  const router = createRouter({
+    routeTree: rootRoute.addChildren([indexRoute, contactosDetailRoute]),
+  });
+
+  const result = render(<RouterProvider router={router} />);
 
   return { ...result, queryClient };
 }
@@ -94,10 +101,8 @@ function renderContactoListView() {
 
 describe('ContactoListView — performance (NFR1 R-003)', () => {
   it('TC-E3-3-1-CMP-1: should filter 1,000 records in ≤150ms when user types in search field', async () => {
-    // GIVEN: 1,000 contactos loaded (NETWORK intercepted BEFORE render)
     const largeList = buildContactoList(1000);
 
-    // CRITICAL: Network intercepted BEFORE render
     server.use(
       http.get(CONTACTOS_URL, () => HttpResponse.json(largeList))
     );
@@ -110,20 +115,16 @@ describe('ContactoListView — performance (NFR1 R-003)', () => {
 
     const searchInput = screen.getByPlaceholderText(/buscar por nombre o email/i);
 
-    // WHEN: User types a search term (triggers useMemo filter over 1,000 records)
     const start = performance.now();
     fireEvent.change(searchInput, { target: { value: 'María' } });
     const elapsed = performance.now() - start;
 
-    // Wait for React state update to settle
     await waitFor(() => {
       const items = screen.queryAllByTestId('contacto-list-item');
       const emptyState = screen.queryByTestId('empty-state');
-      // The render must have updated: either fewer items or EmptyState shown
       expect(items.length < 1000 || emptyState !== null).toBe(true);
     });
 
-    // THEN: Filter execution completed in ≤150ms (NFR1)
     expect(elapsed).toBeLessThanOrEqual(150);
   });
 });
@@ -134,30 +135,25 @@ describe('ContactoListView — performance (NFR1 R-003)', () => {
 
 describe('ContactoListView — search filter by nombre', () => {
   it('TC-E3-3-1-CMP-2: should show only matching items when user types nombre in search field', async () => {
-    // GIVEN: NETWORK intercepted BEFORE render (network-first pattern)
     const contactos = [
       buildContacto({ nombre: 'Ana Gómez Única', email: 'ana.gomez@test.co' }),
       buildContacto({ nombre: 'Pedro Ramírez', email: 'pedro.ramirez@test.co' }),
       buildContacto({ nombre: 'Laura Sánchez', email: 'laura.sanchez@test.co' }),
     ];
 
-    // CRITICAL: Route intercept BEFORE render
     server.use(
       http.get(CONTACTOS_URL, () => HttpResponse.json(contactos))
     );
 
     renderContactoListView();
 
-    // Wait for list to load
     await waitFor(() => {
       expect(screen.getAllByTestId('contacto-list-item')).toHaveLength(3);
     });
 
-    // WHEN: User types nombre in the search field
     const searchInput = screen.getByPlaceholderText(/buscar por nombre o email/i);
     fireEvent.change(searchInput, { target: { value: 'Ana Gómez Única' } });
 
-    // THEN: Only "Ana Gómez Única" is visible
     await waitFor(() => {
       const items = screen.getAllByTestId('contacto-list-item');
       expect(items).toHaveLength(1);
@@ -169,7 +165,6 @@ describe('ContactoListView — search filter by nombre', () => {
   });
 
   it('should show all items when search field is cleared', async () => {
-    // GIVEN: Three contactos loaded, search has been applied
     const contactos = [
       buildContacto({ nombre: 'Ana Gómez', email: 'ana@test.co' }),
       buildContacto({ nombre: 'Pedro Ramírez', email: 'pedro@test.co' }),
@@ -192,10 +187,8 @@ describe('ContactoListView — search filter by nombre', () => {
       expect(screen.getAllByTestId('contacto-list-item')).toHaveLength(1);
     });
 
-    // WHEN: Search field is cleared
     fireEvent.change(searchInput, { target: { value: '' } });
 
-    // THEN: All contactos are shown again
     await waitFor(() => {
       expect(screen.getAllByTestId('contacto-list-item')).toHaveLength(2);
     });
@@ -208,7 +201,6 @@ describe('ContactoListView — search filter by nombre', () => {
 
 describe('ContactoListView — search filter by email', () => {
   it('TC-E3-3-1-CMP-3: should show only matching items when user types email fragment in search field', async () => {
-    // GIVEN: NETWORK intercepted BEFORE render
     const contactos = [
       buildContacto({ nombre: 'Carlos Torres', email: 'carlos.torres.unico@empresa.co' }),
       buildContacto({ nombre: 'Valentina Castro', email: 'valentina.castro@empresa.co' }),
@@ -221,16 +213,13 @@ describe('ContactoListView — search filter by email', () => {
 
     renderContactoListView();
 
-    // Wait for list to load
     await waitFor(() => {
       expect(screen.getAllByTestId('contacto-list-item')).toHaveLength(3);
     });
 
-    // WHEN: User types an email fragment that only matches one contacto
     const searchInput = screen.getByPlaceholderText(/buscar por nombre o email/i);
     fireEvent.change(searchInput, { target: { value: 'carlos.torres.unico' } });
 
-    // THEN: Only Carlos Torres is visible
     await waitFor(() => {
       const items = screen.getAllByTestId('contacto-list-item');
       expect(items).toHaveLength(1);
@@ -248,19 +237,16 @@ describe('ContactoListView — search filter by email', () => {
 
 describe('ContactoListView — empty state', () => {
   it('TC-E3-3-1-CMP-4: should show EmptyState component and no list items when data is empty', async () => {
-    // GIVEN: NETWORK intercepted BEFORE render, returning empty array
     server.use(
       http.get(CONTACTOS_URL, () => HttpResponse.json([]))
     );
 
     renderContactoListView();
 
-    // THEN: EmptyState is displayed
     await waitFor(() => {
       expect(screen.getByTestId('empty-state')).toBeInTheDocument();
     });
 
-    // AND: No contact list items are rendered
     expect(screen.queryAllByTestId('contacto-list-item')).toHaveLength(0);
   });
 });
@@ -271,35 +257,29 @@ describe('ContactoListView — empty state', () => {
 
 describe('ContactoListView — error state', () => {
   it('TC-E3-3-1-CMP-5: should show ErrorPanel with "Reintentar" button when fetch returns 500', async () => {
-    // GIVEN: NETWORK intercepted BEFORE render, returning 500 error
     server.use(
       http.get(CONTACTOS_URL, () => new HttpResponse(null, { status: 500 }))
     );
 
     renderContactoListView();
 
-    // THEN: ErrorPanel is displayed
     await waitFor(() => {
       expect(screen.getByTestId('error-panel')).toBeInTheDocument();
     });
 
-    // AND: "Reintentar" button is visible
     const retryButton = screen.getByRole('button', { name: /reintentar/i });
     expect(retryButton).toBeInTheDocument();
 
-    // AND: No contact list items are rendered
     expect(screen.queryAllByTestId('contacto-list-item')).toHaveLength(0);
   });
 
   it('should show ErrorPanel when network request fails completely', async () => {
-    // GIVEN: NETWORK intercepted BEFORE render, throwing network error
     server.use(
       http.get(CONTACTOS_URL, () => HttpResponse.error())
     );
 
     renderContactoListView();
 
-    // THEN: ErrorPanel is displayed
     await waitFor(() => {
       expect(screen.getByTestId('error-panel')).toBeInTheDocument();
     });
@@ -310,7 +290,6 @@ describe('ContactoListView — error state', () => {
   // ─────────────────────────────────────────────────────────────────────────
 
   it('TC-E3-3-1-CMP-6: should trigger a new GET request when "Reintentar" button is clicked', async () => {
-    // GIVEN: First request fails with 500
     let requestCount = 0;
 
     server.use(
@@ -319,30 +298,25 @@ describe('ContactoListView — error state', () => {
         if (requestCount === 1) {
           return new HttpResponse(null, { status: 500 });
         }
-        // Second request succeeds
         return HttpResponse.json([buildContacto({ nombre: 'María López', email: 'maria@test.co' })]);
       })
     );
 
     renderContactoListView();
 
-    // Wait for ErrorPanel to appear
     await waitFor(() => {
       expect(screen.getByTestId('error-panel')).toBeInTheDocument();
     });
 
     const initialRequestCount = requestCount;
 
-    // WHEN: User clicks "Reintentar"
     const retryButton = screen.getByRole('button', { name: /reintentar/i });
     fireEvent.click(retryButton);
 
-    // THEN: A new GET /api/v1/contactos request is triggered
     await waitFor(() => {
       expect(requestCount).toBeGreaterThan(initialRequestCount);
     });
 
-    // AND: The list is now populated (retry succeeded)
     await waitFor(() => {
       expect(screen.getByTestId('contacto-list-item')).toBeInTheDocument();
     });
@@ -355,7 +329,6 @@ describe('ContactoListView — error state', () => {
 
 describe('ContactoListView — list item structure', () => {
   it('should render each contact item with Nombre, Cargo, and Email visible', async () => {
-    // GIVEN: One contact with known Nombre, Cargo, and Email
     const contacto = buildContacto({
       nombre: 'María López',
       cargo: 'Gerente Comercial',
@@ -368,7 +341,6 @@ describe('ContactoListView — list item structure', () => {
 
     renderContactoListView();
 
-    // THEN: The item displays Nombre, Cargo, and Email
     await waitFor(() => {
       const item = screen.getByTestId('contacto-list-item');
       expect(item).toHaveTextContent('María López');
@@ -378,14 +350,12 @@ describe('ContactoListView — list item structure', () => {
   });
 
   it('should render the search input with Spanish placeholder text', async () => {
-    // GIVEN: Empty contactos list
     server.use(
       http.get(CONTACTOS_URL, () => HttpResponse.json([]))
     );
 
     renderContactoListView();
 
-    // THEN: Search input has Spanish placeholder
     await waitFor(() => {
       const input = screen.getByPlaceholderText(/buscar por nombre o email/i);
       expect(input).toBeInTheDocument();
@@ -393,14 +363,12 @@ describe('ContactoListView — list item structure', () => {
   });
 
   it('should render the section heading "Contactos" in Spanish', async () => {
-    // GIVEN: Any state
     server.use(
       http.get(CONTACTOS_URL, () => HttpResponse.json([]))
     );
 
     renderContactoListView();
 
-    // THEN: Heading "Contactos" is present
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /contactos/i })).toBeInTheDocument();
     });
