@@ -22,7 +22,7 @@ public class ContactoConfiguration : IEntityTypeConfiguration<ContactoEntity>
                .IsRequired(false)
                .OnDelete(DeleteBehavior.SetNull);
         builder.HasIndex(c => c.ClienteId).HasDatabaseName("ix_contactos_cliente_id");
-        builder.HasIndex(c => c.Email).HasDatabaseName("ix_contactos_email");
+        builder.HasIndex(c => c.Email).IsUnique().HasDatabaseName("uk_contactos_email");
         // ApplySnakeCaseNaming() is configured on DbContextOptionsBuilder in DI (Program.cs)
     }
 }

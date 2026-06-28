@@ -8,6 +8,7 @@ using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Application.Clientes.Validators;
 using SiesaAgents.Application.Contactos.Queries;
+using SiesaAgents.Application.Contactos.Validators;
 using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Domain.Contactos.Interfaces;
 using SiesaAgents.Infrastructure.Data;
@@ -33,6 +34,7 @@ builder.Services.AddScoped<DeleteClienteCommandHandler>();
 // Contactos DI
 builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
 builder.Services.AddScoped<GetContactosQueryHandler>();
+builder.Services.AddScoped<CreateContactoRequestValidator>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];
