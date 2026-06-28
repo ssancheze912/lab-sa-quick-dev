@@ -11,9 +11,11 @@ import type { Cliente } from '../domain/Cliente';
 interface ClienteListViewProps {
   onClienteSelect?: (cliente: Cliente) => void;
   selectedClienteId?: string;
+  activeClienteId?: string;
 }
 
-export function ClienteListView({ onClienteSelect, selectedClienteId }: ClienteListViewProps) {
+export function ClienteListView({ onClienteSelect, selectedClienteId, activeClienteId }: ClienteListViewProps) {
+  const resolvedActiveId = activeClienteId ?? selectedClienteId;
   const { data = [], isLoading, isError, refetch } = useClientes();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -76,7 +78,7 @@ export function ClienteListView({ onClienteSelect, selectedClienteId }: ClienteL
                 <ClienteListItem
                   key={cliente.id}
                   cliente={cliente}
-                  isActive={cliente.id === selectedClienteId}
+                  isActive={cliente.id === resolvedActiveId}
                   onClick={onClienteSelect}
                 />
               ))
