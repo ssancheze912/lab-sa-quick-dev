@@ -71,7 +71,7 @@ function RootLayout() {
         )}
 
         {/* Main content area */}
-        <main className="flex-1 overflow-auto p-4 pb-20 lg:pb-4">
+        <main className="flex-1 overflow-auto pb-20 sm:p-4 lg:pb-4">
           <Outlet />
         </main>
       </div>
