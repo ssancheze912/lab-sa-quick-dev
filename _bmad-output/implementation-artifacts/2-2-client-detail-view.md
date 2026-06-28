@@ -358,11 +358,12 @@ claude-sonnet-4-6
 
 ### File List
 
-- backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs (created)
-- backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs (created)
-- backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs (modified — added GET /{id:guid})
-- backend/src/SiesaAgents.API/Program.cs (modified — registered GetClienteByIdQueryHandler)
-- backend/tests/SiesaAgents.UnitTests/Clientes/GetClienteByIdApiTests.cs (created)
+- backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs (created — includes IGetClienteByIdQueryHandler interface)
+- backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs (created — implements IGetClienteByIdQueryHandler)
+- backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs (modified — added GET /{id:guid}, uses IGetClienteByIdQueryHandler)
+- backend/src/SiesaAgents.API/Program.cs (modified — registered IGetClienteByIdQueryHandler)
+- backend/tests/SiesaAgents.UnitTests/Clientes/GetClienteByIdApiTests.cs (created — uses InMemory DB isolation)
+- backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj (modified — added Microsoft.EntityFrameworkCore.InMemory)
 - frontend/src/modules/crm/clientes/domain/IClienteRepository.ts (modified — added getById)
 - frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts (modified — added getById)
 - frontend/src/modules/crm/clientes/application/useCliente.ts (created)
