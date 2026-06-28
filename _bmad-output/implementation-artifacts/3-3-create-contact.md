@@ -1,6 +1,6 @@
 # Story 3.3: Create Contact
 
-Status: ready
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,24 +22,24 @@ so that the contact is available in the system immediately for the whole team.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: Verify `POST /api/v1/contactos` endpoint is complete (AC: #2, #3, #4)
-  - [ ] Verify `POST /` endpoint exists in `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` — confirmed present from Story 3.1; uses `CreateContactoRequestValidator` (FluentValidation), calls `ContactoEntity.Create()`, persists via `IContactoRepository.AddAsync` + `SaveChangesAsync`, returns `Results.Created(...)` (201) on success, `Results.ValidationProblem(...)` (400) on invalid input, `Results.Problem(statusCode: 409, ...)` on unique email conflict
-  - [ ] Verify `CreateContactoRequest` record exists in `backend/src/SiesaAgents.Application/Contactos/DTOs/CreateContactoRequest.cs` — confirmed present from Story 3.1
-  - [ ] Verify `CreateContactoRequestValidator` exists in `backend/src/SiesaAgents.Application/Contactos/Validators/CreateContactoRequestValidator.cs` — confirmed present from Story 3.1; validates NotEmpty + MaximumLength for all 4 fields; Email validated with `.EmailAddress()`
-  - [ ] Verify `IContactoRepository.AddAsync` and `SaveChangesAsync` are declared and implemented — confirmed present from Story 3.1
-  - [ ] No new backend files needed; endpoint is already implemented in Story 3.1
+- [x] Task 1 — Backend: Verify `POST /api/v1/contactos` endpoint is complete (AC: #2, #3, #4)
+  - [x] Verify `POST /` endpoint exists in `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` — confirmed present from Story 3.1; uses `CreateContactoRequestValidator` (FluentValidation), calls `ContactoEntity.Create()`, persists via `IContactoRepository.AddAsync` + `SaveChangesAsync`, returns `Results.Created(...)` (201) on success, `Results.ValidationProblem(...)` (400) on invalid input, `Results.Problem(statusCode: 409, ...)` on unique email conflict
+  - [x] Verify `CreateContactoRequest` record exists in `backend/src/SiesaAgents.Application/Contactos/DTOs/CreateContactoRequest.cs` — confirmed present from Story 3.1
+  - [x] Verify `CreateContactoRequestValidator` exists in `backend/src/SiesaAgents.Application/Contactos/Validators/CreateContactoRequestValidator.cs` — confirmed present from Story 3.1; validates NotEmpty + MaximumLength for all 4 fields; Email validated with `.EmailAddress()`
+  - [x] Verify `IContactoRepository.AddAsync` and `SaveChangesAsync` are declared and implemented — confirmed present from Story 3.1
+  - [x] No new backend files needed; endpoint is already implemented in Story 3.1
 
-- [ ] Task 2 — Frontend: Application layer — `useCreateContacto` mutation hook (AC: #2, #4)
-  - [ ] Create `frontend/src/modules/crm/contactos/application/useCreateContacto.ts` — TanStack Query `useMutation`:
+- [x] Task 2 — Frontend: Application layer — `useCreateContacto` mutation hook (AC: #2, #4)
+  - [x] Create `frontend/src/modules/crm/contactos/application/useCreateContacto.ts` — TanStack Query `useMutation`:
     - `mutationFn: (data: ContactoFormData) => contactoApiRepository.create(data)`
     - `onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['contactos'] }); toast.success('Contacto creado correctamente'); }` — FR27 immediate list update via cache invalidation (R-002 mitigation)
     - Export `useCreateContacto` as named export
-  - [ ] Extend `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` — add `create(data: ContactoFormData): Promise<Contacto>`
-  - [ ] Extend `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts` — add `create(data: ContactoFormData)` method: `POST /api/v1/contactos` via `apiClient`; returns `response.data`
-  - [ ] Verify `frontend/src/modules/crm/contactos/application/contactoSchema.ts` exists (created in Story 3.1); exports `contactoSchema` (Zod) and `ContactoFormData` type — do NOT recreate
+  - [x] Extend `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` — add `create(data: ContactoFormData): Promise<Contacto>`
+  - [x] Extend `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts` — add `create(data: ContactoFormData)` method: `POST /api/v1/contactos` via `apiClient`; returns `response.data`
+  - [x] Verify `frontend/src/modules/crm/contactos/application/contactoSchema.ts` exists (created in Story 3.1); exports `contactoSchema` (Zod) and `ContactoFormData` type — do NOT recreate
 
-- [ ] Task 3 — Frontend: Presentation layer — `ContactoForm` component (AC: #1, #2, #3, #4)
-  - [ ] Create `frontend/src/modules/crm/contactos/presentation/ContactoForm.tsx`:
+- [x] Task 3 — Frontend: Presentation layer — `ContactoForm` component (AC: #1, #2, #3, #4)
+  - [x] Create `frontend/src/modules/crm/contactos/presentation/ContactoForm.tsx`:
     - Uses `react-hook-form` with `zodResolver(contactoSchema)` for client-side validation
     - Fields: `Nombre` (label `"Nombre"`, `data-testid="input-nombre"`), `Cargo` (label `"Cargo"`, `data-testid="input-cargo"`), `Teléfono` (label `"Teléfono"`, `data-testid="input-telefono"`), `Email` (label `"Email"`, `data-testid="input-email"`) — all required
     - Each input has `aria-describedby` pointing to its error span `id` for WCAG 2.1 AA compliance
@@ -54,20 +54,20 @@ so that the contact is available in the system immediately for the whole team.
     - All user-facing text in Spanish; no `any` TypeScript types
     - `data-testid="contacto-form"` on the `<form>` element
 
-- [ ] Task 4 — Frontend: "Nuevo contacto" button wiring (AC: #1)
-  - [ ] Update `frontend/src/routes/_app/contactos.tsx` — add "Nuevo contacto" button (`data-testid="btn-nuevo-contacto"`) in the page header; clicking it sets local `useState<boolean>` `isFormOpen = true`
-  - [ ] Render `<ContactoForm onClose={() => setIsFormOpen(false)} />` conditionally when `isFormOpen === true` — displayed as accessible modal overlay (`role="dialog"`) using shadcn/ui Dialog component (install via MCP if not present; mirrors `ClienteForm` wiring from Story 2.3)
-  - [ ] Update `frontend/src/routes/_app/contactos.$contactoId.tsx` — add the same "Nuevo contacto" button so it is available when a contact detail is open
+- [x] Task 4 — Frontend: "Nuevo contacto" button wiring (AC: #1)
+  - [x] Update `frontend/src/routes/_app/contactos.tsx` — add "Nuevo contacto" button (`data-testid="btn-nuevo-contacto"`) in the page header; clicking it sets local `useState<boolean>` `isFormOpen = true`
+  - [x] Render `<ContactoForm onClose={() => setIsFormOpen(false)} />` conditionally when `isFormOpen === true` — displayed as accessible modal overlay (`role="dialog"`) using a custom div overlay (consistent with `ClienteForm` wiring from Story 2.3)
+  - [x] Update `frontend/src/routes/_app/contactos.$contactoId.tsx` — add the same "Nuevo contacto" button so it is available when a contact detail is open
 
-- [ ] Task 5 — Tests (AC: #1, #2, #3, #4) — aligned with test-design-epic-3.md
-  - [ ] **Backend API — P0**: `POST /api/v1/contactos` with valid payload returns 201 + `ContactoDto` JSON (xUnit, WebApplicationFactory)
-  - [ ] **Backend API — P0**: re-`GET /api/v1/contactos` after POST confirms new contact in list (xUnit, WebApplicationFactory)
-  - [ ] **Backend API — P1**: `POST /api/v1/contactos` with empty body → 400 + Problem Details with `errors` object (xUnit)
-  - [ ] **Backend API — P1**: `POST /api/v1/contactos` same email twice → second returns 409 + Problem Details "El email ya está registrado" (documents R-001 behavior) (xUnit)
-  - [ ] **Backend unit — P2**: `CreateContactoRequestValidator` rejects null Nombre, null Cargo, null Telefono, null Email individually (4 xUnit unit tests)
-  - [ ] **Frontend component — P0**: submit empty `ContactoForm` → 4 inline error messages appear; MSW handler asserts `POST /api/v1/contactos` never called (Vitest + RTL + MSW)
-  - [ ] **Frontend component — P2**: submit `ContactoForm` with 409 response → inline error "El email ya está registrado" on Email field (Vitest + RTL + MSW)
-  - [ ] **Frontend component — P2**: submit valid `ContactoForm` → success toast "Contacto creado correctamente" appears (Vitest + RTL + MSW)
+- [x] Task 5 — Tests (AC: #1, #2, #3, #4) — aligned with test-design-epic-3.md
+  - [x] **Backend API — P0**: `POST /api/v1/contactos` with valid payload returns 201 + `ContactoDto` JSON (xUnit, WebApplicationFactory) — PASS
+  - [x] **Backend API — P0**: re-`GET /api/v1/contactos` after POST confirms new contact in list (xUnit, WebApplicationFactory) — PASS
+  - [x] **Backend API — P1**: `POST /api/v1/contactos` with empty body → 400 + Problem Details with `errors` object (xUnit) — PASS
+  - [x] **Backend API — P1**: `POST /api/v1/contactos` same email twice → second returns 409 + Problem Details "El email ya está registrado" (documents R-001 behavior) (xUnit) — PASS
+  - [x] **Backend unit — P2**: `CreateContactoRequestValidator` rejects null Nombre, null Cargo, null Telefono, null Email individually (4 xUnit unit tests) — PASS
+  - [x] **Frontend component — P0**: submit empty `ContactoForm` → 4 inline error messages appear; MSW handler asserts `POST /api/v1/contactos` never called (Vitest + RTL + MSW) — PASS
+  - [x] **Frontend component — P2**: submit `ContactoForm` with 409 response → inline error "El email ya está registrado" on Email field (Vitest + RTL + MSW) — PASS
+  - [x] **Frontend component — P2**: submit valid `ContactoForm` → success toast "Contacto creado correctamente" appears (Vitest + RTL + MSW) — PASS
   - [ ] **E2E — P1**: fill form (Nombre, Cargo, Teléfono, Email), submit, assert success toast, assert contact Nombre appears in list without page reload (Playwright, TC-E3-3-3-E2E-1, R-002) — deferred (requires running app + seeded data)
 
 ## Dev Notes
@@ -490,6 +490,29 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- Backend POST endpoint already implemented in Story 3.1 — verified and working.
+- `uk_contactos_email` unique constraint exists via `MakeContactoEmailUnique` migration — 409 handling confirmed working.
+- Dialog overlay uses custom `role="dialog"` div (consistent with Story 2.3 ClienteForm pattern — no shadcn Dialog component used in this project).
+- All 17 frontend component tests pass (ContactoForm.test.tsx — pre-existing ATDD tests from test-design phase).
+- All 8 new backend tests pass: 4 API integration tests + 4 FluentValidation unit tests.
+- E2E test (TC-E3-3-3-E2E-1) deferred — requires running app + seeded data.
+
 ### File List
+
+**Created:**
+- `frontend/src/modules/crm/contactos/application/useCreateContacto.ts`
+- `frontend/src/modules/crm/contactos/presentation/ContactoForm.tsx`
+- `backend/tests/SiesaAgents.UnitTests/Contactos/CreateContactoApiTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Contactos/CreateContactoValidatorTests.cs`
+
+**Modified:**
+- `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` (added `create` method)
+- `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts` (added `create` method)
+- `frontend/src/routes/_app/contactos.tsx` (added "Nuevo contacto" button + dialog overlay)
+- `frontend/src/routes/_app/contactos.$contactoId.tsx` (added "Nuevo contacto" button + dialog overlay)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (status: pending → review)
+- `_bmad-output/implementation-artifacts/3-3-create-contact.md` (this file)
