@@ -112,6 +112,21 @@ public static class ContactoEndpoints
             return Results.NoContent();
         });
 
+        group.MapPut("/{id:guid}/cliente", async (
+            Guid id,
+            AssignContactoClienteRequest request,
+            AssignContactoClienteCommandHandler handler,
+            CancellationToken ct) =>
+        {
+            var dto = await handler.HandleAsync(new AssignContactoClienteCommand(id, request.ClienteId), ct);
+            if (dto is null)
+                return Results.Problem(
+                    detail: "El contacto solicitado no fue encontrado.",
+                    statusCode: 404,
+                    title: "Contacto no encontrado");
+            return Results.Ok(dto);
+        });
+
         return app;
     }
 

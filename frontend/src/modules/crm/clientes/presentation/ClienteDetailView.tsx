@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { useCliente } from '../application/useCliente';
 import { useDeleteCliente } from '../application/useDeleteCliente';
 import { useContactosByCliente } from '../../contactos/application/useContactosByCliente';
+import { useAssignContactoCliente } from '../../contactos/application/useAssignContactoCliente';
+import { useCreateContactoForCliente } from '../../contactos/application/useCreateContactoForCliente';
 import { ContactManager } from '../../shared/components/ContactManager';
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel';
 import { NotFoundPanel } from '../../../../shared/components/NotFoundPanel';
@@ -38,6 +40,8 @@ export function ClienteDetailView({ clienteId, onClienteDeleted }: ClienteDetail
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const deleteMutation = useDeleteCliente();
+  const assignMutation = useAssignContactoCliente(clienteId);
+  const createMutation = useCreateContactoForCliente(clienteId);
 
   const isNotFound =
     isError && axios.isAxiosError(error) && error.response?.status === 404;
@@ -114,6 +118,28 @@ export function ClienteDetailView({ clienteId, onClienteDeleted }: ClienteDetail
     });
   };
 
+  const handleAddContact = async (contactoId: string) => {
+    if (!clienteId) return;
+    await assignMutation.mutateAsync({ contactoId, newClienteId: clienteId });
+    toast.success('Contacto asociado correctamente');
+  };
+
+  const handleRemoveContact = async (contactoId: string) => {
+    await assignMutation.mutateAsync({ contactoId, newClienteId: null });
+    toast.success('Contacto desasociado correctamente');
+  };
+
+  const handleCreateContact = async (formData: {
+    nombre: string;
+    cargo: string;
+    telefono: string;
+    email: string;
+  }) => {
+    if (!clienteId) return;
+    await createMutation.mutateAsync({ ...formData, clienteId });
+    toast.success('Contacto creado y asociado correctamente');
+  };
+
   return (
     <div data-testid="cliente-detail-panel" className="flex-1 p-6 overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
@@ -160,6 +186,10 @@ export function ClienteDetailView({ clienteId, onClienteDeleted }: ClienteDetail
           isLoading={isLoadingContactos}
           isError={isErrorContactos}
           onRetry={() => refetchContactos()}
+          onAddContact={clienteId ? handleAddContact : undefined}
+          onRemoveContact={clienteId ? handleRemoveContact : undefined}
+          onCreateContact={clienteId ? handleCreateContact : undefined}
+          clienteId={clienteId}
         />
       </div>
 

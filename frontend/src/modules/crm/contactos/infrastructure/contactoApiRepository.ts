@@ -21,7 +21,7 @@ class ContactoApiRepository implements IContactoRepository {
     return response.data;
   }
 
-  async create(data: ContactoFormData): Promise<Contacto> {
+  async create(data: ContactoFormData & { clienteId?: string | null }): Promise<Contacto> {
     const response = await apiClient.post<Contacto>('/api/v1/contactos', data);
     return response.data;
   }
@@ -33,6 +33,13 @@ class ContactoApiRepository implements IContactoRepository {
 
   async delete(id: string): Promise<void> {
     await apiClient.delete(`/api/v1/contactos/${id}`);
+  }
+
+  async assignCliente(contactoId: string, clienteId: string | null): Promise<Contacto> {
+    const response = await apiClient.put<Contacto>(`/api/v1/contactos/${contactoId}/cliente`, {
+      clienteId,
+    });
+    return response.data;
   }
 }
 

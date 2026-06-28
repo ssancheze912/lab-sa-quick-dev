@@ -39,6 +39,7 @@ builder.Services.AddScoped<CreateContactoRequestValidator>();
 builder.Services.AddScoped<UpdateContactoCommandHandler>();
 builder.Services.AddScoped<UpdateContactoRequestValidator>();
 builder.Services.AddScoped<DeleteContactoCommandHandler>();
+builder.Services.AddScoped<AssignContactoClienteCommandHandler>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];
