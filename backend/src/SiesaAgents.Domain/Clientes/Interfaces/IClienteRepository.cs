@@ -8,7 +8,6 @@ public interface IClienteRepository
     Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddAsync(ClienteEntity cliente, CancellationToken cancellationToken = default);
     Task UpdateAsync(ClienteEntity entity, CancellationToken cancellationToken = default);
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task DeleteAsync(ClienteEntity entity, CancellationToken cancellationToken = default);
     Task<int> CountContactosByClienteIdAsync(Guid clienteId, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);

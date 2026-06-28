@@ -1,6 +1,6 @@
 # Story 2.5: Delete Client
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -478,7 +478,7 @@ None.
 - `CountContactosByClienteIdAsync` stubbed to return 0 (Epic 3 tech debt — Contactos table does not exist yet). Handler gracefully catches any exception.
 - Existing `DeleteAsync(Guid id)` on `IClienteRepository` was already present; added overload `DeleteAsync(ClienteEntity entity, CancellationToken ct)` as required by the handler pattern. Both coexist without conflict.
 - `AlertDialog` component created at `frontend/src/components/ui/alert-dialog.tsx` with shadcn-compatible API (no `@radix-ui` dependency — not installed in this project).
-- All 15 frontend ATDD tests pass. All 4 new backend DELETE tests pass. No regressions in existing 183 frontend tests or 153 previously-passing backend tests.
+- All 28 frontend tests pass (15 ATDD in DeleteCliente.test.tsx + 13 edge cases in DeleteCliente.edge.test.tsx). All 4 new backend DELETE tests pass. No regressions in existing 183 frontend tests or 153 previously-passing backend tests.
 - TypeScript strict mode: zero errors. No `any` types used.
 
 ### File List
@@ -489,6 +489,8 @@ None.
 - `backend/tests/SiesaAgents.UnitTests/Clientes/DeleteClienteApiTests.cs`
 - `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts`
 - `frontend/src/components/ui/alert-dialog.tsx`
+- `frontend/src/modules/crm/clientes/__tests__/DeleteCliente.test.tsx`
+- `frontend/src/modules/crm/clientes/__tests__/DeleteCliente.edge.test.tsx`
 
 **Modified:**
 - `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` — added `DeleteAsync(ClienteEntity, CancellationToken)` and `CountContactosByClienteIdAsync`

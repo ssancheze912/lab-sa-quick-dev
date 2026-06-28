@@ -31,13 +31,6 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        var cliente = await dbContext.Clientes.FindAsync([id], cancellationToken);
-        if (cliente is not null)
-            dbContext.Clientes.Remove(cliente);
-    }
-
     public Task DeleteAsync(ClienteEntity entity, CancellationToken cancellationToken = default)
     {
         dbContext.Clientes.Remove(entity);
