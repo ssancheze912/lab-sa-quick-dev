@@ -114,8 +114,8 @@ describe('ContactoDetailView — empty contactoId boundary (TC-E3-3-2-CMP-EC-1)'
 
     renderContactoDetailView('');
 
-    // Wait a tick to ensure no async request fires
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Assert no async request fires — use act to flush pending microtasks without a hard wait
+    await import('@testing-library/react').then(({ act }) => act(async () => {}));
 
     expect(fetchCalled).toBe(false);
   });
