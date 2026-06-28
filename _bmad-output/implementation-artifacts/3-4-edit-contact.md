@@ -512,12 +512,26 @@ None.
 - `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` — added `MapPut`
 - `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.API/Program.cs` — registered `UpdateContactoCommandHandler` and `UpdateContactoRequestValidator`
 
+**Created (backend tests):**
+- `/home/user/lab-sa-quick-dev/backend/tests/SiesaAgents.UnitTests/Contactos/UpdateContactoApiTests.cs` — API integration tests (TC-E3-3-4-API-1..4)
+- `/home/user/lab-sa-quick-dev/backend/tests/SiesaAgents.UnitTests/Contactos/UpdateContactoValidatorTests.cs` — unit tests (TC-E3-3-4-UNIT-1..4)
+- `/home/user/lab-sa-quick-dev/backend/tests/SiesaAgents.UnitTests/Contactos/UpdateContactoApiEdgeTests.cs` — API edge/boundary tests
+
 **Created (frontend):**
 - `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/application/useUpdateContacto.ts`
-- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/__tests__/UpdateContacto.test.tsx`
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/__tests__/ContactoFormEdit.test.tsx` — component tests (TC-E3-3-4-CMP-1..5)
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/__tests__/ContactoFormEditEdge.test.tsx` — edge case component tests
+
+**Created (e2e):**
+- `/home/user/lab-sa-quick-dev/e2e/tests/contactos/contactos-edit.spec.ts`
+- `/home/user/lab-sa-quick-dev/e2e/tests/contactos/contactos-edit-edge-cases.spec.ts`
 
 **Modified (frontend):**
 - `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` — added `update`
 - `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts` — added `update` method
 - `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/presentation/ContactoForm.tsx` — added edit mode support
 - `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx` — added "Editar" button + dialog
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/presentation/ContactoListView.tsx` — master-detail layout refactor
+- `/home/user/lab-sa-quick-dev/frontend/src/routes/_app/contactos.tsx` — master-detail with Outlet
+- `/home/user/lab-sa-quick-dev/frontend/src/routes/_app/contactos.$contactoId.tsx` — detail route
+- `/home/user/lab-sa-quick-dev/frontend/src/routes/__root.tsx` — navigation rail/bar responsive fix

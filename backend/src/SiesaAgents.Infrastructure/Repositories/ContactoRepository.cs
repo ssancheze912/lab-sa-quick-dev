@@ -36,9 +36,9 @@ public class ContactoRepository(AppDbContext dbContext) : IContactoRepository
         return Task.CompletedTask;
     }
 
-    public async Task UpdateAsync(ContactoEntity contacto, CancellationToken ct = default)
+    public Task UpdateAsync(ContactoEntity contacto, CancellationToken ct = default)
     {
         dbContext.Contactos.Update(contacto);
-        await dbContext.SaveChangesAsync(ct);
+        return Task.CompletedTask;
     }
 }

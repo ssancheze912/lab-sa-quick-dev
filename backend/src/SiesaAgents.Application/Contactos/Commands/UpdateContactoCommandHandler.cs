@@ -13,6 +13,7 @@ public class UpdateContactoCommandHandler(IContactoRepository repository)
 
         entity.Update(command.Nombre, command.Cargo, command.Telefono, command.Email);
         await repository.UpdateAsync(entity, ct);
+        await repository.SaveChangesAsync(ct);
 
         return new ContactoDto(
             entity.Id,

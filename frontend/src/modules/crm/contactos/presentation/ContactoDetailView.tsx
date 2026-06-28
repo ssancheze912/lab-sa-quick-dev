@@ -71,7 +71,7 @@ export function ContactoDetailView({ contactoId }: ContactoDetailViewProps) {
         </button>
       </div>
       {isEditFormOpen && (
-        <div role="dialog" aria-modal="true">
+        <div role="dialog" aria-modal="true" aria-label="Editar contacto">
           <ContactoForm
             contactoId={data!.id}
             defaultValues={{
