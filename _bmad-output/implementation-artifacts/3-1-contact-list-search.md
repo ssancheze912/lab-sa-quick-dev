@@ -1,6 +1,6 @@
 # Story 3.1: Contact List & Search
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -459,6 +459,15 @@ export const createContactoList = (count: number, overrides: Partial<Contacto> =
 - Company standards — Backend rules (DateTimeOffset, UUID, Minimal API): [Source: `.claude/agent-memory/sa-quick-dev/company-standards.md#Backend Critical Rules`]
 - Company standards — Frontend rules (TanStack Query, Zustand, Spanish text): [Source: `.claude/agent-memory/sa-quick-dev/company-standards.md#Frontend Key Rules`]
 - Company standards — Database conventions (snake_case, ix_/uk_ prefixes): [Source: `.claude/agent-memory/sa-quick-dev/company-standards.md#Database Conventions (PostgreSQL)`]
+
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][HIGH] Create `CreateContactoRequestValidator` (FluentValidation) in `SiesaAgents.Application/Contactos/Validators/` and inject into POST endpoint in `ContactoEndpoints.cs`, mirroring `ClienteEndpoints.cs` pattern. Handle `DbUpdateException` for duplicate email (409 conflict).
+- [ ] [AI-Review][HIGH] Add `.IsUnique()` to `builder.HasIndex(c => c.Email)` in `ContactoConfiguration.cs`, rename to `uk_contactos_email` per naming convention (`uk_` prefix for unique indexes), and generate a corrective EF Core migration.
+- [ ] [AI-Review][MED] Implement no-results EmptyState in `ContactoListView.tsx`: when `filteredContactos.length === 0` and `searchQuery` is non-empty, render `<EmptyState>` with "Sin resultados" message instead of an empty list.
+- [ ] [AI-Review][MED] Add `frontend/.tanstack/tmp/` to `.gitignore` and remove committed temp files with `git rm --cached frontend/.tanstack/tmp/591b62a6-502c47371a2954d448312df4b5e5823e frontend/.tanstack/tmp/d20fd4e7-502c47371a2954d448312df4b5e5823e`.
+- [ ] [AI-Review][MED] Add missing files to Story File List: `20260628091102_AddContactoEntity.Designer.cs`, `AppDbContextModelSnapshot.cs`, `e2e/tests/contactos/contactos-list-search.spec.ts`.
+- [ ] [AI-Review][LOW] Commit `frontend/src/modules/crm/contactos/__tests__/ContactoListView.edge.test.tsx` after MED fix above (no-results EmptyState) is implemented and passing.
 
 ## Dev Agent Record
 

@@ -50,6 +50,7 @@ public static class ContactoEndpoints
                     statusCode: 404,
                     title: "Contacto no encontrado");
             await repo.DeleteAsync(contacto, ct);
+            await repo.SaveChangesAsync(ct);
             return Results.NoContent();
         });
 

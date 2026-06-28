@@ -33,6 +33,6 @@ public class ContactoRepository(AppDbContext dbContext) : IContactoRepository
     public Task DeleteAsync(ContactoEntity contacto, CancellationToken ct = default)
     {
         dbContext.Contactos.Remove(contacto);
-        return dbContext.SaveChangesAsync(ct);
+        return Task.CompletedTask;
     }
 }

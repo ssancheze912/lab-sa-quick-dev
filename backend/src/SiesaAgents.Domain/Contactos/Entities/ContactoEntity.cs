@@ -30,6 +30,10 @@ public class ContactoEntity
 
     public void Update(string nombre, string cargo, string telefono, string email)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(nombre);
+        ArgumentException.ThrowIfNullOrWhiteSpace(cargo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(telefono);
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
         Nombre = nombre.Trim();
         Cargo = cargo.Trim();
         Telefono = telefono.Trim();
