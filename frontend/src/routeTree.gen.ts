@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppContactosRouteImport } from './routes/_app/contactos'
 import { Route as AppClientesRouteImport } from './routes/_app/clientes'
+import { Route as AppClientesIndexRouteImport } from './routes/_app/clientes.index'
 import { Route as AppContactosContactoIdRouteImport } from './routes/_app/contactos.$contactoId'
 import { Route as AppClientesClienteIdRouteImport } from './routes/_app/clientes.$clienteId'
 
@@ -35,6 +36,11 @@ const AppClientesRoute = AppClientesRouteImport.update({
   path: '/clientes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppClientesIndexRoute = AppClientesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppClientesRoute,
+} as any)
 const AppContactosContactoIdRoute = AppContactosContactoIdRouteImport.update({
   id: '/$contactoId',
   path: '/$contactoId',
@@ -52,13 +58,14 @@ export interface FileRoutesByFullPath {
   '/contactos': typeof AppContactosRouteWithChildren
   '/clientes/$clienteId': typeof AppClientesClienteIdRoute
   '/contactos/$contactoId': typeof AppContactosContactoIdRoute
+  '/clientes/': typeof AppClientesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/clientes': typeof AppClientesRouteWithChildren
   '/contactos': typeof AppContactosRouteWithChildren
   '/clientes/$clienteId': typeof AppClientesClienteIdRoute
   '/contactos/$contactoId': typeof AppContactosContactoIdRoute
+  '/clientes': typeof AppClientesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,6 +75,7 @@ export interface FileRoutesById {
   '/_app/contactos': typeof AppContactosRouteWithChildren
   '/_app/clientes/$clienteId': typeof AppClientesClienteIdRoute
   '/_app/contactos/$contactoId': typeof AppContactosContactoIdRoute
+  '/_app/clientes/': typeof AppClientesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -77,13 +85,14 @@ export interface FileRouteTypes {
     | '/contactos'
     | '/clientes/$clienteId'
     | '/contactos/$contactoId'
+    | '/clientes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/clientes'
     | '/contactos'
     | '/clientes/$clienteId'
     | '/contactos/$contactoId'
+    | '/clientes'
   id:
     | '__root__'
     | '/'
@@ -92,6 +101,7 @@ export interface FileRouteTypes {
     | '/_app/contactos'
     | '/_app/clientes/$clienteId'
     | '/_app/contactos/$contactoId'
+    | '/_app/clientes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -129,6 +139,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClientesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/clientes/': {
+      id: '/_app/clientes/'
+      path: '/'
+      fullPath: '/clientes/'
+      preLoaderRoute: typeof AppClientesIndexRouteImport
+      parentRoute: typeof AppClientesRoute
+    }
     '/_app/contactos/$contactoId': {
       id: '/_app/contactos/$contactoId'
       path: '/$contactoId'
@@ -148,10 +165,12 @@ declare module '@tanstack/react-router' {
 
 interface AppClientesRouteChildren {
   AppClientesClienteIdRoute: typeof AppClientesClienteIdRoute
+  AppClientesIndexRoute: typeof AppClientesIndexRoute
 }
 
 const AppClientesRouteChildren: AppClientesRouteChildren = {
   AppClientesClienteIdRoute: AppClientesClienteIdRoute,
+  AppClientesIndexRoute: AppClientesIndexRoute,
 }
 
 const AppClientesRouteWithChildren = AppClientesRoute._addFileChildren(
