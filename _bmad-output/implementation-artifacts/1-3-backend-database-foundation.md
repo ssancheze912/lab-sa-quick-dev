@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: review
+Status: done
 
 ## Story
 
@@ -251,24 +251,27 @@ None.
 
 1. `EFCore.NamingConventions` 10.0.1 provides `UseSnakeCaseNamingConvention()` on `DbContextOptionsBuilder`, NOT `ApplySnakeCaseNaming()` on `ModelBuilder`. The DI registration uses `.UseSnakeCaseNamingConvention()` which achieves the same snake_case mapping result. AC #3 is fully satisfied (columns are snake_case as verified by tests).
 2. `Microsoft.EntityFrameworkCore.Design` added with `PrivateAssets=all` so it's build-only and doesn't propagate to consumers.
-3. `dotnet ef` global tool installed at `/root/.dotnet/tools/dotnet-ef` v10.0.9.
-4. EF Core version conflict warnings in test build (10.0.4 from Npgsql vs 10.0.9 from Design/Tools) — resolved by pinning EF Core 10.0.9 in Infrastructure project. All tests pass.
+3. `dotnet ef` global tool at `/root/.dotnet/tools/dotnet-ef`.
+4. Npgsql pinned to `10.0.3` in test project to avoid version downgrade conflict.
 5. Added `public partial class Program { }` to Program.cs for `WebApplicationFactory<Program>` support in integration tests.
-6. Added `/api/v1/test-error` endpoint (non-production only) for middleware integration testing.
-7. All 6 tests pass: 3 middleware tests (unit + integration) + 3 AppDbContext integration tests.
+6. Test endpoint for middleware testing added via `IStartupFilter` + `ThrowingEndpointApplicationFactory` (no production code modified).
+7. `ExceptionHandlingMiddleware` updated to use anonymous object serialization to ensure `detail: null` is always included in RFC 7807 response (ProblemDetails JSON converter omits null properties by default).
+8. `__EFMigrationsHistory` table uses PascalCase name (EF standard) but columns are snake_case (`migration_id`, `product_version`) — test queries corrected to use exact table name.
+9. All 26 tests pass: 11 ExceptionHandlingMiddleware unit/edge-case tests + 7 integration tests + 5 AppDbContext DB integration tests + 2 prior unit tests + 1 placeholder.
 
 ### File List
 
 **Created:**
 - `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
-- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628050533_InitialCreate.cs`
-- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628050533_InitialCreate.Designer.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628051611_InitialCreate.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628051611_InitialCreate.Designer.cs`
 - `backend/src/SiesaAgents.Infrastructure/Data/Migrations/AppDbContextModelSnapshot.cs`
 - `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/ExceptionHandlingMiddlewareIntegrationTests.cs`
 
 **Modified:**
 - `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — added `Microsoft.EntityFrameworkCore.Design`
-- `backend/src/SiesaAgents.API/Program.cs` — added `AddDbContext<AppDbContext>` DI registration, `public partial class Program`, test error endpoint
-- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — added `EFCore.NamingConventions`, `Microsoft.EntityFrameworkCore.Tools`, `Microsoft.EntityFrameworkCore` (pinned), `Microsoft.EntityFrameworkCore.Relational` (pinned)
-- `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — added `Microsoft.AspNetCore.Mvc.Testing`, `Npgsql`
-- `backend/tests/SiesaAgents.UnitTests/Infrastructure/ExceptionHandlingMiddlewareTests.cs` — added TC-E1-P0-05 integration test via WebApplicationFactory
+- `backend/src/SiesaAgents.API/Program.cs` — added `AddDbContext<AppDbContext>` DI registration, `public partial class Program`
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — serializes `detail: null` explicitly (RFC 7807 compliance)
+- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` — added `EFCore.NamingConventions`, `Microsoft.EntityFrameworkCore.Tools`
+- `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — added `Npgsql 10.0.3`

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
 using SiesaAgents.Infrastructure.Data;
 using Xunit;
 
@@ -83,7 +82,7 @@ public class AppDbContextTests : IClassFixture<WebApplicationFactory<Program>>
         command.CommandText = @"
             SELECT column_name
             FROM information_schema.columns
-            WHERE table_name = '__ef_migrations_history'
+            WHERE table_name = '__EFMigrationsHistory'
             ORDER BY ordinal_position;
         ";
 
@@ -96,19 +95,19 @@ public class AppDbContextTests : IClassFixture<WebApplicationFactory<Program>>
         await connection.CloseAsync();
 
         // THEN: Columns must be snake_case (migration_id, product_version)
-        Assert.Contains("migration_id", columnNames,
+        Assert.True(columnNames.Contains("migration_id"),
             "Column must be 'migration_id' (snake_case), not 'MigrationId' (PascalCase). " +
-            "ApplySnakeCaseNaming() must be the LAST call in OnModelCreating.");
+            "UseSnakeCaseNamingConvention() must be applied in DI registration.");
 
-        Assert.Contains("product_version", columnNames,
+        Assert.True(columnNames.Contains("product_version"),
             "Column must be 'product_version' (snake_case), not 'ProductVersion' (PascalCase). " +
-            "ApplySnakeCaseNaming() must be the LAST call in OnModelCreating.");
+            "UseSnakeCaseNamingConvention() must be applied in DI registration.");
 
         // AND: PascalCase column names must NOT exist
-        Assert.DoesNotContain("MigrationId", columnNames,
-            "PascalCase 'MigrationId' column found — ApplySnakeCaseNaming() is not applied or not last.");
-        Assert.DoesNotContain("ProductVersion", columnNames,
-            "PascalCase 'ProductVersion' column found — ApplySnakeCaseNaming() is not applied or not last.");
+        Assert.False(columnNames.Contains("MigrationId"),
+            "PascalCase 'MigrationId' column found — UseSnakeCaseNamingConvention() is not applied.");
+        Assert.False(columnNames.Contains("ProductVersion"),
+            "PascalCase 'ProductVersion' column found — UseSnakeCaseNamingConvention() is not applied.");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -154,9 +153,9 @@ public class AppDbContextTests : IClassFixture<WebApplicationFactory<Program>>
 
         // THEN: Connection string contains the expected database and host
         Assert.NotNull(connectionString);
-        Assert.Contains("siesa_agents_db", connectionString,
+        Assert.True(connectionString!.Contains("siesa_agents_db"),
             "ConnectionString must point to siesa_agents_db per appsettings.Development.json");
-        Assert.Contains("localhost", connectionString,
+        Assert.True(connectionString.Contains("localhost"),
             "ConnectionString must use localhost as host");
     }
 
@@ -200,9 +199,9 @@ public class AppDbContextTests : IClassFixture<WebApplicationFactory<Program>>
         await connection.CloseAsync();
 
         // THEN: Domain tables must NOT exist (they belong to Epics 2 and 3)
-        Assert.DoesNotContain("clientes", tableNames,
+        Assert.False(tableNames.Contains("clientes"),
             "'clientes' table must NOT exist after Story 1.3 migration — domain entities are deferred to Epic 2.");
-        Assert.DoesNotContain("contactos", tableNames,
+        Assert.False(tableNames.Contains("contactos"),
             "'contactos' table must NOT exist after Story 1.3 migration — domain entities are deferred to Epic 3.");
     }
 
@@ -219,7 +218,7 @@ public class AppDbContextTests : IClassFixture<WebApplicationFactory<Program>>
         command.CommandText = @"
             SELECT COUNT(*)
             FROM information_schema.tables
-            WHERE table_name = '__ef_migrations_history';
+            WHERE table_name = '__EFMigrationsHistory';
         ";
 
         var result = await command.ExecuteScalarAsync();

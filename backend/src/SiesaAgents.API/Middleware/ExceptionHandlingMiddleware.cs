@@ -1,10 +1,15 @@
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
 
 namespace SiesaAgents.API.Middleware;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next)
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never
+    };
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -18,17 +23,16 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
                 context.Response.ContentType = "application/problem+json";
                 context.Response.StatusCode = 500;
 
-                var problem = new ProblemDetails
+                // RFC 7807 Problem Details — always include status, title, detail
+                // Detail is always null — never expose internal error messages (NFR6)
+                var problemDetails = new
                 {
-                    Status = 500,
-                    Title = "An unexpected error occurred.",
-                    Detail = null  // Never expose internal details
+                    status = 500,
+                    title = "An unexpected error occurred.",
+                    detail = (string?)null
                 };
 
-                await context.Response.WriteAsync(JsonSerializer.Serialize(problem, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                }));
+                await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, SerializerOptions));
             }
         }
     }
