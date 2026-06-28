@@ -462,8 +462,8 @@ export const createContactoList = (count: number, overrides: Partial<Contacto> =
 
 ## Review Follow-ups (AI)
 
-- [ ] [AI-Review][HIGH] Create `CreateContactoRequestValidator` (FluentValidation) in `SiesaAgents.Application/Contactos/Validators/` and inject into POST endpoint in `ContactoEndpoints.cs`, mirroring `ClienteEndpoints.cs` pattern. Handle `DbUpdateException` for duplicate email (409 conflict).
-- [ ] [AI-Review][HIGH] Add `.IsUnique()` to `builder.HasIndex(c => c.Email)` in `ContactoConfiguration.cs`, rename to `uk_contactos_email` per naming convention (`uk_` prefix for unique indexes), and generate a corrective EF Core migration.
+- [x] [AI-Review][HIGH] Create `CreateContactoRequestValidator` (FluentValidation) in `SiesaAgents.Application/Contactos/Validators/` and inject into POST endpoint in `ContactoEndpoints.cs`, mirroring `ClienteEndpoints.cs` pattern. Handle `DbUpdateException` for duplicate email (409 conflict).
+- [x] [AI-Review][HIGH] Add `.IsUnique()` to `builder.HasIndex(c => c.Email)` in `ContactoConfiguration.cs`, rename to `uk_contactos_email` per naming convention (`uk_` prefix for unique indexes), and generate a corrective EF Core migration.
 - [ ] [AI-Review][MED] Implement no-results EmptyState in `ContactoListView.tsx`: when `filteredContactos.length === 0` and `searchQuery` is non-empty, render `<EmptyState>` with "Sin resultados" message instead of an empty list.
 - [ ] [AI-Review][MED] Add `frontend/.tanstack/tmp/` to `.gitignore` and remove committed temp files with `git rm --cached frontend/.tanstack/tmp/591b62a6-502c47371a2954d448312df4b5e5823e frontend/.tanstack/tmp/d20fd4e7-502c47371a2954d448312df4b5e5823e`.
 - [ ] [AI-Review][MED] Add missing files to Story File List: `20260628091102_AddContactoEntity.Designer.cs`, `AppDbContextModelSnapshot.cs`, `e2e/tests/contactos/contactos-list-search.spec.ts`.
@@ -498,6 +498,10 @@ None.
 - /home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs
 - /home/user/lab-sa-quick-dev/backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs
 - /home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628091102_AddContactoEntity.cs
+- /home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/Contactos/DTOs/CreateContactoRequest.cs
+- /home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/Contactos/Validators/CreateContactoRequestValidator.cs
+- /home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628092907_MakeContactoEmailUnique.cs
+- /home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628092907_MakeContactoEmailUnique.Designer.cs
 
 **Backend — Modified:**
 - /home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs
