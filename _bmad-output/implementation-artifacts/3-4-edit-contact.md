@@ -22,27 +22,27 @@ so that the contact information stays current.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: `PUT /api/v1/contactos/:id` endpoint with FluentValidation (AC: #2, #3)
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/DTOs/UpdateContactoRequest.cs` — record with `string Nombre, string Cargo, string Telefono, string Email`
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/Validators/UpdateContactoRequestValidator.cs` — FluentValidation: `RuleFor(x => x.Nombre).NotEmpty().MaximumLength(255)`; same for `Cargo` (MaxLength 255), `Telefono` (MaxLength 50), `Email` (MaxLength 255 + `.EmailAddress()`); all fields required
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommand.cs` — record with `Guid Id, string Nombre, string Cargo, string Telefono, string Email`
-  - [ ] Create `backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommandHandler.cs` — calls `IContactoRepository.GetByIdAsync(command.Id, ct)`; if null → returns null (caller maps to 404); calls `entity.Update(...)` domain method; calls `IContactoRepository.UpdateAsync(entity, ct)`; returns updated `ContactoDto`
-  - [ ] Add `Update(string nombre, string cargo, string telefono, string email)` method to `ContactoEntity` in `backend/src/SiesaAgents.Domain/Contactos/Entities/ContactoEntity.cs` — updates fields and sets `UpdatedAt = DateTimeOffset.UtcNow` (NEVER `DateTime`)
-  - [ ] Add `Task UpdateAsync(ContactoEntity entity, CancellationToken ct)` to `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`
-  - [ ] Add `UpdateAsync` implementation to `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` — `_context.Contactos.Update(entity); await _context.SaveChangesAsync(ct);`
-  - [ ] Add `MapPut("/{id:guid}", ...)` to `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` — validates `UpdateContactoRequest` via `UpdateContactoRequestValidator`; on invalid → `Results.ValidationProblem(errors)` (400); on entity not found (null from handler) → `Results.Problem(detail: "El contacto solicitado no fue encontrado.", statusCode: 404, title: "Contacto no encontrado")`; on DB unique constraint violation (PostgreSQL error 23505 on `uk_contactos_email`) → `Results.Problem(detail: "El email ya está registrado", statusCode: 409, title: "Conflicto de datos")`; on success → `Results.Ok(dto)` (200)
-  - [ ] Register `UpdateContactoCommandHandler` and `UpdateContactoRequestValidator` in `backend/src/SiesaAgents.API/Program.cs` DI
+- [x] Task 1 — Backend: `PUT /api/v1/contactos/:id` endpoint with FluentValidation (AC: #2, #3)
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/DTOs/UpdateContactoRequest.cs` — record with `string Nombre, string Cargo, string Telefono, string Email`
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/Validators/UpdateContactoRequestValidator.cs` — FluentValidation: `RuleFor(x => x.Nombre).NotEmpty().MaximumLength(255)`; same for `Cargo` (MaxLength 255), `Telefono` (MaxLength 50), `Email` (MaxLength 255 + `.EmailAddress()`); all fields required
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommand.cs` — record with `Guid Id, string Nombre, string Cargo, string Telefono, string Email`
+  - [x] Create `backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommandHandler.cs` — calls `IContactoRepository.GetByIdAsync(command.Id, ct)`; if null → returns null (caller maps to 404); calls `entity.Update(...)` domain method; calls `IContactoRepository.UpdateAsync(entity, ct)`; returns updated `ContactoDto`
+  - [x] Add `Update(string nombre, string cargo, string telefono, string email)` method to `ContactoEntity` in `backend/src/SiesaAgents.Domain/Contactos/Entities/ContactoEntity.cs` — updates fields and sets `UpdatedAt = DateTimeOffset.UtcNow` (NEVER `DateTime`)
+  - [x] Add `Task UpdateAsync(ContactoEntity entity, CancellationToken ct)` to `backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs`
+  - [x] Add `UpdateAsync` implementation to `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` — `_context.Contactos.Update(entity); await _context.SaveChangesAsync(ct);`
+  - [x] Add `MapPut("/{id:guid}", ...)` to `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` — validates `UpdateContactoRequest` via `UpdateContactoRequestValidator`; on invalid → `Results.ValidationProblem(errors)` (400); on entity not found (null from handler) → `Results.Problem(detail: "El contacto solicitado no fue encontrado.", statusCode: 404, title: "Contacto no encontrado")`; on DB unique constraint violation (PostgreSQL error 23505 on `uk_contactos_email`) → `Results.Problem(detail: "El email ya está registrado", statusCode: 409, title: "Conflicto de datos")`; on success → `Results.Ok(dto)` (200)
+  - [x] Register `UpdateContactoCommandHandler` and `UpdateContactoRequestValidator` in `backend/src/SiesaAgents.API/Program.cs` DI
 
-- [ ] Task 2 — Frontend: Application layer — `useUpdateContacto` mutation hook (AC: #2, #4)
-  - [ ] Create `frontend/src/modules/crm/contactos/application/useUpdateContacto.ts` — TanStack Query `useMutation`:
+- [x] Task 2 — Frontend: Application layer — `useUpdateContacto` mutation hook (AC: #2, #4)
+  - [x] Create `frontend/src/modules/crm/contactos/application/useUpdateContacto.ts` — TanStack Query `useMutation`:
     - `mutationFn: ({ id, data }: { id: string; data: ContactoFormData }) => contactoApiRepository.update(id, data)`
     - `onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['contactos'] }); toast.success('Contacto actualizado correctamente'); }` — FR27 immediate list update via cache invalidation (R-002 mitigation)
     - Export `useUpdateContacto` as named export
-  - [ ] Extend `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` — add `update(id: string, data: ContactoFormData): Promise<Contacto>`
-  - [ ] Extend `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts` — add `update(id: string, data: ContactoFormData)` method: `PUT /api/v1/contactos/${id}` via `apiClient`; returns `response.data`
+  - [x] Extend `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` — add `update(id: string, data: ContactoFormData): Promise<Contacto>`
+  - [x] Extend `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts` — add `update(id: string, data: ContactoFormData)` method: `PUT /api/v1/contactos/${id}` via `apiClient`; returns `response.data`
 
-- [ ] Task 3 — Frontend: Presentation layer — extend `ContactoForm` for edit mode (AC: #1, #2, #3, #4)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoForm.tsx` to support edit mode:
+- [x] Task 3 — Frontend: Presentation layer — extend `ContactoForm` for edit mode (AC: #1, #2, #3, #4)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoForm.tsx` to support edit mode:
     - Add optional props: `contactoId?: string` (when provided, activates edit mode)
     - When `contactoId` and `defaultValues` are provided: use `useUpdateContacto` mutation and pre-fill all four fields via `useForm({ resolver: zodResolver(contactoSchema), defaultValues })`
     - When no `contactoId`: use `useCreateContacto` mutation (existing create behavior — do NOT break)
@@ -54,23 +54,23 @@ so that the contact information stays current.
     - All user-facing text in Spanish; no `any` TypeScript types
     - `data-testid="contacto-form"` on the `<form>` element
 
-- [ ] Task 4 — Frontend: "Editar" button wiring in `ContactoDetailView` (AC: #1)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`:
+- [x] Task 4 — Frontend: "Editar" button wiring in `ContactoDetailView` (AC: #1)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`:
     - Add `"Editar"` button (`data-testid="btn-editar"`) visible only in the data-loaded state (not during loading/error/not-found)
     - Clicking it sets local `useState<boolean>` `isEditFormOpen = true`
     - Render `<ContactoForm contactoId={contacto.id} defaultValues={{ nombre: contacto.nombre, cargo: contacto.cargo, telefono: contacto.telefono, email: contacto.email }} onClose={() => setIsEditFormOpen(false)} onSuccess={() => refetch()} />` conditionally when `isEditFormOpen === true` — displayed as accessible modal overlay (`role="dialog"`) consistent with Story 2.4 and Story 3.3 patterns
 
-- [ ] Task 5 — Tests (AC: #1, #2, #3, #4) — aligned with test-design-epic-3.md
-  - [ ] **Backend API — P1**: `PUT /api/v1/contactos/:id` with valid payload returns 200 + updated `ContactoDto` JSON (xUnit, WebApplicationFactory) — TC-E3-3-4-API-1
-  - [ ] **Backend API — P1**: `PUT /api/v1/contactos/:id` with `Nombre=null` returns 400 + Problem Details with `errors` object (xUnit) — TC-E3-3-4-API-2
-  - [ ] **Backend API — P1**: `PUT /api/v1/contactos/{unknown-uuid}` returns 404 + Problem Details (xUnit) — TC-E3-3-4-API-3
-  - [ ] **Backend API — P2**: `PUT /api/v1/contactos/:id` with Email already used by another contact returns 409 + Problem Details "El email ya está registrado" (xUnit) — TC-E3-3-4-API-4
-  - [ ] **Backend unit — P2**: `UpdateContactoRequestValidator` rejects null Nombre, null Cargo, null Telefono, null Email individually (4 xUnit unit tests) — TC-E3-3-4-UNIT-1 through UNIT-4
-  - [ ] **Frontend component — P1**: open edit form with fixture contacto, assert all four input values match fixture (Vitest + RTL + MSW) — tests AC #1, risk R-007
-  - [ ] **Frontend component — P1**: modify Nombre field, click Cancel, assert original Nombre still shown in detail view (Vitest + RTL + MSW) — tests AC #4, risk R-008
-  - [ ] **Frontend component — P1**: clear Nombre field, submit → inline error appears, no PUT called (MSW assert) (Vitest + RTL + MSW) — tests AC #3
-  - [ ] **Frontend component — P2**: submit valid edit form → success toast "Contacto actualizado correctamente" appears (Vitest + RTL + MSW) — tests AC #2, risk R-010
-  - [ ] **Frontend component — P2**: submit edit form with 409 response → inline error "El email ya está registrado" on Email field (Vitest + RTL + MSW)
+- [x] Task 5 — Tests (AC: #1, #2, #3, #4) — aligned with test-design-epic-3.md
+  - [x] **Backend API — P1**: `PUT /api/v1/contactos/:id` with valid payload returns 200 + updated `ContactoDto` JSON (xUnit, WebApplicationFactory) — TC-E3-3-4-API-1
+  - [x] **Backend API — P1**: `PUT /api/v1/contactos/:id` with `Nombre=null` returns 400 + Problem Details with `errors` object (xUnit) — TC-E3-3-4-API-2
+  - [x] **Backend API — P1**: `PUT /api/v1/contactos/{unknown-uuid}` returns 404 + Problem Details (xUnit) — TC-E3-3-4-API-3
+  - [x] **Backend API — P2**: `PUT /api/v1/contactos/:id` with Email already used by another contact returns 409 + Problem Details "El email ya está registrado" (xUnit) — TC-E3-3-4-API-4
+  - [x] **Backend unit — P2**: `UpdateContactoRequestValidator` rejects null Nombre, null Cargo, null Telefono, null Email individually (4 xUnit unit tests) — TC-E3-3-4-UNIT-1 through UNIT-4
+  - [x] **Frontend component — P1**: open edit form with fixture contacto, assert all four input values match fixture (Vitest + RTL + MSW) — tests AC #1, risk R-007
+  - [x] **Frontend component — P1**: modify Nombre field, click Cancel, assert original Nombre still shown in detail view (Vitest + RTL + MSW) — tests AC #4, risk R-008
+  - [x] **Frontend component — P1**: clear Nombre field, submit → inline error appears, no PUT called (MSW assert) (Vitest + RTL + MSW) — tests AC #3
+  - [x] **Frontend component — P2**: submit valid edit form → success toast "Contacto actualizado correctamente" appears (Vitest + RTL + MSW) — tests AC #2, risk R-010
+  - [x] **Frontend component — P2**: submit edit form with 409 response → inline error "El email ya está registrado" on Email field (Vitest + RTL + MSW)
   - [ ] **E2E — P1**: edit contact end-to-end → updated Nombre appears in list and detail view without page reload (Playwright, R-002) — deferred (requires running app + seeded data)
 
 ## Dev Notes
@@ -489,6 +489,35 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- `ContactoEntity.Update` method was already present from a prior partial implementation — confirmed and reused.
+- ATDD backend test files (`UpdateContactoApiTests.cs`, `UpdateContactoValidatorTests.cs`) already existed from the ATDD phase — all 19 tests turned GREEN with this implementation.
+- Existing `ContactoForm.test.tsx` and `ContactoForm.edge.test.tsx` (44 tests) all pass after extending the form with edit mode — create mode path fully preserved.
+- E2E test (TC-E3-3-4-E2E-1) is deferred per story spec — requires running app + seeded data.
+
 ### File List
+
+**Created (backend):**
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/Contactos/DTOs/UpdateContactoRequest.cs`
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/Contactos/Validators/UpdateContactoRequestValidator.cs`
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommand.cs`
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Application/Contactos/Commands/UpdateContactoCommandHandler.cs`
+
+**Modified (backend):**
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Domain/Contactos/Interfaces/IContactoRepository.cs` — added `UpdateAsync`
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` — implemented `UpdateAsync`
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` — added `MapPut`
+- `/home/user/lab-sa-quick-dev/backend/src/SiesaAgents.API/Program.cs` — registered `UpdateContactoCommandHandler` and `UpdateContactoRequestValidator`
+
+**Created (frontend):**
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/application/useUpdateContacto.ts`
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/__tests__/UpdateContacto.test.tsx`
+
+**Modified (frontend):**
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` — added `update`
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts` — added `update` method
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/presentation/ContactoForm.tsx` — added edit mode support
+- `/home/user/lab-sa-quick-dev/frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx` — added "Editar" button + dialog
