@@ -5,7 +5,9 @@ import { useClientes } from '../application/useClientes';
 import { EmptyState } from '../../../../shared/components/EmptyState';
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel';
 import { ClienteListItem } from '../../../../shared/components/ClienteListItem';
+import { SortControl } from '../../../../shared/components/SortControl';
 import { sortClientes } from '../../../../shared/lib/sortClientes';
+import type { SortOption } from '../../../../shared/lib/sortClientes';
 import type { Cliente } from '../domain/Cliente';
 
 interface ClienteListViewProps {
@@ -18,8 +20,9 @@ export function ClienteListView({ onClienteSelect, selectedClienteId, activeClie
   const resolvedActiveId = activeClienteId ?? selectedClienteId;
   const { data = [], isLoading, isError, refetch } = useClientes();
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState<SortOption>('fecha-desc');
 
-  const sortedClientes = useMemo(() => sortClientes(data, 'fecha-desc'), [data]);
+  const sortedClientes = useMemo(() => sortClientes(data, sortOption), [data, sortOption]);
 
   const filteredClientes = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -41,6 +44,9 @@ export function ClienteListView({ onClienteSelect, selectedClienteId, activeClie
           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0e79fd] focus:border-transparent placeholder:text-slate-400"
           aria-label="Buscar clientes"
         />
+        <div className="mt-2">
+          <SortControl value={sortOption} onChange={setSortOption} />
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
