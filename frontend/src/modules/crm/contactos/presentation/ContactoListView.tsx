@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
-import { useNavigate } from '@tanstack/react-router';
+import { useParams } from '@tanstack/react-router';
 import { useContactos } from '../application/useContactos';
 import { ContactoListItem } from './ContactoListItem';
 import { EmptyState } from '../../../../shared/components/EmptyState';
@@ -10,7 +10,10 @@ import { ErrorPanel } from '../../../../shared/components/ErrorPanel';
 export function ContactoListView() {
   const { data = [], isLoading, isError, refetch } = useContactos();
   const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
+
+  // Read active contactoId from route params (undefined when at /contactos)
+  const params = useParams({ strict: false }) as { contactoId?: string };
+  const activeContactoId = params.contactoId;
 
   const filteredContactos = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -67,9 +70,7 @@ export function ContactoListView() {
             <ContactoListItem
               key={c.id}
               contacto={c}
-              onClick={() =>
-                navigate({ to: '/contactos/$contactoId', params: { contactoId: c.id } })
-              }
+              isActive={c.id === activeContactoId}
             />
           ))}
         </ul>
