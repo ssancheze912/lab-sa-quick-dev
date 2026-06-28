@@ -1,6 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.DTOs;
 using SiesaAgents.Application.Clientes.Queries;
-using SiesaAgents.Domain.Clientes.Entities;
+using SiesaAgents.Application.Clientes.Validators;
 using SiesaAgents.Domain.Clientes.Interfaces;
 
 namespace SiesaAgents.API.Endpoints;
@@ -28,14 +30,29 @@ public static class ClienteEndpoints
                     title: "Cliente no encontrado");
         });
 
-        group.MapPost("/", async (CreateClienteRequest request, IClienteRepository repo, CancellationToken ct) =>
+        group.MapPost("/", async (
+            CreateClienteRequest request,
+            CreateClienteRequestValidator validator,
+            CreateClienteCommandHandler handler,
+            CancellationToken ct) =>
         {
-            var cliente = ClienteEntity.Create(request.Nombre, request.Nit, request.Telefono, request.Ciudad);
-            await repo.AddAsync(cliente, ct);
-            await repo.SaveChangesAsync(ct);
-            return Results.Created(
-                $"/api/v1/clientes/{cliente.Id}",
-                new ClienteDto(cliente.Id, cliente.Nombre, cliente.Nit, cliente.Telefono, cliente.Ciudad, cliente.CreatedAt, cliente.UpdatedAt));
+            var validation = await validator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+                return Results.ValidationProblem(validation.ToDictionary());
+
+            try
+            {
+                var dto = await handler.Handle(
+                    new CreateClienteCommand(request.Nombre, request.Nit, request.Telefono, request.Ciudad), ct);
+                return Results.Created($"/api/v1/clientes/{dto.Id}", dto);
+            }
+            catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+            {
+                return Results.Problem(
+                    detail: "El NIT/RUC ya está registrado",
+                    statusCode: 409,
+                    title: "Conflicto de datos");
+            }
         });
 
         group.MapDelete("/{id:guid}", async (Guid id, IClienteRepository repo, CancellationToken ct) =>
@@ -48,5 +65,12 @@ public static class ClienteEndpoints
         return app;
     }
 
-    private sealed record CreateClienteRequest(string Nombre, string Nit, string Telefono, string Ciudad);
+    private static bool IsUniqueConstraintViolation(DbUpdateException ex)
+    {
+        var inner = ex.InnerException;
+        if (inner is null) return false;
+        // PostgreSQL unique constraint violation (SQLSTATE 23505)
+        var sqlState = inner.GetType().GetProperty("SqlState")?.GetValue(inner) as string;
+        return sqlState == "23505";
+    }
 }
