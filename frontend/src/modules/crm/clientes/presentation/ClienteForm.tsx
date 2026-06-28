@@ -3,34 +3,53 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import { clienteSchema, type ClienteFormData } from '../application/clienteSchema';
 import { useCreateCliente } from '../application/useCreateCliente';
+import { useUpdateCliente } from '../application/useUpdateCliente';
 
 interface ClienteFormProps {
   onClose: () => void;
   onSuccess?: () => void;
+  clienteId?: string;
+  defaultValues?: ClienteFormData;
 }
 
-export function ClienteForm({ onClose, onSuccess }: ClienteFormProps) {
+export function ClienteForm({ onClose, onSuccess, clienteId, defaultValues }: ClienteFormProps) {
+  const isEditMode = !!clienteId;
+
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<ClienteFormData>({ resolver: zodResolver(clienteSchema) });
+  } = useForm<ClienteFormData>({
+    resolver: zodResolver(clienteSchema),
+    defaultValues,
+  });
 
-  const { mutate, isPending } = useCreateCliente();
+  const createMutation = useCreateCliente();
+  const updateMutation = useUpdateCliente();
+
+  const isPending = isEditMode ? updateMutation.isPending : createMutation.isPending;
+
+  const handleError = (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 409) {
+      setError('nit', { message: 'El NIT/RUC ya está registrado' });
+    }
+  };
+
+  const handleSuccess = () => {
+    onSuccess?.();
+    onClose();
+  };
 
   const onSubmit = (data: ClienteFormData) => {
-    mutate(data, {
-      onError: (error) => {
-        if (axios.isAxiosError(error) && error.response?.status === 409) {
-          setError('nit', { message: 'El NIT/RUC ya está registrado' });
-        }
-      },
-      onSuccess: () => {
-        onSuccess?.();
-        onClose();
-      },
-    });
+    if (isEditMode) {
+      updateMutation.mutate(
+        { id: clienteId, data },
+        { onError: handleError, onSuccess: handleSuccess }
+      );
+    } else {
+      createMutation.mutate(data, { onError: handleError, onSuccess: handleSuccess });
+    }
   };
 
   return (
@@ -79,7 +98,9 @@ export function ClienteForm({ onClose, onSuccess }: ClienteFormProps) {
         Cancelar
       </button>
       <button type="submit" disabled={isPending} data-testid="btn-submit">
-        {isPending ? 'Creando...' : 'Crear cliente'}
+        {isPending
+          ? isEditMode ? 'Guardando...' : 'Creando...'
+          : isEditMode ? 'Guardar cambios' : 'Crear cliente'}
       </button>
     </form>
   );
