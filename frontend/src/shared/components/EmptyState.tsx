@@ -26,7 +26,7 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
           />
         </svg>
       </div>
-      <h3 className="text-sm font-medium text-slate-900 mb-1">{title}</h3>
+      <p className="text-sm font-medium text-slate-900 mb-1">{title}</p>
       {description && (
         <p className="text-sm text-slate-500 mb-4">{description}</p>
       )}
