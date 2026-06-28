@@ -198,9 +198,9 @@ public class AppDbContextTests : IClassFixture<WebApplicationFactory<Program>>
 
         await connection.CloseAsync();
 
-        // THEN: Domain tables must NOT exist (they belong to Epics 2 and 3)
-        Assert.False(tableNames.Contains("clientes"),
-            "'clientes' table must NOT exist after Story 1.3 migration — domain entities are deferred to Epic 2.");
+        // THEN: clientes table MUST exist (added in Story 2.1 — Epic 2)
+        Assert.True(tableNames.Contains("clientes"),
+            "'clientes' table must exist after Story 2.1 migration — ClienteEntity was added in Epic 2.");
         Assert.False(tableNames.Contains("contactos"),
             "'contactos' table must NOT exist after Story 1.3 migration — domain entities are deferred to Epic 3.");
     }

@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -425,4 +425,48 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- CS1503 fixed: `Assert.Equal(string, string, string)` replaced with `Assert.True(bool, string)` — xUnit 2.9.3 has no 3-arg string overload.
+- Backend unique index test: Changed query from `information_schema.table_constraints` to `pg_indexes` — EF Core creates unique indexes, not unique constraints.
+- Two Story 1.3 tests updated: `AppDbContext_WhenModelInspected_HasNoDomainEntityTypes` and `AppDbContext_WhenInitialMigrationApplied_NoDomainTablesExist` — both explicitly stated they'd need updating when Epic 2 entities were added.
+- `jsdom` installed as dev dependency (was missing from project).
+- Vitest configured with `environment: 'jsdom'` and `setupFiles` for `@testing-library/jest-dom`.
+- EF Core migration `AddClienteEntity` created and marked as applied (table already existed from prior attempt).
+
 ### File List
+
+Backend created:
+- `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs`
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
+- `backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQuery.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQueryHandler.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628061521_AddClienteEntity.cs`
+
+Backend modified:
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
+- `backend/src/SiesaAgents.API/Program.cs`
+- `backend/tests/SiesaAgents.UnitTests/Clientes/GetClientesApiTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextEdgeCaseTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs`
+
+Frontend created:
+- `frontend/src/modules/crm/clientes/domain/Cliente.ts`
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`
+- `frontend/src/modules/crm/clientes/application/useClientes.ts`
+- `frontend/src/modules/crm/clientes/application/clienteSchema.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`
+- `frontend/src/shared/components/EmptyState.tsx`
+- `frontend/src/shared/components/ErrorPanel.tsx`
+- `frontend/src/shared/components/ClienteListItem.tsx`
+- `frontend/src/shared/lib/sortClientes.ts`
+- `frontend/src/test-setup.ts`
+
+Frontend modified:
+- `frontend/src/routes/_app/clientes.tsx`
+- `frontend/src/shared/lib/apiClient.ts`
+- `frontend/vite.config.ts`
+- `frontend/package.json`

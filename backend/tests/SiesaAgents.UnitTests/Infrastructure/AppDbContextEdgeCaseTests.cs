@@ -193,10 +193,10 @@ public class AppDbContextEdgeCaseTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     /// <summary>
-    /// [P2] AppDbContext has no DbSet properties boundary (scope boundary from AC5):
+    /// [P2] AppDbContext has ClienteEntity registered (added in Story 2.1 — Epic 2):
     /// GIVEN AppDbContext resolved from DI
     /// WHEN the model entity types are inspected
-    /// THEN no domain entity types are registered (DbSets added in Epics 2 and 3)
+    /// THEN ClienteEntity is registered (Story 2.1 added it; Contacto added in Epic 3)
     /// </summary>
     [Fact]
     public void AppDbContext_WhenModelInspected_HasNoDomainEntityTypes()
@@ -208,13 +208,19 @@ public class AppDbContextEdgeCaseTests : IClassFixture<WebApplicationFactory<Pro
         // WHEN: Model entity types are inspected
         var entityTypes = dbContext.Model.GetEntityTypes().ToList();
 
-        // THEN: No domain entity types are registered (Epics 2 and 3 add them)
-        var domainEntityNames = entityTypes
+        // THEN: ClienteEntity is registered (Story 2.1); Contacto is not yet (Epic 3)
+        var clienteEntityNames = entityTypes
             .Select(e => e.ClrType.Name)
-            .Where(n => n.Contains("Cliente") || n.Contains("Contacto"))
+            .Where(n => n.Contains("Cliente"))
             .ToList();
 
-        Assert.Empty(domainEntityNames);
+        var contactoEntityNames = entityTypes
+            .Select(e => e.ClrType.Name)
+            .Where(n => n.Contains("Contacto"))
+            .ToList();
+
+        Assert.NotEmpty(clienteEntityNames); // ClienteEntity added in Story 2.1
+        Assert.Empty(contactoEntityNames);   // Contacto added in Epic 3
     }
 
     // ─────────────────────────────────────────────────────────────────────────

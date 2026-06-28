@@ -133,26 +133,26 @@ public class GetClientesApiTests : IClassFixture<WebApplicationFactory<Program>>
         var connection = dbContext.Database.GetDbConnection();
         await connection.OpenAsync();
 
-        string? constraintName = null;
+        string? indexName = null;
         try
         {
             using var command = connection.CreateCommand();
             command.CommandText = @"
-                SELECT constraint_name
-                FROM information_schema.table_constraints
-                WHERE table_name = 'clientes'
-                  AND constraint_type = 'UNIQUE'
-                  AND constraint_name = 'uk_clientes_nit';
+                SELECT indexname
+                FROM pg_indexes
+                WHERE tablename = 'clientes'
+                  AND indexname = 'uk_clientes_nit';
             ";
-            constraintName = (string?)await command.ExecuteScalarAsync();
+            indexName = (string?)await command.ExecuteScalarAsync();
         }
         finally
         {
             await connection.CloseAsync();
         }
 
-        // THEN: uk_clientes_nit unique constraint exists
-        Assert.Equal("uk_clientes_nit", constraintName,
+        // THEN: uk_clientes_nit unique index exists
+        Assert.True(
+            indexName == "uk_clientes_nit",
             "The 'uk_clientes_nit' unique index must exist on the clientes table. " +
             "Add HasIndex(c => c.Nit).IsUnique().HasDatabaseName(\"uk_clientes_nit\") to ClienteConfiguration.");
     }
