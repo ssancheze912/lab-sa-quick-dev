@@ -23,6 +23,7 @@ import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
+import { Toaster } from 'sonner';
 
 import { buildCliente, resetClienteCounter } from './clienteFactory';
 
@@ -94,6 +95,7 @@ function renderClienteFormEditMode(props: {
 
   const result = render(
     <QueryClientProvider client={queryClient}>
+      <Toaster />
       <ClienteForm
         clienteId={props.clienteId}
         defaultValues={props.defaultValues}

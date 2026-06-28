@@ -21,6 +21,7 @@ import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
+import { Toaster } from 'sonner';
 
 import { buildCliente } from './clienteFactory';
 
@@ -81,6 +82,7 @@ function renderClienteForm(props?: {
 
   const result = render(
     <QueryClientProvider client={queryClient}>
+      <Toaster />
       <ClienteForm onClose={onClose} onSuccess={onSuccess} />
     </QueryClientProvider>
   );
