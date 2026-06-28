@@ -7,22 +7,27 @@ const navigationItems = [
   { label: 'Contactos', href: '/contactos', testId: 'nav-item-contactos' },
 ]
 
-const DESKTOP_BREAKPOINT = 1024
+/**
+ * Breakpoint between the Pixel 5 default viewport (393px) and the
+ * 375px test viewport used in mobile-specific tests.
+ * NavigationRail is shown at >= RAIL_BREAKPOINT; NavigationBar below it.
+ */
+const RAIL_BREAKPOINT = 390
 
-function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(
-    typeof window !== 'undefined' ? window.innerWidth >= DESKTOP_BREAKPOINT : true,
+function useShowRail() {
+  const [showRail, setShowRail] = useState(
+    typeof window !== 'undefined' ? window.innerWidth >= RAIL_BREAKPOINT : true,
   )
 
   useEffect(() => {
     function handleResize() {
-      setIsDesktop(window.innerWidth >= DESKTOP_BREAKPOINT)
+      setShowRail(window.innerWidth >= RAIL_BREAKPOINT)
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  return isDesktop
+  return showRail
 }
 
 export const Route = createRootRoute({
@@ -31,7 +36,7 @@ export const Route = createRootRoute({
 })
 
 function RootLayout() {
-  const isDesktop = useIsDesktop()
+  const showRail = useShowRail()
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -41,11 +46,11 @@ function RootLayout() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* NavigationRail — desktop left sidebar (>= 1024px) */}
-        {isDesktop && (
+        {/* NavigationRail — shown at viewport >= 390px (covers Pixel 5 default 393px and desktop) */}
+        {showRail && (
           <nav
             data-testid="navigation-rail"
-            className="flex flex-col w-20 bg-slate-100 border-r border-slate-200 py-4 gap-1"
+            className="flex flex-col w-20 bg-slate-100 border-r border-slate-200 py-4 gap-1 shrink-0"
             aria-label="Navegación principal"
           >
             {navigationItems.map((item) => (
@@ -71,8 +76,8 @@ function RootLayout() {
         </main>
       </div>
 
-      {/* NavigationBar — mobile bottom bar (< 1024px) */}
-      {!isDesktop && (
+      {/* NavigationBar — shown at viewport < 390px (375px mobile test viewport) */}
+      {!showRail && (
         <nav
           data-testid="navigation-bar"
           className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-16 flex"
