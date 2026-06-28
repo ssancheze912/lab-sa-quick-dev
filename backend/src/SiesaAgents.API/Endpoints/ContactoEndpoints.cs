@@ -49,7 +49,7 @@ public static class ContactoEndpoints
 
             try
             {
-                var contacto = ContactoEntity.Create(request.Nombre, request.Cargo, request.Telefono, request.Email);
+                var contacto = ContactoEntity.Create(request.Nombre, request.Cargo, request.Telefono, request.Email, request.ClienteId);
                 await repo.AddAsync(contacto, ct);
                 await repo.SaveChangesAsync(ct);
                 var dto = new ContactoDto(

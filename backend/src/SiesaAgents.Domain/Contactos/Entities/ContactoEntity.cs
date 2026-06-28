@@ -13,7 +13,7 @@ public class ContactoEntity
 
     private ContactoEntity() { } // Required by EF Core
 
-    public static ContactoEntity Create(string nombre, string cargo, string telefono, string email)
+    public static ContactoEntity Create(string nombre, string cargo, string telefono, string email, Guid? clienteId = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(nombre);
         ArgumentException.ThrowIfNullOrWhiteSpace(cargo);
@@ -24,7 +24,8 @@ public class ContactoEntity
             Nombre = nombre.Trim(),
             Cargo = cargo.Trim(),
             Telefono = telefono.Trim(),
-            Email = email.Trim()
+            Email = email.Trim(),
+            ClienteId = clienteId
         };
     }
 
