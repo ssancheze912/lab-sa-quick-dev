@@ -1,0 +1,28 @@
+# Node
+node_modules/
+dist/
+.pnpm-store/
+
+# Build artifacts
+**/bin/
+**/obj/
+
+# Playwright test results
+playwright-report/
+playwright-results/
+test-results/
+
+# .NET
+*.user
+*.suo
+.vs/
+*.userprefs
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db

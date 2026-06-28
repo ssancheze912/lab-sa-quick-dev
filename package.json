@@ -1,0 +1,13 @@
+{
+  "name": "siesa-agents",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "dotnet run --project backend/src/SiesaAgents.API",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.52.0"
+  }
+}
