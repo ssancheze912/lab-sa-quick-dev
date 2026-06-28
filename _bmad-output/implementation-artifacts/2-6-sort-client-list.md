@@ -1,6 +1,6 @@
 # Story 2.6: Sort Client List
 
-Status: ready
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,8 +26,8 @@ so that I can organize my view and quickly find clients based on how I prioritiz
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Frontend: Create `SortControl` shared component (AC: #1, #2, #3, #4, #6)
-  - [ ] Create `frontend/src/shared/components/SortControl.tsx`:
+- [x] Task 1 — Frontend: Create `SortControl` shared component (AC: #1, #2, #3, #4, #6)
+  - [x] Create `frontend/src/shared/components/SortControl.tsx`:
     - Props: `value: SortOption`, `onChange: (value: SortOption) => void`
     - Renders a `<select>` (or shadcn/ui `Select`) with four options in Spanish:
       - `fecha-desc` → "Más reciente" (default — selected when `value === 'fecha-desc'`)
@@ -39,8 +39,8 @@ so that I can organize my view and quickly find clients based on how I prioritiz
     - Import `SortOption` type from `frontend/src/shared/lib/sortClientes.ts`
     - All option labels in Spanish
 
-- [ ] Task 2 — Frontend: Wire `SortControl` into `ClienteListView` (AC: #1, #2, #3, #4, #5, #6)
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`:
+- [x] Task 2 — Frontend: Wire `SortControl` into `ClienteListView` (AC: #1, #2, #3, #4, #5, #6)
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`:
     - Add local `useState<SortOption>` initialized to `'fecha-desc'`:
       ```ts
       const [sortOption, setSortOption] = useState<SortOption>('fecha-desc');
@@ -54,14 +54,14 @@ so that I can organize my view and quickly find clients based on how I prioritiz
     - Import `SortControl` from `../../../../shared/components/SortControl`
     - Keep the existing `searchQuery` state and `filteredClientes` useMemo unchanged
 
-- [ ] Task 3 — Tests (AC: #1, #2, #3, #4, #5, #6) — aligned with test-design-epic-2.md
-  - [ ] **Component — P1**: Render `ClienteListView` with 5 clients, select "nombre-asc" from `SortControl`, assert list order alphabetically ascending (Vitest + RTL + MSW)
-  - [ ] **Component — P1**: Select "nombre-desc" from `SortControl`, assert list order alphabetically descending (Vitest + RTL + MSW)
-  - [ ] **Component — P1**: On initial mount, assert default sort is "Más reciente" (first list item is the client with newest `createdAt`) (Vitest + RTL + MSW)
-  - [ ] **Component — P1**: Select "fecha-asc" from `SortControl`, assert oldest client appears first (Vitest + RTL + MSW)
-  - [ ] **Component — P1**: Apply search filter "Test", then change sort order, assert search input still contains "Test" and list shows only filtered items in new order (Vitest + RTL + MSW) — covers R-006
-  - [ ] **Component — P2**: Apply sort, assert MSW GET handler called exactly once (initial load only — no extra API call on sort change) (Vitest + RTL + MSW)
-  - [ ] **Unit — P2**: `sortClientes` utility tests — verify these already exist in `frontend/src/modules/crm/clientes/__tests__/` from Story 2.1; do NOT duplicate if already passing
+- [x] Task 3 — Tests (AC: #1, #2, #3, #4, #5, #6) — aligned with test-design-epic-2.md
+  - [x] **Component — P1**: Render `ClienteListView` with 5 clients, select "nombre-asc" from `SortControl`, assert list order alphabetically ascending (Vitest + RTL + MSW)
+  - [x] **Component — P1**: Select "nombre-desc" from `SortControl`, assert list order alphabetically descending (Vitest + RTL + MSW)
+  - [x] **Component — P1**: On initial mount, assert default sort is "Más reciente" (first list item is the client with newest `createdAt`) (Vitest + RTL + MSW)
+  - [x] **Component — P1**: Select "fecha-asc" from `SortControl`, assert oldest client appears first (Vitest + RTL + MSW)
+  - [x] **Component — P1**: Apply search filter "Test", then change sort order, assert search input still contains "Test" and list shows only filtered items in new order (Vitest + RTL + MSW) — covers R-006
+  - [x] **Component — P2**: Apply sort, assert MSW GET handler called exactly once (initial load only — no extra API call on sort change) (Vitest + RTL + MSW)
+  - [x] **Unit — P2**: `sortClientes` utility tests — verified existing tests in `frontend/src/modules/crm/clientes/__tests__/` from Story 2.1; NOT duplicated
 
 ## Dev Notes
 
@@ -217,4 +217,19 @@ None.
 
 ### Completion Notes List
 
+- Task 1: Created `SortControl.tsx` as a native `<select>` element at `frontend/src/shared/components/SortControl.tsx`. Used native select (no shadcn/ui Select dependency needed) per story guidance. WCAG 2.1 AA compliant with `aria-label` and `data-testid`.
+- Task 2: Updated `ClienteListView.tsx` — added `sortOption` state (default `'fecha-desc'`), replaced hardcoded sort argument, added `<SortControl>` below search input. The two-useMemo chain (sortedClientes → filteredClientes) correctly handles sort+search independence per AC #5.
+- Task 3: All 6 ATDD tests (TC-E2-2-6-CMP-P1-1 through TC-E2-2-6-CMP-P2-1) pass GREEN. Pre-existing `sortClientes.test.ts` from Story 2.1 not duplicated. TypeScript strict mode passes with no `any` types. Pre-existing failure in `DeleteCliente.edge.test.tsx` (cache eviction test) confirmed pre-existing from Story 2.5 — not a regression.
+
 ### File List
+
+**Created:**
+- `frontend/src/shared/components/SortControl.tsx`
+
+**Modified:**
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/implementation-artifacts/2-6-sort-client-list.md`
+
+**Tests (pre-existing, verified GREEN):**
+- `frontend/src/modules/crm/clientes/__tests__/SortControl.test.tsx` — 6/6 tests pass
