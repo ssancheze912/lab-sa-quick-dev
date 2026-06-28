@@ -12,7 +12,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '../../../../components/ui/alert-dialog';
 import { useContacto } from '../application/useContacto';
 import { useDeleteContacto } from '../application/useDeleteContacto';
 import { ContactoForm } from './ContactoForm';
@@ -73,22 +73,24 @@ export function ContactoDetailView({ contactoId, onContactoDeleted }: ContactoDe
     );
   }
 
+  if (!data) return null;
+
   return (
     <>
       <div data-testid="contacto-detail-view" className="p-6">
-        <h2 className="text-xl font-bold text-slate-900 mb-4">{data!.nombre}</h2>
+        <h2 className="text-xl font-bold text-slate-900 mb-4">{data.nombre}</h2>
         <dl className="space-y-3">
           <div>
             <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Cargo</dt>
-            <dd className="text-sm text-slate-900 mt-0.5">{data!.cargo}</dd>
+            <dd className="text-sm text-slate-900 mt-0.5">{data.cargo}</dd>
           </div>
           <div>
             <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Teléfono</dt>
-            <dd className="text-sm text-slate-900 mt-0.5">{data!.telefono}</dd>
+            <dd className="text-sm text-slate-900 mt-0.5">{data.telefono}</dd>
           </div>
           <div>
             <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Email</dt>
-            <dd className="text-sm text-slate-900 mt-0.5">{data!.email}</dd>
+            <dd className="text-sm text-slate-900 mt-0.5">{data.email}</dd>
           </div>
         </dl>
         <div className="mt-4 flex gap-2">
@@ -112,12 +114,12 @@ export function ContactoDetailView({ contactoId, onContactoDeleted }: ContactoDe
       {isEditFormOpen && (
         <div role="dialog" aria-modal="true" aria-label="Editar contacto">
           <ContactoForm
-            contactoId={data!.id}
+            contactoId={data.id}
             defaultValues={{
-              nombre: data!.nombre,
-              cargo: data!.cargo,
-              telefono: data!.telefono,
-              email: data!.email,
+              nombre: data.nombre,
+              cargo: data.cargo,
+              telefono: data.telefono,
+              email: data.email,
             }}
             onClose={() => setIsEditFormOpen(false)}
             onSuccess={() => refetch()}

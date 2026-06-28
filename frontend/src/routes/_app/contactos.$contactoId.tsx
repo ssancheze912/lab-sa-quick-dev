@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ContactoDetailView } from '../../modules/crm/contactos/presentation/ContactoDetailView';
 
 export const Route = createFileRoute('/_app/contactos/$contactoId')({
@@ -7,6 +7,12 @@ export const Route = createFileRoute('/_app/contactos/$contactoId')({
 
 function ContactoDetailPage() {
   const { contactoId } = Route.useParams();
+  const navigate = useNavigate();
 
-  return <ContactoDetailView contactoId={contactoId} />;
+  return (
+    <ContactoDetailView
+      contactoId={contactoId}
+      onContactoDeleted={() => navigate({ to: '/contactos' })}
+    />
+  );
 }
