@@ -1,7 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
-import { toast } from 'sonner';
 import { contactoSchema, type ContactoFormData } from '../application/contactoSchema';
 import { useCreateContacto } from '../application/useCreateContacto';
 
@@ -34,7 +33,6 @@ export function ContactoForm({ onClose, onSuccess, defaultValues }: ContactoForm
         }
       },
       onSuccess: () => {
-        toast.success('Contacto creado correctamente');
         onSuccess?.();
         onClose();
       },
