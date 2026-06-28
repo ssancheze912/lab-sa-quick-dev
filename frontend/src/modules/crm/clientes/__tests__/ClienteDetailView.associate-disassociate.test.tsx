@@ -485,11 +485,9 @@ describe('ClienteDetailView — disassociation mutation called with clienteId: n
 
     // AND: User confirms in the confirmation dialog
     await waitFor(() => {
-      const confirmBtn = screen.queryByRole('button', { name: /confirmar|desasociar|aceptar/i });
-      expect(confirmBtn).not.toBeNull();
+      expect(screen.getByTestId('btn-confirmar-desasociar')).toBeInTheDocument();
     });
-    const confirmBtn = screen.getByRole('button', { name: /confirmar|desasociar|aceptar/i });
-    fireEvent.click(confirmBtn);
+    fireEvent.click(screen.getByTestId('btn-confirmar-desasociar'));
 
     // THEN: PUT was called with { clienteId: null }
     await waitFor(() => {
