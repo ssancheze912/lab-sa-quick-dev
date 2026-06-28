@@ -15,7 +15,8 @@ development_status:
   epic-2-last-update: 28-06-2026
   epic-3: in-progress
   epic-3-last-update: 28-06-2026
-  epic-4: pending
+  epic-4: in-progress
+  epic-4-last-update: 28-06-2026
 
   # Epic 1 — Project Foundation & Application Shell
   1-1-project-initialization-repository-structure: done
@@ -38,7 +39,7 @@ development_status:
   3-5-delete-contact: done
 
   # Epic 4 — Client-Contact Association & Data Quality
-  4-1-view-associated-contacts-in-client-detail: pending
+  4-1-view-associated-contacts-in-client-detail: ready-for-dev
   4-2-associate-disassociate-contacts-from-client: pending
   4-3-navigate-from-client-detail-to-contact-detail: pending
   4-4-view-associated-client-from-contact-detail: pending
