@@ -97,7 +97,7 @@ test.describe('Story 2.1 — Client List & Search', () => {
       page.getByTestId('cliente-list-item').first()
     ).toBeVisible({ timeout: 5000 });
 
-    const searchInput = page.getByPlaceholderText(/buscar por nombre o nit/i);
+    const searchInput = page.getByPlaceholder(/buscar por nombre o nit/i);
     await expect(searchInput).toBeVisible();
 
     // WHEN: User types the search term
