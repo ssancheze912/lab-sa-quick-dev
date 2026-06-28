@@ -14,6 +14,13 @@ class ContactoApiRepository implements IContactoRepository {
     return response.data;
   }
 
+  async getByClienteId(clienteId: string): Promise<Contacto[]> {
+    const response = await apiClient.get<Contacto[]>('/api/v1/contactos', {
+      params: { clienteId },
+    });
+    return response.data;
+  }
+
   async create(data: ContactoFormData): Promise<Contacto> {
     const response = await apiClient.post<Contacto>('/api/v1/contactos', data);
     return response.data;

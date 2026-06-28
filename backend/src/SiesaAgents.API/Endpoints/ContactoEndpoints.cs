@@ -14,9 +14,13 @@ public static class ContactoEndpoints
     {
         var group = app.MapGroup("/api/v1/contactos");
 
-        group.MapGet("/", async (GetContactosQueryHandler handler, CancellationToken ct) =>
+        group.MapGet("/", async (
+            string? search,
+            Guid? clienteId,
+            GetContactosQueryHandler handler,
+            CancellationToken ct) =>
         {
-            var contactos = await handler.HandleAsync(new GetContactosQuery(), ct);
+            var contactos = await handler.HandleAsync(new GetContactosQuery(search, clienteId), ct);
             return Results.Ok(contactos);
         });
 
