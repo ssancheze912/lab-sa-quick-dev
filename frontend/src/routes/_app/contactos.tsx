@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { ContactoListView } from '../../modules/crm/contactos/presentation/ContactoListView';
 import { ContactoForm } from '../../modules/crm/contactos/presentation/ContactoForm';
 
@@ -11,18 +11,23 @@ function ContactosPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-4 border-b border-slate-200">
-        <h1 className="text-xl font-bold text-slate-900">Contactos</h1>
-        <button
-          onClick={() => setIsFormOpen(true)}
-          data-testid="btn-nuevo-contacto"
-          className="rounded bg-[#0e79fd] px-4 py-2 text-sm font-medium text-white hover:bg-[#154ca9]"
-        >
-          Nuevo contacto
-        </button>
+    <div className="flex h-full">
+      <div className="w-72 shrink-0 border-r border-slate-200 overflow-y-auto">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200">
+          <h1 className="text-base font-bold text-slate-900">Contactos</h1>
+          <button
+            onClick={() => setIsFormOpen(true)}
+            data-testid="btn-nuevo-contacto"
+            className="rounded bg-[#0e79fd] px-3 py-1 text-xs font-medium text-white hover:bg-[#154ca9]"
+          >
+            Nuevo contacto
+          </button>
+        </div>
+        <ContactoListView />
       </div>
-      <ContactoListView />
+      <div className="flex-1 overflow-y-auto">
+        <Outlet />
+      </div>
       {isFormOpen && (
         <div
           role="dialog"
@@ -38,3 +43,4 @@ function ContactosPage() {
     </div>
   );
 }
+

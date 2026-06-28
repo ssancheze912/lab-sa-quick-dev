@@ -50,7 +50,6 @@ export function ContactoListView() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-xl font-bold">Contactos</h1>
       <input
         type="text"
         placeholder="Buscar por nombre o email..."

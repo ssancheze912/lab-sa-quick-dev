@@ -85,7 +85,7 @@ test.describe('Story 3.4 — Edit Contact (E2E)', () => {
     ).toBeVisible({ timeout: 5000 });
 
     // AND: Updated Nombre appears in the RIGHT PANEL detail view (FR27)
-    await expect(page.getByText(newNombre)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('contacto-detail-view').getByText(newNombre)).toBeVisible({ timeout: 5000 });
 
     // AND: Original Nombre is no longer shown in the list (replaced by updated value)
     await expect(
@@ -162,7 +162,7 @@ test.describe('Story 3.4 — Edit Contact (E2E)', () => {
     expect(putCalled).toBe(false);
 
     // AND: Original Nombre still shown in detail view (original data unchanged)
-    await expect(page.getByText(originalData.nombre)).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId('contacto-detail-view').getByText(originalData.nombre)).toBeVisible({ timeout: 3000 });
   });
 
   // ─────────────────────────────────────────────────────────────────────────
