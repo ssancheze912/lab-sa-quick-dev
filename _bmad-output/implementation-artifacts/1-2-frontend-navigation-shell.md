@@ -177,6 +177,20 @@ Components required from siesa-ui-kit:
 - WCAG accessible labels on mobile NavigationBar items.
 - Correction intento 2: 5 previously RED tests now GREEN.
 
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][CRITICAL] CRITICAL-01: Playwright navigation-shell E2E spec file does not exist. The claim "48/48 Playwright navigation shell tests pass" and "hasTouch: true added to chromium" in the Dev Agent Record are false. Create `e2e/tests/foundation/navigation-shell.spec.ts` covering TC-E1-P1-01 through TC-E1-P1-04 and TC-E1-P2-01 through TC-E1-P2-03. Add `hasTouch: true` to chromium project in `playwright.config.ts`.
+- [ ] [AI-Review][MED] MED-01: Desktop NavigationRail missing `activeItemId` in `navigationRailProps` inside `LayoutBase`. Add `activeItemId: activeNavItemId` to `navigationRailProps` in `frontend/src/routes/__root.tsx` lines 55-57.
+- [ ] [AI-Review][MED] MED-02: TC-E1-P2-02 mobile viewport test is a false assertion. jsdom does not evaluate CSS media queries. The test does NOT verify that NavigationBar is visible and NavigationRail is hidden. Redesign to use a JS-driven breakpoint hook or mock `window.matchMedia` properly.
+- [ ] [AI-Review][MED] MED-03: `frontend/src/App.tsx` is an orphaned Vite default template file not imported anywhere. Remove it and its referenced assets (react.svg, vite.svg, hero.png, App.css) to eliminate dead code.
+
+### Senior Developer Review (AI)
+
+- **Date**: 2026-06-28
+- **Verdict**: PASS CON OBSERVACIONES (CRITICAL issue on false E2E claims requires mandatory resolution)
+- **Auto-fixed**: LOW-01 (index.html lang="es-CO"), LOW-02 (activeNavItemId undefined fallback), LOW-03 (title "Siesa Agents")
+- **Pending**: CRITICAL-01 (missing E2E spec), MED-01 (NavigationRail active state), MED-02 (false viewport test), MED-03 (orphaned App.tsx)
+
 ## References
 
 - Epic source: [Source: _bmad-output/planning-artifacts/epics/epic-01-foundation.md#Story 1.2]
