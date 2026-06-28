@@ -150,6 +150,15 @@ test.describe('Story 3.5 — API: DELETE /api/v1/contactos/:id (P1)', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Story 3.5 — API: DELETE non-existent contact (P1)', () => {
+  const createdContactoIds: string[] = [];
+
+  test.afterEach(async ({ request }) => {
+    for (const id of createdContactoIds) {
+      await request.delete(`${CONTACTOS_URL}/${id}`).catch(() => null);
+    }
+    createdContactoIds.length = 0;
+  });
+
   test('TC-E3-3-5-API-2: should return 404 with Problem Details RFC 7807 when deleting a non-existent contact UUID', async ({ request }) => {
     // GIVEN: No contact with UNKNOWN_UUID exists in the system
 
@@ -205,9 +214,13 @@ test.describe('Story 3.5 — API: DELETE non-existent contact (P1)', () => {
     const seeded = await seedContacto(request, {
       nombre: 'Contacto Doble Delete Test',
     });
+    // Track for cleanup in case firstDelete assertion fails and the contact leaks
+    createdContactoIds.push(seeded.id);
 
     const firstDelete = await request.delete(`${CONTACTOS_URL}/${seeded.id}`);
     expect(firstDelete.status()).toBe(204);
+    // Contact was successfully deleted — remove from cleanup tracking
+    createdContactoIds.splice(createdContactoIds.indexOf(seeded.id), 1);
 
     // WHEN: The same UUID is deleted again
     const secondDelete = await request.delete(`${CONTACTOS_URL}/${seeded.id}`);
