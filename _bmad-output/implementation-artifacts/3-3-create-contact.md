@@ -1,6 +1,6 @@
 # Story 3.3: Create Contact
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -501,6 +501,18 @@ None.
 - All 8 new backend tests pass: 4 API integration tests + 4 FluentValidation unit tests.
 - E2E test (TC-E3-3-3-E2E-1) deferred — requires running app + seeded data.
 
+### Senior Developer Review (AI) — 2026-06-28
+
+**Verdict: PASS CON OBSERVACIONES**
+
+**Auto-fixed:**
+- [CRITICAL] `contactoSchema.ts`: Added `.trim()` to all four Zod string fields. Without it, whitespace-only inputs (e.g. `"   "`) passed client-side validation (`.min(1)` checks length, not blank content), reached the backend's `ContactoEntity.Create()` which throws `ArgumentException.ThrowIfNullOrWhiteSpace`, and produced a 500 instead of 400. This also caused the edge-case test in `ContactoForm.edge.test.tsx` (whitespace-only Nombre assertion) to incorrectly pass in mock tests but fail against real backend.
+- [MED] `ContactoForm.tsx`: `aria-describedby` error spans now always render in DOM (previously only rendered when error existed, causing screen readers to reference non-existent elements). Changed to unconditional `<span>` with optional chaining `errors.nombre?.message`.
+
+**Pending manual attention:**
+- [MED] Dialog overlay (`contactos.tsx`, `contactos.$contactoId.tsx`) lacks focus trap and Escape key handler — keyboard users can Tab out of the modal. Requires adding `onKeyDown` for Escape and a focus trap utility (consistent with WCAG 2.1 AA SC 2.1.2). This is a systemic project issue (also present in ClienteForm — Story 2.3).
+- [LOW] `telefono` input lacks `type="tel"` — mobile users get text keyboard instead of numeric.
+
 ### File List
 
 **Created:**
@@ -508,10 +520,15 @@ None.
 - `frontend/src/modules/crm/contactos/presentation/ContactoForm.tsx`
 - `backend/tests/SiesaAgents.UnitTests/Contactos/CreateContactoApiTests.cs`
 - `backend/tests/SiesaAgents.UnitTests/Contactos/CreateContactoValidatorTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Contactos/CreateContactoApiEdgeCaseTests.cs` (added in automation expansion)
+- `backend/tests/SiesaAgents.UnitTests/Contactos/CreateContactoValidatorEdgeCaseTests.cs` (added in automation expansion)
+- `frontend/src/modules/crm/contactos/__tests__/ContactoForm.edge.test.tsx` (added in automation expansion)
+- `e2e/tests/contactos/contactos-create-edge-cases.spec.ts` (added in automation expansion)
 
 **Modified:**
 - `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` (added `create` method)
 - `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts` (added `create` method)
+- `frontend/src/modules/crm/contactos/application/contactoSchema.ts` (code review fix: added .trim() to all fields)
 - `frontend/src/routes/_app/contactos.tsx` (added "Nuevo contacto" button + dialog overlay)
 - `frontend/src/routes/_app/contactos.$contactoId.tsx` (added "Nuevo contacto" button + dialog overlay)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` (status: pending → review)

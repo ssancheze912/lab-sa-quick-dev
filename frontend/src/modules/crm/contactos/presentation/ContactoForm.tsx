@@ -50,11 +50,9 @@ export function ContactoForm({ onClose, onSuccess, defaultValues }: ContactoForm
           data-testid="input-nombre"
           aria-describedby="error-nombre"
         />
-        {errors.nombre && (
-          <span id="error-nombre" role="alert">
-            {errors.nombre.message}
-          </span>
-        )}
+        <span id="error-nombre" role="alert">
+          {errors.nombre?.message}
+        </span>
       </div>
       <div>
         <label htmlFor="cargo">Cargo</label>
@@ -64,11 +62,9 @@ export function ContactoForm({ onClose, onSuccess, defaultValues }: ContactoForm
           data-testid="input-cargo"
           aria-describedby="error-cargo"
         />
-        {errors.cargo && (
-          <span id="error-cargo" role="alert">
-            {errors.cargo.message}
-          </span>
-        )}
+        <span id="error-cargo" role="alert">
+          {errors.cargo?.message}
+        </span>
       </div>
       <div>
         <label htmlFor="telefono">Teléfono</label>
@@ -78,11 +74,9 @@ export function ContactoForm({ onClose, onSuccess, defaultValues }: ContactoForm
           data-testid="input-telefono"
           aria-describedby="error-telefono"
         />
-        {errors.telefono && (
-          <span id="error-telefono" role="alert">
-            {errors.telefono.message}
-          </span>
-        )}
+        <span id="error-telefono" role="alert">
+          {errors.telefono?.message}
+        </span>
       </div>
       <div>
         <label htmlFor="email">Email</label>
@@ -93,11 +87,9 @@ export function ContactoForm({ onClose, onSuccess, defaultValues }: ContactoForm
           data-testid="input-email"
           aria-describedby="error-email"
         />
-        {errors.email && (
-          <span id="error-email" role="alert">
-            {errors.email.message}
-          </span>
-        )}
+        <span id="error-email" role="alert">
+          {errors.email?.message}
+        </span>
       </div>
       <button type="button" onClick={onClose} data-testid="btn-cancel">
         Cancelar
