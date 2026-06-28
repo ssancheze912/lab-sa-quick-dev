@@ -47,8 +47,9 @@ so that I have a complete picture of that client's contacts without navigating e
   - [x] **Frontend hook — P1**: `useContactosByCliente` with `clienteId = undefined` does NOT fire any HTTP request
   - [x] **Frontend component — P0**: `ClienteDetailView` with valid `clienteId` renders `ContactManager` in DOM (`data-testid="contact-manager-section"` present)
   - [x] **Frontend component — P1**: GET contactos?clienteId returns `[]` — ContactManager renders empty state
-  - [ ] **Frontend component — P1**: When `GET /api/v1/contactos?clienteId=...` returns an empty array, `ContactManager` renders empty state (Vitest + RTL + MSW)
-  - [ ] **Frontend component — P1**: When `GET /api/v1/contactos?clienteId=...` returns 500, `ContactManager` renders error state with retry option (Vitest + RTL + MSW)
+  - [x] **Frontend component — P1**: When `GET /api/v1/contactos?clienteId=...` returns an empty array, `ContactManager` renders empty state (Vitest + RTL + MSW)
+  - [x] **Frontend component — P1**: When `GET /api/v1/contactos?clienteId=...` returns 500, `ContactManager` renders error state with retry option (Vitest + RTL + MSW)
+  - [x] **Backend POST — P1**: `POST /api/v1/contactos` accepts optional `clienteId` in body and persists association (ATDD fix — intento 2)
 
 ## Dev Notes
 
@@ -290,12 +291,16 @@ claude-sonnet-4-6
 - ClienteDetailView uses `useContactosByCliente` hook directly (not useMemo adapter pattern) since custom ContactManager accepts props instead of adapter instance.
 - Backend filter uses in-memory LINQ on existing `GetAllAsync` result set — sufficient for current data volume per Epic 4 scope.
 - 2 pre-existing frontend test failures exist (DeleteCliente cache eviction + ContactoListView heading) — not introduced by this story.
+- ATDD fix (intento 2): Extended `POST /api/v1/contactos` to accept optional `Guid? ClienteId` in `CreateContactoRequest`, passed it through validator, entity `Create()` factory, and endpoint — enabling Playwright API tests (contactos-by-cliente.api.spec.ts) to seed contacts with clienteId association.
 
 ### File List
 
 - `backend/src/SiesaAgents.Application/Contactos/Queries/GetContactosQuery.cs` — MODIFIED
 - `backend/src/SiesaAgents.Application/Contactos/Queries/GetContactosQueryHandler.cs` — MODIFIED
-- `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` — MODIFIED
+- `backend/src/SiesaAgents.Application/Contactos/DTOs/CreateContactoRequest.cs` — MODIFIED (added Guid? ClienteId)
+- `backend/src/SiesaAgents.Application/Contactos/Validators/CreateContactoRequestValidator.cs` — MODIFIED (added ClienteId optional rule)
+- `backend/src/SiesaAgents.Domain/Contactos/Entities/ContactoEntity.cs` — MODIFIED (Create() accepts clienteId)
+- `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` — MODIFIED (wired clienteId through POST)
 - `backend/tests/SiesaAgents.UnitTests/Contactos/GetContactosByClienteApiTests.cs` — CREATED
 - `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` — MODIFIED
 - `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts` — MODIFIED
