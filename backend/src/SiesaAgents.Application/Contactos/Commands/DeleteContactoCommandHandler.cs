@@ -11,6 +11,7 @@ public class DeleteContactoCommandHandler(IContactoRepository repository)
             return false;
 
         await repository.DeleteAsync(entity, ct);
+        await repository.SaveChangesAsync(ct);
         return true;
     }
 }

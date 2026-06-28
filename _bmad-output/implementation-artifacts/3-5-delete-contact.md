@@ -1,6 +1,6 @@
 # Story 3.5: Delete Contact
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -437,9 +437,10 @@ None.
 - `backend/src/SiesaAgents.Application/Contactos/Commands/DeleteContactoCommandHandler.cs`
 - `backend/tests/SiesaAgents.UnitTests/Contactos/DeleteContactoApiTests.cs`
 - `frontend/src/modules/crm/contactos/application/useDeleteContacto.ts`
+- `frontend/src/modules/crm/contactos/__tests__/DeleteContacto.test.tsx`
 
 **Modified:**
-- `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` (DeleteAsync now calls SaveChangesAsync)
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` (DeleteAsync marks entity removed; SaveChangesAsync called explicitly by handler)
 - `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs` (DELETE uses DeleteContactoCommandHandler)
 - `backend/src/SiesaAgents.API/Program.cs` (registered DeleteContactoCommandHandler)
 - `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts` (added delete method)
