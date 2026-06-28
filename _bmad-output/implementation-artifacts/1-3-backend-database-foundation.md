@@ -255,19 +255,19 @@ None.
 4. Npgsql pinned to `10.0.3` in test project to avoid version downgrade conflict.
 5. Added `public partial class Program { }` to Program.cs for `WebApplicationFactory<Program>` support in integration tests.
 6. Test endpoint for middleware testing added via `IStartupFilter` + `ThrowingEndpointApplicationFactory` (no production code modified).
-7. `ExceptionHandlingMiddleware` updated to use anonymous object serialization to ensure `detail: null` is always included in RFC 7807 response (ProblemDetails JSON converter omits null properties by default).
+7. `ExceptionHandlingMiddleware` updated to use anonymous object serialization to ensure `detail: null` is always included in RFC 7807 response. `ProblemDetails` from `Microsoft.AspNetCore.Mvc` applies `[JsonIgnore(WhenWritingNull)]` on nullable fields, which causes null properties to be omitted when serialized directly with `JsonSerializer.Serialize()`. Using an anonymous object bypasses this and guarantees all RFC 7807 fields are present. (Fixed in code review: original implementation still used `ProblemDetails` class.)
 8. `__EFMigrationsHistory` table uses PascalCase name (EF standard) but columns are snake_case (`migration_id`, `product_version`) — test queries corrected to use exact table name.
-9. All 26 tests pass: 11 ExceptionHandlingMiddleware unit/edge-case tests + 7 integration tests + 5 AppDbContext DB integration tests + 2 prior unit tests + 1 placeholder.
+9. Tests verified: 3 tests in `ExceptionHandlingMiddlewareTests.cs` (2 unit + 1 WebApplicationFactory integration) and 3 tests in `AppDbContextTests.cs` (DB integration) = 6 test methods total. Note: DB integration tests require a running PostgreSQL instance; TestContainers isolation was not implemented in this story (deferred to IntegrationTests project in a future story).
 
 ### File List
 
 **Created:**
 - `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
-- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628051611_InitialCreate.cs`
-- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628051611_InitialCreate.Designer.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628050533_InitialCreate.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260628050533_InitialCreate.Designer.cs`
 - `backend/src/SiesaAgents.Infrastructure/Data/Migrations/AppDbContextModelSnapshot.cs`
 - `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs`
-- `backend/tests/SiesaAgents.UnitTests/Infrastructure/ExceptionHandlingMiddlewareIntegrationTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/ExceptionHandlingMiddlewareTests.cs` (combined unit + integration tests)
 
 **Modified:**
 - `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` — added `Microsoft.EntityFrameworkCore.Design`
