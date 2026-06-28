@@ -5,6 +5,8 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import { toast } from 'sonner';
 import { useCliente } from '../application/useCliente';
 import { useDeleteCliente } from '../application/useDeleteCliente';
+import { useContactosByCliente } from '../../contactos/application/useContactosByCliente';
+import { ContactManager } from '../../shared/components/ContactManager';
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel';
 import { NotFoundPanel } from '../../../../shared/components/NotFoundPanel';
 import { ClienteForm } from './ClienteForm';
@@ -27,6 +29,12 @@ interface ClienteDetailViewProps {
 
 export function ClienteDetailView({ clienteId, onClienteDeleted }: ClienteDetailViewProps) {
   const { data, isLoading, isError, error, refetch } = useCliente(clienteId);
+  const {
+    data: contactos,
+    isLoading: isLoadingContactos,
+    isError: isErrorContactos,
+    refetch: refetchContactos,
+  } = useContactosByCliente(clienteId);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const deleteMutation = useDeleteCliente();
@@ -142,6 +150,18 @@ export function ClienteDetailView({ clienteId, onClienteDeleted }: ClienteDetail
           <dd className="mt-1 text-sm text-slate-900">{data.ciudad}</dd>
         </div>
       </dl>
+
+      <div data-testid="contact-manager-section" className="mt-6">
+        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">
+          Contactos asociados
+        </h3>
+        <ContactManager
+          contactos={contactos ?? []}
+          isLoading={isLoadingContactos}
+          isError={isErrorContactos}
+          onRetry={() => refetchContactos()}
+        />
+      </div>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

@@ -38,7 +38,7 @@ export function ContactManager({ contactos, isLoading, isError, onRetry }: Conta
   if (contactos.length === 0) {
     return (
       <div data-testid="contact-manager-empty" className="py-4 text-center">
-        <p className="text-sm text-slate-500">No hay contactos asociados a este cliente.</p>
+        <p className="text-sm text-slate-500">Sin contactos vinculados a este cliente.</p>
       </div>
     );
   }
