@@ -55,6 +55,38 @@ public static class ClienteEndpoints
             }
         });
 
+        group.MapPut("/{id:guid}", async (
+            Guid id,
+            UpdateClienteRequest request,
+            UpdateClienteRequestValidator validator,
+            UpdateClienteCommandHandler handler,
+            CancellationToken ct) =>
+        {
+            var validation = await validator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+                return Results.ValidationProblem(validation.ToDictionary());
+
+            try
+            {
+                var dto = await handler.Handle(
+                    new UpdateClienteCommand(id, request.Nombre, request.Nit, request.Telefono, request.Ciudad), ct);
+
+                return dto is not null
+                    ? Results.Ok(dto)
+                    : Results.Problem(
+                        detail: "El cliente solicitado no fue encontrado.",
+                        statusCode: 404,
+                        title: "Cliente no encontrado");
+            }
+            catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+            {
+                return Results.Problem(
+                    detail: "El NIT/RUC ya está registrado",
+                    statusCode: 409,
+                    title: "Conflicto de datos");
+            }
+        });
+
         group.MapDelete("/{id:guid}", async (Guid id, IClienteRepository repo, CancellationToken ct) =>
         {
             await repo.DeleteAsync(id, ct);

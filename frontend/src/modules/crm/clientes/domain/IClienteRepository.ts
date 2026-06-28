@@ -5,4 +5,5 @@ export interface IClienteRepository {
   getAll(): Promise<Cliente[]>;
   getById(id: string): Promise<Cliente>;
   create(data: ClienteFormData): Promise<Cliente>;
+  update(id: string, data: ClienteFormData): Promise<Cliente>;
 }

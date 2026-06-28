@@ -25,6 +25,8 @@ builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 builder.Services.AddScoped<CreateClienteCommandHandler>();
 builder.Services.AddScoped<CreateClienteRequestValidator>();
+builder.Services.AddScoped<UpdateClienteCommandHandler>();
+builder.Services.AddScoped<UpdateClienteRequestValidator>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5173"];

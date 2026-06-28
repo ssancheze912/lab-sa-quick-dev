@@ -7,6 +7,7 @@ public interface IClienteRepository
     Task<IReadOnlyList<ClienteEntity>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddAsync(ClienteEntity cliente, CancellationToken cancellationToken = default);
+    Task UpdateAsync(ClienteEntity entity, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
