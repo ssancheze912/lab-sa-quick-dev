@@ -11,7 +11,11 @@ import type { Contacto } from '../../contactos/domain/Contacto';
  * Story 4.2 will add mutation methods (addContact, removeContact).
  */
 export class ClienteContactServiceAdapter {
-  constructor(private readonly clienteId: string) {}
+  private readonly clienteId: string;
+
+  constructor(clienteId: string) {
+    this.clienteId = clienteId;
+  }
 
   async getContacts(): Promise<Contacto[]> {
     return contactoApiRepository.getByClienteId(this.clienteId);
