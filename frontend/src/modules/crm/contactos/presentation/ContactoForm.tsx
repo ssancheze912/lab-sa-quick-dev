@@ -3,14 +3,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import { contactoSchema, type ContactoFormData } from '../application/contactoSchema';
 import { useCreateContacto } from '../application/useCreateContacto';
+import { useUpdateContacto } from '../application/useUpdateContacto';
 
 interface ContactoFormProps {
   onClose: () => void;
   onSuccess?: () => void;
   defaultValues?: Partial<ContactoFormData>;
+  contactoId?: string;
 }
 
-export function ContactoForm({ onClose, onSuccess, defaultValues }: ContactoFormProps) {
+export function ContactoForm({ onClose, onSuccess, defaultValues, contactoId }: ContactoFormProps) {
+  const isEditMode = !!contactoId;
+
   const {
     register,
     handleSubmit,
@@ -21,22 +25,37 @@ export function ContactoForm({ onClose, onSuccess, defaultValues }: ContactoForm
     defaultValues,
   });
 
-  const { mutate, isPending } = useCreateContacto();
+  const createMutation = useCreateContacto();
+  const updateMutation = useUpdateContacto();
+
+  const isPending = isEditMode ? updateMutation.isPending : createMutation.isPending;
+
+  const handleError = (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 409) {
+      setError('email', { message: 'El email ya está registrado' });
+    } else {
+      setError('root', {
+        message: isEditMode
+          ? 'Error al actualizar el contacto. Intente nuevamente.'
+          : 'Error al crear el contacto. Intente nuevamente.',
+      });
+    }
+  };
+
+  const handleSuccess = () => {
+    onSuccess?.();
+    onClose();
+  };
 
   const onSubmit = (data: ContactoFormData) => {
-    mutate(data, {
-      onError: (error) => {
-        if (axios.isAxiosError(error) && error.response?.status === 409) {
-          setError('email', { message: 'El email ya está registrado' });
-        } else {
-          setError('root', { message: 'Error al crear el contacto. Intente nuevamente.' });
-        }
-      },
-      onSuccess: () => {
-        onSuccess?.();
-        onClose();
-      },
-    });
+    if (isEditMode) {
+      updateMutation.mutate(
+        { id: contactoId!, data },
+        { onError: handleError, onSuccess: handleSuccess }
+      );
+    } else {
+      createMutation.mutate(data, { onError: handleError, onSuccess: handleSuccess });
+    }
   };
 
   return (
@@ -95,7 +114,13 @@ export function ContactoForm({ onClose, onSuccess, defaultValues }: ContactoForm
         Cancelar
       </button>
       <button type="submit" disabled={isPending} data-testid="btn-submit">
-        {isPending ? 'Creando...' : 'Crear contacto'}
+        {isPending
+          ? isEditMode
+            ? 'Guardando...'
+            : 'Creando...'
+          : isEditMode
+            ? 'Guardar cambios'
+            : 'Crear contacto'}
       </button>
     </form>
   );

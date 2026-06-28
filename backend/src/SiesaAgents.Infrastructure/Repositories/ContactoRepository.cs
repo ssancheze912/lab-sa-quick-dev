@@ -35,4 +35,10 @@ public class ContactoRepository(AppDbContext dbContext) : IContactoRepository
         dbContext.Contactos.Remove(contacto);
         return Task.CompletedTask;
     }
+
+    public async Task UpdateAsync(ContactoEntity contacto, CancellationToken ct = default)
+    {
+        dbContext.Contactos.Update(contacto);
+        await dbContext.SaveChangesAsync(ct);
+    }
 }

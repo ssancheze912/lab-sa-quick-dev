@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Application.Contactos.Commands;
 using SiesaAgents.Application.Contactos.DTOs;
 using SiesaAgents.Application.Contactos.Queries;
 using SiesaAgents.Application.Contactos.Validators;
@@ -51,6 +52,36 @@ public static class ContactoEndpoints
                     contacto.Id, contacto.Nombre, contacto.Cargo, contacto.Telefono,
                     contacto.Email, contacto.ClienteId, contacto.CreatedAt, contacto.UpdatedAt);
                 return Results.Created($"/api/v1/contactos/{contacto.Id}", dto);
+            }
+            catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+            {
+                return Results.Problem(
+                    detail: "El email ya está registrado",
+                    statusCode: 409,
+                    title: "Conflicto de datos");
+            }
+        });
+
+        group.MapPut("/{id:guid}", async (
+            Guid id,
+            UpdateContactoRequest request,
+            UpdateContactoRequestValidator validator,
+            UpdateContactoCommandHandler handler,
+            CancellationToken ct) =>
+        {
+            var validation = await validator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+                return Results.ValidationProblem(validation.ToDictionary());
+
+            try
+            {
+                var dto = await handler.HandleAsync(new UpdateContactoCommand(id, request.Nombre, request.Cargo, request.Telefono, request.Email), ct);
+                if (dto is null)
+                    return Results.Problem(
+                        detail: "El contacto solicitado no fue encontrado.",
+                        statusCode: 404,
+                        title: "Contacto no encontrado");
+                return Results.Ok(dto);
             }
             catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
             {

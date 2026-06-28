@@ -9,4 +9,5 @@ public interface IContactoRepository
     Task AddAsync(ContactoEntity contacto, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
     Task DeleteAsync(ContactoEntity contacto, CancellationToken ct = default);
+    Task UpdateAsync(ContactoEntity contacto, CancellationToken ct = default);
 }
