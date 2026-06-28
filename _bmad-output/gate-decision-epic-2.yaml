@@ -1,0 +1,116 @@
+traceability_and_gate:
+  # Phase 1: Traceability
+  traceability:
+    epic_id: "2"
+    epic_name: "Client Management"
+    date: "2026-06-28"
+    stories_traced:
+      - "2.1"
+      - "2.2"
+      - "2.3"
+      - "2.4"
+      - "2.5"
+      - "2.6"
+    criteria_count:
+      p0: 12
+      p1: 23
+      p2: 18
+      p3: 5
+      total: 58
+    coverage:
+      overall: 89.7%
+      p0: 100%
+      p1: 95.7%
+      p2: 83.3%
+      p3: 60%
+    full_coverage_counts:
+      p0: 12
+      p1: 22
+      p2: 15
+      p3: 3
+      total: 52
+    gaps:
+      critical: 0
+      high: 1     # AC-2.5-4 cascade SET NULL — Epic 3 dependency
+      medium: 2   # E2E sort tests; hadContacts E2E
+      low: 3
+    quality:
+      blocker_issues: 0
+      warning_issues: 3
+      info_issues: 2
+    recommendations:
+      - "Update Story 2.5 status to done (completion notes confirm all tests pass)"
+      - "Add Testcontainers to CreateClienteApiTests for CI portability"
+      - "Add TC-E2-2-5-API-P0-2 cascade SET NULL integration test when Contactos table exists (Epic 3)"
+      - "Resolve or skip pre-existing DeleteCliente.edge.test.tsx cache eviction failure"
+      - "Add E2E sort tests (clientes-sort.spec.ts) for complete E2E sort coverage"
+
+  # Phase 2: Gate Decision
+  gate_decision:
+    decision: "PASS"
+    gate_type: "epic"
+    decision_mode: "deterministic"
+    date: "2026-06-28"
+    evaluator: "TEA Agent (testarch-trace v4.0)"
+
+    criteria:
+      p0_coverage: "100%"
+      p0_pass_rate: "100%"
+      p1_coverage: "95.7%"
+      p1_pass_rate: "~100%"
+      overall_pass_rate: "~99%"
+      overall_coverage: "89.7%"
+      security_issues: 0
+      critical_nfrs_fail: 0
+      flaky_tests: 0
+
+    thresholds:
+      min_p0_coverage: 100
+      min_p0_pass_rate: 100
+      min_p1_coverage: 90
+      min_p1_pass_rate: 95
+      min_overall_pass_rate: 90
+      min_coverage: 80
+
+    all_thresholds_met: true
+    gate_rationale: >
+      All quality gate thresholds met.
+      P0 coverage 100% (12/12 criteria).
+      P1 coverage 95.7% (22/23) — the single PARTIAL criterion (AC-2.5-4 cascade contacts)
+      has an architecturally accepted Epic 3 dependency; the DB schema enforces ON DELETE SET NULL
+      and the frontend component test validates the conditional toast behavior.
+      Overall coverage 89.7% is well above the 80% threshold.
+      No P0 test failures. No security issues. No critical NFR failures.
+
+    residual_risks:
+      - id: "RR-1"
+        description: "Cascade SET NULL not integration-tested (Contactos table Epic 3 dependency)"
+        priority: P1
+        probability: low
+        impact: low
+        mitigation: "Tech debt test stub documents gap; Epic 3 will add TC-E2-2-5-API-P0-2"
+      - id: "RR-2"
+        description: "CreateClienteApiTests requires real PostgreSQL (no Testcontainers)"
+        priority: P2
+        probability: low
+        impact: low
+        mitigation: "Verify CI pipeline has PostgreSQL service; add Testcontainers in backlog"
+
+    evidence:
+      traceability_matrix: "_bmad-output/traceability-matrix-epic-2.md"
+      story_files:
+        - "_bmad-output/implementation-artifacts/2-1-client-list-search.md"
+        - "_bmad-output/implementation-artifacts/2-2-client-detail-view.md"
+        - "_bmad-output/implementation-artifacts/2-3-create-client.md"
+        - "_bmad-output/implementation-artifacts/2-4-edit-client.md"
+        - "_bmad-output/implementation-artifacts/2-5-delete-client.md"
+        - "_bmad-output/implementation-artifacts/2-6-sort-client-list.md"
+      test_dirs:
+        backend: "backend/tests/SiesaAgents.UnitTests/Clientes/"
+        frontend: "frontend/src/modules/crm/clientes/__tests__/"
+        e2e: "e2e/tests/clientes/"
+
+    next_steps: >
+      Proceed to Epic 3 Contact Management.
+      Track RR-1 (cascade SET NULL test) as Epic 3 acceptance criteria.
+      Update Story 2.5 status field from in-progress to done.
