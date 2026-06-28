@@ -117,7 +117,7 @@ test.describe('Story 3.5 — Delete Contact (E2E)', () => {
     expect(deleteCalled).toBe(false);
 
     // AND: Contact data is still shown in the detail panel (record unchanged)
-    await expect(page.getByText(contactoData.nombre)).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId('contacto-detail-view').getByText(contactoData.nombre)).toBeVisible({ timeout: 3000 });
   });
 
   // ─────────────────────────────────────────────────────────────────────────
