@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import axios from 'axios';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { useContacto } from '../application/useContacto';
+import { ContactoForm } from './ContactoForm';
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel';
 import { NotFoundPanel } from '../../../../shared/components/NotFoundPanel';
 
@@ -11,6 +13,7 @@ interface ContactoDetailViewProps {
 
 export function ContactoDetailView({ contactoId }: ContactoDetailViewProps) {
   const { data, isLoading, isError, error, refetch } = useContacto(contactoId);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
 
   const isNotFound =
     isError && axios.isAxiosError(error) && error.response?.status === 404;
@@ -42,22 +45,46 @@ export function ContactoDetailView({ contactoId }: ContactoDetailViewProps) {
   }
 
   return (
-    <div data-testid="contacto-detail-view" className="p-6">
-      <h2 className="text-xl font-bold text-slate-900 mb-4">{data!.nombre}</h2>
-      <dl className="space-y-3">
-        <div>
-          <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Cargo</dt>
-          <dd className="text-sm text-slate-900 mt-0.5">{data!.cargo}</dd>
+    <>
+      <div data-testid="contacto-detail-view" className="p-6">
+        <h2 className="text-xl font-bold text-slate-900 mb-4">{data!.nombre}</h2>
+        <dl className="space-y-3">
+          <div>
+            <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Cargo</dt>
+            <dd className="text-sm text-slate-900 mt-0.5">{data!.cargo}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Teléfono</dt>
+            <dd className="text-sm text-slate-900 mt-0.5">{data!.telefono}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Email</dt>
+            <dd className="text-sm text-slate-900 mt-0.5">{data!.email}</dd>
+          </div>
+        </dl>
+        <button
+          onClick={() => setIsEditFormOpen(true)}
+          data-testid="btn-editar"
+          className="mt-4 rounded bg-[#0e79fd] px-4 py-2 text-sm font-medium text-white hover:bg-[#154ca9]"
+        >
+          Editar
+        </button>
+      </div>
+      {isEditFormOpen && (
+        <div role="dialog" aria-modal="true">
+          <ContactoForm
+            contactoId={data!.id}
+            defaultValues={{
+              nombre: data!.nombre,
+              cargo: data!.cargo,
+              telefono: data!.telefono,
+              email: data!.email,
+            }}
+            onClose={() => setIsEditFormOpen(false)}
+            onSuccess={() => refetch()}
+          />
         </div>
-        <div>
-          <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Teléfono</dt>
-          <dd className="text-sm text-slate-900 mt-0.5">{data!.telefono}</dd>
-        </div>
-        <div>
-          <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Email</dt>
-          <dd className="text-sm text-slate-900 mt-0.5">{data!.email}</dd>
-        </div>
-      </dl>
-    </div>
+      )}
+    </>
   );
 }
