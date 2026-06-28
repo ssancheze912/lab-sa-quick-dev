@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
+import { Toaster } from 'sonner'
 import { QueryProvider } from './app/providers/QueryProvider'
 import { routeTree } from './routeTree.gen'
 import './index.css'
@@ -17,6 +18,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryProvider>
       <RouterProvider router={router} />
+      <Toaster />
     </QueryProvider>
   </StrictMode>,
 )

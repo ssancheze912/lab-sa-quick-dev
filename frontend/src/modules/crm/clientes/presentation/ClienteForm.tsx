@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
+import { Toaster } from 'sonner';
 import { clienteSchema, type ClienteFormData } from '../application/clienteSchema';
 import { useCreateCliente } from '../application/useCreateCliente';
 
@@ -34,6 +35,8 @@ export function ClienteForm({ onClose, onSuccess }: ClienteFormProps) {
   };
 
   return (
+    <>
+    <Toaster />
     <form onSubmit={handleSubmit(onSubmit)} data-testid="cliente-form">
       <div>
         <label htmlFor="nombre">Nombre</label>
@@ -62,5 +65,6 @@ export function ClienteForm({ onClose, onSuccess }: ClienteFormProps) {
         {isPending ? 'Creando...' : 'Crear cliente'}
       </button>
     </form>
+    </>
   );
 }
