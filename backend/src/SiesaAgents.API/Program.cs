@@ -33,6 +33,7 @@ builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
 builder.Services.AddScoped<IGetContactosQueryHandler, GetContactosQueryHandler>();
 builder.Services.AddScoped<IGetContactoByIdQueryHandler, GetContactoByIdQueryHandler>();
 builder.Services.AddScoped<ICreateContactoCommandHandler, CreateContactoCommandHandler>();
+builder.Services.AddScoped<IUpdateContactoCommandHandler, UpdateContactoCommandHandler>();
 
 // OpenApi metadata (required by Scalar)
 builder.Services.AddOpenApi();

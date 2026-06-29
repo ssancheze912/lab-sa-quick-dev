@@ -25,6 +25,12 @@ public sealed class ContactoRepository(AppDbContext dbContext) : IContactoReposi
         await dbContext.Contactos.AddAsync(entity, ct);
     }
 
+    public Task UpdateAsync(ContactoEntity entity, CancellationToken ct = default)
+    {
+        dbContext.Contactos.Update(entity);
+        return Task.CompletedTask;
+    }
+
     public async Task SaveChangesAsync(CancellationToken ct = default)
     {
         await dbContext.SaveChangesAsync(ct);

@@ -1,15 +1,19 @@
+import { useState } from 'react'
 import axios from 'axios'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { ToastProvider } from 'siesa-ui-kit'
 import { useContacto } from '../application/useContacto'
+import { ContactoForm } from './ContactoForm'
 
 interface ContactoDetailViewProps {
   contactoId: string
 }
 
-export function ContactoDetailView({ contactoId }: ContactoDetailViewProps) {
+function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
   const { data, isLoading, isError, error, refetch } = useContacto(contactoId)
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false)
 
   if (isLoading) {
     return (
@@ -64,6 +68,19 @@ export function ContactoDetailView({ contactoId }: ContactoDetailViewProps) {
     )
   }
 
+  if (isEditFormOpen) {
+    return (
+      <div data-testid="contacto-detail-edit-form" className="p-6">
+        <ContactoForm
+          mode="edit"
+          contacto={data}
+          onSuccess={() => setIsEditFormOpen(false)}
+          onCancel={() => setIsEditFormOpen(false)}
+        />
+      </div>
+    )
+  }
+
   return (
     <div data-testid="contacto-detail-panel" className="p-6">
       <div className="flex items-center justify-end mb-4 gap-2">
@@ -71,6 +88,7 @@ export function ContactoDetailView({ contactoId }: ContactoDetailViewProps) {
           type="button"
           data-testid="contacto-edit-button"
           aria-label={`Editar contacto ${data.nombre}`}
+          onClick={() => setIsEditFormOpen(true)}
           className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
         >
           <PencilSquareIcon className="w-4 h-4" aria-hidden="true" />
@@ -114,5 +132,13 @@ export function ContactoDetailView({ contactoId }: ContactoDetailViewProps) {
         </div>
       </dl>
     </div>
+  )
+}
+
+export function ContactoDetailView(props: ContactoDetailViewProps) {
+  return (
+    <ToastProvider>
+      <ContactoDetailViewInner {...props} />
+    </ToastProvider>
   )
 }

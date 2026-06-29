@@ -19,7 +19,8 @@ public sealed class GetContactoByIdQueryHandler(IContactoRepository repository) 
             contacto.Telefono,
             contacto.Email,
             contacto.ClienteId,
-            contacto.CreatedAt
+            contacto.CreatedAt,
+            contacto.UpdatedAt
         );
     }
 }

@@ -25,7 +25,8 @@ public sealed class CreateContactoCommandHandler(IContactoRepository repository)
             entity.Telefono,
             entity.Email,
             entity.ClienteId,
-            entity.CreatedAt
+            entity.CreatedAt,
+            entity.UpdatedAt
         );
     }
 }

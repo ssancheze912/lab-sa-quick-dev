@@ -1,4 +1,4 @@
-import type { IContactoRepository, CreateContactoInput } from '../domain/IContactoRepository'
+import type { IContactoRepository, CreateContactoInput, UpdateContactoInput } from '../domain/IContactoRepository'
 import type { Contacto } from '../domain/Contacto'
 import { apiClient } from '../../../../shared/lib/apiClient'
 
@@ -15,6 +15,11 @@ export const contactoApiRepository: IContactoRepository = {
 
   async create(data: CreateContactoInput): Promise<Contacto> {
     const response = await apiClient.post<Contacto>('/api/v1/contactos', data)
+    return response.data
+  },
+
+  async update(id: string, data: UpdateContactoInput): Promise<Contacto> {
+    const response = await apiClient.put<Contacto>(`/api/v1/contactos/${id}`, data)
     return response.data
   },
 }

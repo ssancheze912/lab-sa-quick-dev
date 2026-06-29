@@ -16,7 +16,8 @@ public sealed class GetContactosQueryHandler(IContactoRepository repository) : I
             c.Telefono,
             c.Email,
             c.ClienteId,
-            c.CreatedAt
+            c.CreatedAt,
+            c.UpdatedAt
         ));
     }
 }

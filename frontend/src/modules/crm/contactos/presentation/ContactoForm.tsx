@@ -3,34 +3,64 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ToastProvider, toast } from 'siesa-ui-kit'
 import { zodContactoSchema, type ContactoFormData } from '../application/contactoSchema'
 import { useCreateContacto } from '../application/useCreateContacto'
+import { useUpdateContacto } from '../application/useUpdateContacto'
+import type { Contacto } from '../domain/Contacto'
 
 interface ContactoFormProps {
+  contacto?: Contacto
+  mode?: 'create' | 'edit'
   onSuccess?: () => void
   onCancel?: () => void
 }
 
-function ContactoFormInner({ onSuccess, onCancel }: ContactoFormProps) {
+function ContactoFormInner({ contacto, mode = 'create', onSuccess, onCancel }: ContactoFormProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<ContactoFormData>({
     resolver: zodResolver(zodContactoSchema),
+    defaultValues:
+      mode === 'edit' && contacto
+        ? {
+            nombre: contacto.nombre,
+            cargo: contacto.cargo,
+            telefono: contacto.telefono,
+            email: contacto.email,
+          }
+        : undefined,
   })
 
-  const { mutate, isPending } = useCreateContacto({
+  const createMutation = useCreateContacto({
     onSuccess: () => {
       toast.success('Contacto creado correctamente')
       onSuccess?.()
     },
   })
+  const updateMutation = useUpdateContacto({ onSuccess })
+
+  const isPending = mode === 'edit' ? updateMutation.isPending : createMutation.isPending
 
   const onSubmit = (data: ContactoFormData) => {
-    mutate(data, {
-      onError: () => {
-        toast.error('Error al crear el contacto')
-      },
-    })
+    if (mode === 'edit' && contacto) {
+      updateMutation.mutate(
+        { id: contacto.id, data },
+        {
+          onSuccess: () => {
+            toast.success('Contacto actualizado correctamente')
+          },
+          onError: () => {
+            toast.error('Error al actualizar el contacto')
+          },
+        }
+      )
+    } else {
+      createMutation.mutate(data, {
+        onError: () => {
+          toast.error('Error al crear el contacto')
+        },
+      })
+    }
   }
 
   return (

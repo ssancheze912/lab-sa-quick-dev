@@ -7,5 +7,6 @@ public sealed record ContactoDto(
     string Telefono,
     string Email,
     Guid? ClienteId,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt
 );

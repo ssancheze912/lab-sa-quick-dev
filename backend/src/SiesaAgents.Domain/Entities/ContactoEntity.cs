@@ -17,6 +17,16 @@ public sealed class ContactoEntity
     // Navigation property (optional)
     public ClienteEntity? Cliente { get; private set; }
 
+    /// <summary>Updates contact fields. ClienteId is NOT modified here — Epic 4 handles client-contact association.</summary>
+    public void Update(string nombre, string cargo, string telefono, string email)
+    {
+        Nombre = nombre;
+        Cargo = cargo;
+        Telefono = telefono;
+        Email = email;
+        UpdatedAt = DateTimeOffset.UtcNow; // ALWAYS DateTimeOffset, NEVER DateTime
+    }
+
     /// <summary>Factory method — only valid way to create a new ContactoEntity.</summary>
     public static ContactoEntity Create(
         string nombre,
