@@ -138,7 +138,7 @@ public sealed class CreateContactoEndpointTests
         // THEN: clienteId is null (contacts created independently per FR25)
         Assert.True(doc.RootElement.TryGetProperty("clienteId", out var clienteIdProp),
             "Response must contain 'clienteId' field");
-        Assert.Equal(JsonValueKind.Null, clienteIdProp.ValueKind,
+        Assert.True(clienteIdProp.ValueKind == JsonValueKind.Null,
             $"'clienteId' must be null on creation but got: {clienteIdProp}");
 
         // THEN: createdAt is present as ISO 8601 with timezone (DateTimeOffset)

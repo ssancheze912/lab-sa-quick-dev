@@ -19,4 +19,14 @@ public sealed class ContactoRepository(AppDbContext dbContext) : IContactoReposi
         return await dbContext.Contactos
             .FirstOrDefaultAsync(c => c.Id == id, ct);
     }
+
+    public async Task AddAsync(ContactoEntity entity, CancellationToken ct = default)
+    {
+        await dbContext.Contactos.AddAsync(entity, ct);
+    }
+
+    public async Task SaveChangesAsync(CancellationToken ct = default)
+    {
+        await dbContext.SaveChangesAsync(ct);
+    }
 }

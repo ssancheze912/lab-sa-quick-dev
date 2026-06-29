@@ -6,6 +6,7 @@ using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Interfaces;
 using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Application.Clientes.DTOs;
+using SiesaAgents.Application.Contactos.Commands;
 using SiesaAgents.Application.Contactos.Interfaces;
 using SiesaAgents.Application.Contactos.Queries;
 using SiesaAgents.Application.Contactos.DTOs;
@@ -31,6 +32,7 @@ builder.Services.AddScoped<IDeleteClienteCommandHandler, DeleteClienteCommandHan
 builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
 builder.Services.AddScoped<IGetContactosQueryHandler, GetContactosQueryHandler>();
 builder.Services.AddScoped<IGetContactoByIdQueryHandler, GetContactoByIdQueryHandler>();
+builder.Services.AddScoped<ICreateContactoCommandHandler, CreateContactoCommandHandler>();
 
 // OpenApi metadata (required by Scalar)
 builder.Services.AddOpenApi();

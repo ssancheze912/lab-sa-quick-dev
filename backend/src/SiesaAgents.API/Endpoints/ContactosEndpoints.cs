@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using SiesaAgents.Application.Contactos.Commands;
 using SiesaAgents.Application.Contactos.Queries;
+using SiesaAgents.Application.Contactos.Validators;
 
 namespace SiesaAgents.API.Endpoints;
 
@@ -48,6 +50,37 @@ public static class ContactosEndpoints
         })
         .WithName("GetContactoByIdInvalid")
         .WithSummary("Invalid contact ID format");
+
+        app.MapPost("/api/v1/contactos", async (CreateContactoCommand command, ICreateContactoCommandHandler handler, CancellationToken ct) =>
+        {
+            var validator = new CreateContactoRequestValidator();
+            var validationResult = await validator.ValidateAsync(command, ct);
+
+            if (!validationResult.IsValid)
+            {
+                var errors = validationResult.Errors
+                    .GroupBy(e => e.PropertyName, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(
+                        g => char.ToLowerInvariant(g.Key[0]) + g.Key[1..],
+                        g => g.Select(e => e.ErrorMessage).ToArray()
+                    );
+
+                var validationProblem = new
+                {
+                    status = StatusCodes.Status400BadRequest,
+                    title = "Validation Error",
+                    errors
+                };
+
+                return Results.Json(validationProblem, statusCode: StatusCodes.Status400BadRequest, contentType: "application/problem+json");
+            }
+
+            var dto = await handler.HandleAsync(command, ct);
+
+            return Results.Created($"/api/v1/contactos/{dto.Id}", dto);
+        })
+        .WithName("CreateContacto")
+        .WithSummary("Create a new contact");
 
         return app;
     }

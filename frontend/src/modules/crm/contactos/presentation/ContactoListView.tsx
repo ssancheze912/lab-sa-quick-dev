@@ -6,10 +6,12 @@ import { useContactos } from '../application/useContactos'
 import { ContactListItem } from './ContactListItem'
 import { EmptyState } from '../../../../shared/components/EmptyState'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
+import { ContactoForm } from './ContactoForm'
 
 export function ContactoListView() {
   const { data, isLoading, isError, refetch } = useContactos()
   const [searchQuery, setSearchQuery] = useState('')
+  const [isFormOpen, setIsFormOpen] = useState(false)
 
   const filteredContactos = useMemo(() => {
     if (!searchQuery.trim()) return data ?? []
@@ -48,9 +50,18 @@ export function ContactoListView() {
     )
   }
 
+  if (isFormOpen) {
+    return (
+      <ContactoForm
+        onSuccess={() => setIsFormOpen(false)}
+        onCancel={() => setIsFormOpen(false)}
+      />
+    )
+  }
+
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 border-b border-slate-200">
+      <div className="p-3 border-b border-slate-200 flex items-center gap-2">
         <input
           data-testid="contactos-search-input"
           type="text"
@@ -58,8 +69,20 @@ export function ContactoListView() {
           aria-label="Buscar contacto por nombre o email"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full text-sm border border-slate-200 rounded px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0e79fd]"
+          className="flex-1 text-sm border border-slate-200 rounded px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0e79fd]"
         />
+        <button
+          type="button"
+          data-testid="nuevo-contacto-button"
+          onClick={() => setIsFormOpen(true)}
+          className="flex items-center gap-1 text-sm bg-[#0e79fd] text-white px-3 py-2 rounded hover:bg-[#154ca9] focus:outline-none focus:ring-2 focus:ring-[#0e79fd]"
+          aria-label="Nuevo contacto"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4" aria-hidden="true">
+            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+          </svg>
+          Nuevo contacto
+        </button>
       </div>
       <div className="overflow-y-auto flex-1">
         {filteredContactos.map((contacto) => (
