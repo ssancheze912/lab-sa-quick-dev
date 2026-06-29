@@ -1,0 +1,5 @@
+# Root-level ignores
+node_modules/
+playwright-results/
+playwright-report/
+test-results/
