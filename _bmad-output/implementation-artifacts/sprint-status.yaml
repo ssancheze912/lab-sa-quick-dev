@@ -36,7 +36,7 @@ development_status:
   epic-3-last-update: 29-06-2026
   3-3-create-contact: done
   3-4-edit-contact: done
-  3-5-delete-contact: pending
+  3-5-delete-contact: ready-for-dev
 
   # Epic 4 — Client-Contact Association & Data Quality
   4-1-view-associated-contacts-in-client-detail: pending
