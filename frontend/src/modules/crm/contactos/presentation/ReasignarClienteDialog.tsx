@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
-import { ToastProvider } from 'siesa-ui-kit'
 import {
   Dialog,
   DialogContent,
@@ -30,14 +29,7 @@ function ReasignarClienteDialogInner({
   const { data: clientes, isLoading } = useClientes()
   const { mutate, isPending } = useReasignarContacto()
 
-  let _currentExcluded = false
-  const available = (clientes ?? []).filter((c) => {
-    if (c.id === currentClienteId && !_currentExcluded) {
-      _currentExcluded = true
-      return false
-    }
-    return true
-  })
+  const available = (clientes ?? []).filter((c) => c.id !== currentClienteId)
 
   const filtered = available.filter((c) =>
     c.nombre.toLowerCase().includes(search.toLowerCase())
@@ -148,9 +140,5 @@ function ReasignarClienteDialogInner({
 }
 
 export function ReasignarClienteDialog(props: ReasignarClienteDialogProps) {
-  return (
-    <ToastProvider>
-      <ReasignarClienteDialogInner {...props} />
-    </ToastProvider>
-  )
+  return <ReasignarClienteDialogInner {...props} />
 }

@@ -77,6 +77,7 @@ function ClienteAsociadoSeccion({ clienteId, contactoId }: ClienteAsociadoSeccio
         <button
           type="button"
           data-testid="reasignar-cliente-btn"
+          aria-label="Reasignar cliente"
           onClick={() => setIsReasignarOpen(true)}
           className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
