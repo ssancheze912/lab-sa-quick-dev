@@ -6,6 +6,7 @@ export function useContactos(sinCliente = false) {
     queryKey: ['contactos', { sinCliente }],
     queryFn: () => contactoApiRepository.getAll({ sinCliente }),
     staleTime: 0,
+    retry: 0,
   })
 
   return { data, isLoading, isError, refetch }

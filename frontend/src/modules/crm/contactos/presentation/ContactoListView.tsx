@@ -9,8 +9,28 @@ import { EmptyState } from '../../../../shared/components/EmptyState'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 import { ContactoForm } from './ContactoForm'
 
-export function ContactoListView() {
-  const [sinCliente, setSinCliente] = useState(false)
+interface ContactoListViewProps {
+  /** When provided, URL-synced sinCliente state controlled by parent route. */
+  sinClienteParam?: boolean
+  /** When provided, navigate to toggle sinCliente URL param. */
+  onToggleSinCliente?: () => void
+}
+
+export function ContactoListView({ sinClienteParam, onToggleSinCliente }: ContactoListViewProps = {}) {
+  // Local state fallback — used when no URL-synced prop is provided (e.g. unit tests)
+  const [sinClienteLocal, setSinClienteLocal] = useState(false)
+
+  // sinClienteParam takes precedence when supplied (URL-synced, E2E / real app)
+  const sinCliente = sinClienteParam !== undefined ? sinClienteParam : sinClienteLocal
+
+  function toggleSinCliente() {
+    if (onToggleSinCliente) {
+      onToggleSinCliente()
+    } else {
+      setSinClienteLocal((prev) => !prev)
+    }
+  }
+
   const { data, isLoading, isError, refetch } = useContactos(sinCliente)
   const [searchQuery, setSearchQuery] = useState('')
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -27,8 +47,10 @@ export function ContactoListView() {
     <button
       type="button"
       data-testid="filtro-sin-cliente"
-      onClick={() => setSinCliente((prev) => !prev)}
+      onClick={toggleSinCliente}
       aria-pressed={sinCliente}
+      data-state={sinCliente ? 'on' : 'off'}
+      data-active={sinCliente ? 'true' : undefined}
       aria-label="Sin cliente"
       className={`text-sm px-3 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-[#0e79fd] ${
         sinCliente
@@ -73,13 +95,18 @@ export function ContactoListView() {
     )
   }
 
-  // Empty state without sinCliente filter: no search input (AC-E3 pre-existing test requirement)
+  // Empty state without sinCliente filter: show toggle so user can still activate it
   if (!sinCliente && data && data.length === 0) {
     return (
-      <EmptyState
-        message="No hay contactos registrados. Cree el primer contacto para comenzar."
-        testId="contactos-empty-state"
-      />
+      <div className="flex flex-col h-full">
+        <div className="p-3 border-b border-slate-200 flex items-center gap-2 flex-wrap">
+          {sinClienteToggle}
+        </div>
+        <EmptyState
+          message="No hay contactos registrados. Cree el primer contacto para comenzar."
+          testId="contactos-empty-state"
+        />
+      </div>
     )
   }
 

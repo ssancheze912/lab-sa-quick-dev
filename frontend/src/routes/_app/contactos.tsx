@@ -17,9 +17,23 @@ function ContactosLayout() {
   // cargo / nombre text only appears once in the DOM (enables strict-mode text locators).
   const isDetailView = /\/contactos\/[^/]+/.test(location.pathname)
 
+  const { sinCliente } = Route.useSearch()
+  const navigate = Route.useNavigate()
+
+  function handleToggleSinCliente() {
+    void navigate({
+      search: (prev) => ({ ...prev, sinCliente: sinCliente ? undefined : true }),
+    })
+  }
+
   return (
     <div className="flex h-full" data-testid="contactos-view">
-      {!isDetailView && <ContactoListView />}
+      {!isDetailView && (
+        <ContactoListView
+          sinClienteParam={sinCliente ?? false}
+          onToggleSinCliente={handleToggleSinCliente}
+        />
+      )}
       <div className="flex-1 overflow-auto">
         <Outlet />
       </div>
