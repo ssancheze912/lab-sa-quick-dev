@@ -22,7 +22,7 @@ export function ConfirmarDesasociarDialog({
   open,
   onClose,
 }: ConfirmarDesasociarDialogProps) {
-  const { mutate, isPending, isError } = useDesasociarContacto()
+  const { mutate, isPending } = useDesasociarContacto()
 
   function handleConfirm() {
     mutate(
@@ -37,20 +37,14 @@ export function ConfirmarDesasociarDialog({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent aria-describedby={undefined} aria-labelledby="desasociar-contacto-dialog-title">
         <DialogHeader>
-          <DialogTitle>Desasociar contacto</DialogTitle>
+          <DialogTitle id="desasociar-contacto-dialog-title">Desasociar contacto</DialogTitle>
         </DialogHeader>
 
         <p className="text-sm text-slate-600 mt-2">
           ¿Deseas desasociar a <span className="font-medium">{contactoNombre}</span> de este cliente? El contacto no será eliminado.
         </p>
-
-        {isError && (
-          <p className="text-sm text-red-600 mt-2">
-            No se pudo desasociar el contacto. Intenta de nuevo.
-          </p>
-        )}
 
         <DialogFooter className="mt-4">
           <button

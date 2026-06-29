@@ -51,9 +51,9 @@ export function AsociarContactoDialog({ clienteId, open, onClose }: AsociarConta
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleCancel() }}>
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent aria-describedby={undefined} aria-labelledby="asociar-contacto-dialog-title">
         <DialogHeader>
-          <DialogTitle>Asociar contacto</DialogTitle>
+          <DialogTitle id="asociar-contacto-dialog-title">Asociar contacto</DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
@@ -64,6 +64,7 @@ export function AsociarContactoDialog({ clienteId, open, onClose }: AsociarConta
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden="true" />
               <input
                 type="text"
+                aria-label="Buscar contacto"
                 placeholder="Buscar contacto..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -82,6 +83,7 @@ export function AsociarContactoDialog({ clienteId, open, onClose }: AsociarConta
                     <button
                       type="button"
                       data-testid={`contacto-item-${contacto.id}`}
+                      aria-pressed={selectedContactoId === contacto.id}
                       onClick={() => setSelectedContactoId(contacto.id)}
                       className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                         selectedContactoId === contacto.id

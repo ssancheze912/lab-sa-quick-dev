@@ -10,5 +10,10 @@ public sealed class AssignClienteCommandValidator : AbstractValidator<AssignClie
         RuleFor(x => x.ContactoId)
             .NotEqual(Guid.Empty)
             .WithMessage("El identificador del contacto no es válido.");
+
+        RuleFor(x => x.ClienteId)
+            .NotEqual(Guid.Empty)
+            .When(x => x.ClienteId.HasValue)
+            .WithMessage("El identificador del cliente no es válido.");
     }
 }
