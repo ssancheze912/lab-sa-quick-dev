@@ -50,7 +50,7 @@ function useIsDesktop() {
 }
 
 const NAV_BUTTON_BASE =
-  'flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors'
+  'flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#60b6fa]'
 
 const NAV_BUTTON_ACTIVE = 'text-[#0e79fd] bg-blue-50'
 const NAV_BUTTON_INACTIVE = 'text-slate-600'
@@ -73,9 +73,6 @@ function NavItems({ items, activeId, onNavigate }: {
             aria-label={item.ariaLabel}
             aria-current={isActive ? 'page' : undefined}
             onClick={() => onNavigate(item)}
-            style={{ outline: 'none' }}
-            onFocus={(e) => { e.currentTarget.style.outline = '2px solid #60b6fa'; e.currentTarget.style.outlineOffset = '2px' }}
-            onBlur={(e) => { e.currentTarget.style.outline = 'none'; e.currentTarget.style.outlineOffset = '0' }}
             className={[
               NAV_BUTTON_BASE,
               isActive ? NAV_BUTTON_ACTIVE : NAV_BUTTON_INACTIVE,
@@ -128,30 +125,7 @@ function RootLayout() {
           role="navigation"
           style={{ height: 64 }}
         >
-          {NAV_ITEMS.map((item) => {
-            const isActive = activeId === item.id
-            return (
-              <button
-                key={item.id}
-                type="button"
-                data-testid={`nav-item-${item.id}`}
-                data-active={isActive ? 'true' : undefined}
-                aria-label={item.ariaLabel}
-                aria-current={isActive ? 'page' : undefined}
-                onClick={() => handleNavClick(item)}
-                style={{ outline: 'none' }}
-                onFocus={(e) => { e.currentTarget.style.outline = '2px solid #60b6fa'; e.currentTarget.style.outlineOffset = '2px' }}
-                onBlur={(e) => { e.currentTarget.style.outline = 'none'; e.currentTarget.style.outlineOffset = '0' }}
-                className={[
-                  'flex flex-1 flex-col items-center justify-center gap-1 py-2 px-1 cursor-pointer transition-colors',
-                  isActive ? 'text-[#0e79fd]' : 'text-slate-600',
-                ].join(' ')}
-              >
-                <span>{item.icon}</span>
-                <span className="text-[10px] font-bold leading-3">{item.label}</span>
-              </button>
-            )
-          })}
+          <NavItems items={NAV_ITEMS} activeId={activeId} onNavigate={handleNavClick} />
         </nav>
       ) : null}
     </div>

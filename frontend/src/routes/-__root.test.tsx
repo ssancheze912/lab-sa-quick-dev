@@ -52,16 +52,24 @@ describe('RootLayout — NavigationBar mobile (< lg)', () => {
 describe('Active navigation item', () => {
   it('marks Clientes as active when on /clientes route', async () => {
     await renderWithRouter('/clientes')
-    const railWrapper = document.querySelector('[data-testid="navigation-rail"]')
-    expect(railWrapper).toBeInTheDocument()
-    const clientesItems = document.querySelectorAll('[aria-label="Clientes"]')
-    expect(clientesItems.length).toBeGreaterThan(0)
+    const clientesItem = document.querySelector('[data-testid="nav-item-clientes"]')
+    expect(clientesItem).toBeInTheDocument()
+    expect(clientesItem).toHaveAttribute('data-active', 'true')
+    expect(clientesItem).toHaveAttribute('aria-current', 'page')
   })
 
   it('marks Contactos as active when on /contactos route', async () => {
     await renderWithRouter('/contactos')
-    const contactosItems = document.querySelectorAll('[aria-label="Contactos"]')
-    expect(contactosItems.length).toBeGreaterThan(0)
+    const contactosItem = document.querySelector('[data-testid="nav-item-contactos"]')
+    expect(contactosItem).toBeInTheDocument()
+    expect(contactosItem).toHaveAttribute('data-active', 'true')
+    expect(contactosItem).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('does not mark Contactos as active when on /clientes route', async () => {
+    await renderWithRouter('/clientes')
+    const contactosItem = document.querySelector('[data-testid="nav-item-contactos"]')
+    expect(contactosItem).not.toHaveAttribute('data-active', 'true')
   })
 })
 
