@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7]
 story_path: _bmad-output/implementation-artifacts/2-4-edit-client.md
 story_key: 2-4-edit-client
 ---
@@ -150,3 +150,13 @@ Updating `ClienteDetailView.tsx` to add `aria-label={`Editar cliente ${data.nomb
 ## Status Sync
 - **Story File Status**: Updated to `done`
 - **Sprint Status YAML**: Synced — `2-4-edit-client` → `done`
+
+## Jira Sync
+- No Jira config found (project_config.yaml missing). Skipping Jira sync.
+
+## Repository Sync
+- **Branch**: develop-platform-gaduranb-rq2-epic-2-gestion-de-clientes
+- **Commit**: review(2.4): fix type contract, Heroicons icon, and WCAG aria-label (65aa600)
+- **Push**: Performed — pushed to origin/develop-platform-gaduranb-rq2-epic-2-gestion-de-clientes
+- **GitFlow Compliance**: Verified against git-flow-siesa.md
+- **Status**: Workflow Completed Successfully
