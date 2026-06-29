@@ -1,8 +1,10 @@
 import { useState, type CSSProperties } from 'react'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
-import { PencilSquareIcon } from '@heroicons/react/24/outline'
+import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { ToastProvider, toast } from 'siesa-ui-kit'
 import { useCliente } from '../application/useCliente'
+import { useDeleteCliente } from '../application/useDeleteCliente'
 import { ClienteForm } from './ClienteForm'
 
 interface ClienteDetailViewProps {
@@ -11,9 +13,37 @@ interface ClienteDetailViewProps {
   className?: string
 }
 
-export function ClienteDetailView({ clienteId, style, className }: ClienteDetailViewProps) {
+function ClienteDetailViewInner({ clienteId, style, className }: ClienteDetailViewProps) {
   const { data, isLoading, isError } = useCliente(clienteId)
   const [isEditFormOpen, setIsEditFormOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleted, setIsDeleted] = useState(false)
+
+  const hasAssociatedContacts = (data?.contactCount ?? 0) > 0
+
+  const deleteMutation = useDeleteCliente({
+    hasAssociatedContacts,
+    onSuccess: () => {
+      setIsDeleteDialogOpen(false)
+      setIsDeleted(true)
+      const toastMessage = hasAssociatedContacts
+        ? 'Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado.'
+        : 'Cliente eliminado correctamente'
+      toast.success(toastMessage)
+    },
+  })
+
+  if (isDeleted) {
+    return (
+      <div
+        data-testid="empty-state"
+        style={style}
+        className={`flex flex-col items-center justify-center p-8 text-center ${className ?? ''}`}
+      >
+        <p className="text-slate-400 text-sm">Selecciona un cliente para ver sus detalles</p>
+      </div>
+    )
+  }
 
   if (!clienteId) {
     return (
@@ -22,6 +52,7 @@ export function ClienteDetailView({ clienteId, style, className }: ClienteDetail
         style={style}
         className={`flex flex-col items-center justify-center p-8 text-center ${className ?? ''}`}
       >
+        <span data-testid="cliente-detail-empty-state" />
         <p className="text-slate-400 text-sm">Selecciona un cliente para ver sus detalles</p>
       </div>
     )
@@ -77,17 +108,30 @@ export function ClienteDetailView({ clienteId, style, className }: ClienteDetail
     >
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-slate-800">{data.nombre}</h2>
-        <button
-          type="button"
-          data-testid="cliente-detail-edit-button"
-          aria-label={`Editar cliente ${data.nombre}`}
-          onClick={() => setIsEditFormOpen(true)}
-          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
-        >
-          <PencilSquareIcon className="w-4 h-4" aria-hidden="true" />
-          Editar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            data-testid="cliente-detail-edit-button"
+            aria-label={`Editar cliente ${data.nombre}`}
+            onClick={() => setIsEditFormOpen(true)}
+            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+          >
+            <PencilSquareIcon className="w-4 h-4" aria-hidden="true" />
+            Editar
+          </button>
+          <button
+            type="button"
+            data-testid="cliente-detail-delete-button"
+            aria-label={`Eliminar cliente ${data.nombre}`}
+            onClick={() => setIsDeleteDialogOpen(true)}
+            className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
+          >
+            <TrashIcon className="w-4 h-4" aria-hidden="true" />
+            Eliminar
+          </button>
+        </div>
       </div>
+
       <dl className="space-y-3">
         <div className="flex flex-col">
           <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Nombre</dt>
@@ -114,6 +158,55 @@ export function ClienteDetailView({ clienteId, style, className }: ClienteDetail
           </dd>
         </div>
       </dl>
+
+      {isDeleteDialogOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-dialog-title"
+          data-testid="cliente-detail-delete-dialog"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        >
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h2
+              id="delete-dialog-title"
+              className="text-lg font-semibold text-slate-800 mb-2"
+            >
+              ¿Eliminar este cliente?
+            </h2>
+            <p className="text-sm text-slate-500 mb-6">
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                data-testid="cliente-detail-delete-cancel"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded hover:bg-slate-200"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                data-testid="cliente-detail-delete-confirm"
+                disabled={deleteMutation.isPending}
+                onClick={() => deleteMutation.mutate(data.id)}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+export function ClienteDetailView(props: ClienteDetailViewProps) {
+  return (
+    <ToastProvider>
+      <ClienteDetailViewInner {...props} />
+    </ToastProvider>
   )
 }

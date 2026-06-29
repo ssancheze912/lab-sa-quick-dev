@@ -31,6 +31,12 @@ public sealed class ClienteRepository(AppDbContext dbContext) : IClienteReposito
         return Task.CompletedTask;
     }
 
+    public async Task DeleteAsync(ClienteEntity entity, CancellationToken ct = default)
+    {
+        dbContext.Clientes.Remove(entity);
+        await dbContext.SaveChangesAsync(ct);
+    }
+
     public async Task SaveChangesAsync()
     {
         await dbContext.SaveChangesAsync();

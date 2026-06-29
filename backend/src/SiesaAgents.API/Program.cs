@@ -22,6 +22,7 @@ builder.Services.AddScoped<IGetClientesQueryHandler, GetClientesQueryHandler>();
 builder.Services.AddScoped<IGetClienteByIdQueryHandler, GetClienteByIdQueryHandler>();
 builder.Services.AddScoped<ICreateClienteCommandHandler, CreateClienteCommandHandler>();
 builder.Services.AddScoped<IUpdateClienteCommandHandler, UpdateClienteCommandHandler>();
+builder.Services.AddScoped<IDeleteClienteCommandHandler, DeleteClienteCommandHandler>();
 
 // OpenApi metadata (required by Scalar)
 builder.Services.AddOpenApi();

@@ -101,6 +101,14 @@ public static class ClientesEndpoints
         .WithName("UpdateCliente")
         .WithSummary("Update an existing client");
 
+        app.MapDelete("/api/v1/clientes/{id:guid}", async (Guid id, IDeleteClienteCommandHandler handler, CancellationToken ct) =>
+        {
+            await handler.HandleAsync(new DeleteClienteCommand(id), ct);
+            return Results.NoContent();
+        })
+        .WithName("DeleteCliente")
+        .WithSummary("Delete a client by ID");
+
         return app;
     }
 }
