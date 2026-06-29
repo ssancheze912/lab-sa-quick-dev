@@ -13,7 +13,7 @@ development_status:
   epic-1: in-progress
   epic-2: done
   epic-3: done
-  epic-4: pending
+  epic-4: in-progress
 
   # Epic 1 — Project Foundation & Application Shell
   1-1-project-initialization-repository-structure: ready-for-dev
