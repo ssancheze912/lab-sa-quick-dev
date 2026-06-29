@@ -104,26 +104,28 @@ public class ExceptionHandlingMiddlewareUnitTests
         await act.Should().ThrowAsync<InvalidOperationException>("the middleware must rethrow if HasStarted is true");
     }
 
-    [Fact]
-    public async Task InvokeAsync_DifferentHttpMethods_AllProduceProblemDetails()
+    [Theory]
+    [InlineData("GET")]
+    [InlineData("POST")]
+    [InlineData("PUT")]
+    [InlineData("DELETE")]
+    [InlineData("PATCH")]
+    public async Task InvokeAsync_DifferentHttpMethods_AllProduceProblemDetails(string method)
     {
         // GIVEN: a middleware that always throws regardless of HTTP verb.
-        foreach (var method in new[] { "GET", "POST", "PUT", "DELETE", "PATCH" })
-        {
-            RequestDelegate next = _ => throw new InvalidOperationException();
-            var middleware = new ExceptionHandlingMiddleware(next, NullLogger<ExceptionHandlingMiddleware>.Instance);
-            var context = new DefaultHttpContext();
-            context.Request.Method = method;
-            context.Request.Path = "/api/v1/x";
-            context.Response.Body = new MemoryStream();
+        RequestDelegate next = _ => throw new InvalidOperationException();
+        var middleware = new ExceptionHandlingMiddleware(next, NullLogger<ExceptionHandlingMiddleware>.Instance);
+        var context = new DefaultHttpContext();
+        context.Request.Method = method;
+        context.Request.Path = "/api/v1/x";
+        context.Response.Body = new MemoryStream();
 
-            // WHEN: invoked.
-            await middleware.InvokeAsync(context);
+        // WHEN: invoked.
+        await middleware.InvokeAsync(context);
 
-            // THEN: response is always Problem Details with 500.
-            context.Response.StatusCode.Should().Be(500, $"verb {method} must still go through the middleware");
-            context.Response.ContentType.Should().Be("application/problem+json");
-        }
+        // THEN: response is always Problem Details with 500.
+        context.Response.StatusCode.Should().Be(500, $"verb {method} must still go through the middleware");
+        context.Response.ContentType.Should().Be("application/problem+json");
     }
 
     /// <summary>
