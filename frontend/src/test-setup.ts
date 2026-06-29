@@ -1,4 +1,11 @@
 import '@testing-library/jest-dom/vitest'
+import { afterAll, afterEach, beforeAll } from 'vitest'
+import { server } from './mocks/server'
+
+// MSW lifecycle — used by Story 2.1+ component tests.
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
 // jsdom locks `window.location` properties so `vi.spyOn(window.location, 'reload')`
 // throws "Cannot redefine property". Replacing `window.location` with a plain
