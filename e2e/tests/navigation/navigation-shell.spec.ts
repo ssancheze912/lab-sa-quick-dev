@@ -86,12 +86,14 @@ test.describe('AC2 — Client-side navigation to /clientes', () => {
     await page.waitForURL('**/contactos**');
 
     // WHEN: The user clicks the "Clientes" navigation item
-    // Track whether a full navigation (document reload) occurs — it must NOT
+    // Network-first: intercept the HTML document request BEFORE click to detect a full reload.
+    // If /clientes is fetched as a new HTML document, fullPageReload becomes true.
     let fullPageReload = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame()) {
+    await page.route('**/clientes', (route) => {
+      if (route.request().resourceType() === 'document') {
         fullPageReload = true;
       }
+      route.continue();
     });
 
     await page.getByTestId('nav-item-clientes').click();
@@ -99,9 +101,7 @@ test.describe('AC2 — Client-side navigation to /clientes', () => {
 
     // THEN: The URL changed to /clientes via client-side routing (no full reload)
     expect(page.url()).toContain('/clientes');
-    // Full page reload detection: a new navigation frame event IS expected for client-side
-    // routing — the important thing is no full document fetch (no 200 on /)
-    // The SPA router changes URL without a server round-trip — verified by no reload of root HTML
+    expect(fullPageReload).toBe(false); // SPA navigation must NOT fetch a new HTML document
   });
 
   test('should mark the "Clientes" nav item as active after navigating to /clientes', async ({

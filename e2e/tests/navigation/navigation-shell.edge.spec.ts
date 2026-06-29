@@ -181,18 +181,14 @@ test.describe('[P1] Rapid consecutive navigation clicks', () => {
     await page.getByTestId('nav-item-contactos').click();
     await page.getByTestId('nav-item-clientes').click();
 
-    // Wait for the navigation to settle
-    await page.waitForURL(/.*\/(clientes|contactos)/);
+    // Wait for navigation to settle on the last-clicked item (/clientes)
+    // The router must process clicks sequentially — the last click (Clientes) must win
+    await page.waitForURL('**/clientes**');
 
-    // THEN: The URL and active state are consistent — URL matches the active item
-    const finalUrl = page.url();
-    if (finalUrl.includes('/clientes')) {
-      await expect(page.getByTestId('nav-item-clientes')).toHaveAttribute('data-active', 'true');
-      await expect(page.getByTestId('nav-item-contactos')).not.toHaveAttribute('data-active', 'true');
-    } else {
-      await expect(page.getByTestId('nav-item-contactos')).toHaveAttribute('data-active', 'true');
-      await expect(page.getByTestId('nav-item-clientes')).not.toHaveAttribute('data-active', 'true');
-    }
+    // THEN: The final URL is /clientes (last click wins) and active state is consistent
+    await expect(page).toHaveURL(/.*\/clientes/);
+    await expect(page.getByTestId('nav-item-clientes')).toHaveAttribute('data-active', 'true');
+    await expect(page.getByTestId('nav-item-contactos')).not.toHaveAttribute('data-active', 'true');
   });
 });
 
