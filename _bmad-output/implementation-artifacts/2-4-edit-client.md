@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,8 +24,8 @@ so that the client information stays up to date.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Create `useUpdateCliente` application hook (AC: #2, #5)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useUpdateCliente.ts`
+- [x] Task 1 — Create `useUpdateCliente` application hook (AC: #2, #5)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useUpdateCliente.ts`
     - Uses `useMutation` from TanStack Query
     - `mutationFn: ({ id, data }: { id: string; data: ClienteFormData }) => clienteApiRepository.update(id, data)` — calls `PUT /api/v1/clientes/{id}`
     - `onSuccess`: calls `queryClient.invalidateQueries({ queryKey: ['clientes'] })` AND `queryClient.invalidateQueries({ queryKey: ['clientes', id] })` to refresh both list and detail caches
@@ -33,12 +33,12 @@ so that the client information stays up to date.
     - `onError`: shows generic "Error al actualizar el cliente" (never expose raw error details)
     - Exposes `mutate`, `isPending`, `isError`, `error` from the hook
 
-- [ ] Task 2 — Extend infrastructure layer: add `update` to API repository (AC: #2)
-  - [ ] Update `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — add `update(id: string, data: ClienteFormData): Promise<Cliente>` method signature
-  - [ ] Update `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implement `update`: calls `PUT /api/v1/clientes/${id}` via `apiClient` with `data` as JSON body; returns `Cliente`; throws on non-2xx (let `useMutation` `onError` handle it)
+- [x] Task 2 — Extend infrastructure layer: add `update` to API repository (AC: #2)
+  - [x] Update `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — add `update(id: string, data: ClienteFormData): Promise<Cliente>` method signature
+  - [x] Update `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implement `update`: calls `PUT /api/v1/clientes/${id}` via `apiClient` with `data` as JSON body; returns `Cliente`; throws on non-2xx (let `useMutation` `onError` handle it)
 
-- [ ] Task 3 — Update `ClienteForm` to support edit mode (AC: #1, #3, #4)
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx`
+- [x] Task 3 — Update `ClienteForm` to support edit mode (AC: #1, #3, #4)
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx`
     - Add optional props: `cliente?: Cliente` (existing client to edit) and `mode?: 'create' | 'edit'` (defaults to `'create'`)
     - When `cliente` prop is provided, initialize form with `defaultValues` from the existing client data using `useForm`'s `defaultValues` option
     - When `mode === 'edit'`: submit calls `useUpdateCliente.mutate({ id: cliente.id, data })` instead of `useCreateCliente.mutate(data)`
@@ -48,8 +48,8 @@ so that the client information stays up to date.
     - Props interface updated: `{ cliente?: Cliente; mode?: 'create' | 'edit'; onSuccess?: () => void; onCancel?: () => void }`
     - Check siesa-ui-kit first for form input / label / button components; fall back to shadcn/ui, then custom
 
-- [ ] Task 4 — Wire "Editar" button in `ClienteDetailView` (AC: #1, #4)
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+- [x] Task 4 — Wire "Editar" button in `ClienteDetailView` (AC: #1, #4)
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
     - Add "Editar" button (Heroicon `PencilIcon` + label) in the detail panel actions area
     - Manage `isEditFormOpen: boolean` state with `useState`
     - When `isEditFormOpen === true`: render `ClienteForm` with `mode="edit"` and `cliente={currentCliente}` (pass full `Cliente` object from TanStack Query cache)
@@ -57,35 +57,35 @@ so that the client information stays up to date.
     - When `isEditFormOpen === false`: render the client detail as before (Nombre, NIT/RUC, Teléfono, Ciudad)
     - Form host: use siesa-ui-kit dialog/sheet if available, else the shadcn `Dialog` component already installed in the project
 
-- [ ] Task 5 — Backend: PUT /api/v1/clientes/{id} endpoint (AC: #2, #3)
-  - [ ] Create `UpdateClienteCommand.cs` + `UpdateClienteCommandHandler.cs` in `backend/src/SiesaAgents.Application/Clientes/Commands/`
+- [x] Task 5 — Backend: PUT /api/v1/clientes/{id} endpoint (AC: #2, #3)
+  - [x] Create `UpdateClienteCommand.cs` + `UpdateClienteCommandHandler.cs` in `backend/src/SiesaAgents.Application/Clientes/Commands/`
     - Command record: `UpdateClienteCommand(Guid Id, string Nombre, string Nit, string Telefono, string Ciudad)`
     - Handler: loads `ClienteEntity` by ID via `IClienteRepository.GetByIdAsync(id)`; if not found, throws domain-level NotFoundException → 404; calls entity update method (e.g., `entity.Update(nombre, nit, telefono, ciudad)`) which sets fields and `UpdatedAt = DateTimeOffset.UtcNow`; calls `SaveChangesAsync()`; returns `ClienteDto`
-  - [ ] Add `Update(string nombre, string nit, string telefono, string ciudad)` method to `ClienteEntity` in `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs`
+  - [x] Add `Update(string nombre, string nit, string telefono, string ciudad)` method to `ClienteEntity` in `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs`
     - Sets `Nombre`, `Nit`, `Telefono`, `Ciudad` on the entity
     - Sets `UpdatedAt = DateTimeOffset.UtcNow` — ALWAYS `DateTimeOffset`, NEVER `DateTime`
-  - [ ] Create `UpdateClienteRequestValidator.cs` in `backend/src/SiesaAgents.Application/Clientes/Validators/`
+  - [x] Create `UpdateClienteRequestValidator.cs` in `backend/src/SiesaAgents.Application/Clientes/Validators/`
     - FluentValidation: `Nombre`, `Nit`, `Telefono`, `Ciudad` all required (not empty/null)
     - Returns `400 Bad Request` with Problem Details on validation failure
-  - [ ] Create or verify endpoint `PUT /api/v1/clientes/{id}` in `backend/src/SiesaAgents.API/Endpoints/ClientesEndpoints.cs`
+  - [x] Create or verify endpoint `PUT /api/v1/clientes/{id}` in `backend/src/SiesaAgents.API/Endpoints/ClientesEndpoints.cs`
     - Accepts `UpdateClienteRequest` body (maps to command fields) and `{id}` route param (Guid)
     - Returns `200 OK` with updated `ClienteDto` body
     - Returns `400 Bad Request` + Problem Details when FluentValidation fails
     - Returns `404 Not Found` + Problem Details when client does not exist
     - Uses Scalar docs (NEVER Swagger)
-  - [ ] Update `IClienteRepository` interface in `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` — add `UpdateAsync(ClienteEntity entity): Task` if not already present
-  - [ ] Update `ClienteRepository` implementation in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implement `UpdateAsync`: marks entity as Modified in EF Core context and calls `SaveChangesAsync()`
+  - [x] Update `IClienteRepository` interface in `backend/src/SiesaAgents.Application/Clientes/Interfaces/IClienteRepository.cs` — add `UpdateAsync(ClienteEntity entity): Task` if not already present
+  - [x] Update `ClienteRepository` implementation in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implement `UpdateAsync`: marks entity as Modified in EF Core context and calls `SaveChangesAsync()`
 
-- [ ] Task 6 — Write tests (AC: #1–#5)
-  - [ ] **Unit test** `useUpdateCliente.test.ts`:
+- [x] Task 6 — Write tests (AC: #1–#5)
+  - [x] **Unit test** `useUpdateCliente.test.ts`:
     - TC-E2-P2-05 (analog for update): spy on `queryClient.invalidateQueries`; execute mutation `onSuccess` callback; assert `invalidateQueries({ queryKey: ['clientes'] })` called AND `invalidateQueries({ queryKey: ['clientes', id] })` called
     - Assert `isPending` is `true` during mutation execution
-  - [ ] **Component test** `ClienteForm.edit.test.tsx` (or extend `ClienteForm.test.tsx`):
+  - [x] **Component test** `ClienteForm.edit.test.tsx` (or extend `ClienteForm.test.tsx`):
     - TC-E2-P1-07: Render `ClienteForm` with `mode="edit"` and `cliente={{ id: '1', nombre: 'Delta SA', nit: '888', telefono: '3219876543', ciudad: 'Medellín' }}`; assert all 4 inputs are pre-filled with correct values
     - TC-E2-P1-08: Open edit form pre-filled, modify `Nombre` to "Modified Name", click "Cancelar"; assert `onCancel` was called; assert PUT NOT triggered by MSW (0 requests)
     - TC-E2-P1-09: Fill edit form, change `Ciudad` to "Cali", submit → MSW returns 200 → assert PUT called with correct payload `{ nombre, nit, telefono, ciudad: "Cali" }`, toast "Cliente actualizado correctamente" shown, `onSuccess` called
     - TC-E2-P2-02: Open edit form pre-filled, clear `Nombre`, submit; assert inline error on `Nombre` field; assert PUT not called (MSW receives 0 requests)
-  - [ ] **API Integration test** `UpdateClienteEndpointTests.cs` (xUnit + WebApplicationFactory):
+  - [x] **API Integration test** `UpdateClienteEndpointTests.cs` (xUnit + WebApplicationFactory):
     - TC-E2-P1-18: Seed client with `ciudad: "Bogotá"`; PUT `{ nombre, nit, telefono, ciudad: "Cali" }` to `/api/v1/clientes/{id}`; assert 200, response body has updated `ciudad: "Cali"` and `updatedAt` (ISO 8601 with TZ); follow-up GET confirms persistence
     - Update 404: PUT valid payload to non-existent ID `/api/v1/clientes/00000000-0000-0000-0000-000000000000`; assert 404 Problem Details with `status: 404`; assert NO `stackTrace`
     - Validation 400: PUT `{}` (empty body) to valid ID; assert 400, Problem Details with errors on `nombre`, `nit`, `telefono`, `ciudad`; assert NO `stackTrace`
@@ -437,6 +437,10 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- All 6 tasks implemented. Frontend: useUpdateCliente.ts, updated IClienteRepository.ts, clienteApiRepository.ts, ClienteForm.tsx (extended with mode/cliente props), ClienteDetailView.tsx (added Editar button + isEditFormOpen state). Backend: UpdateClienteCommand.cs, UpdateClienteCommandHandler.cs, UpdateClienteRequest.cs, UpdateClienteRequestValidator.cs, ClienteEntity.Update() method, IClienteRepository.UpdateAsync(), ClienteRepository.UpdateAsync(), PUT endpoint in ClientesEndpoints.cs, DI registration in Program.cs, ClienteNotFoundException → 404 in middleware. ClienteDto extended with UpdatedAt field.
+- Created proxy re-export files at src/modules/test/msw/handlers/ to resolve ATDD test import path mismatch (tests used 3-level relative paths pointing to src/modules/test/ instead of src/test/).
+- 22 frontend ATDD tests GREEN (8 useUpdateCliente + 14 ClienteForm.edit). 6 backend integration tests GREEN. Pre-existing test failures in ClientesEndpointsTests (story 2.1) and ClientesEndpointsEdgeTests not introduced by this story.
+
 ### File List
 
 - frontend/src/modules/crm/clientes/domain/IClienteRepository.ts
@@ -444,14 +448,19 @@ claude-sonnet-4-6
 - frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts
 - frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx
 - frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx
-- backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs
+- frontend/src/modules/test/msw/handlers/clientes-update.handlers.ts
+- frontend/src/modules/test/msw/handlers/clientes.handlers.ts
+- backend/src/SiesaAgents.Domain/Entities/ClienteEntity.cs
 - backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommand.cs
 - backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommandHandler.cs
 - backend/src/SiesaAgents.Application/Clientes/Validators/UpdateClienteRequestValidator.cs
 - backend/src/SiesaAgents.Application/Clientes/DTOs/UpdateClienteRequest.cs
+- backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs
 - backend/src/SiesaAgents.Application/Clientes/Interfaces/IClienteRepository.cs
 - backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs
 - backend/src/SiesaAgents.API/Endpoints/ClientesEndpoints.cs
+- backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs
+- backend/src/SiesaAgents.API/Program.cs
 - frontend/src/modules/crm/clientes/application/useUpdateCliente.test.ts
-- frontend/src/modules/crm/clientes/presentation/ClienteForm.test.tsx
+- frontend/src/modules/crm/clientes/presentation/ClienteForm.edit.test.tsx
 - backend/tests/SiesaAgents.IntegrationTests/Clientes/UpdateClienteEndpointTests.cs
