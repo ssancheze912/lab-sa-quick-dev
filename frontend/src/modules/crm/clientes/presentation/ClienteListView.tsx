@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useClientes } from '../application/useClientes'
@@ -95,19 +96,15 @@ export function ClienteListView() {
       </div>
       <div className="overflow-y-auto flex-1">
         {filteredAndSorted.map((cliente) => (
-          <a
+          <Link
             key={cliente.id}
-            href={`/clientes/${cliente.id}`}
+            to="/clientes/$clienteId"
+            params={{ clienteId: cliente.id }}
+            data-testid={`cliente-item-${cliente.id}`}
             className="block"
-            onClick={(e) => {
-              // Prevent full page reload — TanStack Router handles navigation
-              // when rendered inside a RouterProvider context
-              e.preventDefault()
-              window.history.pushState({}, '', `/clientes/${cliente.id}`)
-            }}
           >
             <ClientListItem cliente={cliente} />
-          </a>
+          </Link>
         ))}
       </div>
     </div>

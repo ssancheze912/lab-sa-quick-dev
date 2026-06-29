@@ -217,7 +217,7 @@ test.describe('TC-E2-P1-06: Deep link to non-existent clienteId', () => {
     await page.goto(`/clientes/${NONEXISTENT_CLIENT_ID}`);
 
     // THEN: Navigation shell (sidebar/topbar) is still visible
-    await expect(page.getByTestId('nav-shell')).toBeVisible();
+    await expect(page.getByTestId('navigation-rail')).toBeVisible();
   });
 
   test('should NOT crash the page (no blank white screen) on 404 deep link', async ({ page }) => {
