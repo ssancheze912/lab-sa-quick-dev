@@ -17,7 +17,8 @@ development_status:
 
   # Epic 1 — Project Foundation & Application Shell
   1-1-project-initialization-repository-structure: ready-for-dev
-  1-2-frontend-navigation-shell: in-progress
+  1-2-frontend-navigation-shell: review
+  epic-1-last-update: 29-06-2026
   1-3-backend-database-foundation: pending
 
   # Epic 2 — Client Management
