@@ -24,7 +24,7 @@ development_status:
   # Epic 2 — Client Management
   2-1-client-list-search: ready-for-dev
   epic-2-last-update: 29-06-2026
-  2-2-client-detail-view: pending
+  2-2-client-detail-view: ready-for-dev
   2-3-create-client: pending
   2-4-edit-client: pending
   2-5-delete-client: pending
