@@ -3,6 +3,7 @@ import { clienteApiRepository } from '../infrastructure/clienteApiRepository'
 
 interface UseDeleteClienteOptions {
   onSuccess?: () => void
+  onError?: () => void
   hasAssociatedContacts?: boolean
 }
 
@@ -14,6 +15,9 @@ export function useDeleteCliente(options?: UseDeleteClienteOptions) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clientes'] })
       options?.onSuccess?.()
+    },
+    onError: () => {
+      options?.onError?.()
     },
   })
 }

@@ -115,18 +115,7 @@ describe('ClienteDetailView — DELETE 500 keeps dialog open', () => {
     expect(screen.queryByTestId('cliente-detail-delete-dialog')).toBeInTheDocument();
   });
 
-  it.skip('[P1] FIXME: should show an error toast when DELETE returns 500', async () => {
-    // FIXME: Test healing failed — implementation gap detected (iteration 1/3)
-    // Failure: "Unable to find an element with the text: /Error al eliminar el cliente/i"
-    // Root cause: useDeleteCliente.ts does not implement an onError callback.
-    //             ClienteDetailView.tsx does not render an error toast when deleteMutation.isError
-    //             is true. The story dev notes specify: "onError: shows generic 'Error al eliminar
-    //             el cliente' (never expose raw error details)" — this was not implemented.
-    // Attempted healing: none (implementation code change required — not a test selector issue)
-    // Manual investigation needed: Add onError handler to useDeleteCliente options and/or
-    //   add toast.error('Error al eliminar el cliente') in ClienteDetailView.tsx when
-    //   deleteMutation.isError becomes true.
-    // TODO: Remove test.fixme() once implementation adds the error toast on DELETE failure.
+  it('[P1] should show an error toast when DELETE returns 500', async () => {
 
     // GIVEN: DELETE returns 500, client is loaded
     server.use(

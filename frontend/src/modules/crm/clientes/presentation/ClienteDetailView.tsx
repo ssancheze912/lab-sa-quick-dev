@@ -31,6 +31,9 @@ function ClienteDetailViewInner({ clienteId, style, className }: ClienteDetailVi
         : 'Cliente eliminado correctamente'
       toast.success(toastMessage)
     },
+    onError: () => {
+      toast.error('Error al eliminar el cliente')
+    },
   })
 
   if (isDeleted) {
