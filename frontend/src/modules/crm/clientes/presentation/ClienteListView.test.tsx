@@ -198,7 +198,6 @@ describe('TC-E2-P0-03: ErrorPanel with Reintentar on API failure', () => {
 
   it('should trigger a new fetch when Reintentar button is clicked', async () => {
     // GIVEN: MSW starts with 500 then returns success on second request
-    let requestCount = 0;
     const clients = createClientes(2);
 
     server.use(
