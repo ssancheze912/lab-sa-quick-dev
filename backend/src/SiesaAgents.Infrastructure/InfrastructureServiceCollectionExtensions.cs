@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 namespace SiesaAgents.Infrastructure;
 
@@ -25,6 +27,8 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        services.AddScoped<IClienteRepository, ClienteRepository>();
 
         return services;
     }

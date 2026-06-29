@@ -1,4 +1,7 @@
+using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application;
 using SiesaAgents.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,8 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 // OpenAPI metadata (consumed by Scalar — NOT Swagger)
 builder.Services.AddOpenApi();
 
-// Infrastructure layer (AppDbContext + PostgreSQL provider)
+// Infrastructure layer (AppDbContext + PostgreSQL provider + repositories)
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Application layer (CQRS handlers)
+builder.Services.AddApplication();
 
 // CORS for local frontend development
 var allowedOrigins = builder.Configuration
@@ -32,6 +38,9 @@ app.UseCors("DevCors");
 // Scalar — corporate standard, NEVER Swagger
 app.MapOpenApi();
 app.MapScalarApiReference();
+
+// Story 2.1 — /api/v1/clientes
+app.MapClienteEndpoints();
 
 // Development-only probe endpoint that exercises ExceptionHandlingMiddleware.
 // Validates Problem Details RFC 7807 contract end-to-end (Story 1.3 AC #2 / TC-E1-P0-05).

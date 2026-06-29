@@ -18,11 +18,14 @@
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   RouterProvider,
   createRouter,
   createMemoryHistory,
 } from '@tanstack/react-router'
+import { http, HttpResponse } from 'msw'
+import { server } from '@/mocks/server'
 import { routeTree } from '../routeTree.gen'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -63,11 +66,21 @@ function setViewport(width: number): void {
 }
 
 function renderShellAt(path: string = '/clientes') {
+  // /clientes mounts ClienteListView which uses TanStack Query; stub the API
+  // so the navigation shell tests keep their original surface intact.
+  server.use(http.get('*/api/v1/clientes', () => HttpResponse.json([])))
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 0, gcTime: 0 } },
+  })
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [path] }),
   })
-  return render(<RouterProvider router={router} />)
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

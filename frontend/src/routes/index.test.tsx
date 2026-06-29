@@ -16,11 +16,14 @@
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   RouterProvider,
   createRouter,
   createMemoryHistory,
 } from '@tanstack/react-router'
+import { http, HttpResponse } from 'msw'
+import { server } from '@/mocks/server'
 import { routeTree } from '../routeTree.gen'
 
 function setupDesktopViewport(): void {
@@ -47,11 +50,19 @@ function setupDesktopViewport(): void {
 }
 
 function renderRouterAtRoot() {
+  server.use(http.get('*/api/v1/clientes', () => HttpResponse.json([])))
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 0, gcTime: 0 } },
+  })
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: ['/'] }),
   })
-  const result = render(<RouterProvider router={router} />)
+  const result = render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  )
   return { router, ...result }
 }
 
@@ -76,11 +87,11 @@ describe('Index route — / redirects to /clientes (Story 1.2 / AC #5)', () => {
     })
   })
 
-  test('renders the Clientes placeholder after the redirect resolves', async () => {
+  test('renders the Clientes view after the redirect resolves', async () => {
     // GIVEN: starting at /
     renderRouterAtRoot()
 
-    // WHEN/THEN: the Clientes route component is rendered
-    expect(await screen.findByRole('heading', { name: 'Clientes' })).toBeInTheDocument()
+    // WHEN/THEN: the Clientes route mounts the client-list panel
+    expect(await screen.findByTestId('client-list-panel')).toBeInTheDocument()
   })
 })

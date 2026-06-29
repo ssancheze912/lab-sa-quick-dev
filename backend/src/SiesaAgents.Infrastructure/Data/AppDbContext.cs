@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
 
 namespace SiesaAgents.Infrastructure.Data;
 
@@ -7,15 +8,8 @@ namespace SiesaAgents.Infrastructure.Data;
 /// Owns the snake_case naming convention applied via <see cref="EFCore.NamingConventions"/>.
 /// </summary>
 /// <remarks>
-/// No <see cref="DbSet{TEntity}"/> declarations live here yet — domain entities arrive in:
-/// <list type="bullet">
-/// <item><description>Story 2.1 — <c>ClienteEntity</c></description></item>
-/// <item><description>Story 3.1 — <c>ContactoEntity</c></description></item>
-/// </list>
-/// Future entity configurations must be added under
-/// <c>SiesaAgents.Infrastructure/Data/Configurations/</c> implementing
-/// <see cref="IEntityTypeConfiguration{TEntity}"/> — they are auto-discovered by
-/// <see cref="ModelBuilder.ApplyConfigurationsFromAssembly(System.Reflection.Assembly, System.Func{System.Type, bool}?)"/>.
+/// Story 2.1 — added <c>DbSet&lt;ClienteEntity&gt;</c> and registered the <c>pg_trgm</c>
+/// PostgreSQL extension required by the GIN trigram index on <c>clientes.nombre</c>.
 /// </remarks>
 public sealed class AppDbContext : DbContext
 {
@@ -23,12 +17,17 @@ public sealed class AppDbContext : DbContext
     {
     }
 
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         // Auto-discover every IEntityTypeConfiguration<T> in this assembly.
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // pg_trgm extension — backs the GIN trigram index for ILIKE search.
+        modelBuilder.HasPostgresExtension("pg_trgm");
 
         // MUST be the LAST call — company-standards.md §Database Conventions.
         modelBuilder.ApplySnakeCaseNaming();

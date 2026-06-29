@@ -14,11 +14,14 @@
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   RouterProvider,
   createRouter,
   createMemoryHistory,
 } from '@tanstack/react-router'
+import { http, HttpResponse } from 'msw'
+import { server } from '@/mocks/server'
 import { routeTree } from '../routeTree.gen'
 
 function setupDesktopViewport(): void {
@@ -45,11 +48,19 @@ function setupDesktopViewport(): void {
 }
 
 function renderRouterAt(path: string) {
+  server.use(http.get('*/api/v1/clientes', () => HttpResponse.json([])))
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 0, gcTime: 0 } },
+  })
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [path] }),
   })
-  const result = render(<RouterProvider router={router} />)
+  const result = render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  )
   return { router, ...result }
 }
 
@@ -88,8 +99,8 @@ describe('Index route redirect edges (Story 1.2 / AC #5 — edges)', () => {
     // GIVEN: app boots at /
     renderRouterAt('/')
 
-    // WHEN: redirect resolves
-    await screen.findByRole('heading', { name: 'Clientes' })
+    // WHEN: redirect resolves and the Clientes view mounts
+    await screen.findByTestId('client-list-panel')
 
     // THEN: Contactos placeholder is NOT mounted (router resolved to /clientes only)
     expect(screen.queryByRole('heading', { name: 'Contactos' })).not.toBeInTheDocument()
@@ -99,8 +110,8 @@ describe('Index route redirect edges (Story 1.2 / AC #5 — edges)', () => {
     // GIVEN: app boots at /
     renderRouterAt('/')
 
-    // WHEN: redirect resolves
-    await screen.findByRole('heading', { name: 'Clientes' })
+    // WHEN: redirect resolves and the Clientes view mounts
+    await screen.findByTestId('client-list-panel')
 
     // THEN: there is no 404 heading on the page
     expect(screen.queryByRole('heading', { name: '404' })).not.toBeInTheDocument()
