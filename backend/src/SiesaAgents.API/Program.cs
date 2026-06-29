@@ -6,6 +6,8 @@ using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Interfaces;
 using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Application.Clientes.DTOs;
+using SiesaAgents.Application.Contactos.Interfaces;
+using SiesaAgents.Application.Contactos.Queries;
 using SiesaAgents.Infrastructure.Data;
 using SiesaAgents.Infrastructure.Repositories;
 
@@ -23,6 +25,10 @@ builder.Services.AddScoped<IGetClienteByIdQueryHandler, GetClienteByIdQueryHandl
 builder.Services.AddScoped<ICreateClienteCommandHandler, CreateClienteCommandHandler>();
 builder.Services.AddScoped<IUpdateClienteCommandHandler, UpdateClienteCommandHandler>();
 builder.Services.AddScoped<IDeleteClienteCommandHandler, DeleteClienteCommandHandler>();
+
+// Contactos services
+builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
+builder.Services.AddScoped<IGetContactosQueryHandler, GetContactosQueryHandler>();
 
 // OpenApi metadata (required by Scalar)
 builder.Services.AddOpenApi();
@@ -65,6 +71,7 @@ app.MapGet("/api/v1/test/trigger-exception", IResult () =>
 });
 
 app.MapClientesEndpoints();
+app.MapContactosEndpoints();
 
 app.Run();
 

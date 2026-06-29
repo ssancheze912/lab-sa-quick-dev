@@ -33,15 +33,27 @@ public sealed class ContactosWebApplicationFactory : WebApplicationFactory<Progr
     {
         builder.ConfigureServices(services =>
         {
-            // Remove the existing AppDbContext registration (PostgreSQL)
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            if (descriptor is not null)
-                services.Remove(descriptor);
+            // Remove ALL DbContext-related descriptors (PostgreSQL + AppDbContext)
+            var descriptorsToRemove = services
+                .Where(d =>
+                    d.ServiceType == typeof(DbContextOptions<AppDbContext>) ||
+                    d.ServiceType == typeof(Microsoft.EntityFrameworkCore.DbContextOptions) ||
+                    d.ServiceType == typeof(AppDbContext))
+                .ToList();
 
-            // Replace with in-memory database
+            foreach (var d in descriptorsToRemove)
+                services.Remove(d);
+
+            // Also remove IDbContextOptions registrations that hold Npgsql config
+            var optionsDescriptors = services
+                .Where(d => d.ServiceType.Name.Contains("DbContextOptions"))
+                .ToList();
+            foreach (var d in optionsDescriptors)
+                services.Remove(d);
+
+            // Add fresh InMemory context (no Npgsql, no snake_case needed)
             services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase($"IntegrationTestDb_Contactos_{Guid.NewGuid()}"));
+                options.UseInMemoryDatabase("IntegrationTestDb_Contactos"));
         });
     }
 }
@@ -219,24 +231,19 @@ public sealed class ContactosEndpointsTests : IClassFixture<ContactosWebApplicat
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        // NOTE: ContactoEntity does not exist yet — RED phase.
-        // When implemented (Task 7 of Story 3.1), uncomment this block:
-        //
-        // var contactos = Enumerable.Range(1, count).Select(i => new SiesaAgents.Domain.Entities.ContactoEntity
-        // {
-        //     Id = Guid.NewGuid(),
-        //     Nombre = $"Contacto Test {i:D4}",
-        //     Cargo = $"Cargo Test {i:D4}",
-        //     Telefono = $"310{i:D7}",
-        //     Email = $"contacto.test.{i:D4}@siesa.com",
-        //     ClienteId = null,
-        //     CreatedAt = DateTimeOffset.UtcNow.AddDays(-i),
-        //     UpdatedAt = DateTimeOffset.UtcNow.AddDays(-i),
-        // }).ToList();
-        // await dbContext.Set<SiesaAgents.Domain.Entities.ContactoEntity>().AddRangeAsync(contactos);
-        // await dbContext.SaveChangesAsync();
+        var contactos = Enumerable.Range(1, count).Select(i =>
+            SiesaAgents.Domain.Entities.ContactoEntity.Create(
+                nombre: $"Contacto Test {i:D4}",
+                cargo: $"Cargo Test {i:D4}",
+                telefono: $"310{i:D7}",
+                email: $"contacto.test.{i:D4}@siesa.com",
+                clienteId: null,
+                createdAt: DateTimeOffset.UtcNow.AddDays(-i),
+                updatedAt: DateTimeOffset.UtcNow.AddDays(-i)
+            )
+        ).ToList();
 
-        // Placeholder until domain entity exists — remove once entity is created
-        await Task.CompletedTask;
+        await dbContext.Set<SiesaAgents.Domain.Entities.ContactoEntity>().AddRangeAsync(contactos);
+        await dbContext.SaveChangesAsync();
     }
 }
