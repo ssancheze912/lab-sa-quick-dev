@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
+import { PencilSquareIcon } from '@heroicons/react/24/outline'
 import { useCliente } from '../application/useCliente'
 import { ClienteForm } from './ClienteForm'
 
@@ -79,22 +80,11 @@ export function ClienteDetailView({ clienteId, style, className }: ClienteDetail
         <button
           type="button"
           data-testid="cliente-detail-edit-button"
+          aria-label={`Editar cliente ${data.nombre}`}
           onClick={() => setIsEditFormOpen(true)}
           className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="w-4 h-4"
-            aria-hidden="true"
-          >
-            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-          </svg>
+          <PencilSquareIcon className="w-4 h-4" aria-hidden="true" />
           Editar
         </button>
       </div>

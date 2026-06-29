@@ -5,4 +5,5 @@ export interface Cliente {
   telefono: string
   ciudad: string
   createdAt: string // ISO 8601 with TZ
+  updatedAt?: string // ISO 8601 with TZ — present after PUT
 }
