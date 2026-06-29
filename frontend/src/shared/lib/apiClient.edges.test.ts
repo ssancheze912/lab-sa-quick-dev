@@ -37,8 +37,7 @@ describe('apiClient — edges', () => {
   it('[P2] has at least one response interceptor registered', () => {
     // GIVEN: apiClient.ts registers a response interceptor (success + error)
     // WHEN: Inspecting the interceptors handler list
-    // @ts-expect-error - handlers is internal but stable on axios InterceptorManager
-    const handlers = apiClient.interceptors.response.handlers as unknown[]
+    const handlers = (apiClient.interceptors.response as unknown as { handlers: unknown[] }).handlers
 
     // THEN: At least one interceptor is registered
     expect(Array.isArray(handlers)).toBe(true)
@@ -48,10 +47,9 @@ describe('apiClient — edges', () => {
   it('[P2] response error interceptor returns a rejected promise (does not swallow errors)', async () => {
     // GIVEN: apiClient.ts response interceptor is (error) => Promise.reject(error)
     // WHEN: Manually invoking the error half of the interceptor
-    // @ts-expect-error - handlers is internal but stable on axios InterceptorManager
-    const handler = apiClient.interceptors.response.handlers[0] as {
-      rejected?: (err: unknown) => unknown
-    }
+    const handler = (apiClient.interceptors.response as unknown as {
+      handlers: Array<{ rejected?: (err: unknown) => unknown }>
+    }).handlers[0]
 
     if (!handler?.rejected) {
       // Fallback assertion to keep this test deterministic even if interceptor is removed

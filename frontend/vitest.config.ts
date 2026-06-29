@@ -1,17 +1,26 @@
 import path from 'node:path'
 import { defineConfig } from 'vitest/config'
+import { loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
+// Load .env.development (and .env) so VITE_* vars are injected into import.meta.env
+// during test runs — matches the behaviour of `vite dev`.
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode ?? 'development', process.cwd(), '')
+  return {
+    plugins: [react()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
     },
-  },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    css: false,
-  },
+    define: {
+      'import.meta.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL ?? 'http://localhost:5000'),
+    },
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      css: false,
+    },
+  }
 })
