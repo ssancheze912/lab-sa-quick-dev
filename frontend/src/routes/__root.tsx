@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { createRootRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
 import { UserGroupIcon, IdentificationIcon } from '@heroicons/react/24/outline'
 import { useNavigate } from '@tanstack/react-router'
@@ -33,9 +33,67 @@ const NAV_ITEMS: NavItem[] = [
   },
 ]
 
+const DESKTOP_BREAKPOINT = 1024
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== 'undefined' ? window.innerWidth >= DESKTOP_BREAKPOINT : true
+  )
+  useEffect(() => {
+    const mql = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`)
+    setIsDesktop(mql.matches)
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
+  return isDesktop
+}
+
+const NAV_BUTTON_BASE =
+  'flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors'
+
+const NAV_BUTTON_ACTIVE = 'text-[#0e79fd] bg-blue-50'
+const NAV_BUTTON_INACTIVE = 'text-slate-600'
+
+function NavItems({ items, activeId, onNavigate }: {
+  items: NavItem[]
+  activeId: string | undefined
+  onNavigate: (item: NavItem) => void
+}) {
+  return (
+    <>
+      {items.map((item) => {
+        const isActive = activeId === item.id
+        return (
+          <button
+            key={item.id}
+            type="button"
+            data-testid={`nav-item-${item.id}`}
+            data-active={isActive ? 'true' : undefined}
+            aria-label={item.ariaLabel}
+            aria-current={isActive ? 'page' : undefined}
+            onClick={() => onNavigate(item)}
+            style={{ outline: 'none' }}
+            onFocus={(e) => { e.currentTarget.style.outline = '2px solid #60b6fa'; e.currentTarget.style.outlineOffset = '2px' }}
+            onBlur={(e) => { e.currentTarget.style.outline = 'none'; e.currentTarget.style.outlineOffset = '0' }}
+            className={[
+              NAV_BUTTON_BASE,
+              isActive ? NAV_BUTTON_ACTIVE : NAV_BUTTON_INACTIVE,
+            ].join(' ')}
+          >
+            <span>{item.icon}</span>
+            <span className="text-[10px] font-bold leading-3">{item.label}</span>
+          </button>
+        )
+      })}
+    </>
+  )
+}
+
 function RootLayout() {
   const { location } = useRouterState()
   const navigate = useNavigate()
+  const isDesktop = useIsDesktop()
 
   const activeId = NAV_ITEMS.find((item) =>
     location.pathname.startsWith(item.to)
@@ -47,82 +105,55 @@ function RootLayout() {
 
   return (
     <div className="flex h-screen">
-      {/* Desktop: NavigationRail visible on lg+ screens */}
-      <nav
-        className="hidden lg:flex flex-col w-14 bg-white border-r border-slate-200 shrink-0 py-2"
-        data-testid="navigation-rail"
-        aria-label="Navegación principal"
-        role="navigation"
-      >
-        {NAV_ITEMS.map((item) => {
-          const isActive = activeId === item.id
-          return (
-            <button
-              key={item.id}
-              type="button"
-              data-testid={`nav-item-${item.id}`}
-              data-active={isActive ? 'true' : undefined}
-              aria-label={item.ariaLabel}
-              aria-current={isActive ? 'page' : undefined}
-              onClick={() => handleNavClick(item)}
-              className={[
-                'flex flex-col items-center justify-center gap-1 w-full py-2 px-1 rounded-none',
-                'focus:outline-[2px] focus:outline-[#60b6fa] focus:outline focus:outline-offset-2',
-                'transition-colors cursor-pointer',
-                isActive
-                  ? 'text-[#0e79fd] bg-blue-50'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800',
-              ].join(' ')}
-            >
-              <span className={isActive ? 'text-[#0e79fd]' : 'text-slate-600'}>
-                {item.icon}
-              </span>
-              <span className="text-[10px] font-bold leading-3">{item.label}</span>
-            </button>
-          )
-        })}
-      </nav>
+      {isDesktop ? (
+        <nav
+          className="flex flex-col w-14 bg-white border-r border-slate-200 shrink-0 py-2"
+          data-testid="navigation-rail"
+          aria-label="Navegación principal"
+          role="navigation"
+        >
+          <NavItems items={NAV_ITEMS} activeId={activeId} onNavigate={handleNavClick} />
+        </nav>
+      ) : null}
 
-      {/* Main content area */}
-      <main className="flex-1 overflow-auto pb-16 lg:pb-0">
+      <main className="flex-1 overflow-auto" style={{ paddingBottom: isDesktop ? 0 : 64 }}>
         <Outlet />
       </main>
 
-      {/* Mobile: NavigationBar visible below lg screens */}
-      <nav
-        className="flex lg:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 z-10"
-        data-testid="navigation-bar"
-        aria-label="Navegación principal"
-        role="navigation"
-      >
-        {NAV_ITEMS.map((item) => {
-          const isActive = activeId === item.id
-          return (
-            <button
-              key={item.id}
-              type="button"
-              data-testid={`nav-item-${item.id}`}
-              data-active={isActive ? 'true' : undefined}
-              aria-label={item.ariaLabel}
-              aria-current={isActive ? 'page' : undefined}
-              onClick={() => handleNavClick(item)}
-              className={[
-                'flex flex-1 flex-col items-center justify-center gap-1 py-2 px-1',
-                'focus:outline-[2px] focus:outline-[#60b6fa] focus:outline focus:outline-offset-2',
-                'transition-colors cursor-pointer',
-                isActive
-                  ? 'text-[#0e79fd]'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800',
-              ].join(' ')}
-            >
-              <span className={isActive ? 'text-[#0e79fd]' : 'text-slate-600'}>
-                {item.icon}
-              </span>
-              <span className="text-[10px] font-bold leading-3">{item.label}</span>
-            </button>
-          )
-        })}
-      </nav>
+      {!isDesktop ? (
+        <nav
+          className="flex fixed bottom-0 w-full bg-white border-t border-slate-200 z-10"
+          data-testid="navigation-bar"
+          aria-label="Navegación principal"
+          role="navigation"
+          style={{ height: 64 }}
+        >
+          {NAV_ITEMS.map((item) => {
+            const isActive = activeId === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                data-testid={`nav-item-${item.id}`}
+                data-active={isActive ? 'true' : undefined}
+                aria-label={item.ariaLabel}
+                aria-current={isActive ? 'page' : undefined}
+                onClick={() => handleNavClick(item)}
+                style={{ outline: 'none' }}
+                onFocus={(e) => { e.currentTarget.style.outline = '2px solid #60b6fa'; e.currentTarget.style.outlineOffset = '2px' }}
+                onBlur={(e) => { e.currentTarget.style.outline = 'none'; e.currentTarget.style.outlineOffset = '0' }}
+                className={[
+                  'flex flex-1 flex-col items-center justify-center gap-1 py-2 px-1 cursor-pointer transition-colors',
+                  isActive ? 'text-[#0e79fd]' : 'text-slate-600',
+                ].join(' ')}
+              >
+                <span>{item.icon}</span>
+                <span className="text-[10px] font-bold leading-3">{item.label}</span>
+              </button>
+            )
+          })}
+        </nav>
+      ) : null}
     </div>
   )
 }
