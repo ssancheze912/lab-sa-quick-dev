@@ -71,7 +71,7 @@ export function ClienteListView() {
   if (isError) {
     return (
       <div className="w-[280px] flex-shrink-0 border-r border-slate-200 h-full flex items-center justify-center">
-        <ErrorPanel onRetry={() => refetch()} />
+        <ErrorPanel onRetry={() => refetch()} testId="clientes-error-panel" retryTestId="clientes-retry-button" />
       </div>
     )
   }
@@ -108,7 +108,7 @@ export function ClienteListView() {
           </button>
         </div>
         <div className="flex-1 flex items-center justify-center">
-          <EmptyState message="No hay clientes registrados. Cree el primer cliente para comenzar." />
+          <EmptyState message="No hay clientes registrados. Cree el primer cliente para comenzar." testId="clientes-empty-state" />
         </div>
       </div>
     )
