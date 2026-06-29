@@ -2,13 +2,10 @@
  * API Integration Tests — GET /api/v1/clientes
  * Story 2.1 — Client List & Search
  *
- * Test IDs covered (RED phase — endpoint does not exist yet):
+ * Test IDs covered:
  *   TC-E2-P1-17  GET /api/v1/clientes returns 200, direct array, all DTO fields
  *
  * Stack: xUnit 2 + WebApplicationFactory<Program> + EF Core InMemory
- *
- * Expected RED failure:
- *   - 404 Not Found because GET /api/v1/clientes is not yet registered in Program.cs
  *
  * Given-When-Then format per test method.
  */
@@ -19,6 +16,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SiesaAgents.Domain.Entities;
 using SiesaAgents.Infrastructure.Data;
 
 namespace SiesaAgents.IntegrationTests.Clientes;
@@ -29,19 +27,29 @@ namespace SiesaAgents.IntegrationTests.Clientes;
 /// </summary>
 public sealed class ClientesWebApplicationFactory : WebApplicationFactory<Program>
 {
+    public string DatabaseName { get; init; } = $"IntegrationTestDb_{Guid.NewGuid()}";
+
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
         {
-            // Remove the existing AppDbContext registration (PostgreSQL)
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            if (descriptor is not null)
-                services.Remove(descriptor);
+            // EF Core registers IDbContextOptionsConfiguration<T> services for each
+            // extension (UseNpgsql, UseSnakeCaseNamingConvention). We must remove ALL of
+            // them to prevent the "dual provider" error when adding UseInMemoryDatabase.
+            var dbContextOptionsConfigType = typeof(Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<AppDbContext>);
+            var toRemove = services
+                .Where(d =>
+                    d.ServiceType == typeof(DbContextOptions<AppDbContext>) ||
+                    d.ServiceType == typeof(AppDbContext) ||
+                    dbContextOptionsConfigType.IsAssignableFrom(d.ServiceType))
+                .ToList();
 
-            // Replace with in-memory database
+            foreach (var d in toRemove)
+                services.Remove(d);
+
+            // Register a clean in-memory DbContext
             services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase("IntegrationTestDb_Clientes"));
+                options.UseInMemoryDatabase(DatabaseName));
         });
     }
 }
@@ -149,21 +157,25 @@ public sealed class ClientesEndpointsTests : IClassFixture<ClientesWebApplicatio
     {
         // GIVEN: A fresh isolated client that does not see other tests' seeded data
         // Use a unique in-memory DB name to isolate this test
+        var uniqueDb = $"EmptyDb_{Guid.NewGuid()}";
         var factory = new ClientesWebApplicationFactory();
-        factory.WithWebHostBuilder(builder =>
+        var isolatedFactory = factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
             {
-                var descriptor = services.SingleOrDefault(
-                    d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-                if (descriptor is not null)
-                    services.Remove(descriptor);
+                var descriptors = services
+                    .Where(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>)
+                             || (d.ServiceType.IsGenericType &&
+                                 d.ServiceType.GetGenericTypeDefinition() == typeof(DbContextOptions<>)))
+                    .ToList();
+                foreach (var d in descriptors)
+                    services.Remove(d);
 
                 services.AddDbContext<AppDbContext>(options =>
-                    options.UseInMemoryDatabase($"EmptyDb_{Guid.NewGuid()}"));
+                    options.UseInMemoryDatabase(uniqueDb));
             });
         });
-        var client = factory.CreateClient();
+        var client = isolatedFactory.CreateClient();
 
         // WHEN: GET /api/v1/clientes
         var response = await client.GetAsync("/api/v1/clientes");
@@ -186,23 +198,18 @@ public sealed class ClientesEndpointsTests : IClassFixture<ClientesWebApplicatio
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        // NOTE: This uses ClienteEntity which does not exist yet (RED phase).
-        // When the entity is created, uncomment the seeding code below.
-        //
-        // var clientes = Enumerable.Range(1, count).Select(i => new SiesaAgents.Domain.Entities.ClienteEntity
-        // {
-        //     Id = Guid.NewGuid(),
-        //     Nombre = $"Empresa Test {i:D4}",
-        //     Nit = $"900{i:D6}-{i % 10}",
-        //     Telefono = $"300{i:D7}",
-        //     Ciudad = "Bogotá",
-        //     CreatedAt = DateTimeOffset.UtcNow.AddDays(-i),
-        //     UpdatedAt = DateTimeOffset.UtcNow.AddDays(-i),
-        // });
-        // await dbContext.Set<SiesaAgents.Domain.Entities.ClienteEntity>().AddRangeAsync(clientes);
-        // await dbContext.SaveChangesAsync();
+        var clientes = Enumerable.Range(1, count).Select(i => new ClienteEntity
+        {
+            Id = Guid.NewGuid(),
+            Nombre = $"Empresa Test {i:D4}",
+            Nit = $"900{i:D6}-{i % 10}",
+            Telefono = $"300{i:D7}",
+            Ciudad = "Bogotá",
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-i),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-i),
+        });
 
-        // Placeholder — remove once domain entity exists and uncomment above
-        await Task.CompletedTask;
+        await dbContext.Clientes.AddRangeAsync(clientes);
+        await dbContext.SaveChangesAsync();
     }
 }

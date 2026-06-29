@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\SiesaAgents.Application\SiesaAgents.Application.csproj" />
     <ProjectReference Include="..\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
   </ItemGroup>
 

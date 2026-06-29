@@ -52,10 +52,10 @@ public sealed class AppDbContextTests
     // AC2 — No DbSet<> properties exist on AppDbContext (scope: empty migration)
     // ─────────────────────────────────────────────────────────────────────────
 
-    [Fact(DisplayName = "AC2 — AppDbContext has no DbSet properties (empty initial migration — no domain entities in Story 1.3)")]
-    public void AppDbContext_HasNoDbSetProperties_InStory13Scope()
+    [Fact(DisplayName = "AC2 — AppDbContext exposes DbSet<ClienteEntity> after Story 2.1 (Epic 2)")]
+    public void AppDbContext_HasClientesDbSet_InStory21Scope()
     {
-        // GIVEN: Story 1.3 scope explicitly forbids adding ClienteEntity, ContactoEntity, or any DbSet<>
+        // GIVEN: Story 2.1 introduces ClienteEntity into the domain (Epic 2 — Client Management)
         // WHEN: Inspecting the public DbSet properties of AppDbContext
 
         var type = typeof(AppDbContext);
@@ -65,8 +65,9 @@ public sealed class AppDbContextTests
                 p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
             .ToList();
 
-        // THEN: No DbSet<> properties exist (domain entities are added in Epic 2 and 3)
-        Assert.Empty(dbSetProperties);
+        // THEN: Exactly one DbSet exists (Clientes), domain entities added per epic
+        Assert.NotEmpty(dbSetProperties);
+        Assert.Contains(dbSetProperties, p => p.Name == "Clientes");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

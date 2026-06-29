@@ -1,13 +1,38 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { setupServer } from 'msw/node'
+import { http, HttpResponse } from 'msw'
 import { routeTree } from '../routeTree.gen'
 
+// MSW server to intercept /api/v1/clientes so ClienteListView doesn't error
+const server = setupServer(
+  http.get('/api/v1/clientes', () => HttpResponse.json([]))
+)
+
+beforeEach(() => {
+  server.listen({ onUnhandledRequest: 'bypass' })
+})
+
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+afterEach(async () => {
+  server.resetHandlers()
+  server.close()
+})
+
 async function renderWithRouter(initialPath: string = '/clientes') {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
+  })
   const memoryHistory = createMemoryHistory({ initialEntries: [initialPath] })
   const router = createRouter({ routeTree, history: memoryHistory })
   await act(async () => {
-    render(<RouterProvider router={router} />)
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    )
     await router.load()
   })
   return { router }
@@ -76,11 +101,10 @@ describe('Active navigation item', () => {
 describe('Route views', () => {
   it('renders Clientes placeholder content on /clientes', async () => {
     await renderWithRouter('/clientes')
-    // h1 heading inside the view
-    const heading = screen.getAllByText('Clientes').find(
-      (el) => el.tagName === 'H1',
-    )
-    expect(heading).toBeInTheDocument()
+    // ClienteListView renders the clientes panel (Story 2.1 replaces placeholder)
+    await act(async () => {})
+    const clientesView = document.querySelector('[data-testid="clientes-view"]')
+    expect(clientesView).toBeInTheDocument()
   })
 
   it('renders Contactos placeholder content on /contactos', async () => {

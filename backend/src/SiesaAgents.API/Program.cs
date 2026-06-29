@@ -1,7 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Interfaces;
+using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +13,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
            .UseSnakeCaseNamingConvention());
+
+// Application services
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<IGetClientesQueryHandler, GetClientesQueryHandler>();
 
 // OpenApi metadata (required by Scalar)
 builder.Services.AddOpenApi();
@@ -50,4 +58,9 @@ app.MapGet("/api/v1/test/trigger-exception", IResult () =>
     throw new InvalidOperationException("Deliberate test exception for middleware validation.");
 });
 
+app.MapClientesEndpoints();
+
 app.Run();
+
+// Needed for WebApplicationFactory in integration tests
+public partial class Program { }
