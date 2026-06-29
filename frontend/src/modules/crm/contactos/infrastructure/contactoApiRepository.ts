@@ -8,6 +8,13 @@ export const contactoApiRepository: IContactoRepository = {
     return response.data
   },
 
+  async getByClienteId(clienteId: string): Promise<Contacto[]> {
+    const response = await apiClient.get<Contacto[]>('/api/v1/contactos', {
+      params: { clienteId },
+    })
+    return response.data
+  },
+
   async getById(id: string): Promise<Contacto> {
     const response = await apiClient.get<Contacto>(`/api/v1/contactos/${id}`)
     return response.data

@@ -19,6 +19,7 @@ export interface UpdateContactoInput {
 export interface IContactoRepository {
   getAll(): Promise<Contacto[]>
   getById(id: string): Promise<Contacto>
+  getByClienteId(clienteId: string): Promise<Contacto[]>
   create(data: CreateContactoInput): Promise<Contacto>
   update(id: string, data: UpdateContactoInput): Promise<Contacto>
   delete(id: string): Promise<void>

@@ -5,12 +5,60 @@ import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { ToastProvider, toast } from 'siesa-ui-kit'
 import { useCliente } from '../application/useCliente'
 import { useDeleteCliente } from '../application/useDeleteCliente'
+import { useContactosByCliente } from '../../contactos/application/useContactosByCliente'
 import { ClienteForm } from './ClienteForm'
 
 interface ClienteDetailViewProps {
   clienteId: string | null
   style?: CSSProperties
   className?: string
+}
+
+function ContactosSeccion({ clienteId }: { clienteId: string }) {
+  const { data, isLoading, isError, refetch } = useContactosByCliente(clienteId)
+
+  if (isLoading) {
+    return (
+      <div data-testid="contactos-skeleton" className="mt-6">
+        <Skeleton height={20} count={3} className="mb-2" />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div data-testid="contactos-error-state" className="mt-6">
+        <p className="text-sm text-slate-500 mb-2">No se pudo cargar los contactos. Intenta de nuevo.</p>
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
+        >
+          Reintentar
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div data-testid="cliente-contactos-seccion" className="mt-6">
+      <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">Contactos</h3>
+      {!data || data.length === 0 ? (
+        <div data-testid="contactos-empty-state" className="text-sm text-slate-400">
+          Sin contactos asociados
+        </div>
+      ) : (
+        <ul data-testid="contactos-lista" className="space-y-2">
+          {data.map((contacto) => (
+            <li key={contacto.id} className="flex flex-col py-2 border-b border-slate-100 last:border-0">
+              <span className="text-sm font-medium text-slate-800">{contacto.nombre}</span>
+              <span className="text-xs text-slate-500">{contacto.cargo}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
 }
 
 function ClienteDetailViewInner({ clienteId, style, className }: ClienteDetailViewProps) {
@@ -70,6 +118,7 @@ function ClienteDetailViewInner({ clienteId, style, className }: ClienteDetailVi
       >
         <Skeleton height={28} className="mb-4" />
         <Skeleton height={20} count={4} className="mb-2" />
+        <ContactosSeccion clienteId={clienteId} />
       </div>
     )
   }
@@ -161,6 +210,8 @@ function ClienteDetailViewInner({ clienteId, style, className }: ClienteDetailVi
           </dd>
         </div>
       </dl>
+
+      <ContactosSeccion clienteId={data.id} />
 
       {isDeleteDialogOpen && (
         <div

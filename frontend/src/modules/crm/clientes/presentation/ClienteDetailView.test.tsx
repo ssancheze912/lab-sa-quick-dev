@@ -25,7 +25,10 @@ import { ClienteDetailView } from '../ClienteDetailView';
 // MSW server setup
 // ---------------------------------------------------------------------------
 
-const server = setupServer();
+// Default handler for contactos — returns empty array unless overridden per test
+const server = setupServer(
+  http.get('/api/v1/contactos', () => HttpResponse.json([]))
+);
 
 beforeEach(() => {
   resetClienteCounter();

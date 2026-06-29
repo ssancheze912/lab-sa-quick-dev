@@ -10,9 +10,31 @@ public static class ContactosEndpoints
 {
     public static IEndpointRouteBuilder MapContactosEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/v1/contactos", async (IGetContactosQueryHandler handler) =>
+        app.MapGet("/api/v1/contactos", async ([FromQuery] string? clienteId, IGetContactosQueryHandler handler) =>
         {
-            var contactos = await handler.HandleAsync(new GetContactosQuery());
+            Guid? parsedClienteId = null;
+
+            if (clienteId is not null)
+            {
+                if (clienteId.Length == 0)
+                {
+                    parsedClienteId = null;
+                }
+                else if (Guid.TryParse(clienteId, out var parsed))
+                {
+                    parsedClienteId = parsed;
+                }
+                else
+                {
+                    return Results.Problem(
+                        title: "Parámetro inválido",
+                        detail: "El valor proporcionado para 'clienteId' no es un UUID válido.",
+                        statusCode: StatusCodes.Status400BadRequest
+                    );
+                }
+            }
+
+            var contactos = await handler.HandleAsync(new GetContactosQuery(parsedClienteId));
             return Results.Ok(contactos);
         })
         .WithName("GetContactos")
