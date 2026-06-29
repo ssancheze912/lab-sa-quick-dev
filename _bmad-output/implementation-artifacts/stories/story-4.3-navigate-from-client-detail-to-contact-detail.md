@@ -1,6 +1,6 @@
 # Story 4.3: Navigate from Client Detail to Contact Detail
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,8 +26,8 @@ so that I can access all contact information with no more than 2 clicks from the
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add navigation link to each contact item in `ContactosSeccion` inside `ClienteDetailView.tsx` (AC: #1, #2, #5, #6)
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+- [x] Task 1 — Add navigation link to each contact item in `ContactosSeccion` inside `ClienteDetailView.tsx` (AC: #1, #2, #5, #6)
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
     - Import `Link` from `@tanstack/react-router` (or use `useNavigate` hook with `router.navigate`)
     - Wrap each contact item in `ContactosSeccion` with a `<Link to="/contactos/$contactoId" params={{ contactoId: contacto.id }}>` (TanStack Router typed link)
     - Preserve existing `data-testid="contactos-lista"` attribute on the list container
@@ -36,26 +36,26 @@ so that I can access all contact information with no more than 2 clicks from the
     - Style the item as a clickable row: add `cursor-pointer`, `hover:bg-slate-50 dark:hover:bg-slate-800` (TailwindCSS, Siesa design system)
     - Do NOT add a new API call — navigation uses the already-available `Contacto` data from `useContactosByCliente`
 
-- [ ] Task 2 — Verify TanStack Router route for `/contactos/:contactoId` is already registered (AC: #3)
-  - [ ] Confirm `frontend/src/routes/_app/contactos.$contactoId.tsx` exists (created in Story 3.2)
-  - [ ] If the file does not exist, create a minimal route file pointing to `ContactoDetailView` component
-  - [ ] No new backend endpoint needed — `GET /api/v1/contactos/{id}` already exists (Story 3.2)
+- [x] Task 2 — Verify TanStack Router route for `/contactos/:contactoId` is already registered (AC: #3)
+  - [x] Confirm `frontend/src/routes/_app/contactos.$contactoId.tsx` exists (created in Story 3.2)
+  - [x] If the file does not exist, create a minimal route file pointing to `ContactoDetailView` component
+  - [x] No new backend endpoint needed — `GET /api/v1/contactos/{id}` already exists (Story 3.2)
 
-- [ ] Task 3 — Add "Volver al cliente" back-navigation affordance in `ContactoDetailView` (AC: #4)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
+- [x] Task 3 — Add "Volver al cliente" back-navigation affordance in `ContactoDetailView` (AC: #4)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
     - Use TanStack Router's `useRouterState` or check `history.state` to detect if the user arrived from a client detail
     - If `clienteId` is available from the contact's data (field `contacto.clienteId`), render a "Volver al cliente" link: `<Link to="/clientes/$clienteId" params={{ clienteId: contacto.clienteId }}>Volver al cliente</Link>`
     - If `clienteId` is null, render a generic "Volver a contactos" link: `<Link to="/contactos">Volver a contactos</Link>`
     - Use Heroicons `ArrowLeftIcon` as icon prefix for the back link (company standard: Heroicons primary)
     - All user-facing text in Spanish
 
-- [ ] Task 4 — Write tests (AC: #1–#6)
-  - [ ] **Component test** `ClienteDetailView.navigation.test.tsx` (Vitest + RTL + MSW)
+- [x] Task 4 — Write tests (AC: #1–#6)
+  - [x] **Component test** `ClienteDetailView.navigation.test.tsx` (Vitest + RTL + MSW)
     - TC-1: Clicking a contact item navigates to `/contactos/{contactoId}` (assert `router.navigate` or link `href` contains correct path)
     - TC-2: Contact items are rendered as links/buttons with correct `href` or `onClick`
     - TC-3: Contact item displays `nombre` and `cargo` text
     - TC-4: Keyboard Enter/Space on focused contact item triggers navigation (WCAG compliance)
-  - [ ] **Component test** `ContactoDetailView.backNavigation.test.tsx` (Vitest + RTL + MSW)
+  - [x] **Component test** `ContactoDetailView.backNavigation.test.tsx` (Vitest + RTL + MSW)
     - TC-1: "Volver al cliente" link renders with correct `/clientes/{clienteId}` href when contact has a clienteId
     - TC-2: "Volver a contactos" link renders when contact has no clienteId (clienteId is null)
     - TC-3: Back link contains `ArrowLeftIcon` aria label or text
@@ -215,6 +215,38 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- Task 1: Added `Link` import from `@tanstack/react-router` to `ClienteDetailView.tsx`. Each contact item in `ContactosSeccion` is now wrapped in a `<Link>` with `data-testid="contacto-item-{contacto.id}"`, keyboard-accessible, and styled with hover and focus-visible ring styles.
+- Task 2: Confirmed `frontend/src/routes/_app/contactos.$contactoId.tsx` exists from Story 3.2. No changes needed.
+- Task 3: Added back-navigation to `ContactoDetailView.tsx`. When `contacto.clienteId` is non-null, renders "Volver al cliente" link to `/clientes/$clienteId`. When null, renders "Volver a contactos" link to `/contactos`. Both use `ArrowLeftIcon` (Heroicons) with `aria-hidden="true"` and `data-testid="contacto-back-link"`.
+- Task 4: ATDD tests (RED phase already generated) turned GREEN. Also added `Link` mock to all existing ContactoDetailView and ClienteDetailView test files that were rendering these components without router context — no new test logic was changed, only router mocking was added to prevent context errors.
+- All 19 ATDD tests (9 navigation + 10 back-navigation) pass GREEN.
+- No regressions introduced; 12 pre-existing failures remain (pre-existed before this story).
+
 ### File List
+
+**Modified:**
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+- `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
+- `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.delete.test.tsx`
+- `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.delete.edge.test.tsx`
+- `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.edge.test.tsx`
+- `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.contactos.edgecases.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.contactos.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.delete.edge.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.delete.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.edge.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.edit.edge.test.tsx`
+
+**Verified (no change needed):**
+- `frontend/src/routes/_app/contactos.$contactoId.tsx`
+- `frontend/src/routes/_app/clientes.$clienteId.tsx`
+
+**Already existed (ATDD RED phase):**
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.navigation.test.tsx`
+- `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.backNavigation.test.tsx`
+- `e2e/tests/clientes/navigate-client-to-contact.spec.ts`
