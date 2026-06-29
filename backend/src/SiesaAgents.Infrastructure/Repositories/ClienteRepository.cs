@@ -25,10 +25,18 @@ public sealed class ClienteRepository : IClienteRepository
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var pattern = $"%{search}%";
+            // Escape LIKE metacharacters so a fragment like "100%" or "ABC_1"
+            // is treated as a literal substring instead of a wildcard match.
+            // EF.Functions.ILike already parameterizes the value (no SQL
+            // injection), but the wildcards still apply at the SQL layer.
+            var escaped = search
+                .Replace("\\", "\\\\")
+                .Replace("%", "\\%")
+                .Replace("_", "\\_");
+            var pattern = $"%{escaped}%";
             query = query.Where(c =>
-                EF.Functions.ILike(c.Nombre, pattern) ||
-                EF.Functions.ILike(c.Nit, pattern));
+                EF.Functions.ILike(c.Nombre, pattern, "\\") ||
+                EF.Functions.ILike(c.Nit, pattern, "\\"));
         }
 
         return await query

@@ -32,7 +32,11 @@ export function ClienteListView(): React.ReactElement {
   const navigate = useNavigate()
 
   // Selection lives in the URL search param so Story 2.2 can lift it into a
-  // route segment without breaking this component.
+  // route segment without breaking this component. `useSearch` is called once
+  // (rules-of-hooks compliant) but raises when invoked outside a RouterProvider
+  // (e.g. component-level tests in `*.test.tsx` that render this view without
+  // wiring a router) — the try/catch swallows that case and falls back to
+  // "nothing selected".
   let selectedId: string | undefined
   try {
     const search = useSearch({ strict: false }) as ClientesRouteSearch

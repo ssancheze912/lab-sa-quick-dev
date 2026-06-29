@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: review
+Status: done
 
 ## Story
 
