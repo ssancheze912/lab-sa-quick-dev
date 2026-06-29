@@ -83,9 +83,9 @@ describe('ClienteDetailView — edge cases', () => {
 
     renderWithQueryClient(<ClienteDetailView clienteId={cliente.id} />)
 
-    expect(
-      await screen.findByText('Distribuidora Ñoño & Compañía S.A.S.')
-    ).toBeInTheDocument()
+    // Nombre appears in BOTH the <h2> heading AND the DescriptionList row (AC #9).
+    const matches = await screen.findAllByText('Distribuidora Ñoño & Compañía S.A.S.')
+    expect(matches.length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Bogotá')).toBeInTheDocument()
   })
 
@@ -98,7 +98,8 @@ describe('ClienteDetailView — edge cases', () => {
     const { rerender } = renderWithQueryClient(
       <ClienteDetailView clienteId={first.id} />
     )
-    expect(await screen.findByText('First Client')).toBeInTheDocument()
+    // Nombre appears in BOTH the <h2> heading AND the DescriptionList row (AC #9).
+    expect((await screen.findAllByText('First Client')).length).toBeGreaterThanOrEqual(1)
 
     // Re-render with the second id — must show the second client, not the first
     rerender(
@@ -110,7 +111,7 @@ describe('ClienteDetailView — edge cases', () => {
         <ClienteDetailView clienteId={second.id} />
       </QueryClientProvider>
     )
-    expect(await screen.findByText('Second Client')).toBeInTheDocument()
+    expect((await screen.findAllByText('Second Client')).length).toBeGreaterThanOrEqual(1)
   })
 
   // ─── [P2] Non-404 HTTP errors → ErrorPanel branch ────────────────────
@@ -151,8 +152,9 @@ describe('ClienteDetailView — edge cases', () => {
 
     renderWithQueryClient(<ClienteDetailView clienteId={cliente.id} />)
 
-    // The "Nombre" field in the DescriptionList must render the full string
-    expect(await screen.findByText(longName)).toBeInTheDocument()
+    // Nombre appears in BOTH the <h2> heading AND the DescriptionList row (AC #9).
+    const matches = await screen.findAllByText(longName)
+    expect(matches.length).toBeGreaterThanOrEqual(1)
   })
 
   // ─── [P2] Root container is an <article> ─────────────────────────────
@@ -272,7 +274,8 @@ describe('ClienteDetailView — edge cases', () => {
 
     renderWithQueryClient(<ClienteDetailView clienteId={cliente.id} />)
 
-    expect(await screen.findByText('Settled Client')).toBeInTheDocument()
+    // Nombre appears in BOTH the <h2> heading AND the DescriptionList row (AC #9).
+    expect((await screen.findAllByText('Settled Client')).length).toBeGreaterThanOrEqual(1)
     await waitFor(() => {
       expect(
         screen.queryByTestId('cliente-detail-skeleton')

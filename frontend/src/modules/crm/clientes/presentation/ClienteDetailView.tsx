@@ -68,16 +68,15 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps): React.
     >
       <header className="flex flex-col gap-1">
         {/*
-          The heading visibly displays the client's nombre; the trailing suffix
-          " — Detalle del cliente" keeps the h2 text-content unique so the
-          DescriptionList "Nombre" row can be addressed by its own value alone
-          (AC #9).
+          Per AC #9, the <h2> renders the client name verbatim — the client
+          name doubles as the heading. Tests that need to disambiguate between
+          the heading and the DescriptionList "Nombre" row use scoped queries.
         */}
         <h2
           id={headingId}
           className="text-3xl font-bold tracking-tight text-slate-900"
         >
-          {`${data.nombre} — Detalle del cliente`}
+          {data.nombre}
         </h2>
       </header>
       <div data-testid="cliente-detail-description-list" className="flex flex-col">

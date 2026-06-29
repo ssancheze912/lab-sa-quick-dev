@@ -157,7 +157,8 @@ describe('Route /clientes/$clienteId — edge cases', () => {
     renderRouterAt(`/clientes/${cliente.id}`)
 
     expect(await screen.findByTestId('cliente-detail-card')).toBeInTheDocument()
-    expect(screen.getByText('Detail Only Client')).toBeInTheDocument()
+    // Nombre appears in BOTH the <h2> heading AND the DescriptionList row (AC #9).
+    expect(screen.getAllByText('Detail Only Client').length).toBeGreaterThanOrEqual(1)
   })
 
   // ─── [P2] Cold deep-link to not-found id renders not-found + list ────
