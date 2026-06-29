@@ -2,15 +2,72 @@ import { useState } from 'react'
 import axios from 'axios'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
-import { PencilSquareIcon, TrashIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { PencilSquareIcon, TrashIcon, ArrowLeftIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
 import { ToastProvider } from 'siesa-ui-kit'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useContacto } from '../application/useContacto'
 import { useDeleteContacto } from '../application/useDeleteContacto'
+import { useCliente } from '../../clientes/application/useCliente'
 import { ContactoForm } from './ContactoForm'
 
 interface ContactoDetailViewProps {
   contactoId: string
+}
+
+function ClienteAsociadoSeccion({ clienteId }: { clienteId: string | null }) {
+  const { data: cliente, isLoading, isError, refetch } = useCliente(clienteId)
+
+  if (!clienteId) {
+    return (
+      <div data-testid="cliente-asociado-section">
+        <p data-testid="sin-cliente-message" className="text-slate-500 text-sm">
+          Sin cliente asignado
+        </p>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div data-testid="cliente-asociado-section">
+        <div data-testid="cliente-loading-skeleton">
+          <Skeleton width={200} height={20} />
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div data-testid="cliente-asociado-section">
+        <div data-testid="cliente-asociado-error" className="flex items-center gap-2">
+          <span className="text-red-500 text-sm">Error al cargar cliente</span>
+          <button
+            type="button"
+            data-testid="cliente-asociado-retry"
+            onClick={() => void refetch()}
+            className="text-blue-600 text-sm underline hover:text-blue-800"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div data-testid="cliente-asociado-section">
+      <Link
+        to="/clientes/$clienteId"
+        params={{ clienteId }}
+        data-testid="navigate-to-cliente"
+        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 focus-visible:ring-2 focus-visible:ring-blue-500 rounded cursor-pointer"
+      >
+        <BuildingOfficeIcon className="h-4 w-4" aria-hidden="true" />
+        {cliente?.nombre}
+      </Link>
+    </div>
+  )
 }
 
 function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
@@ -163,6 +220,12 @@ function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
           <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Email</dt>
           <dd data-testid="contacto-detail-email" className="text-sm text-slate-800 mt-0.5">
             {data.email}
+          </dd>
+        </div>
+        <div className="flex flex-col">
+          <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Cliente asociado</dt>
+          <dd className="mt-0.5">
+            <ClienteAsociadoSeccion clienteId={data.clienteId ?? null} />
           </dd>
         </div>
       </dl>
