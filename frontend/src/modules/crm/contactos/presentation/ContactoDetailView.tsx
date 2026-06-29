@@ -4,7 +4,9 @@ import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { ToastProvider } from 'siesa-ui-kit'
+import { useNavigate } from '@tanstack/react-router'
 import { useContacto } from '../application/useContacto'
+import { useDeleteContacto } from '../application/useDeleteContacto'
 import { ContactoForm } from './ContactoForm'
 
 interface ContactoDetailViewProps {
@@ -14,6 +16,20 @@ interface ContactoDetailViewProps {
 function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
   const { data, isLoading, isError, error, refetch } = useContacto(contactoId)
   const [isEditFormOpen, setIsEditFormOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+  const navigate = useNavigate()
+
+  const deleteMutation = useDeleteContacto({
+    onSuccess: () => {
+      setIsDeleteDialogOpen(false)
+      try {
+        navigate({ to: '/contactos' })
+      } catch {
+        // No router context in test environment
+      }
+    },
+  })
 
   if (isLoading) {
     return (
@@ -98,6 +114,7 @@ function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
           type="button"
           data-testid="contacto-delete-button"
           aria-label={`Eliminar contacto ${data.nombre}`}
+          onClick={() => setIsDeleteDialogOpen(true)}
           className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
         >
           <TrashIcon className="w-4 h-4" aria-hidden="true" />
@@ -131,6 +148,47 @@ function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
           </dd>
         </div>
       </dl>
+
+      {isDeleteDialogOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="contacto-delete-dialog-title"
+          data-testid="contacto-detail-delete-dialog"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        >
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h2
+              id="contacto-delete-dialog-title"
+              className="text-lg font-semibold text-slate-800 mb-2"
+            >
+              ¿Eliminar este contacto?
+            </h2>
+            <p className="text-sm text-slate-500 mb-6">
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                data-testid="contacto-detail-delete-cancel"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded hover:bg-slate-200"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                data-testid="contacto-detail-delete-confirm"
+                disabled={deleteMutation.isPending}
+                onClick={() => deleteMutation.mutate(data.id)}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -8,5 +8,6 @@ public interface IContactoRepository
     Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task AddAsync(ContactoEntity entity, CancellationToken ct = default);
     Task UpdateAsync(ContactoEntity entity, CancellationToken ct = default);
+    Task DeleteAsync(ContactoEntity entity, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

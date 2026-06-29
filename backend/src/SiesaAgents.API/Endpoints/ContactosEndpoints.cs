@@ -83,6 +83,14 @@ public static class ContactosEndpoints
         .WithName("CreateContacto")
         .WithSummary("Create a new contact");
 
+        app.MapDelete("/api/v1/contactos/{id:guid}", async (Guid id, IDeleteContactoCommandHandler handler, CancellationToken ct) =>
+        {
+            await handler.HandleAsync(new DeleteContactoCommand(id), ct);
+            return Results.NoContent();
+        })
+        .WithName("DeleteContacto")
+        .WithSummary("Delete a contact by ID");
+
         app.MapPut("/api/v1/contactos/{id:guid}", async (Guid id, UpdateContactoRequest body, IUpdateContactoCommandHandler handler, CancellationToken ct) =>
         {
             var command = new UpdateContactoCommand(

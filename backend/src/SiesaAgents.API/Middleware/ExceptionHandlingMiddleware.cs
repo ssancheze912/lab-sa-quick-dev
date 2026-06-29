@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using SiesaAgents.Application.Clientes.Commands;
+using SiesaAgents.Application.Contactos.Commands;
 
 namespace SiesaAgents.API.Middleware;
 
@@ -24,6 +25,20 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
                 Status = StatusCodes.Status404NotFound,
                 Title = "Not Found",
                 Detail = "Cliente no encontrado"
+            };
+
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            context.Response.ContentType = "application/problem+json";
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(problem, JsonOptions));
+        }
+        catch (ContactoNotFoundException)
+        {
+            var problem = new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Not Found",
+                Detail = "Contacto no encontrado"
             };
 
             context.Response.StatusCode = StatusCodes.Status404NotFound;

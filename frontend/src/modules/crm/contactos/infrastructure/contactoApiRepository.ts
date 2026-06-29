@@ -22,4 +22,8 @@ export const contactoApiRepository: IContactoRepository = {
     const response = await apiClient.put<Contacto>(`/api/v1/contactos/${id}`, data)
     return response.data
   },
+
+  async delete(id: string): Promise<void> {
+    await apiClient.delete(`/api/v1/contactos/${id}`)
+  },
 }
