@@ -3,13 +3,17 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ToastProvider, toast } from 'siesa-ui-kit'
 import { clienteSchema, type ClienteFormData } from '../application/clienteSchema'
 import { useCreateCliente } from '../application/useCreateCliente'
+import { useUpdateCliente } from '../application/useUpdateCliente'
+import type { Cliente } from '../domain/Cliente'
 
 interface ClienteFormProps {
+  cliente?: Cliente
+  mode?: 'create' | 'edit'
   onSuccess?: () => void
   onCancel?: () => void
 }
 
-function ClienteFormInner({ onSuccess, onCancel }: ClienteFormProps) {
+function ClienteFormInner({ cliente, mode = 'create', onSuccess, onCancel }: ClienteFormProps) {
   const {
     register,
     handleSubmit,
@@ -17,24 +21,45 @@ function ClienteFormInner({ onSuccess, onCancel }: ClienteFormProps) {
     setError,
   } = useForm<ClienteFormData>({
     resolver: zodResolver(clienteSchema),
+    defaultValues:
+      mode === 'edit' && cliente
+        ? { nombre: cliente.nombre, nit: cliente.nit, telefono: cliente.telefono, ciudad: cliente.ciudad }
+        : undefined,
   })
 
-  const { mutate, isPending } = useCreateCliente({ onSuccess })
+  const createMutation = useCreateCliente({ onSuccess })
+  const updateMutation = useUpdateCliente({ onSuccess })
+
+  const isPending = mode === 'edit' ? updateMutation.isPending : createMutation.isPending
 
   const onSubmit = (data: ClienteFormData) => {
-    mutate(data, {
-      onSuccess: () => {
-        toast.success('Cliente creado correctamente')
-      },
-      onError: (error: unknown) => {
-        const axiosError = error as { response?: { status?: number } }
-        if (axiosError?.response?.status === 409) {
-          setError('nit', { message: 'El NIT/RUC ya está registrado' })
-        } else {
-          toast.error('Error al crear el cliente')
+    if (mode === 'edit' && cliente) {
+      updateMutation.mutate(
+        { id: cliente.id, data },
+        {
+          onSuccess: () => {
+            toast.success('Cliente actualizado correctamente')
+          },
+          onError: () => {
+            toast.error('Error al actualizar el cliente')
+          },
         }
-      },
-    })
+      )
+    } else {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          toast.success('Cliente creado correctamente')
+        },
+        onError: (error: unknown) => {
+          const axiosError = error as { response?: { status?: number } }
+          if (axiosError?.response?.status === 409) {
+            setError('nit', { message: 'El NIT/RUC ya está registrado' })
+          } else {
+            toast.error('Error al crear el cliente')
+          }
+        },
+      })
+    }
   }
 
   return (

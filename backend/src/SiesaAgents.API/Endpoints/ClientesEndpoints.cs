@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SiesaAgents.Application.Clientes.Commands;
+using SiesaAgents.Application.Clientes.DTOs;
 using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Application.Clientes.Validators;
 
@@ -67,6 +68,38 @@ public static class ClientesEndpoints
         })
         .WithName("CreateCliente")
         .WithSummary("Create a new client");
+
+        app.MapPut("/api/v1/clientes/{id:guid}", async (Guid id, UpdateClienteRequest request, IUpdateClienteCommandHandler handler) =>
+        {
+            var validator = new UpdateClienteRequestValidator();
+            var validationResult = await validator.ValidateAsync(request);
+
+            if (!validationResult.IsValid)
+            {
+                var errors = validationResult.Errors
+                    .GroupBy(e => e.PropertyName, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(
+                        g => char.ToLowerInvariant(g.Key[0]) + g.Key[1..],
+                        g => g.Select(e => e.ErrorMessage).ToArray()
+                    );
+
+                var validationProblem = new
+                {
+                    status = StatusCodes.Status400BadRequest,
+                    title = "Validation Error",
+                    errors
+                };
+
+                return Results.Json(validationProblem, statusCode: StatusCodes.Status400BadRequest, contentType: "application/problem+json");
+            }
+
+            var command = new UpdateClienteCommand(id, request.Nombre, request.Nit, request.Telefono, request.Ciudad);
+            var dto = await handler.HandleAsync(command);
+
+            return Results.Ok(dto);
+        })
+        .WithName("UpdateCliente")
+        .WithSummary("Update an existing client");
 
         return app;
     }

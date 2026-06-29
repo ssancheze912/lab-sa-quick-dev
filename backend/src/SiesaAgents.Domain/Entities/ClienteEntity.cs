@@ -35,4 +35,14 @@ public sealed class ClienteEntity
             UpdatedAt = updatedAt ?? now,
         };
     }
+
+    /// <summary>Updates mutable fields and sets UpdatedAt to current UTC time.</summary>
+    public void Update(string nombre, string nit, string telefono, string ciudad)
+    {
+        Nombre = nombre;
+        Nit = nit;
+        Telefono = telefono;
+        Ciudad = ciudad;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }

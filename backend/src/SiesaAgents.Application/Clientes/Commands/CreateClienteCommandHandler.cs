@@ -33,7 +33,8 @@ public sealed class CreateClienteCommandHandler(IClienteRepository repository) :
             entity.Nit,
             entity.Telefono,
             entity.Ciudad,
-            entity.CreatedAt
+            entity.CreatedAt,
+            entity.UpdatedAt
         );
     }
 }

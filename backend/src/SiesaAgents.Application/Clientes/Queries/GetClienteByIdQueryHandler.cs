@@ -18,7 +18,8 @@ public sealed class GetClienteByIdQueryHandler(IClienteRepository repository) : 
             cliente.Nit,
             cliente.Telefono,
             cliente.Ciudad,
-            cliente.CreatedAt
+            cliente.CreatedAt,
+            cliente.UpdatedAt
         );
     }
 }

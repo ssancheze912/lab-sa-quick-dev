@@ -15,7 +15,8 @@ public sealed class GetClientesQueryHandler(IClienteRepository repository) : IGe
             c.Nit,
             c.Telefono,
             c.Ciudad,
-            c.CreatedAt
+            c.CreatedAt,
+            c.UpdatedAt
         ));
     }
 }

@@ -6,5 +6,6 @@ public sealed record ClienteDto(
     string Nit,
     string Telefono,
     string Ciudad,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt
 );

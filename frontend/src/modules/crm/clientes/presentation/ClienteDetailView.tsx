@@ -1,7 +1,8 @@
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useCliente } from '../application/useCliente'
+import { ClienteForm } from './ClienteForm'
 
 interface ClienteDetailViewProps {
   clienteId: string | null
@@ -11,6 +12,7 @@ interface ClienteDetailViewProps {
 
 export function ClienteDetailView({ clienteId, style, className }: ClienteDetailViewProps) {
   const { data, isLoading, isError } = useCliente(clienteId)
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false)
 
   if (!clienteId) {
     return (
@@ -49,13 +51,53 @@ export function ClienteDetailView({ clienteId, style, className }: ClienteDetail
     )
   }
 
+  if (isEditFormOpen) {
+    return (
+      <div
+        data-testid="cliente-detail-edit-form"
+        style={style}
+        className={`p-6 ${className ?? ''}`}
+      >
+        <ClienteForm
+          mode="edit"
+          cliente={data}
+          onSuccess={() => setIsEditFormOpen(false)}
+          onCancel={() => setIsEditFormOpen(false)}
+        />
+      </div>
+    )
+  }
+
   return (
     <div
       data-testid="cliente-detail-panel"
       style={style}
       className={`p-6 ${className ?? ''}`}
     >
-      <h2 className="text-lg font-bold text-slate-800 mb-4">{data.nombre}</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-slate-800">{data.nombre}</h2>
+        <button
+          type="button"
+          data-testid="cliente-detail-edit-button"
+          onClick={() => setIsEditFormOpen(true)}
+          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-4 h-4"
+            aria-hidden="true"
+          >
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+          </svg>
+          Editar
+        </button>
+      </div>
       <dl className="space-y-3">
         <div className="flex flex-col">
           <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Nombre</dt>
