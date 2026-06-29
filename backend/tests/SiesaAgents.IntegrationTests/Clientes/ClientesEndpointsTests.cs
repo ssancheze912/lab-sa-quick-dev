@@ -198,16 +198,14 @@ public sealed class ClientesEndpointsTests : IClassFixture<ClientesWebApplicatio
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var clientes = Enumerable.Range(1, count).Select(i => new ClienteEntity
-        {
-            Id = Guid.NewGuid(),
-            Nombre = $"Empresa Test {i:D4}",
-            Nit = $"900{i:D6}-{i % 10}",
-            Telefono = $"300{i:D7}",
-            Ciudad = "Bogotá",
-            CreatedAt = DateTimeOffset.UtcNow.AddDays(-i),
-            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-i),
-        });
+        var clientes = Enumerable.Range(1, count).Select(i => ClienteEntity.Create(
+            nombre: $"Empresa Test {i:D4}",
+            nit: $"900{i:D6}-{i % 10}",
+            telefono: $"300{i:D7}",
+            ciudad: "Bogotá",
+            createdAt: DateTimeOffset.UtcNow.AddDays(-i),
+            updatedAt: DateTimeOffset.UtcNow.AddDays(-i)
+        ));
 
         await dbContext.Clientes.AddRangeAsync(clientes);
         await dbContext.SaveChangesAsync();

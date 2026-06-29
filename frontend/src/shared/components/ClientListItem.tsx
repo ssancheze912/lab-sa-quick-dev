@@ -9,7 +9,11 @@ export function ClientListItem({ cliente, onClick }: ClientListItemProps) {
   return (
     <div
       data-testid={`cliente-item-${cliente.id}`}
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() }}
+      aria-label={`Cliente: ${cliente.nombre}, NIT: ${cliente.nit}`}
       className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
     >
       <p className="font-bold text-slate-800 text-sm truncate">{cliente.nombre}</p>

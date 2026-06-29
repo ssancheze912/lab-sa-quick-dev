@@ -25,7 +25,7 @@ import {
   handleGetClientesEmpty,
 } from '../../../../test/msw/handlers/clientes.handlers';
 import { createCliente, createClientes, resetClienteCounter } from '../../../../test/factories/cliente.factory';
-import { ClienteListView } from '../ClienteListView';
+import { ClienteListView } from './ClienteListView';
 
 // ---------------------------------------------------------------------------
 // MSW server setup

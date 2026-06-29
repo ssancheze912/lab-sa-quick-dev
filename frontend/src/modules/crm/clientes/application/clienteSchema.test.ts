@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { clienteSchema } from '../clienteSchema';
+import { clienteSchema } from './clienteSchema';
 
 describe('clienteSchema', () => {
   // ---------------------------------------------------------------------------

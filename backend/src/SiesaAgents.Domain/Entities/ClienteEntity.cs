@@ -2,11 +2,37 @@ namespace SiesaAgents.Domain.Entities;
 
 public sealed class ClienteEntity
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string Nombre { get; set; } = string.Empty;
-    public string Nit { get; set; } = string.Empty;
-    public string Telefono { get; set; } = string.Empty;
-    public string Ciudad { get; set; } = string.Empty;
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+    // Private parameterless constructor for EF Core materialisation
+    private ClienteEntity() { }
+
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public string Nombre { get; private set; } = string.Empty;
+    public string Nit { get; private set; } = string.Empty;
+    public string Telefono { get; private set; } = string.Empty;
+    public string Ciudad { get; private set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset UpdatedAt { get; private set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>Factory method — only valid way to create a new ClienteEntity.</summary>
+    public static ClienteEntity Create(
+        string nombre,
+        string nit,
+        string telefono,
+        string ciudad,
+        Guid? id = null,
+        DateTimeOffset? createdAt = null,
+        DateTimeOffset? updatedAt = null)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return new ClienteEntity
+        {
+            Id = id ?? Guid.NewGuid(),
+            Nombre = nombre,
+            Nit = nit,
+            Telefono = telefono,
+            Ciudad = ciudad,
+            CreatedAt = createdAt ?? now,
+            UpdatedAt = updatedAt ?? now,
+        };
+    }
 }

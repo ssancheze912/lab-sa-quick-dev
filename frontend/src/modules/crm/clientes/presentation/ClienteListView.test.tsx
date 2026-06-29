@@ -28,7 +28,7 @@ import {
   handleGetClientesDelayed,
 } from '../../../../test/msw/handlers/clientes.handlers';
 import { createClientes, createCliente, resetClienteCounter } from '../../../../test/factories/cliente.factory';
-import { ClienteListView } from '../ClienteListView';
+import { ClienteListView } from './ClienteListView';
 
 // ---------------------------------------------------------------------------
 // MSW server setup
