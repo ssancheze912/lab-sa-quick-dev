@@ -10,7 +10,7 @@ public static class ContactosEndpoints
 {
     public static IEndpointRouteBuilder MapContactosEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/v1/contactos", async ([FromQuery] string? clienteId, IGetContactosQueryHandler handler) =>
+        app.MapGet("/api/v1/contactos", async ([FromQuery] string? clienteId, IGetContactosQueryHandler handler, CancellationToken ct) =>
         {
             Guid? parsedClienteId = null;
 
@@ -34,7 +34,7 @@ public static class ContactosEndpoints
                 }
             }
 
-            var contactos = await handler.HandleAsync(new GetContactosQuery(parsedClienteId));
+            var contactos = await handler.HandleAsync(new GetContactosQuery(parsedClienteId), ct);
             return Results.Ok(contactos);
         })
         .WithName("GetContactos")

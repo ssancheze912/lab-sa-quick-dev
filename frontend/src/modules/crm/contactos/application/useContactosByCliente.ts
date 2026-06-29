@@ -4,9 +4,9 @@ import { contactoApiRepository } from '../infrastructure/contactoApiRepository'
 export function useContactosByCliente(clienteId: string | null | undefined) {
   return useQuery({
     queryKey: ['contactos', { clienteId }],
-    queryFn: () => contactoApiRepository.getByClienteId(clienteId!),
+    queryFn: () => contactoApiRepository.getByClienteId(clienteId as string),
     enabled: !!clienteId,
-    staleTime: 0,
-    retry: 0,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
