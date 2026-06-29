@@ -2,20 +2,27 @@ import { useState } from 'react'
 import axios from 'axios'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
-import { PencilSquareIcon, TrashIcon, ArrowLeftIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
+import { PencilSquareIcon, TrashIcon, ArrowLeftIcon, BuildingOfficeIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
 import { ToastProvider } from 'siesa-ui-kit'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useContacto } from '../application/useContacto'
 import { useDeleteContacto } from '../application/useDeleteContacto'
 import { useCliente } from '../../clientes/application/useCliente'
 import { ContactoForm } from './ContactoForm'
+import { ReasignarClienteDialog } from './ReasignarClienteDialog'
 
 interface ContactoDetailViewProps {
   contactoId: string
 }
 
-function ClienteAsociadoSeccion({ clienteId }: { clienteId: string | null }) {
+interface ClienteAsociadoSeccionProps {
+  clienteId: string | null
+  contactoId: string
+}
+
+function ClienteAsociadoSeccion({ clienteId, contactoId }: ClienteAsociadoSeccionProps) {
   const { data: cliente, isLoading, isError, refetch } = useCliente(clienteId)
+  const [isReasignarOpen, setIsReasignarOpen] = useState(false)
 
   if (!clienteId) {
     return (
@@ -57,15 +64,34 @@ function ClienteAsociadoSeccion({ clienteId }: { clienteId: string | null }) {
 
   return (
     <div data-testid="cliente-asociado-section">
-      <Link
-        to="/clientes/$clienteId"
-        params={{ clienteId }}
-        data-testid="navigate-to-cliente"
-        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded cursor-pointer"
-      >
-        <BuildingOfficeIcon className="h-4 w-4" aria-hidden="true" />
-        {cliente?.nombre ?? ''}
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link
+          to="/clientes/$clienteId"
+          params={{ clienteId }}
+          data-testid="navigate-to-cliente"
+          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded cursor-pointer"
+        >
+          <BuildingOfficeIcon className="h-4 w-4" aria-hidden="true" />
+          {cliente?.nombre ?? ''}
+        </Link>
+        <button
+          type="button"
+          data-testid="reasignar-cliente-btn"
+          onClick={() => setIsReasignarOpen(true)}
+          className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          <ArrowsRightLeftIcon className="h-4 w-4" aria-hidden="true" />
+          Reasignar cliente
+        </button>
+      </div>
+      {isReasignarOpen && (
+        <ReasignarClienteDialog
+          contactoId={contactoId}
+          currentClienteId={clienteId}
+          open={isReasignarOpen}
+          onClose={() => setIsReasignarOpen(false)}
+        />
+      )}
     </div>
   )
 }
@@ -225,7 +251,7 @@ function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
         <div className="flex flex-col">
           <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Cliente asociado</dt>
           <dd className="mt-0.5">
-            <ClienteAsociadoSeccion clienteId={data.clienteId ?? null} />
+            <ClienteAsociadoSeccion clienteId={data.clienteId ?? null} contactoId={data.id} />
           </dd>
         </div>
       </dl>
