@@ -3,6 +3,7 @@ import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { PencilSquareIcon, TrashIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { ToastProvider, toast } from 'siesa-ui-kit'
+import { Link } from '@tanstack/react-router'
 import { useCliente } from '../application/useCliente'
 import { useDeleteCliente } from '../application/useDeleteCliente'
 import { useContactosByCliente } from '../../contactos/application/useContactosByCliente'
@@ -75,17 +76,22 @@ function ContactosSeccion({ clienteId }: { clienteId: string }) {
         <ul data-testid="contactos-lista" className="space-y-2">
           {data.map((contacto) => (
             <li key={contacto.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-              <div className="flex flex-col">
+              <Link
+                to="/contactos/$contactoId"
+                params={{ contactoId: contacto.id }}
+                data-testid={`contacto-item-${contacto.id}`}
+                className="flex flex-col flex-1 min-w-0 cursor-pointer rounded-md px-1 py-0.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
                 <span className="text-sm font-medium text-slate-800">{contacto.nombre}</span>
                 <span className="text-xs text-slate-500">{contacto.cargo}</span>
-              </div>
+              </Link>
               <button
                 type="button"
                 data-testid={`desasociar-contacto-${contacto.id}`}
                 aria-label={`Desasociar ${contacto.nombre}`}
                 disabled={isAsociando || isDesasociando}
                 onClick={() => setContactoToDesasociar(contacto)}
-                className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed ml-2 shrink-0"
               >
                 <XMarkIcon className="w-3.5 h-3.5" aria-hidden="true" />
                 Desasociar

@@ -31,10 +31,25 @@ import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 import React from 'react';
 
-// Mock TanStack Router so useNavigate works outside a Router context in tests
+// Mock TanStack Router so useNavigate and Link work outside a Router context in tests
 const mockNavigate = vi.fn();
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => mockNavigate,
+  Link: ({ to, params, children, className, ...rest }: {
+    to: string;
+    params?: Record<string, string>;
+    children: React.ReactNode;
+    className?: string;
+    [key: string]: unknown;
+  }) => {
+    let href = to;
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        href = href.replace(`$${key}`, value);
+      }
+    }
+    return <a href={href} className={className} {...rest}>{children}</a>;
+  },
 }));
 import {
   handleDeleteContactoSuccess,

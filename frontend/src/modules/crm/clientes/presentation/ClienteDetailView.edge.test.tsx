@@ -17,7 +17,28 @@
  * Test stack: Vitest + React Testing Library + MSW 2
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import React from 'react';
+
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => vi.fn(),
+  Link: ({ to, params, children, className, ...rest }: {
+    to: string;
+    params?: Record<string, string>;
+    children: React.ReactNode;
+    className?: string;
+    [key: string]: unknown;
+  }) => {
+    let href = to;
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        href = href.replace(`$${key}`, value);
+      }
+    }
+    return <a href={href} className={className} {...rest}>{children}</a>;
+  },
+}));
+
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { setupServer } from 'msw/node';

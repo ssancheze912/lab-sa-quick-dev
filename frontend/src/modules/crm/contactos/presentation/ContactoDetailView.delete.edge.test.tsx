@@ -20,6 +20,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
+import React from 'react';
 import {
   handleDeleteContactoSuccess,
   handleDeleteContactoServerError,
@@ -30,6 +31,27 @@ import {
 } from '../../../../test/msw/handlers/contactos-detail.handlers';
 import { resetContactoCounter } from '../../../../test/factories/contacto.factory';
 import { ContactoDetailView } from './ContactoDetailView';
+
+// Mock TanStack Router so Link and useNavigate work outside a Router context
+const mockNavigate = vi.fn();
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => mockNavigate,
+  Link: ({ to, params, children, className, ...rest }: {
+    to: string;
+    params?: Record<string, string>;
+    children: React.ReactNode;
+    className?: string;
+    [key: string]: unknown;
+  }) => {
+    let href = to;
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        href = href.replace(`$${key}`, value);
+      }
+    }
+    return <a href={href} className={className} {...rest}>{children}</a>;
+  },
+}));
 
 // ---------------------------------------------------------------------------
 // MSW server setup

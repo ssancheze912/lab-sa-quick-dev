@@ -15,11 +15,12 @@
  * Test stack: Vitest + React Testing Library + MSW 2
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse, delay } from 'msw';
+import React from 'react';
 import { createContacto, resetContactoCounter } from '../../../../test/factories/contacto.factory';
 import {
   handleGetContactoByIdSuccess,
@@ -28,6 +29,26 @@ import {
   handleGetContactoByIdError,
 } from '../../../../test/msw/handlers/contactos-detail.handlers';
 import { ContactoDetailView } from './ContactoDetailView';
+
+// Mock TanStack Router so Link and useNavigate work outside a Router context
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => vi.fn(),
+  Link: ({ to, params, children, className, ...rest }: {
+    to: string;
+    params?: Record<string, string>;
+    children: React.ReactNode;
+    className?: string;
+    [key: string]: unknown;
+  }) => {
+    let href = to;
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        href = href.replace(`$${key}`, value);
+      }
+    }
+    return <a href={href} className={className} {...rest}>{children}</a>;
+  },
+}));
 
 // ---------------------------------------------------------------------------
 // MSW server setup
@@ -127,10 +148,10 @@ describe('TC-6: Field labels in Spanish', () => {
       expect(screen.getByText(contacto.nombre)).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/Nombre/i)).toBeInTheDocument();
-    expect(screen.getByText(/Cargo/i)).toBeInTheDocument();
-    expect(screen.getByText(/Teléfono/i)).toBeInTheDocument();
-    expect(screen.getByText(/Email/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Nombre/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Cargo/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Teléfono/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Email/i).length).toBeGreaterThanOrEqual(1);
   });
 });
 

@@ -2,9 +2,9 @@ import { useState } from 'react'
 import axios from 'axios'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
-import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { PencilSquareIcon, TrashIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { ToastProvider } from 'siesa-ui-kit'
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useContacto } from '../application/useContacto'
 import { useDeleteContacto } from '../application/useDeleteContacto'
 import { ContactoForm } from './ContactoForm'
@@ -95,6 +95,28 @@ function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
 
   return (
     <div data-testid="contacto-detail-panel" className="p-6">
+      <div className="mb-4">
+        {data.clienteId ? (
+          <Link
+            to="/clientes/$clienteId"
+            params={{ clienteId: data.clienteId }}
+            data-testid="contacto-back-link"
+            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
+            Volver al cliente
+          </Link>
+        ) : (
+          <Link
+            to="/contactos"
+            data-testid="contacto-back-link"
+            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
+            Volver a contactos
+          </Link>
+        )}
+      </div>
       <div className="flex items-center justify-end mb-4 gap-2">
         <button
           type="button"
