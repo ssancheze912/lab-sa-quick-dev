@@ -1,0 +1,13 @@
+{
+  "name": "siesa-agents",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:api": "playwright test e2e/tests/api --project=chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  },
+  "workspaces": []
+}
