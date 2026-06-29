@@ -17,8 +17,11 @@ public static class InfrastructureServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
+        }
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));

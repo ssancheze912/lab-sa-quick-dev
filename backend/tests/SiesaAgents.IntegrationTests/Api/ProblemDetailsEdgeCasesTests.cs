@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace SiesaAgents.IntegrationTests.Api;
@@ -22,11 +24,33 @@ public class ProblemDetailsEdgeCasesTests : IClassFixture<WebApplicationFactory<
         _factory = factory;
     }
 
+    /// <summary>
+    /// Injects a non-empty connection string for non-Development environments where
+    /// <c>appsettings.Development.json</c> is NOT loaded. <c>AddInfrastructure</c> would
+    /// otherwise throw at startup because <c>ConnectionStrings:DefaultConnection</c> is missing
+    /// from base <c>appsettings.json</c>. No actual connection is opened by these tests.
+    /// </summary>
+    private static void InjectProbeConnectionString(IWebHostBuilder b)
+    {
+        b.ConfigureAppConfiguration((_, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:DefaultConnection"] =
+                    "Host=localhost;Database=probe;Username=probe;Password=probe"
+            });
+        });
+    }
+
     [Fact]
     public async Task TestErrorEndpoint_InNonDevelopmentEnvironment_Returns404()
     {
         // GIVEN: the API hosted with ASPNETCORE_ENVIRONMENT=Production (no test-error endpoint registered).
-        using var prodFactory = _factory.WithWebHostBuilder(b => b.UseEnvironment(Environments.Production));
+        using var prodFactory = _factory.WithWebHostBuilder(b =>
+        {
+            b.UseEnvironment(Environments.Production);
+            InjectProbeConnectionString(b);
+        });
         var client = prodFactory.CreateClient();
 
         // WHEN: a request hits the Development-only path.
@@ -41,7 +65,11 @@ public class ProblemDetailsEdgeCasesTests : IClassFixture<WebApplicationFactory<
     public async Task TestErrorEndpoint_InStagingEnvironment_Returns404()
     {
         // GIVEN: a Staging-like environment (anything not "Development").
-        using var stagingFactory = _factory.WithWebHostBuilder(b => b.UseEnvironment("Staging"));
+        using var stagingFactory = _factory.WithWebHostBuilder(b =>
+        {
+            b.UseEnvironment("Staging");
+            InjectProbeConnectionString(b);
+        });
         var client = stagingFactory.CreateClient();
 
         // WHEN: requested.
