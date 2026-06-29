@@ -1,6 +1,6 @@
 # Story 3.2: Contact Detail View
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -244,6 +244,40 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- Backend: `GetContactoByIdQuery`, `GetContactoByIdQueryHandler`, `IContactoRepository.GetByIdAsync`, `ContactoRepository.GetByIdAsync`, `GET /api/v1/contactos/{id:guid}` endpoint all implemented.
+- Catch-all route `/api/v1/contactos/{id}` added for non-UUID input → returns 400.
+- Frontend: `useContacto`, `ContactoDetailView`, `contactoApiRepository.getById`, `IContactoRepository.getById` all implemented.
+- Routes: `contactos.$contactoId.tsx`, `contactos.index.tsx` created; `contactos.tsx` updated to layout with `<Outlet />`.
+- `ContactoListView` uses `<a href>` for navigation to avoid TanStack Router context dependency in unit tests.
+- `ContactoDetailView` differentiates 404 (shows "Contacto no encontrado") from 5xx (shows ErrorPanel with Reintentar) using `axios.isAxiosError`.
+- Pre-existing test failures in `clientes` domain and 1 in `__root.test.tsx` are unrelated to this story.
+- All 31 ATDD tests pass GREEN: 10 unit, 13 component, 8 backend integration.
+
 ### File List
+
+**Backend created:**
+- `backend/src/SiesaAgents.Application/Contactos/Queries/GetContactoByIdQuery.cs`
+- `backend/src/SiesaAgents.Application/Contactos/Queries/GetContactoByIdQueryHandler.cs`
+
+**Backend modified:**
+- `backend/src/SiesaAgents.Application/Contactos/Interfaces/IContactoRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ContactosEndpoints.cs`
+- `backend/src/SiesaAgents.API/Program.cs`
+
+**Frontend created:**
+- `frontend/src/modules/crm/contactos/application/useContacto.ts`
+- `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
+- `frontend/src/routes/_app/contactos.$contactoId.tsx`
+- `frontend/src/routes/_app/contactos.index.tsx`
+- `frontend/src/modules/test/factories/contacto.factory.ts`
+
+**Frontend modified:**
+- `frontend/src/modules/crm/contactos/domain/IContactoRepository.ts`
+- `frontend/src/modules/crm/contactos/infrastructure/contactoApiRepository.ts`
+- `frontend/src/modules/crm/contactos/presentation/ContactoListView.tsx`
+- `frontend/src/routes/_app/contactos.tsx`
