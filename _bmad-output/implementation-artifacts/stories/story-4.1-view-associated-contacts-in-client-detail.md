@@ -1,6 +1,6 @@
 # Story 4.1: View Associated Contacts in Client Detail
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
