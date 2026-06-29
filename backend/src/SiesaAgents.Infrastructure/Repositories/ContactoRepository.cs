@@ -13,4 +13,10 @@ public sealed class ContactoRepository(AppDbContext dbContext) : IContactoReposi
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        return await dbContext.Contactos
+            .FirstOrDefaultAsync(c => c.Id == id, ct);
+    }
 }

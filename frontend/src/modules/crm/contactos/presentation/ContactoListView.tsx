@@ -66,9 +66,13 @@ export function ContactoListView() {
             key={contacto.id}
             data-testid="contacto-row"
           >
-            <div data-testid={`contacto-item-${contacto.id}`}>
+            <a
+              href={`/contactos/${contacto.id}`}
+              data-testid={`contacto-item-${contacto.id}`}
+              className="block"
+            >
               <ContactListItem contacto={contacto} />
-            </div>
+            </a>
           </div>
         ))}
       </div>
