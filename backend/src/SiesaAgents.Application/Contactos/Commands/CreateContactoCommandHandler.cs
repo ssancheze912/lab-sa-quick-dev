@@ -12,7 +12,8 @@ public sealed class CreateContactoCommandHandler(IContactoRepository repository)
             command.Nombre,
             command.Cargo,
             command.Telefono,
-            command.Email
+            command.Email,
+            command.ClienteId
         );
 
         await repository.AddAsync(entity, ct);

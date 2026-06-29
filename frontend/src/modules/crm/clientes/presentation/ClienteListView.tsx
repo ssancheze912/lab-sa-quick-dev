@@ -115,7 +115,7 @@ export function ClienteListView() {
   }
 
   return (
-    <div className="w-[280px] flex-shrink-0 border-r border-slate-200 h-full flex flex-col">
+    <div data-testid="clientes-list-panel" className="w-[280px] flex-shrink-0 border-r border-slate-200 h-full flex flex-col">
       <div className="p-3 border-b border-slate-200 space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-slate-700">Clientes</span>

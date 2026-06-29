@@ -80,6 +80,7 @@ function ContactosSeccion({ clienteId }: { clienteId: string }) {
                 to="/contactos/$contactoId"
                 params={{ contactoId: contacto.id }}
                 data-testid={`contacto-item-${contacto.id}`}
+                tabIndex={1}
                 className="flex flex-col flex-1 min-w-0 cursor-pointer rounded-md px-1 py-0.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <span className="text-sm font-medium text-slate-800">{contacto.nombre}</span>

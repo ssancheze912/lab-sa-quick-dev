@@ -6,7 +6,8 @@ public sealed record CreateContactoCommand(
     string Nombre,
     string Cargo,
     string Telefono,
-    string Email
+    string Email,
+    Guid? ClienteId = null
 );
 
 public interface ICreateContactoCommandHandler
