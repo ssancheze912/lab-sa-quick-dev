@@ -1,6 +1,6 @@
 # Story 2.2: Client Detail View
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -248,3 +248,27 @@ claude-sonnet-4-6
 ### Completion Notes List
 
 ### File List
+
+- frontend/src/modules/crm/clientes/domain/IClienteRepository.ts
+- frontend/src/modules/crm/clientes/application/useCliente.ts
+- frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts
+- frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx
+- frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx
+- frontend/src/routes/_app/clientes.tsx
+- frontend/src/routes/_app/clientes.$clienteId.tsx
+- frontend/src/routes/_app/clientes.index.tsx
+- frontend/src/routeTree.gen.ts
+- backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs
+- backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs
+- backend/src/SiesaAgents.Application/Clientes/Interfaces/IClienteRepository.cs
+- backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs
+- backend/src/SiesaAgents.API/Endpoints/ClientesEndpoints.cs
+- backend/src/SiesaAgents.API/Program.cs
+- frontend/src/modules/crm/clientes/application/useCliente.test.ts
+- frontend/src/modules/crm/clientes/application/useCliente.edge.test.ts
+- frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx
+- frontend/src/modules/crm/clientes/presentation/ClienteDetailView.edge.test.tsx
+- e2e/tests/clientes/cliente-detail.spec.ts
+- e2e/tests/clientes/cliente-detail.edge.spec.ts
+- backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteDetailEndpointsTests.cs
+- backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteDetailEndpointsEdgeTests.cs
