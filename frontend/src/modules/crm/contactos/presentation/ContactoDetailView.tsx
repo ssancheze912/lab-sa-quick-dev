@@ -61,10 +61,10 @@ function ClienteAsociadoSeccion({ clienteId }: { clienteId: string | null }) {
         to="/clientes/$clienteId"
         params={{ clienteId }}
         data-testid="navigate-to-cliente"
-        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 focus-visible:ring-2 focus-visible:ring-blue-500 rounded cursor-pointer"
+        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded cursor-pointer"
       >
         <BuildingOfficeIcon className="h-4 w-4" aria-hidden="true" />
-        {cliente?.nombre}
+        {cliente?.nombre ?? ''}
       </Link>
     </div>
   )
