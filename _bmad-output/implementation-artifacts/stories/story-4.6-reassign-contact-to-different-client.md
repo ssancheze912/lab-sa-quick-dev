@@ -1,6 +1,6 @@
 # Story 4.6: Reassign Contact to Different Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -36,26 +36,26 @@ so that I can correct associations or reflect organizational changes.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: verify `AssignClienteCommandHandler` allows overwrite when contact already has a `clienteId` (AC: #3, #9)
-  - [ ] Review `backend/src/SiesaAgents.Application/Contactos/Commands/AssignClienteCommandHandler.cs`
+- [x] Task 1 — Backend: verify `AssignClienteCommandHandler` allows overwrite when contact already has a `clienteId` (AC: #3, #9)
+  - [x] Review `backend/src/SiesaAgents.Application/Contactos/Commands/AssignClienteCommandHandler.cs`
     - Confirm the handler calls `contacto.AssignCliente(command.ClienteId)` unconditionally — no check that rejects a non-null `ClienteId` replacement
     - If any guard prevents overwrite (e.g., `if (contacto.ClienteId != null) return Conflict(...)`), remove it — overwrite must always be allowed
     - No new migration, no new endpoint — the existing `PUT /api/v1/contactos/{id}/cliente` is reused as-is
 
-- [ ] Task 2 — Backend: add integration test for the overwrite scenario (AC: #9)
-  - [ ] Update `backend/tests/SiesaAgents.IntegrationTests/Contactos/AssignClienteCommandTests.cs` (or equivalent)
+- [x] Task 2 — Backend: add integration test for the overwrite scenario (AC: #9)
+  - [x] Update `backend/tests/SiesaAgents.IntegrationTests/Contactos/AssignClienteCommandTests.cs` (or equivalent)
     - TC-new: `PUT /api/v1/contactos/{existingId}/cliente` with `{ clienteId: clienteB_uuid }` where contact already has `clienteId = clienteA_uuid` → 200 OK with `contactoDto.clienteId == clienteB_uuid`
 
-- [ ] Task 3 — Implement `useReasignarContacto` mutation hook (AC: #3, #4, #7, #8)
-  - [ ] Create `frontend/src/modules/crm/contactos/application/useReasignarContacto.ts`
+- [x] Task 3 — Implement `useReasignarContacto` mutation hook (AC: #3, #4, #7, #8)
+  - [x] Create `frontend/src/modules/crm/contactos/application/useReasignarContacto.ts`
     - `useMutation({ mutationFn: ({ contactoId, newClienteId }: { contactoId: string; newClienteId: string }) => contactoApiRepository.assignCliente(contactoId, newClienteId) })`
     - `onSuccess`: invalidate `['contactos']`, `['contactos', { clienteId: oldClienteId }]`, `['contactos', { clienteId: newClienteId }]`, and `['contactos', contactoId]`
     - `onSuccess`: show toast "Contacto reasignado correctamente"
     - `onError`: show toast "No se pudo reasignar el contacto. Intenta de nuevo."
     - Note: `oldClienteId` must be passed as a variable to the hook so it can be captured in `onSuccess`
 
-- [ ] Task 4 — Implement `ReasignarClienteDialog` component (AC: #2, #6, #7, #10, #11)
-  - [ ] Create `frontend/src/modules/crm/contactos/presentation/ReasignarClienteDialog.tsx`
+- [x] Task 4 — Implement `ReasignarClienteDialog` component (AC: #2, #6, #7, #10, #11)
+  - [x] Create `frontend/src/modules/crm/contactos/presentation/ReasignarClienteDialog.tsx`
     - Props: `{ contactoId: string; currentClienteId: string; open: boolean; onClose: () => void }`
     - Fetches all clients via existing `useClientes()` hook (queryKey `['clientes']`)
     - Filters out the current client from the selector list (user must pick a DIFFERENT client)
@@ -67,33 +67,33 @@ so that I can correct associations or reflect organizational changes.
     - Uses shadcn/ui `Dialog` (`frontend/src/shared/components/ui/dialog.tsx` — already created in Story 4.2)
     - Keyboard-accessible: confirm button is a `<button>` element (natively focusable, Enter/Space activatable)
 
-- [ ] Task 5 — Update `ClienteAsociadoSeccion` in `ContactoDetailView.tsx` to wire reassignment UI (AC: #1, #5, #10, #11)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
+- [x] Task 5 — Update `ClienteAsociadoSeccion` in `ContactoDetailView.tsx` to wire reassignment UI (AC: #1, #5, #10, #11)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
     - In `ClienteAsociadoSeccion` (added in Story 4.4): render a "Reasignar cliente" button (Heroicons `ArrowsRightLeftIcon` or `PencilIcon`) ONLY when `contacto.clienteId` is non-null
     - Button click: open `ReasignarClienteDialog` (local state `isReasignarOpen`)
     - Pass `contactoId` and `contacto.clienteId` as props to `ReasignarClienteDialog`
     - After dialog closes (onClose), dialog unmounts — no additional refresh needed (query invalidation in hook handles it)
     - Preserve existing "Volver al cliente" navigation link and "Sin cliente asignado" empty state (from Stories 4.3 and 4.4)
 
-- [ ] Task 6 — Write tests (AC: #1–#11)
-  - [ ] **Unit test** `useReasignarContacto.test.ts` (Vitest + MSW)
+- [x] Task 6 — Write tests (AC: #1–#11)
+  - [x] **Unit test** `useReasignarContacto.test.ts` (Vitest + MSW)
     - TC-1: Calls `PUT /api/v1/contactos/{id}/cliente` with correct body `{ clienteId: newClienteId }` on mutation
     - TC-2: Invalidates `['contactos']`, `['contactos', { clienteId: oldClienteId }]`, `['contactos', { clienteId: newClienteId }]`, and `['contactos', contactoId]` on success
     - TC-3: Toast "Contacto reasignado correctamente" shown on success
     - TC-4: Toast "No se pudo reasignar el contacto. Intenta de nuevo." shown on error
-  - [ ] **Component test** `ReasignarClienteDialog.test.tsx` (Vitest + RTL + MSW)
+  - [x] **Component test** `ReasignarClienteDialog.test.tsx` (Vitest + RTL + MSW)
     - TC-1: Dialog renders with a list of clients excluding the current one
     - TC-2: Searching by name filters the client list
     - TC-3: "Reasignar" button is disabled when no client is selected
     - TC-4: Selecting a client and clicking "Reasignar" triggers mutation and closes dialog
     - TC-5: Clicking "Cancelar" closes dialog without API call
     - TC-6: Empty state "No hay otros clientes disponibles" shows when all clients are filtered out
-  - [ ] **Component test** `ContactoDetailView.reasignar.test.tsx` (Vitest + RTL + MSW)
+  - [x] **Component test** `ContactoDetailView.reasignar.test.tsx` (Vitest + RTL + MSW)
     - TC-1: "Reasignar cliente" button is visible when `contacto.clienteId` is non-null
     - TC-2: "Reasignar cliente" button is NOT rendered when `contacto.clienteId` is null
     - TC-3: Clicking "Reasignar cliente" opens `ReasignarClienteDialog`
     - TC-4: After successful reassignment, `ClienteAsociadoSeccion` shows new client name
-  - [ ] **E2E test** `e2e/tests/contactos/reassign-contact.spec.ts` (Playwright)
+  - [x] **E2E test** `e2e/tests/contactos/reassign-contact.spec.ts` (Playwright)
     - TC-1: Navigate to a contact detail that has a client assigned, click "Reasignar cliente", select a different client, confirm — verify new client name appears in `ClienteAsociadoSeccion`
     - TC-2: Verify the old client's contact list (navigate to `/clientes/:oldClienteId`) no longer contains the reassigned contact
     - TC-3: Verify the new client's contact list (navigate to `/clientes/:newClienteId`) now contains the reassigned contact
