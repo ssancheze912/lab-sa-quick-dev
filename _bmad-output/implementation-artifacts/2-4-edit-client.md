@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -464,3 +464,9 @@ claude-sonnet-4-6
 - frontend/src/modules/crm/clientes/application/useUpdateCliente.test.ts
 - frontend/src/modules/crm/clientes/presentation/ClienteForm.edit.test.tsx
 - backend/tests/SiesaAgents.IntegrationTests/Clientes/UpdateClienteEndpointTests.cs
+- frontend/src/modules/crm/clientes/domain/Cliente.ts
+
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][MED] `UpdateClienteCommandHandler.cs`: Add NIT uniqueness check before updating — call `repository.GetByNitAsync(command.Nit)` and if a different entity is found (different Id), throw `NitAlreadyExistsException`. Currently the DB constraint catches this, but the application layer should enforce it consistently with the Create pattern.
+- [ ] [AI-Review][LOW] `ClienteForm.tsx`: Refactor the `onSuccess` / toast pattern — `onSuccess` is bound both at the hook level (via `useUpdateCliente({ onSuccess })`) and the toast is shown in the per-call `mutate()` callback. Consider moving toast into the hook's `onSuccess` to avoid ordering dependency between dialog close and toast render.
