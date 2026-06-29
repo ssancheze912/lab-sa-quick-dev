@@ -166,22 +166,17 @@ describe('TC-E2-P0-04: Successful client creation', () => {
     server.use(
       handleGetClientesSuccess(createClientes(1)),
       // Override the handler to capture the request body
-      ...(() => {
-        const { http, HttpResponse } = require('msw');
-        return [
-          http.post('/api/v1/clientes', async ({ request }: { request: Request }) => {
-            capturedBody = (await request.json()) as Record<string, string>;
-            return HttpResponse.json(
-              {
-                id: '00000000-0000-0000-0000-000000000099',
-                ...capturedBody,
-                createdAt: '2026-06-29T10:00:00Z',
-              },
-              { status: 201 }
-            );
-          }),
-        ];
-      })()
+      http.post('/api/v1/clientes', async ({ request }) => {
+        capturedBody = (await request.json()) as Record<string, string>;
+        return HttpResponse.json(
+          {
+            id: '00000000-0000-0000-0000-000000000099',
+            ...capturedBody,
+            createdAt: '2026-06-29T10:00:00Z',
+          },
+          { status: 201 }
+        );
+      })
     );
 
     // WHEN: Form is submitted with valid data

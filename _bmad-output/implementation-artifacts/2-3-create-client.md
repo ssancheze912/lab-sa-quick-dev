@@ -1,6 +1,6 @@
 # Story 2.3: Create Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -437,3 +437,28 @@ None.
 - frontend/src/modules/crm/clientes/application/useCreateCliente.test.ts
 - frontend/src/modules/crm/clientes/presentation/ClienteForm.test.tsx
 - backend/tests/SiesaAgents.IntegrationTests/Clientes/CreateClienteEndpointTests.cs
+
+## Senior Developer Review (AI)
+
+**Date**: 2026-06-29
+**Reviewer**: SiesaTeam (AI Agent — Adversarial Code Review)
+**Verdict**: PASS CON OBSERVACIONES
+
+### Issues Found and Auto-Fixed
+
+1. **[MED] `ClienteForm.test.tsx`: `require('msw')` in ESM project** — Replaced IIFE+`require()` pattern with direct `http.post(...)` using already-imported ESM symbols. Would have caused `ReferenceError: require is not defined` at test runtime.
+
+2. **[MED] Duplicate `siesa-ui-kit/styles.css` import** — Removed redundant import from `main.tsx`; canonical import is in `index.css`. Dev notes mentioned adding it to `main.tsx` but `index.css` already had `@import "siesa-ui-kit/styles.css"`.
+
+3. **[MED] Incomplete `onError` handler in `ClienteForm.tsx`** — Only handled 409. Added `else { toast.error('Error al crear el cliente') }` branch per Task 2 spec.
+
+4. **[WARN] Missing WCAG 2.1 AA accessibility attributes** — Added `aria-invalid`, `aria-describedby` to all 4 inputs and `id` attributes to all error spans per company WCAG 2.1 AA requirement.
+
+### Remaining Observations (Informational)
+
+- `NitAlreadyExistsException` lives in `Commands` namespace — acceptable for MVP scope, but consider moving to `Application.Exceptions` in a future refactor.
+- `ClienteForm` contains its own `ToastProvider` — correct for now since no global provider exists at app root.
+
+### Change Log
+
+- 2026-06-29: Code review — auto-fixed 4 issues (require/ESM, duplicate CSS import, missing generic error handler, WCAG accessibility)

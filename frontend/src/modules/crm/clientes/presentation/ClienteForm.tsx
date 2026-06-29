@@ -30,6 +30,8 @@ function ClienteFormInner({ onSuccess, onCancel }: ClienteFormProps) {
         const axiosError = error as { response?: { status?: number } }
         if (axiosError?.response?.status === 409) {
           setError('nit', { message: 'El NIT/RUC ya está registrado' })
+        } else {
+          toast.error('Error al crear el cliente')
         }
       },
     })
@@ -43,10 +45,12 @@ function ClienteFormInner({ onSuccess, onCancel }: ClienteFormProps) {
           id="cliente-nombre"
           data-testid="cliente-form-nombre"
           type="text"
+          aria-invalid={!!errors.nombre}
+          aria-describedby={errors.nombre ? 'error-nombre' : undefined}
           {...register('nombre')}
         />
         {errors.nombre && (
-          <span data-testid="cliente-form-error-nombre" role="alert">
+          <span id="error-nombre" data-testid="cliente-form-error-nombre" role="alert">
             {errors.nombre.message}
           </span>
         )}
@@ -58,10 +62,12 @@ function ClienteFormInner({ onSuccess, onCancel }: ClienteFormProps) {
           id="cliente-nit"
           data-testid="cliente-form-nit"
           type="text"
+          aria-invalid={!!errors.nit}
+          aria-describedby={errors.nit ? 'error-nit' : undefined}
           {...register('nit')}
         />
         {errors.nit && (
-          <span data-testid="cliente-form-error-nit" role="alert">
+          <span id="error-nit" data-testid="cliente-form-error-nit" role="alert">
             {errors.nit.message}
           </span>
         )}
@@ -73,10 +79,12 @@ function ClienteFormInner({ onSuccess, onCancel }: ClienteFormProps) {
           id="cliente-telefono"
           data-testid="cliente-form-telefono"
           type="text"
+          aria-invalid={!!errors.telefono}
+          aria-describedby={errors.telefono ? 'error-telefono' : undefined}
           {...register('telefono')}
         />
         {errors.telefono && (
-          <span data-testid="cliente-form-error-telefono" role="alert">
+          <span id="error-telefono" data-testid="cliente-form-error-telefono" role="alert">
             {errors.telefono.message}
           </span>
         )}
@@ -88,10 +96,12 @@ function ClienteFormInner({ onSuccess, onCancel }: ClienteFormProps) {
           id="cliente-ciudad"
           data-testid="cliente-form-ciudad"
           type="text"
+          aria-invalid={!!errors.ciudad}
+          aria-describedby={errors.ciudad ? 'error-ciudad' : undefined}
           {...register('ciudad')}
         />
         {errors.ciudad && (
-          <span data-testid="cliente-form-error-ciudad" role="alert">
+          <span id="error-ciudad" data-testid="cliente-form-error-ciudad" role="alert">
             {errors.ciudad.message}
           </span>
         )}
