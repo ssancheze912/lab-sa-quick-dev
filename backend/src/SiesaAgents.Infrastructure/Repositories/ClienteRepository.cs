@@ -13,4 +13,10 @@ public sealed class ClienteRepository(AppDbContext dbContext) : IClienteReposito
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task<ClienteEntity?> GetByIdAsync(Guid id)
+    {
+        return await dbContext.Clientes
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
 }

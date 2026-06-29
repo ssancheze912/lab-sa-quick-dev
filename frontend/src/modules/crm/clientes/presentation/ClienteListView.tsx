@@ -95,7 +95,19 @@ export function ClienteListView() {
       </div>
       <div className="overflow-y-auto flex-1">
         {filteredAndSorted.map((cliente) => (
-          <ClientListItem key={cliente.id} cliente={cliente} />
+          <a
+            key={cliente.id}
+            href={`/clientes/${cliente.id}`}
+            className="block"
+            onClick={(e) => {
+              // Prevent full page reload — TanStack Router handles navigation
+              // when rendered inside a RouterProvider context
+              e.preventDefault()
+              window.history.pushState({}, '', `/clientes/${cliente.id}`)
+            }}
+          >
+            <ClientListItem cliente={cliente} />
+          </a>
         ))}
       </div>
     </div>

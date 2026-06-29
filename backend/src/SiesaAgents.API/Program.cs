@@ -17,6 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Application services
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<IGetClientesQueryHandler, GetClientesQueryHandler>();
+builder.Services.AddScoped<IGetClienteByIdQueryHandler, GetClienteByIdQueryHandler>();
 
 // OpenApi metadata (required by Scalar)
 builder.Services.AddOpenApi();

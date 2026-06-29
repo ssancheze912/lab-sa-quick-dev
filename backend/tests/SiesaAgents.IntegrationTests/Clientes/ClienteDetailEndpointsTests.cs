@@ -120,7 +120,7 @@ public sealed class ClienteDetailEndpointsTests : IClassFixture<ClienteDetailWeb
 
         // THEN: Content-Type contains "problem+json" (RFC 7807)
         var contentType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
-        Assert.Contains("problem+json", contentType,
+        Assert.True(contentType.Contains("problem+json"),
             $"Expected Content-Type to contain 'problem+json' but got: {contentType}");
     }
 
@@ -208,11 +208,11 @@ public sealed class ClienteDetailEndpointsTests : IClassFixture<ClienteDetailWeb
         var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         var lowerJson = json.ToLowerInvariant();
 
-        Assert.DoesNotContain("stacktrace", lowerJson,
+        Assert.True(!lowerJson.Contains("stacktrace"),
             $"Stack trace must not be exposed. Response: {json}");
-        Assert.DoesNotContain("exception", lowerJson,
+        Assert.True(!lowerJson.Contains("exception"),
             $"Exception details must not be exposed. Response: {json}");
-        Assert.DoesNotContain("innerexception", lowerJson,
+        Assert.True(!lowerJson.Contains("innerexception"),
             $"InnerException details must not be exposed. Response: {json}");
     }
 }

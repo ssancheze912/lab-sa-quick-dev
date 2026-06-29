@@ -5,4 +5,5 @@ namespace SiesaAgents.Application.Clientes.Interfaces;
 public interface IClienteRepository
 {
     Task<IEnumerable<ClienteEntity>> GetAllAsync();
+    Task<ClienteEntity?> GetByIdAsync(Guid id);
 }
