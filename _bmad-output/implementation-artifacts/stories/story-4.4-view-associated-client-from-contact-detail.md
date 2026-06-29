@@ -1,6 +1,6 @@
 # Story 4.4: View Associated Client from Contact Detail
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -28,8 +28,8 @@ so that I can understand the relationship without additional navigation.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add `ClienteAsociadoSeccion` to `ContactoDetailView.tsx` to display the associated client (AC: #1, #4, #5, #6, #7)
-  - [ ] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
+- [x] Task 1 — Add `ClienteAsociadoSeccion` to `ContactoDetailView.tsx` to display the associated client (AC: #1, #4, #5, #6, #7)
+  - [x] Update `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
     - Import `Link` from `@tanstack/react-router`
     - Import `BuildingOfficeIcon` from `@heroicons/react/24/outline` (Heroicons — primary icon library)
     - Add a `ClienteAsociadoSeccion` section in the layout (below or alongside existing contact fields)
@@ -43,27 +43,27 @@ so that I can understand the relationship without additional navigation.
     - If `contacto.clienteId` is null: render `<p data-testid="sin-cliente-message">Sin cliente asignado</p>` in muted text (`text-slate-500`)
     - All user-facing text in Spanish (MANDATORY)
 
-- [ ] Task 2 — Implement or reuse `useCliente(id)` hook in the contactos module (AC: #1, #5, #6)
-  - [ ] Check if `frontend/src/modules/crm/clientes/application/useCliente.ts` already exists (Story 2.2)
+- [x] Task 2 — Implement or reuse `useCliente(id)` hook in the contactos module (AC: #1, #5, #6)
+  - [x] Check if `frontend/src/modules/crm/clientes/application/useCliente.ts` already exists (Story 2.2)
     - If it exists: import and reuse it directly in `ContactoDetailView.tsx`
     - If it does not exist: create `frontend/src/modules/crm/contactos/application/useClienteAsociado.ts`
       - `useQuery({ queryKey: ['clientes', id], queryFn: () => clienteApiRepository.getById(id), enabled: !!id })`
       - Returns `{ cliente, isLoading, isError, refetch }`
-  - [ ] No new backend endpoint required — `GET /api/v1/clientes/{id}` already exists (Story 2.2)
+  - [x] No new backend endpoint required — `GET /api/v1/clientes/{id}` already exists (Story 2.2)
 
-- [ ] Task 3 — Verify TanStack Router route for `/clientes/:clienteId` is registered (AC: #2)
-  - [ ] Confirm `frontend/src/routes/_app/clientes.$clienteId.tsx` exists (created in Story 2.2, confirmed in Story 4.3)
-  - [ ] No changes needed to this file
+- [x] Task 3 — Verify TanStack Router route for `/clientes/:clienteId` is registered (AC: #2)
+  - [x] Confirm `frontend/src/routes/_app/clientes.$clienteId.tsx` exists (created in Story 2.2, confirmed in Story 4.3)
+  - [x] No changes needed to this file
 
-- [ ] Task 4 — Write tests (AC: #1–#7)
-  - [ ] **Component test** `ContactoDetailView.clienteAsociado.test.tsx` (Vitest + RTL + MSW)
+- [x] Task 4 — Write tests (AC: #1–#7)
+  - [x] **Component test** `ContactoDetailView.clienteAsociado.test.tsx` (Vitest + RTL + MSW)
     - TC-1: When contact has `clienteId`, renders client name as a `<Link>` with `data-testid="cliente-asociado-link"` pointing to `/clientes/{clienteId}`
     - TC-2: When contact has `clienteId` is null, renders `data-testid="sin-cliente-message"` with text "Sin cliente asignado"
     - TC-3: Clicking the client name link navigates to `/clientes/{clienteId}` (assert link `href` or router.navigate call)
     - TC-4: While loading client data, skeleton placeholder renders (assert `react-loading-skeleton` presence or `data-testid="cliente-loading-skeleton"`)
     - TC-5: On fetch error, error state renders with retry button
     - TC-6: Client name link is keyboard-focusable (rendered as `<a>` or `<Link>` — not a `<div>`)
-  - [ ] **E2E test** `e2e/tests/contactos/view-client-from-contact.spec.ts` (Playwright)
+  - [x] **E2E test** `e2e/tests/contactos/view-client-from-contact.spec.ts` (Playwright)
     - TC-1: Navigate to contact detail, verify client name is visible and clicking it navigates to `/clientes/{clienteId}`
     - TC-2: Navigate to contact detail for orphan contact, verify "Sin cliente asignado" text
 
