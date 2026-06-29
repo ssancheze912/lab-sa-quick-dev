@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: review
+Status: done
 
 ## Story
 
@@ -226,3 +226,10 @@ N/A
 **Root:**
 - `package.json` — Root package with @playwright/test 1.56.1
 - `pnpm-workspace.yaml` — pnpm workspace config
+
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][MED] `backend/tests/SiesaAgents.UnitTests/UnitTest1.cs`: Replace empty `Test1()` body with a minimal meaningful assertion (e.g., a smoke test that verifies the project compiles) or delete the class and add real unit tests as domain logic is introduced in future stories. An empty test body always passes and provides zero coverage value.
+- [ ] [AI-Review][MED] Frontend Vitest is installed but not configured: add `test` block to `frontend/vite.config.ts` (or create `vitest.config.ts`), add a `"test": "vitest"` script to `frontend/package.json`, and create `frontend/src/test-setup.ts` importing `@testing-library/jest-dom/vitest`. Without this, `pnpm test` fails inside `frontend/`.
+- [ ] [AI-Review][LOW] `frontend/tsconfig.app.json` lib array is missing `"DOM.Iterable"`. Add it: `"lib": ["ES2023", "DOM", "DOM.Iterable"]` to prevent TypeScript errors when iterating DOM collections in future stories.
+- [ ] [AI-Review][LOW] Root `package.json` has `"workspaces": []` which is redundant/inconsistent with `pnpm-workspace.yaml`. Consider removing the empty `workspaces` array from `package.json` to avoid confusion.

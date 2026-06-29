@@ -7,7 +7,7 @@ export const Route = createFileRoute('/')({
 function IndexPage() {
   return (
     <main>
-      <h1>Siesa Agents</h1>
+      <h1>Siesa Agentes</h1>
     </main>
   )
 }
