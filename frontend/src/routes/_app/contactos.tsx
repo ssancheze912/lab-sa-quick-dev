@@ -1,7 +1,13 @@
+import { z } from 'zod'
 import { createFileRoute, Outlet, useRouterState } from '@tanstack/react-router'
 import { ContactoListView } from '../../modules/crm/contactos/presentation/ContactoListView'
 
+const contactosSearch = z.object({
+  sinCliente: z.boolean().optional(),
+})
+
 export const Route = createFileRoute('/_app/contactos')({
+  validateSearch: contactosSearch,
   component: ContactosLayout,
 })
 

@@ -10,7 +10,8 @@ import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
 import { ContactoForm } from './ContactoForm'
 
 export function ContactoListView() {
-  const { data, isLoading, isError, refetch } = useContactos()
+  const [sinCliente, setSinCliente] = useState(false)
+  const { data, isLoading, isError, refetch } = useContactos(sinCliente)
   const [searchQuery, setSearchQuery] = useState('')
   const [isFormOpen, setIsFormOpen] = useState(false)
 
@@ -22,14 +23,22 @@ export function ContactoListView() {
     )
   }, [data, searchQuery])
 
-  if (isLoading) {
-    return (
-      <div data-testid="contactos-list-skeleton" className="p-4">
-        <Skeleton height={36} className="mb-3" />
-        <Skeleton height={24} className="mb-2" count={8} />
-      </div>
-    )
-  }
+  const sinClienteToggle = (
+    <button
+      type="button"
+      data-testid="filtro-sin-cliente"
+      onClick={() => setSinCliente((prev) => !prev)}
+      aria-pressed={sinCliente}
+      aria-label="Sin cliente"
+      className={`text-sm px-3 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-[#0e79fd] ${
+        sinCliente
+          ? 'bg-[#0e79fd] text-white border-[#0e79fd]'
+          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+      }`}
+    >
+      Sin cliente
+    </button>
+  )
 
   if (isError) {
     return (
@@ -42,6 +51,19 @@ export function ContactoListView() {
     )
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="p-3 border-b border-slate-200 flex items-center gap-2 flex-wrap">
+          {sinClienteToggle}
+        </div>
+        <div data-testid="contactos-list-skeleton" className="p-4 flex-1">
+          <Skeleton height={24} className="mb-2" count={8} />
+        </div>
+      </div>
+    )
+  }
+
   if (isFormOpen) {
     return (
       <ContactoForm
@@ -51,7 +73,8 @@ export function ContactoListView() {
     )
   }
 
-  if (data && data.length === 0) {
+  // Empty state without sinCliente filter: no search input (AC-E3 pre-existing test requirement)
+  if (!sinCliente && data && data.length === 0) {
     return (
       <EmptyState
         message="No hay contactos registrados. Cree el primer contacto para comenzar."
@@ -60,9 +83,24 @@ export function ContactoListView() {
     )
   }
 
+  // Empty state with sinCliente filter active: show toggle so user can deactivate
+  if (sinCliente && data && data.length === 0) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="p-3 border-b border-slate-200 flex items-center gap-2 flex-wrap">
+          {sinClienteToggle}
+        </div>
+        <EmptyState
+          message="Todos los contactos tienen un cliente asignado"
+          testId="contactos-sin-cliente-empty-state"
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 border-b border-slate-200 flex items-center gap-2">
+      <div className="p-3 border-b border-slate-200 flex items-center gap-2 flex-wrap">
         <input
           data-testid="contactos-search-input"
           type="text"
@@ -72,6 +110,7 @@ export function ContactoListView() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="flex-1 text-sm border border-slate-200 rounded px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0e79fd]"
         />
+        {sinClienteToggle}
         <button
           type="button"
           data-testid="nuevo-contacto-button"
@@ -83,6 +122,14 @@ export function ContactoListView() {
           Nuevo contacto
         </button>
       </div>
+      {sinCliente && data && data.length > 0 && (
+        <div
+          data-testid="contador-sin-cliente"
+          className="px-3 py-2 text-sm text-slate-600 bg-slate-50 border-b border-slate-200"
+        >
+          {data.length} contacto(s) sin cliente
+        </div>
+      )}
       <div className="overflow-y-auto flex-1">
         {filteredContactos.map((contacto) => (
           <div

@@ -11,7 +11,7 @@ public static class ContactosEndpoints
 {
     public static IEndpointRouteBuilder MapContactosEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/v1/contactos", async ([FromQuery] string? clienteId, IGetContactosQueryHandler handler, CancellationToken ct) =>
+        app.MapGet("/api/v1/contactos", async ([FromQuery] string? clienteId, [FromQuery] string? sinCliente, IGetContactosQueryHandler handler, CancellationToken ct) =>
         {
             Guid? parsedClienteId = null;
 
@@ -35,7 +35,29 @@ public static class ContactosEndpoints
                 }
             }
 
-            var contactos = await handler.HandleAsync(new GetContactosQuery(parsedClienteId), ct);
+            bool parsedSinCliente = false;
+
+            if (sinCliente is not null)
+            {
+                if (sinCliente.Equals("true", StringComparison.OrdinalIgnoreCase))
+                {
+                    parsedSinCliente = true;
+                }
+                else if (sinCliente.Equals("false", StringComparison.OrdinalIgnoreCase) || sinCliente.Length == 0)
+                {
+                    parsedSinCliente = false;
+                }
+                else
+                {
+                    return Results.Problem(
+                        title: "Parámetro inválido",
+                        detail: "El valor proporcionado para 'sinCliente' debe ser 'true' o 'false'.",
+                        statusCode: StatusCodes.Status400BadRequest
+                    );
+                }
+            }
+
+            var contactos = await handler.HandleAsync(new GetContactosQuery(parsedClienteId, parsedSinCliente), ct);
             return Results.Ok(contactos);
         })
         .WithName("GetContactos")

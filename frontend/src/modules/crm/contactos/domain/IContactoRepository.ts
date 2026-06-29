@@ -16,8 +16,12 @@ export interface UpdateContactoInput {
   email: string
 }
 
+export interface GetAllContactosParams {
+  sinCliente?: boolean
+}
+
 export interface IContactoRepository {
-  getAll(): Promise<Contacto[]>
+  getAll(params?: GetAllContactosParams): Promise<Contacto[]>
   getById(id: string): Promise<Contacto>
   getByClienteId(clienteId: string): Promise<Contacto[]>
   create(data: CreateContactoInput): Promise<Contacto>

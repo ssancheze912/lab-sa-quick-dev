@@ -7,12 +7,15 @@ namespace SiesaAgents.Infrastructure.Repositories;
 
 public sealed class ContactoRepository(AppDbContext dbContext) : IContactoRepository
 {
-    public async Task<IEnumerable<ContactoEntity>> GetAllAsync(Guid? clienteId = null, CancellationToken ct = default)
+    public async Task<IEnumerable<ContactoEntity>> GetAllAsync(Guid? clienteId = null, bool sinCliente = false, CancellationToken ct = default)
     {
         var query = dbContext.Contactos.AsNoTracking().AsQueryable();
 
         if (clienteId.HasValue)
             query = query.Where(c => c.ClienteId == clienteId.Value);
+
+        if (sinCliente)
+            query = query.Where(c => c.ClienteId == null);
 
         return await query
             .OrderByDescending(c => c.CreatedAt)

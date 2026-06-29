@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { contactoApiRepository } from '../infrastructure/contactoApiRepository'
 
-export function useContactos() {
+export function useContactos(sinCliente = false) {
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['contactos'],
-    queryFn: () => contactoApiRepository.getAll(),
+    queryKey: ['contactos', { sinCliente }],
+    queryFn: () => contactoApiRepository.getAll({ sinCliente }),
     staleTime: 0,
   })
 

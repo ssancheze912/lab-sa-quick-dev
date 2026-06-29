@@ -7,7 +7,7 @@ public sealed class GetContactosQueryHandler(IContactoRepository repository) : I
 {
     public async Task<IEnumerable<ContactoDto>> HandleAsync(GetContactosQuery query, CancellationToken ct = default)
     {
-        var contactos = await repository.GetAllAsync(query.ClienteId, ct);
+        var contactos = await repository.GetAllAsync(query.ClienteId, query.SinCliente, ct);
 
         return contactos.Select(c => new ContactoDto(
             c.Id,

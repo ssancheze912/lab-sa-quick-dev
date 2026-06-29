@@ -1,10 +1,11 @@
-import type { IContactoRepository, CreateContactoInput, UpdateContactoInput } from '../domain/IContactoRepository'
+import type { IContactoRepository, CreateContactoInput, UpdateContactoInput, GetAllContactosParams } from '../domain/IContactoRepository'
 import type { Contacto } from '../domain/Contacto'
 import { apiClient } from '../../../../shared/lib/apiClient'
 
 export const contactoApiRepository: IContactoRepository = {
-  async getAll(): Promise<Contacto[]> {
-    const response = await apiClient.get<Contacto[]>('/api/v1/contactos')
+  async getAll(params?: GetAllContactosParams): Promise<Contacto[]> {
+    const queryParams = params?.sinCliente === true ? { sinCliente: true } : {}
+    const response = await apiClient.get<Contacto[]>('/api/v1/contactos', { params: queryParams })
     return response.data
   },
 
