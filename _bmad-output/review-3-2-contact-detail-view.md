@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3]
+stepsCompleted: [1, 2, 3, 4, 5]
 story_path: /home/user/lab-sa-quick-dev/_bmad-output/implementation-artifacts/stories/story-3.2-contact-detail-view.md
 story_key: 3-2-contact-detail-view
 ---
@@ -80,3 +80,20 @@ story_key: 3-2-contact-detail-view
 - **[LOW] Missing `aria-live` region for dynamic state changes in ContactoDetailView**
   File: `frontend/src/modules/crm/contactos/presentation/ContactoDetailView.tsx`
   When state transitions from loading → error → data, screen readers may not announce the change. Adding `aria-live="polite"` on the container or using a visually-hidden status announcement would fully satisfy WCAG 2.1 AA 4.1.3 (Status Messages). Not blocking for MVP but noted for accessibility completeness.
+
+---
+
+## Fix Outcome
+
+- **Action Taken**: Fixed automatically
+- **Fixed Count**: 4
+  1. [HIGH] `ContactoListView.tsx`: Replaced `<a href>` with TanStack Router `<Link to="/contactos/$contactoId" params={...}>` — SPA navigation restored
+  2. [HIGH] `ContactoDetailView.tsx` line 99: Replaced broken self-closing `<dt aria-label>` with `<dt>Cargo</dt>` — accessible semantic markup restored
+  3. [MED] `ContactoDetailView.tsx` line 46: Replaced `onClick={() => refetch()}` with `onClick={refetch}` — removes unnecessary lambda allocation
+  4. [MED] `GetContactoByIdQuery.cs` + `GetContactoByIdQueryHandler.cs` + `ContactosEndpoints.cs`: Added `CancellationToken ct = default` through the handler chain — cancellation token forwarding complete
+- **Task Count**: 0
+- **Recommended Status**: done (all ACs satisfied, all High/Med issues fixed)
+
+## Status Sync
+- **Story File Status**: Updated to done
+- **Sprint Status YAML**: Synced — 3-2-contact-detail-view -> done
