@@ -23,11 +23,7 @@ function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
   const deleteMutation = useDeleteContacto({
     onSuccess: () => {
       setIsDeleteDialogOpen(false)
-      try {
-        navigate({ to: '/contactos' })
-      } catch {
-        // No router context in test environment
-      }
+      navigate({ to: '/contactos' })
     },
   })
 
@@ -154,6 +150,7 @@ function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="contacto-delete-dialog-title"
+          aria-describedby="contacto-delete-dialog-description"
           data-testid="contacto-detail-delete-dialog"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
         >
@@ -164,7 +161,7 @@ function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
             >
               ¿Eliminar este contacto?
             </h2>
-            <p className="text-sm text-slate-500 mb-6">
+            <p id="contacto-delete-dialog-description" className="text-sm text-slate-500 mb-6">
               Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-end gap-3">

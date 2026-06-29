@@ -30,6 +30,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 import React from 'react';
+
+// Mock TanStack Router so useNavigate works outside a Router context in tests
+const mockNavigate = vi.fn();
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => mockNavigate,
+}));
 import {
   handleDeleteContactoSuccess,
   handleDeleteContactoNotFound,
@@ -49,6 +55,7 @@ const server = setupServer();
 
 beforeEach(() => {
   resetContactoCounter();
+  mockNavigate.mockClear();
   server.listen({ onUnhandledRequest: 'error' });
 });
 
