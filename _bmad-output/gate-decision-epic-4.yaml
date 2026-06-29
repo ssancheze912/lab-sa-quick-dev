@@ -1,0 +1,155 @@
+gate_decision:
+  epic: EP-04
+  epic_name: "Asociación Cliente-Contacto"
+  generated: "2026-06-29"
+  branch: "develop-platform-gaduranb-rq4-epic-4-asociacion-cliente-contacto"
+  gate_scope: epic
+  decision_mode: deterministic
+
+  decision: CONCERNS
+
+  coverage:
+    p0:
+      acs_total: 5
+      acs_covered: 5
+      percentage: 100
+      threshold: 100
+      status: PASS
+    p1:
+      acs_total: 2
+      acs_covered_equivalent: 1.94
+      percentage: 97
+      threshold: 90
+      status: PASS
+    overall:
+      acs_total: 7
+      acs_covered_equivalent: 6.94
+      percentage: 99
+      threshold: 80
+      status: PASS
+
+  stories:
+    - id: "4.1"
+      title: "View Associated Contacts in Client Detail"
+      status: done
+      tests_total: 43
+      test_review_score: 79
+      epic_acs_covered:
+        - AC-E4.2
+      coverage: FULL
+    - id: "4.2"
+      title: "Associate / Disassociate Contacts from Client"
+      status: done
+      tests_total: 59
+      test_review_score: 72
+      epic_acs_covered:
+        - AC-E4.1
+        - AC-E4.4
+        - AC-E4.7
+      coverage: FULL
+      notes: "Task 8 test checkboxes show as unchecked in story file — documentation gap, not implementation gap. Tests confirmed in test-review."
+    - id: "4.3"
+      title: "Navigate from Client Detail to Contact Detail"
+      status: done
+      tests_total: 27
+      test_review_score: 79
+      epic_acs_covered:
+        - AC-E4.2
+      coverage: FULL
+    - id: "4.4"
+      title: "View Associated Client from Contact Detail"
+      status: done
+      tests_total: 22
+      test_review_score: 79
+      epic_acs_covered:
+        - AC-E4.3
+      coverage: FULL
+      notes: "data-testid naming inconsistency: story spec 'cliente-asociado-link' vs tests 'navigate-to-cliente'. P1 quality issue."
+    - id: "4.5"
+      title: "Orphan Contacts Filter"
+      status: done
+      tests_total: 39
+      test_review_score: 74
+      epic_acs_covered:
+        - AC-E4.5
+      coverage: PARTIAL
+      notes: "renderWithSinCliente helper ignores sinCliente argument — AC#6 (deep-link pre-activation) not verified at component level. E2E TC-2 covers it at full-stack level."
+    - id: "4.6"
+      title: "Reassign Contact to Different Client"
+      status: done
+      tests_total: 39
+      test_review_score: null
+      test_review_verdict: "PASS CON OBSERVACIONES"
+      epic_acs_covered:
+        - AC-E4.6
+        - AC-E4.7
+      coverage: FULL
+      notes: "ATDD checklist generated in RED phase. Story marked done — tests expected GREEN post-implementation. No CI execution report available."
+
+  evidence:
+    test_results: UNKNOWN
+    test_results_note: "No formal CI execution reports (JUnit XML, TAP, JSON) available. Evidence from story completion status and ATDD checklist notes only."
+    code_reviews: AVAILABLE
+    atdd_checklists: AVAILABLE
+    test_reviews: AVAILABLE
+
+  gaps:
+    - id: GAP-01
+      epic_ac: AC-E4.5
+      story: "4.5"
+      type: test_quality
+      severity: P1
+      description: "renderWithSinCliente helper ignores sinCliente arg — component deep-link (AC#6) not truly exercised at component level."
+      blocking: false
+    - id: GAP-02
+      epic_ac: AC-E4.3
+      story: "4.4"
+      type: naming_inconsistency
+      severity: P1
+      description: "data-testid mismatch: story spec 'cliente-asociado-link' vs test implementation 'navigate-to-cliente'."
+      blocking: false
+    - id: GAP-03
+      epic_ac: ALL
+      story: "4.2–4.6"
+      type: evidence
+      severity: P1
+      description: "No formal CI test execution reports available. Evidence from story completion notes only."
+      blocking: false
+    - id: GAP-04
+      epic_ac: AC-E4.1
+      story: "4.2"
+      type: test_quality
+      severity: P1
+      description: "Toast text assertion weak — spy does not verify exact string for AC#8."
+      blocking: false
+    - id: GAP-05
+      epic_ac: AC-E4.6
+      story: "4.6"
+      type: test_quality
+      severity: P2
+      description: "Toast spy imports siesa-ui-kit instead of react-hot-toast — alignment risk."
+      blocking: false
+
+  concerns:
+    - "Formal CI test execution evidence is UNKNOWN — no JUnit XML or equivalent reports."
+    - "AC-E4.5 (Story 4.5) has a test helper defect that leaves component-level deep-link coverage unverified."
+    - "Story 4.6 ATDD checklist was generated in RED phase — GREEN status assumed from story completion, not CI."
+    - "Multiple P1 test quality issues across stories 4.2–4.6 (not blocking individually, cumulative risk)."
+
+  recommended_actions:
+    - priority: P0
+      action: "Run full test suite in CI and export JUnit XML / TAP / JSON execution report."
+    - priority: P1
+      action: "Fix renderWithSinCliente helper in Story 4.5 tests to pass sinCliente to router context."
+    - priority: P1
+      action: "Resolve data-testid naming inconsistency in Story 4.4."
+    - priority: P1
+      action: "Verify Story 4.6 tests are GREEN after implementation (RED phase ATDD)."
+    - priority: P2
+      action: "Align toast spy imports across stories to react-hot-toast (not siesa-ui-kit)."
+
+  sign_off:
+    decision_author: "sa-tea-trace (TEA BMAD agent)"
+    reviewed_by: null
+    approved_for_release: false
+    approval_note: "CONCERNS must be resolved or formally waived before epic is marked DONE and merged."
