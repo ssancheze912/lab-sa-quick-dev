@@ -5,9 +5,9 @@ namespace SiesaAgents.Application.Contactos.Queries;
 
 public sealed class GetContactoByIdQueryHandler(IContactoRepository repository) : IGetContactoByIdQueryHandler
 {
-    public async Task<ContactoDto?> HandleAsync(GetContactoByIdQuery query)
+    public async Task<ContactoDto?> HandleAsync(GetContactoByIdQuery query, CancellationToken ct = default)
     {
-        var contacto = await repository.GetByIdAsync(query.Id);
+        var contacto = await repository.GetByIdAsync(query.Id, ct);
 
         if (contacto is null)
             return null;

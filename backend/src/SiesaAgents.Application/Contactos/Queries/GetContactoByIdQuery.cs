@@ -6,5 +6,5 @@ public sealed record GetContactoByIdQuery(Guid Id);
 
 public interface IGetContactoByIdQueryHandler
 {
-    Task<ContactoDto?> HandleAsync(GetContactoByIdQuery query);
+    Task<ContactoDto?> HandleAsync(GetContactoByIdQuery query, CancellationToken ct = default);
 }

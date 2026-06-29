@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useContactos } from '../application/useContactos'
@@ -66,13 +67,14 @@ export function ContactoListView() {
             key={contacto.id}
             data-testid="contacto-row"
           >
-            <a
-              href={`/contactos/${contacto.id}`}
+            <Link
+              to="/contactos/$contactoId"
+              params={{ contactoId: contacto.id }}
               data-testid={`contacto-item-${contacto.id}`}
               className="block"
             >
               <ContactListItem contacto={contacto} />
-            </a>
+            </Link>
           </div>
         ))}
       </div>

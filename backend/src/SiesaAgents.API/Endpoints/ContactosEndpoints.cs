@@ -15,9 +15,9 @@ public static class ContactosEndpoints
         .WithName("GetContactos")
         .WithSummary("Get all contacts");
 
-        app.MapGet("/api/v1/contactos/{id:guid}", async (Guid id, IGetContactoByIdQueryHandler handler) =>
+        app.MapGet("/api/v1/contactos/{id:guid}", async (Guid id, IGetContactoByIdQueryHandler handler, CancellationToken ct) =>
         {
-            var contacto = await handler.HandleAsync(new GetContactoByIdQuery(id));
+            var contacto = await handler.HandleAsync(new GetContactoByIdQuery(id), ct);
 
             if (contacto is null)
             {

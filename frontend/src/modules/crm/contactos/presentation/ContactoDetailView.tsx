@@ -43,7 +43,7 @@ export function ContactoDetailView({ contactoId }: ContactoDetailViewProps) {
         </p>
         <button
           data-testid="contacto-detail-retry-button"
-          onClick={() => refetch()}
+          onClick={refetch}
           className="px-4 py-2 bg-[#0e79fd] text-white text-sm rounded hover:bg-[#154ca9] transition-colors"
           type="button"
         >
@@ -95,8 +95,7 @@ export function ContactoDetailView({ contactoId }: ContactoDetailViewProps) {
           </dd>
         </div>
         <div className="flex flex-col">
-          {/* Label via aria-label to avoid text collision with cargo values that start with "Cargo" */}
-          <dt aria-label="Cargo" className="text-xs font-medium text-slate-500 uppercase tracking-wide before:content-['Cargo']" />
+          <dt className="text-xs font-medium text-slate-500 uppercase tracking-wide">Cargo</dt>
           <dd data-testid="contacto-detail-cargo" className="text-sm text-slate-800 mt-0.5">
             {data.cargo}
           </dd>
