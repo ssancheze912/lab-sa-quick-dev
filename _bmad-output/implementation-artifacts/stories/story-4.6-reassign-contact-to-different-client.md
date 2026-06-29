@@ -1,6 +1,6 @@
 # Story 4.6: Reassign Contact to Different Client
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
