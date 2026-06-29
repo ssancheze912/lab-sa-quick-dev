@@ -1,19 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { RouterProvider } from '@tanstack/react-router'
 
 import 'siesa-ui-kit/styles.css'
 import './index.css'
 import { QueryProvider } from '@/app/providers/QueryProvider'
-import { routeTree } from './routeTree.gen'
-
-const router = createRouter({ routeTree })
-
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: typeof router
-  }
-}
+import { router } from './router'
 
 const rootElement = document.getElementById('root')
 if (!rootElement) {
