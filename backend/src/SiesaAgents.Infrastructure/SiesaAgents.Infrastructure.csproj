@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>SiesaAgents.Infrastructure</RootNamespace>
+    <AssemblyName>SiesaAgents.Infrastructure</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

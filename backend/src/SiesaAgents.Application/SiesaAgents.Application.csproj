@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>SiesaAgents.Application</RootNamespace>
+    <AssemblyName>SiesaAgents.Application</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.10.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

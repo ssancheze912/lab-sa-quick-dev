@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>SiesaAgents.Domain</RootNamespace>
+    <AssemblyName>SiesaAgents.Domain</AssemblyName>
+  </PropertyGroup>
+
+</Project>
