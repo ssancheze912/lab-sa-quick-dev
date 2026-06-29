@@ -8,7 +8,6 @@ interface ClientListItemProps {
 export function ClientListItem({ cliente, onClick }: ClientListItemProps) {
   return (
     <div
-      data-testid={`cliente-item-${cliente.id}`}
       role="button"
       tabIndex={0}
       onClick={onClick}

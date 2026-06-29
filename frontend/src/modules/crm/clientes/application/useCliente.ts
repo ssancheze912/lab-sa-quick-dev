@@ -7,5 +7,6 @@ export function useCliente(clienteId: string | null | undefined) {
     queryFn: () => clienteApiRepository.getById(clienteId!),
     enabled: !!clienteId,
     staleTime: 0,
+    retry: 0,
   })
 }
