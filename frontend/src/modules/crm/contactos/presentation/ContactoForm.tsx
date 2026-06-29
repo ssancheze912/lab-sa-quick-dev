@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ToastProvider, toast } from 'siesa-ui-kit'
 import { zodContactoSchema, type ContactoFormData } from '../application/contactoSchema'
 import { useCreateContacto } from '../application/useCreateContacto'
 
@@ -9,10 +9,7 @@ interface ContactoFormProps {
   onCancel?: () => void
 }
 
-export function ContactoForm({ onSuccess, onCancel }: ContactoFormProps) {
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
+function ContactoFormInner({ onSuccess, onCancel }: ContactoFormProps) {
   const {
     register,
     handleSubmit,
@@ -23,41 +20,29 @@ export function ContactoForm({ onSuccess, onCancel }: ContactoFormProps) {
 
   const { mutate, isPending } = useCreateContacto({
     onSuccess: () => {
-      setSuccessMessage('Contacto creado correctamente')
-      setErrorMessage(null)
+      toast.success('Contacto creado correctamente')
       onSuccess?.()
     },
   })
 
   const onSubmit = (data: ContactoFormData) => {
-    setSuccessMessage(null)
-    setErrorMessage(null)
     mutate(data, {
       onError: () => {
-        setErrorMessage('Error al crear el contacto')
+        toast.error('Error al crear el contacto')
       },
     })
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
-      {successMessage && (
-        <div role="status" aria-live="polite">
-          {successMessage}
-        </div>
-      )}
-      {errorMessage && (
-        <div role="alert" aria-live="assertive">
-          {errorMessage}
-        </div>
-      )}
-
       <div>
         <label htmlFor="contacto-nombre">Nombre</label>
         <input
           id="contacto-nombre"
           data-testid="contacto-form-nombre"
           type="text"
+          required
+          aria-required="true"
           aria-invalid={!!errors.nombre}
           aria-describedby={errors.nombre ? 'error-nombre' : undefined}
           {...register('nombre')}
@@ -75,6 +60,8 @@ export function ContactoForm({ onSuccess, onCancel }: ContactoFormProps) {
           id="contacto-cargo"
           data-testid="contacto-form-cargo"
           type="text"
+          required
+          aria-required="true"
           aria-invalid={!!errors.cargo}
           aria-describedby={errors.cargo ? 'error-cargo' : undefined}
           {...register('cargo')}
@@ -92,6 +79,8 @@ export function ContactoForm({ onSuccess, onCancel }: ContactoFormProps) {
           id="contacto-telefono"
           data-testid="contacto-form-telefono"
           type="text"
+          required
+          aria-required="true"
           aria-invalid={!!errors.telefono}
           aria-describedby={errors.telefono ? 'error-telefono' : undefined}
           {...register('telefono')}
@@ -109,6 +98,8 @@ export function ContactoForm({ onSuccess, onCancel }: ContactoFormProps) {
           id="contacto-email"
           data-testid="contacto-form-email"
           type="email"
+          required
+          aria-required="true"
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? 'error-email' : undefined}
           {...register('email')}
@@ -137,5 +128,13 @@ export function ContactoForm({ onSuccess, onCancel }: ContactoFormProps) {
         </button>
       </div>
     </form>
+  )
+}
+
+export function ContactoForm(props: ContactoFormProps) {
+  return (
+    <ToastProvider>
+      <ContactoFormInner {...props} />
+    </ToastProvider>
   )
 }

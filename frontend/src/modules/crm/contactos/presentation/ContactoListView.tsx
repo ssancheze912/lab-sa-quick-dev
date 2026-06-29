@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
+import { PlusIcon } from '@heroicons/react/24/outline'
 import { useContactos } from '../application/useContactos'
 import { ContactListItem } from './ContactListItem'
 import { EmptyState } from '../../../../shared/components/EmptyState'
@@ -41,20 +42,20 @@ export function ContactoListView() {
     )
   }
 
-  if (data && data.length === 0) {
-    return (
-      <EmptyState
-        message="No hay contactos registrados. Cree el primer contacto para comenzar."
-        testId="contactos-empty-state"
-      />
-    )
-  }
-
   if (isFormOpen) {
     return (
       <ContactoForm
         onSuccess={() => setIsFormOpen(false)}
         onCancel={() => setIsFormOpen(false)}
+      />
+    )
+  }
+
+  if (data && data.length === 0) {
+    return (
+      <EmptyState
+        message="No hay contactos registrados. Cree el primer contacto para comenzar."
+        testId="contactos-empty-state"
       />
     )
   }
@@ -78,9 +79,7 @@ export function ContactoListView() {
           className="flex items-center gap-1 text-sm bg-[#0e79fd] text-white px-3 py-2 rounded hover:bg-[#154ca9] focus:outline-none focus:ring-2 focus:ring-[#0e79fd]"
           aria-label="Nuevo contacto"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4" aria-hidden="true">
-            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-          </svg>
+          <PlusIcon className="w-4 h-4" aria-hidden="true" />
           Nuevo contacto
         </button>
       </div>
