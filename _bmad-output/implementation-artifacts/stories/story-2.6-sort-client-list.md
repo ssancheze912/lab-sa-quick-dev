@@ -1,6 +1,6 @@
 # Story 2.6: Sort Client List
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,8 +26,8 @@ so that I can organize my view and quickly find clients based on how I prioritiz
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Create `SortControl` shared component (AC: #1, #2, #3, #4, #6)
-  - [ ] Create `frontend/src/shared/components/SortControl.tsx`
+- [x] Task 1 — Create `SortControl` shared component (AC: #1, #2, #3, #4, #6)
+  - [x] Create `frontend/src/shared/components/SortControl.tsx`
     - Renders a `<select>` or a siesa-ui-kit / shadcn `Select` dropdown (check siesa-ui-kit catalog FIRST, then shadcn)
     - Accepts `value: SortOption` and `onChange: (value: SortOption) => void` props
     - Displays 4 options (all text in Spanish):
@@ -38,12 +38,12 @@ so that I can organize my view and quickly find clients based on how I prioritiz
     - ARIA label: `aria-label="Ordenar clientes"` for WCAG 2.1 AA compliance
     - Exports `SortOption` type: `'nombre-asc' | 'nombre-desc' | 'fecha-desc' | 'fecha-asc'`
     - Default value is `fecha-desc` when `value` matches the default
-  - [ ] Create `frontend/src/shared/components/SortControl.test.tsx`
+  - [x] Create `frontend/src/shared/components/SortControl.test.tsx`
     - TC-E2-P2-01: renders all 4 options with correct labels in Spanish
     - TC-E2-P3-01: verifies identifier constants match `nombre-asc`, `nombre-desc`, `fecha-desc`, `fecha-asc`
 
-- [ ] Task 2 — Add sort state and sort logic to `ClienteListView` (AC: #1–#6)
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`
+- [x] Task 2 — Add sort state and sort logic to `ClienteListView` (AC: #1–#6)
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`
     - Add `const [sortOption, setSortOption] = useState<SortOption>('fecha-desc')` (default = "Más reciente")
     - Existing `searchQuery` state remains unchanged — both states coexist (AC #5: sort must not clear search)
     - Add `useMemo` for `sortedClientes`:
@@ -68,14 +68,14 @@ so that I can organize my view and quickly find clients based on how I prioritiz
     - Pass `sortedClientes` to the list render instead of `filteredClientes`
     - Sort is client-side only — no extra API call triggered (operates on TanStack Query cache already loaded via `useClientes()`)
 
-- [ ] Task 3 — Verify `createdAt` field is included in `ClienteDto` (AC: #3, #4)
-  - [ ] Check `frontend/src/modules/crm/clientes/domain/Cliente.ts` — verify `createdAt: string` (ISO 8601) field exists on `Cliente` interface
-  - [ ] Check `backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs` — verify `CreatedAt: DateTimeOffset` is included in the DTO response
-  - [ ] If `createdAt` is missing from the `Cliente` domain type, add it: `createdAt: string` (ISO 8601 with timezone, e.g. `"2026-06-29T10:30:00Z"`)
-  - [ ] If `CreatedAt` is missing from `ClienteDto.cs`, add `public DateTimeOffset CreatedAt { get; init; }` and map from `ClienteEntity.CreatedAt`
+- [x] Task 3 — Verify `createdAt` field is included in `ClienteDto` (AC: #3, #4)
+  - [x] Check `frontend/src/modules/crm/clientes/domain/Cliente.ts` — verify `createdAt: string` (ISO 8601) field exists on `Cliente` interface
+  - [x] Check `backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs` — verify `CreatedAt: DateTimeOffset` is included in the DTO response
+  - [x] If `createdAt` is missing from the `Cliente` domain type, add it: `createdAt: string` (ISO 8601 with timezone, e.g. `"2026-06-29T10:30:00Z"`)
+  - [x] If `CreatedAt` is missing from `ClienteDto.cs`, add `public DateTimeOffset CreatedAt { get; init; }` and map from `ClienteEntity.CreatedAt`
 
-- [ ] Task 4 — Write tests for sort integration (AC: #1–#6)
-  - [ ] **Component test** `ClienteListView.sort.test.tsx` at `frontend/src/modules/crm/clientes/presentation/`:
+- [x] Task 4 — Write tests for sort integration (AC: #1–#6)
+  - [x] **Component test** `ClienteListView.sort.test.tsx` at `frontend/src/modules/crm/clientes/presentation/`:
     - TC-E2-P1-12: Load list with "Zeta", "Alpha", "Mango"; select "Nombre A→Z"; assert DOM order: "Alpha", "Mango", "Zeta"; assert no additional GET called
     - TC-E2-P1-13: Same setup, select "Nombre Z→A"; assert DOM order: "Zeta", "Mango", "Alpha"
     - TC-E2-P1-14: Load with clients `createdAt` A=2026-01-01, B=2026-06-01, C=2026-03-01; select "Más reciente" → assert order B, C, A; select "Más antiguo" → assert order A, C, B
@@ -275,6 +275,24 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+N/A — No debug issues. Implementation was clean ATDD green-phase completion.
+
 ### Completion Notes List
 
+- All 4 tasks verified complete. SortControl and ClienteListView.sort were pre-implemented by ATDD agent.
+- 27 tests GREEN: 14 in SortControl.test.tsx (TC-E2-P2-01, TC-E2-P3-01) + 13 in ClienteListView.sort.test.tsx (TC-E2-P1-12 through TC-E2-P1-16).
+- `Cliente.ts` already had `createdAt: string` (ISO 8601). `ClienteDto.cs` already had `DateTimeOffset CreatedAt`. No backend changes needed.
+- SortControl uses native `<select>` with TailwindCSS v4 styling (siesa-ui-kit has no Select equivalent; shadcn Select not needed for this simple case).
+- Sort pipeline: `data` (TanStack Query cache) → `filteredAndSorted` (combined useMemo with filter + sort). Implementation uses a single combined useMemo for filter+sort (functionally equivalent to the specified two-stage pipeline — simpler and correct).
+- AC#5 (R-E2-04) fully satisfied: `searchQuery` and `sortOrder` are independent `useState` variables.
+- Zero new API calls — sort is purely client-side over the TanStack Query cache.
+- WCAG 2.1 AA: `aria-label="Ordenar clientes"` present on the `<select>`.
+
 ### File List
+
+- `frontend/src/shared/components/SortControl.tsx` — NEW: Sort dropdown component with SortOption type
+- `frontend/src/shared/components/SortControl.test.tsx` — NEW: TC-E2-P2-01, TC-E2-P3-01 (14 tests)
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` — UPDATED: sortOrder state, filteredAndSorted combined useMemo, SortControl rendered in panel header
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.sort.test.tsx` — NEW: TC-E2-P1-12 through TC-E2-P1-16 (13 tests)
+- `frontend/src/modules/crm/clientes/domain/Cliente.ts` — VERIFIED (no change): createdAt field already present
+- `backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs` — VERIFIED (no change): DateTimeOffset CreatedAt already present
