@@ -14,6 +14,9 @@ backend/**/obj/
 *.user
 .vs/
 
+# .NET secrets — never commit connection strings
+backend/**/appsettings.Development.json
+
 # Frontend build
 frontend/dist/
 frontend/node_modules/
