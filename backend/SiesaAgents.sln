@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SiesaAgents.Infrastructure"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SiesaAgents.UnitTests", "tests\SiesaAgents.UnitTests\SiesaAgents.UnitTests.csproj", "{1A1B0001-0000-0000-0000-000000000005}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SiesaAgents.IntegrationTests", "tests\SiesaAgents.IntegrationTests\SiesaAgents.IntegrationTests.csproj", "{1A1B0001-0000-0000-0000-000000000006}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,10 @@ Global
 		{1A1B0001-0000-0000-0000-000000000005}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A1B0001-0000-0000-0000-000000000005}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A1B0001-0000-0000-0000-000000000005}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A1B0001-0000-0000-0000-000000000006}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A1B0001-0000-0000-0000-000000000006}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A1B0001-0000-0000-0000-000000000006}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A1B0001-0000-0000-0000-000000000006}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
