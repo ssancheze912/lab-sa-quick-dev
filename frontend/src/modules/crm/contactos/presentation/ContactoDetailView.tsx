@@ -59,7 +59,7 @@ function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
         </p>
         <button
           data-testid="contacto-detail-retry-button"
-          onClick={refetch}
+          onClick={() => void refetch()}
           className="px-4 py-2 bg-[#0e79fd] text-white text-sm rounded hover:bg-[#154ca9] transition-colors"
           type="button"
         >
@@ -101,7 +101,7 @@ function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
             to="/clientes/$clienteId"
             params={{ clienteId: data.clienteId }}
             data-testid="contacto-back-link"
-            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
             Volver al cliente
@@ -110,7 +110,7 @@ function ContactoDetailViewInner({ contactoId }: ContactoDetailViewProps) {
           <Link
             to="/contactos"
             data-testid="contacto-back-link"
-            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
             Volver a contactos
