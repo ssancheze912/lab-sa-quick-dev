@@ -52,7 +52,7 @@ export function ContactoListView({ sinClienteParam, onToggleSinCliente }: Contac
       data-state={sinCliente ? 'on' : 'off'}
       data-active={sinCliente ? 'true' : undefined}
       aria-label="Sin cliente"
-      className={`text-sm px-3 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-[#0e79fd] ${
+      className={`text-sm px-3 py-2 rounded border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd] ${
         sinCliente
           ? 'bg-[#0e79fd] text-white border-[#0e79fd]'
           : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
@@ -135,14 +135,14 @@ export function ContactoListView({ sinClienteParam, onToggleSinCliente }: Contac
           aria-label="Buscar contacto por nombre o email"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 text-sm border border-slate-200 rounded px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0e79fd]"
+          className="flex-1 text-sm border border-slate-200 rounded px-3 py-2 text-slate-700 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0e79fd]"
         />
         {sinClienteToggle}
         <button
           type="button"
           data-testid="nuevo-contacto-button"
           onClick={() => setIsFormOpen(true)}
-          className="flex items-center gap-1 text-sm bg-[#0e79fd] text-white px-3 py-2 rounded hover:bg-[#154ca9] focus:outline-none focus:ring-2 focus:ring-[#0e79fd]"
+          className="flex items-center gap-1 text-sm bg-[#0e79fd] text-white px-3 py-2 rounded hover:bg-[#154ca9] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e79fd]"
           aria-label="Nuevo contacto"
         >
           <PlusIcon className="w-4 h-4" aria-hidden="true" />
