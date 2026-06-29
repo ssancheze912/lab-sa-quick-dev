@@ -189,13 +189,6 @@ describe('useAsociarContacto — TC-3: success toast in Spanish', () => {
     // GIVEN: PUT /api/v1/contactos/{id}/cliente returns 200 OK
     server.use(handleAssignClienteSuccess({ clienteId: CLIENTE_ID }));
 
-    // GIVEN: toast is mocked
-    const toastSuccessMock = vi.fn();
-    vi.mock('react-hot-toast', () => ({
-      default: { success: toastSuccessMock, error: vi.fn() },
-      toast: { success: toastSuccessMock, error: vi.fn() },
-    }));
-
     const { wrapper } = createWrapper();
 
     // WHEN: useAsociarContacto mutate succeeds

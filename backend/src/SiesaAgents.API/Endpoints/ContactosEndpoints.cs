@@ -3,6 +3,7 @@ using SiesaAgents.Application.Contactos.Commands;
 using SiesaAgents.Application.Contactos.DTOs;
 using SiesaAgents.Application.Contactos.Queries;
 using SiesaAgents.Application.Contactos.Validators;
+using FluentValidation;
 
 namespace SiesaAgents.API.Endpoints;
 
@@ -112,6 +113,38 @@ public static class ContactosEndpoints
         })
         .WithName("DeleteContacto")
         .WithSummary("Delete a contact by ID");
+
+        app.MapPut("/api/v1/contactos/{id:guid}/cliente", async (Guid id, AssignClienteRequest body, IAssignClienteCommandHandler handler, CancellationToken ct) =>
+        {
+            var command = new AssignClienteCommand(id, body.ClienteId);
+
+            var validator = new AssignClienteCommandValidator();
+            var validationResult = await validator.ValidateAsync(command, ct);
+
+            if (!validationResult.IsValid)
+            {
+                return Results.Problem(
+                    title: "Datos inválidos",
+                    detail: "El identificador del contacto no es válido.",
+                    statusCode: StatusCodes.Status400BadRequest
+                );
+            }
+
+            var dto = await handler.HandleAsync(command, ct);
+
+            if (dto is null)
+            {
+                return Results.Problem(
+                    title: "Recurso no encontrado",
+                    detail: "No existe un contacto con el ID proporcionado.",
+                    statusCode: StatusCodes.Status404NotFound
+                );
+            }
+
+            return Results.Ok(dto);
+        })
+        .WithName("AssignClienteToContacto")
+        .WithSummary("Associate or disassociate a contact from a client");
 
         app.MapPut("/api/v1/contactos/{id:guid}", async (Guid id, UpdateContactoRequest body, IUpdateContactoCommandHandler handler, CancellationToken ct) =>
         {

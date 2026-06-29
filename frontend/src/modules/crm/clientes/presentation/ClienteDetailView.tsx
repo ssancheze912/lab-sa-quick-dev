@@ -1,12 +1,17 @@
 import { useState, type CSSProperties } from 'react'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
-import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { PencilSquareIcon, TrashIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { ToastProvider, toast } from 'siesa-ui-kit'
 import { useCliente } from '../application/useCliente'
 import { useDeleteCliente } from '../application/useDeleteCliente'
 import { useContactosByCliente } from '../../contactos/application/useContactosByCliente'
+import { useAsociarContacto } from '../application/useAsociarContacto'
+import { useDesasociarContacto } from '../application/useDesasociarContacto'
 import { ClienteForm } from './ClienteForm'
+import { AsociarContactoDialog } from './AsociarContactoDialog'
+import { ConfirmarDesasociarDialog } from './ConfirmarDesasociarDialog'
+import type { Contacto } from '../../contactos/domain/Contacto'
 
 interface ClienteDetailViewProps {
   clienteId: string | null
@@ -16,6 +21,11 @@ interface ClienteDetailViewProps {
 
 function ContactosSeccion({ clienteId }: { clienteId: string }) {
   const { data, isLoading, isError, refetch } = useContactosByCliente(clienteId)
+  const [isAsociarOpen, setIsAsociarOpen] = useState(false)
+  const [contactoToDesasociar, setContactoToDesasociar] = useState<Contacto | null>(null)
+
+  const { isPending: isAsociando } = useAsociarContacto()
+  const { isPending: isDesasociando } = useDesasociarContacto()
 
   if (isLoading) {
     return (
@@ -42,7 +52,21 @@ function ContactosSeccion({ clienteId }: { clienteId: string }) {
 
   return (
     <div data-testid="cliente-contactos-seccion" className="mt-6">
-      <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">Contactos</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Contactos</h3>
+        <button
+          type="button"
+          data-testid="asociar-contacto-button"
+          aria-label="Asociar contacto"
+          disabled={isAsociando || isDesasociando}
+          onClick={() => setIsAsociarOpen(true)}
+          className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <PlusIcon className="w-3.5 h-3.5" aria-hidden="true" />
+          Asociar contacto
+        </button>
+      </div>
+
       {!data || data.length === 0 ? (
         <div data-testid="contactos-empty-state" className="text-sm text-slate-400">
           Sin contactos asociados
@@ -50,12 +74,41 @@ function ContactosSeccion({ clienteId }: { clienteId: string }) {
       ) : (
         <ul data-testid="contactos-lista" className="space-y-2">
           {data.map((contacto) => (
-            <li key={contacto.id} className="flex flex-col py-2 border-b border-slate-100 last:border-0">
-              <span className="text-sm font-medium text-slate-800">{contacto.nombre}</span>
-              <span className="text-xs text-slate-500">{contacto.cargo}</span>
+            <li key={contacto.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-slate-800">{contacto.nombre}</span>
+                <span className="text-xs text-slate-500">{contacto.cargo}</span>
+              </div>
+              <button
+                type="button"
+                data-testid={`desasociar-contacto-${contacto.id}`}
+                aria-label={`Desasociar ${contacto.nombre}`}
+                disabled={isAsociando || isDesasociando}
+                onClick={() => setContactoToDesasociar(contacto)}
+                className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <XMarkIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                Desasociar
+              </button>
             </li>
           ))}
         </ul>
+      )}
+
+      <AsociarContactoDialog
+        clienteId={clienteId}
+        open={isAsociarOpen}
+        onClose={() => setIsAsociarOpen(false)}
+      />
+
+      {contactoToDesasociar && (
+        <ConfirmarDesasociarDialog
+          contactoId={contactoToDesasociar.id}
+          contactoNombre={contactoToDesasociar.nombre}
+          clienteId={clienteId}
+          open={contactoToDesasociar !== null}
+          onClose={() => setContactoToDesasociar(null)}
+        />
       )}
     </div>
   )

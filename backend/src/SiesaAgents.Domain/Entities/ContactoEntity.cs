@@ -17,6 +17,13 @@ public sealed class ContactoEntity
     // Navigation property (optional)
     public ClienteEntity? Cliente { get; private set; }
 
+    /// <summary>Associates or disassociates the contact from a client (Epic 4 — Story 4.2).</summary>
+    public void AssignCliente(Guid? clienteId)
+    {
+        ClienteId = clienteId;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     /// <summary>Updates contact fields. ClienteId is NOT modified here — Epic 4 handles client-contact association.</summary>
     public void Update(string nombre, string cargo, string telefono, string email)
     {
