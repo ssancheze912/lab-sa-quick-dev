@@ -1,113 +1,149 @@
 /**
- * Unit tests — useCliente application hook
- * Story 2.2 — Client Detail View (ATDD RED phase)
+ * Unit tests — useCliente hook
+ * Story 2.2 | Client Detail View
  *
- * Test IDs covered:
- *   AC #6 — useQuery is NOT enabled when clienteId is null/undefined
+ * These tests are in the RED phase — useCliente.ts does not exist yet.
+ * Expected failure: "Cannot find module '../useCliente'"
  *
- * Expected RED failure:
- *   "Cannot find module './useCliente'"
- *
- * Test stack: Vitest
+ * Given-When-Then format per test.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
+import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
+import { useCliente } from '../useCliente';
 
 // ---------------------------------------------------------------------------
-// Mock @tanstack/react-query so we can spy on useQuery's enabled option.
+// MSW server for this unit test file
 // ---------------------------------------------------------------------------
 
-const mockUseQuery = vi.fn();
+const server = setupServer();
 
-vi.mock('@tanstack/react-query', () => ({
-  useQuery: (options: { enabled?: boolean }) => {
-    mockUseQuery(options);
-    return { data: undefined, isLoading: false, isError: false };
-  },
-}));
+beforeEach(() => {
+  server.listen({ onUnhandledRequest: 'error' });
+});
 
-// ---------------------------------------------------------------------------
-// We mock the repository so the test doesn't need an actual HTTP layer.
-// ---------------------------------------------------------------------------
-
-vi.mock('../infrastructure/clienteApiRepository', () => ({
-  clienteApiRepository: {
-    getById: vi.fn(),
-  },
-}));
-
-// Import AFTER mocks are set up.
-import { useCliente } from './useCliente';
+afterEach(() => {
+  server.resetHandlers();
+  server.close();
+});
 
 // ---------------------------------------------------------------------------
-// AC #6: useQuery is disabled when clienteId is null or undefined
+// Helper: wrap useCliente in QueryClientProvider with isolated QueryClient
 // ---------------------------------------------------------------------------
 
-describe('useCliente — enabled guard (AC #6)', () => {
-  it('should NOT enable the query when clienteId is null', () => {
-    // GIVEN: clienteId is null (no client selected)
-    mockUseQuery.mockClear();
-
-    // WHEN: useCliente is called with null
-    useCliente(null);
-
-    // THEN: useQuery was called with enabled: false
-    expect(mockUseQuery).toHaveBeenCalledWith(
-      expect.objectContaining({ enabled: false })
-    );
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        refetchOnWindowFocus: false,
+      },
+    },
   });
+  return ({ children }: { children: React.ReactNode }) =>
+    React.createElement(QueryClientProvider, { client: queryClient }, children);
+}
 
+// ---------------------------------------------------------------------------
+// TC: useCliente with undefined clienteId — query must NOT fire
+// ---------------------------------------------------------------------------
+
+describe('useCliente — disabled when clienteId is falsy', () => {
   it('should NOT enable the query when clienteId is undefined', () => {
-    // GIVEN: clienteId is undefined
-    mockUseQuery.mockClear();
+    // GIVEN: No clienteId provided (undefined)
+    const wrapper = createWrapper();
 
     // WHEN: useCliente is called with undefined
-    useCliente(undefined);
+    const { result } = renderHook(() => useCliente(undefined), { wrapper });
 
-    // THEN: useQuery was called with enabled: false
-    expect(mockUseQuery).toHaveBeenCalledWith(
-      expect.objectContaining({ enabled: false })
-    );
+    // THEN: Query is disabled — fetchStatus should be idle, not loading
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('should NOT enable the query when clienteId is null', () => {
+    // GIVEN: clienteId is explicitly null (no client selected)
+    const wrapper = createWrapper();
+
+    // WHEN: useCliente is called with null
+    const { result } = renderHook(() => useCliente(null), { wrapper });
+
+    // THEN: Query is disabled — fetchStatus idle means no network request was made
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(result.current.isLoading).toBe(false);
   });
 
   it('should NOT enable the query when clienteId is an empty string', () => {
-    // GIVEN: clienteId is an empty string
-    mockUseQuery.mockClear();
+    // GIVEN: clienteId is empty string (falsy)
+    const wrapper = createWrapper();
 
     // WHEN: useCliente is called with empty string
-    useCliente('');
+    const { result } = renderHook(() => useCliente(''), { wrapper });
 
-    // THEN: useQuery was called with enabled: false (empty string is falsy)
-    expect(mockUseQuery).toHaveBeenCalledWith(
-      expect.objectContaining({ enabled: false })
+    // THEN: Query is disabled
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(result.current.isLoading).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// TC: useCliente with valid clienteId — query fires and returns data
+// ---------------------------------------------------------------------------
+
+describe('useCliente — fetches client data when clienteId is provided', () => {
+  it('should fetch and return cliente data when clienteId is a valid UUID', async () => {
+    // GIVEN: MSW returns a client for the requested ID
+    const knownId = '00000000-0000-0000-0000-000000000001';
+    const mockCliente = {
+      id: knownId,
+      nombre: 'Empresa Test',
+      nit: '900000001-1',
+      telefono: '3001234567',
+      ciudad: 'Bogotá',
+      createdAt: '2026-06-29T10:00:00Z',
+    };
+
+    server.use(
+      http.get(`/api/v1/clientes/${knownId}`, () => HttpResponse.json(mockCliente))
     );
+
+    const wrapper = createWrapper();
+
+    // WHEN: useCliente is called with a valid UUID
+    const { result } = renderHook(() => useCliente(knownId), { wrapper });
+
+    // THEN: Data is eventually returned
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(result.current.data).toEqual(mockCliente);
   });
 
-  it('should enable the query when clienteId is a valid UUID string', () => {
-    // GIVEN: clienteId is a valid UUID
-    mockUseQuery.mockClear();
-    const clienteId = '00000000-0000-0000-0000-000000000001';
+  it('should expose isError true when the API returns 404', async () => {
+    // GIVEN: MSW returns 404 for the given ID
+    const unknownId = '00000000-0000-0000-0000-000000000000';
 
-    // WHEN: useCliente is called with a valid ID
-    useCliente(clienteId);
-
-    // THEN: useQuery was called with enabled: true
-    expect(mockUseQuery).toHaveBeenCalledWith(
-      expect.objectContaining({ enabled: true })
+    server.use(
+      http.get(`/api/v1/clientes/${unknownId}`, () =>
+        new HttpResponse(null, { status: 404 })
+      )
     );
-  });
 
-  it('should use queryKey ["clientes", clienteId] for the single-item query', () => {
-    // GIVEN: A valid clienteId
-    mockUseQuery.mockClear();
-    const clienteId = '00000000-0000-0000-0000-000000000002';
+    const wrapper = createWrapper();
 
-    // WHEN: useCliente is called
-    useCliente(clienteId);
+    // WHEN: useCliente is called with an ID that does not exist
+    const { result } = renderHook(() => useCliente(unknownId), { wrapper });
 
-    // THEN: queryKey follows the canonical pattern ['clientes', clienteId]
-    expect(mockUseQuery).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: ['clientes', clienteId] })
-    );
+    // THEN: isError becomes true
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true);
+    });
+
+    expect(result.current.data).toBeUndefined();
   });
 });

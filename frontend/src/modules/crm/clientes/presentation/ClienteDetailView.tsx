@@ -1,10 +1,11 @@
+import type { CSSProperties } from 'react'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useCliente } from '../application/useCliente'
 
 interface ClienteDetailViewProps {
   clienteId: string | null
-  style?: React.CSSProperties
+  style?: CSSProperties
   className?: string
 }
 

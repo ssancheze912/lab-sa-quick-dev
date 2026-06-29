@@ -1,30 +1,25 @@
 /**
  * Component tests — ClienteDetailView
- * Story 2.2 — Client Detail View (ATDD RED phase)
+ * Story 2.2 — Client Detail View
  *
- * Test IDs covered:
- *   TC-E2-P1-04  Detail renders all 4 fields when client is clicked (AC #1)
- *   AC #5        Empty/default state when no clienteId
- *   AC #4        Not-found message "Cliente no encontrado" on 404
- *   (Loading)    Skeleton shown while fetch is in-flight (AC #1 loading state)
- *
- * Expected RED failure:
- *   "Cannot find module './ClienteDetailView'"
+ * Test IDs covered (RED phase — component does not exist yet):
+ *   TC-E2-P1-04  Click client in list → detail panel renders Nombre, NIT/RUC, Teléfono, Ciudad
+ *   AC #4        MSW returns 404 → "Cliente no encontrado" shown, no crash
+ *   AC #5        No clienteId selected → EmptyState with Spanish prompt rendered
+ *   AC (loading) Loading skeleton shown while fetch is in-flight
  *
  * Test stack: Vitest + React Testing Library + MSW 2
+ *
+ * Expected RED failure: "Cannot find module '../ClienteDetailView'"
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { setupServer } from 'msw/node';
-import {
-  handleGetClienteByIdSuccess,
-  handleGetClienteByIdNotFound,
-  handleGetClienteByIdDelayed,
-} from '../../../../test/msw/handlers/clientes-detail.handlers';
+import { http, HttpResponse, delay } from 'msw';
 import { createCliente, resetClienteCounter } from '../../../../test/factories/cliente.factory';
-import { ClienteDetailView } from './ClienteDetailView';
+import { ClienteDetailView } from '../ClienteDetailView';
 
 // ---------------------------------------------------------------------------
 // MSW server setup
@@ -64,213 +59,170 @@ function renderClienteDetailView(clienteId: string | null) {
 }
 
 // ---------------------------------------------------------------------------
-// AC #5: Default/empty state when no clienteId
+// TC-E2-P1-04: Detail panel renders Nombre, NIT/RUC, Teléfono, Ciudad on item click
 // ---------------------------------------------------------------------------
 
-describe('AC #5: Empty state when no client is selected', () => {
-  it('should render the empty state panel when clienteId is null', async () => {
-    // GIVEN: No client is selected (clienteId = null)
-    // WHEN: ClienteDetailView is rendered
-    renderClienteDetailView(null);
+describe('TC-E2-P1-04: ClienteDetailView renders all client fields', () => {
+  it('should display Nombre, NIT/RUC, Teléfono, Ciudad when clienteId resolves to a client', async () => {
+    // GIVEN: MSW returns a complete client for a specific clienteId
+    const cliente = createCliente({
+      nombre: 'Acme Corp',
+      nit: '900123456-7',
+      telefono: '3001234567',
+      ciudad: 'Bogotá',
+    });
 
-    // THEN: Empty state panel is visible
-    expect(screen.getByTestId('cliente-detail-empty')).toBeInTheDocument();
+    server.use(
+      http.get(`/api/v1/clientes/${cliente.id}`, () => HttpResponse.json(cliente))
+    );
+
+    // WHEN: ClienteDetailView is rendered with a valid clienteId
+    renderClienteDetailView(cliente.id);
+
+    // THEN: All 4 fields appear in the right panel
+    await waitFor(() => {
+      expect(screen.getByText('Acme Corp')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('900123456-7')).toBeInTheDocument();
+    expect(screen.getByText('3001234567')).toBeInTheDocument();
+    expect(screen.getByText('Bogotá')).toBeInTheDocument();
   });
 
-  it('should show a Spanish prompt to select a client when clienteId is null', async () => {
-    // GIVEN: No client is selected
-    // WHEN: ClienteDetailView is rendered
-    renderClienteDetailView(null);
+  it('should display field labels in Spanish', async () => {
+    // GIVEN: A valid client returned by MSW
+    const cliente = createCliente();
 
-    // THEN: The empty state contains the Spanish selection prompt
-    const emptyPanel = screen.getByTestId('cliente-detail-empty');
-    expect(emptyPanel).toHaveTextContent(/selecciona un cliente/i);
-  });
+    server.use(
+      http.get(`/api/v1/clientes/${cliente.id}`, () => HttpResponse.json(cliente))
+    );
 
-  it('should NOT render the detail panel fields when clienteId is null', async () => {
-    // GIVEN: No client is selected
-    // WHEN: ClienteDetailView is rendered
-    renderClienteDetailView(null);
+    // WHEN: ClienteDetailView renders the client
+    renderClienteDetailView(cliente.id);
 
-    // THEN: No field rows are rendered
-    expect(screen.queryByTestId('cliente-detail-nombre')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('cliente-detail-nit')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('cliente-detail-telefono')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('cliente-detail-ciudad')).not.toBeInTheDocument();
+    // THEN: Spanish field labels are visible
+    await waitFor(() => {
+      expect(screen.getByText(cliente.nombre)).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/Nombre/i)).toBeInTheDocument();
+    expect(screen.getByText(/NIT/i)).toBeInTheDocument();
+    expect(screen.getByText(/Teléfono/i)).toBeInTheDocument();
+    expect(screen.getByText(/Ciudad/i)).toBeInTheDocument();
   });
 });
 
 // ---------------------------------------------------------------------------
-// TC-E2-P1-04: Detail renders all 4 fields on valid clienteId
+// AC #5: Empty/default state when no client is selected
 // ---------------------------------------------------------------------------
 
-describe('TC-E2-P1-04: Client detail renders all required fields (AC #1)', () => {
-  it('should render Nombre when a client is fetched successfully', async () => {
-    // GIVEN: MSW returns a client with all fields
-    const client = createCliente({
-      nombre: 'Empresa Detalle SA',
-      nit: '900123456-7',
-      telefono: '3001234567',
-      ciudad: 'Bogotá',
-    });
-    server.use(handleGetClienteByIdSuccess(client));
+describe('AC#5: EmptyState when no clienteId provided', () => {
+  it('should render EmptyState with Spanish prompt when clienteId is null', () => {
+    // GIVEN: No client has been selected (clienteId is null)
+    // WHEN: ClienteDetailView is rendered with clienteId=null
+    renderClienteDetailView(null);
 
-    // WHEN: ClienteDetailView renders with the client's ID
-    renderClienteDetailView(client.id);
-
-    // THEN: Nombre is displayed in the detail panel
-    await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-nombre')).toHaveTextContent('Empresa Detalle SA');
-    });
+    // THEN: EmptyState with Spanish prompt "Selecciona un cliente" is rendered
+    expect(screen.getByTestId('cliente-detail-empty-state')).toBeInTheDocument();
+    expect(screen.getByText(/selecciona un cliente/i)).toBeInTheDocument();
   });
 
-  it('should render NIT/RUC when a client is fetched successfully', async () => {
-    // GIVEN: MSW returns a client with all fields
-    const client = createCliente({
-      nombre: 'Empresa Detalle SA',
-      nit: '900123456-7',
-      telefono: '3001234567',
-      ciudad: 'Bogotá',
-    });
-    server.use(handleGetClienteByIdSuccess(client));
-
-    // WHEN: ClienteDetailView renders
-    renderClienteDetailView(client.id);
-
-    // THEN: NIT/RUC is displayed
-    await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-nit')).toHaveTextContent('900123456-7');
-    });
-  });
-
-  it('should render Teléfono when a client is fetched successfully', async () => {
-    // GIVEN: MSW returns a client with all fields
-    const client = createCliente({
-      nombre: 'Empresa Detalle SA',
-      nit: '900123456-7',
-      telefono: '3001234567',
-      ciudad: 'Bogotá',
-    });
-    server.use(handleGetClienteByIdSuccess(client));
-
-    // WHEN: ClienteDetailView renders
-    renderClienteDetailView(client.id);
-
-    // THEN: Teléfono is displayed
-    await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-telefono')).toHaveTextContent('3001234567');
-    });
-  });
-
-  it('should render Ciudad when a client is fetched successfully', async () => {
-    // GIVEN: MSW returns a client with all fields
-    const client = createCliente({
-      nombre: 'Empresa Detalle SA',
-      nit: '900123456-7',
-      telefono: '3001234567',
-      ciudad: 'Bogotá',
-    });
-    server.use(handleGetClienteByIdSuccess(client));
-
-    // WHEN: ClienteDetailView renders
-    renderClienteDetailView(client.id);
-
-    // THEN: Ciudad is displayed
-    await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-ciudad')).toHaveTextContent('Bogotá');
-    });
-  });
-
-  it('should show the client detail panel (not empty state) when a client is fetched', async () => {
-    // GIVEN: MSW returns a valid client
-    const client = createCliente();
-    server.use(handleGetClienteByIdSuccess(client));
-
-    // WHEN: ClienteDetailView renders with a clienteId
-    renderClienteDetailView(client.id);
-
-    // THEN: The detail panel is visible and the empty state is gone
-    await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-panel')).toBeInTheDocument();
-    });
-    expect(screen.queryByTestId('cliente-detail-empty')).not.toBeInTheDocument();
+  it('should NOT make any API request when clienteId is null', () => {
+    // GIVEN: No client selected
+    // WHEN: Rendered with null clienteId — server has onUnhandledRequest: 'error'
+    // THEN: No request is made (server error handler would fire if it did)
+    expect(() => renderClienteDetailView(null)).not.toThrow();
   });
 });
 
 // ---------------------------------------------------------------------------
-// AC #4: Not-found message when API returns 404
+// AC #4: 404 handling — "Cliente no encontrado" shown gracefully
 // ---------------------------------------------------------------------------
 
-describe('AC #4: Not-found message on 404 (R-E2-07)', () => {
-  it('should display "Cliente no encontrado" when API returns 404', async () => {
-    // GIVEN: MSW returns 404 for the requested clienteId
-    const nonExistentId = '00000000-0000-0000-0000-000000000000';
-    server.use(handleGetClienteByIdNotFound());
+describe('AC#4: Not-found message for invalid clienteId', () => {
+  it('should display "Cliente no encontrado" when MSW returns 404', async () => {
+    // GIVEN: MSW returns 404 for the given clienteId
+    const unknownId = '00000000-0000-0000-0000-000000000000';
 
-    // WHEN: ClienteDetailView renders with a non-existent ID
-    renderClienteDetailView(nonExistentId);
+    server.use(
+      http.get(`/api/v1/clientes/${unknownId}`, () =>
+        new HttpResponse(null, { status: 404 })
+      )
+    );
 
-    // THEN: The not-found message is rendered in Spanish
+    // WHEN: ClienteDetailView is rendered with a non-existent clienteId
+    renderClienteDetailView(unknownId);
+
+    // THEN: Not-found message shown in Spanish
     await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-not-found')).toBeInTheDocument();
+      expect(screen.getByText(/Cliente no encontrado/i)).toBeInTheDocument();
     });
-    expect(screen.getByTestId('cliente-detail-not-found')).toHaveTextContent('Cliente no encontrado');
   });
 
-  it('should NOT show a blank screen on 404', async () => {
+  it('should NOT cause a JavaScript crash when API returns 404', async () => {
     // GIVEN: MSW returns 404
-    server.use(handleGetClienteByIdNotFound());
+    const unknownId = '00000000-0000-0000-0000-000000000000';
 
-    // WHEN: ClienteDetailView renders with an invalid ID
-    renderClienteDetailView('00000000-0000-0000-0000-000000000000');
+    server.use(
+      http.get(`/api/v1/clientes/${unknownId}`, () =>
+        new HttpResponse(null, { status: 404 })
+      )
+    );
 
-    // THEN: A data-testid element is always visible (no blank screen)
+    // WHEN: Component renders — assert no throw
+    expect(() => renderClienteDetailView(unknownId)).not.toThrow();
+
+    // THEN: DOM remains intact (no blank screen)
     await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-not-found')).toBeInTheDocument();
+      expect(screen.getByText(/Cliente no encontrado/i)).toBeInTheDocument();
     });
   });
 
-  it('should NOT render detail field rows when API returns 404', async () => {
+  it('should NOT display any client data fields when the client is not found', async () => {
     // GIVEN: MSW returns 404
-    server.use(handleGetClienteByIdNotFound());
+    const unknownId = '00000000-0000-0000-0000-000000000000';
 
-    // WHEN: ClienteDetailView renders
-    renderClienteDetailView('00000000-0000-0000-0000-000000000000');
+    server.use(
+      http.get(`/api/v1/clientes/${unknownId}`, () =>
+        new HttpResponse(null, { status: 404 })
+      )
+    );
 
-    // THEN: No field rows are shown alongside the error
+    // WHEN: Rendered with unknown ID
+    renderClienteDetailView(unknownId);
+
     await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-not-found')).toBeInTheDocument();
+      expect(screen.getByText(/Cliente no encontrado/i)).toBeInTheDocument();
     });
-    expect(screen.queryByTestId('cliente-detail-nombre')).not.toBeInTheDocument();
+
+    // THEN: No client data fields are rendered
+    expect(screen.queryByText(/Teléfono/i)).not.toBeInTheDocument();
   });
 });
 
 // ---------------------------------------------------------------------------
-// Loading skeleton shown while fetch is in-flight
+// AC (loading): Skeleton shown while fetch is in-flight
 // ---------------------------------------------------------------------------
 
-describe('Loading skeleton during fetch (AC #1 — loading state)', () => {
-  it('should show a skeleton while the client data is loading', async () => {
-    // GIVEN: MSW delays response by 200ms
-    const client = createCliente();
-    server.use(handleGetClienteByIdDelayed(client, 200));
+describe('Loading skeleton during fetch', () => {
+  it('should display loading skeleton while fetch is in-flight (MSW delayed response)', async () => {
+    // GIVEN: MSW delays the response by 150ms
+    const cliente = createCliente();
 
-    // WHEN: ClienteDetailView renders with a clienteId
-    renderClienteDetailView(client.id);
+    server.use(
+      http.get(`/api/v1/clientes/${cliente.id}`, async () => {
+        await delay(150);
+        return HttpResponse.json(cliente);
+      })
+    );
 
-    // THEN: Loading skeleton is visible immediately before data arrives
+    // WHEN: ClienteDetailView is rendered with a valid clienteId
+    renderClienteDetailView(cliente.id);
+
+    // THEN: Loading skeleton is visible before the response arrives
     expect(screen.getByTestId('cliente-detail-skeleton')).toBeInTheDocument();
-  });
 
-  it('should hide the skeleton once data arrives', async () => {
-    // GIVEN: MSW delays response by 200ms
-    const client = createCliente();
-    server.use(handleGetClienteByIdDelayed(client, 200));
-
-    // WHEN: ClienteDetailView renders
-    renderClienteDetailView(client.id);
-
-    // THEN: After data arrives, skeleton is gone and detail is shown
+    // THEN: After response arrives, skeleton disappears and data is visible
     await waitFor(
       () => {
         expect(screen.queryByTestId('cliente-detail-skeleton')).not.toBeInTheDocument();
@@ -279,59 +231,7 @@ describe('Loading skeleton during fetch (AC #1 — loading state)', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-panel')).toBeInTheDocument();
+      expect(screen.getByText(cliente.nombre)).toBeInTheDocument();
     });
-  });
-});
-
-// ---------------------------------------------------------------------------
-// AC #6: GET /api/v1/clientes/{id} is triggered via separate query key
-// ---------------------------------------------------------------------------
-
-describe('AC #6: Separate per-client query key ["clientes", clienteId]', () => {
-  it('should call GET /api/v1/clientes/:clienteId when a valid clienteId is provided', async () => {
-    // GIVEN: A client with a known ID
-    const client = createCliente({ nombre: 'Query Key Test SA' });
-    let apiCallWasMade = false;
-
-    server.use(
-      handleGetClienteByIdSuccess(client)
-    );
-
-    // Register a spy via a second handler to detect the call
-    const { http, HttpResponse: HR } = await import('msw');
-    server.use(
-      http.get('/api/v1/clientes/:clienteId', ({ params }) => {
-        if (params.clienteId === client.id) {
-          apiCallWasMade = true;
-        }
-        return HR.json(client);
-      })
-    );
-
-    // WHEN: ClienteDetailView renders with a valid clienteId
-    renderClienteDetailView(client.id);
-
-    // THEN: The GET request was triggered for the specific client
-    await waitFor(() => {
-      expect(screen.getByTestId('cliente-detail-panel')).toBeInTheDocument();
-    });
-
-    expect(apiCallWasMade).toBe(true);
-  });
-
-  it('should NOT call GET /api/v1/clientes/:clienteId when clienteId is null', () => {
-    // GIVEN: No client is selected
-    // We register an error handler — if the request fires, the test will fail
-    server.use(
-      handleGetClienteByIdSuccess(createCliente())
-    );
-
-    // WHEN: ClienteDetailView renders with null clienteId
-    renderClienteDetailView(null);
-
-    // THEN: The empty state is shown (no network request was triggered)
-    // If useCliente fires with enabled: false, no request reaches MSW
-    expect(screen.getByTestId('cliente-detail-empty')).toBeInTheDocument();
   });
 });

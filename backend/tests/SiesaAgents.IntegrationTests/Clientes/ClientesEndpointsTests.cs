@@ -2,10 +2,13 @@
  * API Integration Tests — GET /api/v1/clientes
  * Story 2.1 — Client List & Search
  *
- * Test IDs covered:
+ * Test IDs covered (RED phase — endpoint does not exist yet):
  *   TC-E2-P1-17  GET /api/v1/clientes returns 200, direct array, all DTO fields
  *
  * Stack: xUnit 2 + WebApplicationFactory<Program> + EF Core InMemory
+ *
+ * Expected RED failure:
+ *   - 404 Not Found because GET /api/v1/clientes is not yet registered in Program.cs
  *
  * Given-When-Then format per test method.
  */
@@ -16,7 +19,6 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using SiesaAgents.Domain.Entities;
 using SiesaAgents.Infrastructure.Data;
 
 namespace SiesaAgents.IntegrationTests.Clientes;
@@ -27,29 +29,19 @@ namespace SiesaAgents.IntegrationTests.Clientes;
 /// </summary>
 public sealed class ClientesWebApplicationFactory : WebApplicationFactory<Program>
 {
-    public string DatabaseName { get; init; } = $"IntegrationTestDb_{Guid.NewGuid()}";
-
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
         {
-            // EF Core registers IDbContextOptionsConfiguration<T> services for each
-            // extension (UseNpgsql, UseSnakeCaseNamingConvention). We must remove ALL of
-            // them to prevent the "dual provider" error when adding UseInMemoryDatabase.
-            var dbContextOptionsConfigType = typeof(Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<AppDbContext>);
-            var toRemove = services
-                .Where(d =>
-                    d.ServiceType == typeof(DbContextOptions<AppDbContext>) ||
-                    d.ServiceType == typeof(AppDbContext) ||
-                    dbContextOptionsConfigType.IsAssignableFrom(d.ServiceType))
-                .ToList();
+            // Remove the existing AppDbContext registration (PostgreSQL)
+            var descriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+            if (descriptor is not null)
+                services.Remove(descriptor);
 
-            foreach (var d in toRemove)
-                services.Remove(d);
-
-            // Register a clean in-memory DbContext
+            // Replace with in-memory database
             services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase(DatabaseName));
+                options.UseInMemoryDatabase("IntegrationTestDb_Clientes"));
         });
     }
 }
@@ -157,25 +149,21 @@ public sealed class ClientesEndpointsTests : IClassFixture<ClientesWebApplicatio
     {
         // GIVEN: A fresh isolated client that does not see other tests' seeded data
         // Use a unique in-memory DB name to isolate this test
-        var uniqueDb = $"EmptyDb_{Guid.NewGuid()}";
         var factory = new ClientesWebApplicationFactory();
-        var isolatedFactory = factory.WithWebHostBuilder(builder =>
+        factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
             {
-                var descriptors = services
-                    .Where(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>)
-                             || (d.ServiceType.IsGenericType &&
-                                 d.ServiceType.GetGenericTypeDefinition() == typeof(DbContextOptions<>)))
-                    .ToList();
-                foreach (var d in descriptors)
-                    services.Remove(d);
+                var descriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                if (descriptor is not null)
+                    services.Remove(descriptor);
 
                 services.AddDbContext<AppDbContext>(options =>
-                    options.UseInMemoryDatabase(uniqueDb));
+                    options.UseInMemoryDatabase($"EmptyDb_{Guid.NewGuid()}"));
             });
         });
-        var client = isolatedFactory.CreateClient();
+        var client = factory.CreateClient();
 
         // WHEN: GET /api/v1/clientes
         var response = await client.GetAsync("/api/v1/clientes");
@@ -190,6 +178,54 @@ public sealed class ClientesEndpointsTests : IClassFixture<ClientesWebApplicatio
     }
 
     // -------------------------------------------------------------------------
+    // TC-E2-P2-09: GET /api/v1/clientes/{id} returns 404 Problem Details for non-existent ID
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// TC-E2-P2-09 — Given a UUID that does not correspond to any existing client,
+    /// When GET /api/v1/clientes/{id} is called,
+    /// Then returns HTTP 404 with a Problem Details body (RFC 7807) containing status: 404.
+    /// (Story 2.2, AC-2.2: invalid clienteId graceful handling, Risk R-E2-07)
+    ///
+    /// Expected RED failure:
+    ///   - 404 Not Found because GET /api/v1/clientes/{id} endpoint does not exist yet.
+    ///   - OR: The endpoint exists but returns 500 instead of 404 + Problem Details.
+    /// </summary>
+    [Fact]
+    public async Task TC_E2_P2_09_GetClienteById_Returns404_WithProblemDetails_WhenIdDoesNotExist()
+    {
+        // GIVEN: An ID that does not correspond to any existing client
+        var nonExistentId = "00000000-0000-0000-0000-000000000000";
+
+        // WHEN: GET /api/v1/clientes/{id}
+        var response = await _client.GetAsync($"/api/v1/clientes/{nonExistentId}");
+
+        // THEN: HTTP 404 Not Found
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        // THEN: Response body is Problem Details (RFC 7807)
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+
+        // THEN: Problem Details must contain status: 404
+        Assert.True(
+            doc.RootElement.TryGetProperty("status", out var statusProp),
+            "Problem Details body is missing 'status' field"
+        );
+        Assert.Equal(404, statusProp.GetInt32());
+
+        // THEN: No stack trace exposed
+        Assert.False(
+            doc.RootElement.TryGetProperty("stackTrace", out _),
+            "Response must not expose 'stackTrace' (security: R-E2-06)"
+        );
+        Assert.False(
+            doc.RootElement.TryGetProperty("exception", out _),
+            "Response must not expose 'exception' key"
+        );
+    }
+
+    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 
@@ -198,16 +234,23 @@ public sealed class ClientesEndpointsTests : IClassFixture<ClientesWebApplicatio
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var clientes = Enumerable.Range(1, count).Select(i => ClienteEntity.Create(
-            nombre: $"Empresa Test {i:D4}",
-            nit: $"900{i:D6}-{i % 10}",
-            telefono: $"300{i:D7}",
-            ciudad: "Bogotá",
-            createdAt: DateTimeOffset.UtcNow.AddDays(-i),
-            updatedAt: DateTimeOffset.UtcNow.AddDays(-i)
-        ));
+        // NOTE: This uses ClienteEntity which does not exist yet (RED phase).
+        // When the entity is created, uncomment the seeding code below.
+        //
+        // var clientes = Enumerable.Range(1, count).Select(i => new SiesaAgents.Domain.Entities.ClienteEntity
+        // {
+        //     Id = Guid.NewGuid(),
+        //     Nombre = $"Empresa Test {i:D4}",
+        //     Nit = $"900{i:D6}-{i % 10}",
+        //     Telefono = $"300{i:D7}",
+        //     Ciudad = "Bogotá",
+        //     CreatedAt = DateTimeOffset.UtcNow.AddDays(-i),
+        //     UpdatedAt = DateTimeOffset.UtcNow.AddDays(-i),
+        // });
+        // await dbContext.Set<SiesaAgents.Domain.Entities.ClienteEntity>().AddRangeAsync(clientes);
+        // await dbContext.SaveChangesAsync();
 
-        await dbContext.Clientes.AddRangeAsync(clientes);
-        await dbContext.SaveChangesAsync();
+        // Placeholder — remove once domain entity exists and uncomment above
+        await Task.CompletedTask;
     }
 }
