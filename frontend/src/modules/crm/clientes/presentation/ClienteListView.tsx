@@ -45,9 +45,9 @@ export function ClienteListView() {
     return [...filtered].sort((a, b) => {
       switch (sortOrder) {
         case 'nombre-asc':
-          return a.nombre.localeCompare(b.nombre)
+          return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
         case 'nombre-desc':
-          return b.nombre.localeCompare(a.nombre)
+          return b.nombre.localeCompare(a.nombre, 'es', { sensitivity: 'base' })
         case 'fecha-asc':
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         case 'fecha-desc':
