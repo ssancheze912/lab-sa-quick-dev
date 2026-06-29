@@ -77,3 +77,53 @@ export function clienteHandlersError() {
     ),
   ]
 }
+
+// ─── Story 2.2 — per-id (detail view) handlers ──────────────────────────────
+
+/**
+ * Success handler for `GET /api/v1/clientes/{id}` returning the given fixture.
+ */
+export function clienteByIdHandler(cliente: ClienteFixture) {
+  return [
+    http.get(`*/api/v1/clientes/${cliente.id}`, () => HttpResponse.json(cliente)),
+  ]
+}
+
+/**
+ * 404 Problem Details handler for a missing id — drives the ClienteNotFound UI.
+ * Matches the backend contract: application/problem+json with RFC 7807 body
+ * (`type`, `title`, `status: 404`, `instance`, `detail: null`).
+ */
+export function clienteByIdNotFoundHandler(id: string) {
+  return [
+    http.get(`*/api/v1/clientes/${id}`, () =>
+      HttpResponse.json(
+        {
+          type: 'https://tools.ietf.org/html/rfc7231#section-6.5.4',
+          title: 'Cliente no encontrado',
+          status: 404,
+          instance: `/api/v1/clientes/${id}`,
+          detail: null,
+        },
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/problem+json' },
+        }
+      )
+    ),
+  ]
+}
+
+/**
+ * 500 handler for `GET /api/v1/clientes/{id}` — drives the ErrorPanel branch.
+ */
+export function clienteByIdServerErrorHandler(id: string) {
+  return [
+    http.get(`*/api/v1/clientes/${id}`, () =>
+      HttpResponse.json(
+        { type: 'about:blank', title: 'Server Error', status: 500 },
+        { status: 500 }
+      )
+    ),
+  ]
+}
