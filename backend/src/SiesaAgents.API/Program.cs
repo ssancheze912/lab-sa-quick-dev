@@ -30,4 +30,24 @@ app.UseCors("DevCors");
 app.MapOpenApi();
 app.MapScalarApiReference();
 
+app.MapGet("/api/v1/health/db", async (AppDbContext context) =>
+{
+    try
+    {
+        var canConnect = await context.Database.CanConnectAsync();
+        return canConnect
+            ? Results.Ok(new { status = "healthy" })
+            : Results.Json(new { status = "unhealthy" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch
+    {
+        return Results.Json(new { status = "unhealthy" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+});
+
+app.MapGet("/api/v1/test/trigger-exception", IResult () =>
+{
+    throw new InvalidOperationException("Deliberate test exception for middleware validation.");
+});
+
 app.Run();
