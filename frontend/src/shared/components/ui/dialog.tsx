@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 interface DialogProps {
   open: boolean
@@ -7,8 +8,24 @@ interface DialogProps {
 }
 
 export function Dialog({ open, onOpenChange, children }: DialogProps) {
+  useEffect(() => {
+    const root = document.getElementById('root')
+    if (!root) return
+    if (open) {
+      root.setAttribute('aria-hidden', 'true')
+      root.style.visibility = 'hidden'
+    } else {
+      root.removeAttribute('aria-hidden')
+      root.style.visibility = ''
+    }
+    return () => {
+      root.removeAttribute('aria-hidden')
+      root.style.visibility = ''
+    }
+  }, [open])
+
   if (!open) return null
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={(e) => {
@@ -16,7 +33,8 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
       }}
     >
       {children}
-    </div>
+    </div>,
+    document.body
   )
 }
 
