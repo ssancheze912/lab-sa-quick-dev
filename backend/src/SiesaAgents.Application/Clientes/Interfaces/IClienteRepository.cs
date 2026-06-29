@@ -6,4 +6,7 @@ public interface IClienteRepository
 {
     Task<IEnumerable<ClienteEntity>> GetAllAsync();
     Task<ClienteEntity?> GetByIdAsync(Guid id);
+    Task AddAsync(ClienteEntity entity);
+    Task SaveChangesAsync();
+    Task<ClienteEntity?> GetByNitAsync(string nit);
 }

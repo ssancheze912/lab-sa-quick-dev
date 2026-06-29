@@ -19,4 +19,20 @@ public sealed class ClienteRepository(AppDbContext dbContext) : IClienteReposito
         return await dbContext.Clientes
             .FirstOrDefaultAsync(c => c.Id == id);
     }
+
+    public async Task AddAsync(ClienteEntity entity)
+    {
+        await dbContext.Clientes.AddAsync(entity);
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task<ClienteEntity?> GetByNitAsync(string nit)
+    {
+        return await dbContext.Clientes
+            .FirstOrDefaultAsync(c => c.Nit == nit);
+    }
 }

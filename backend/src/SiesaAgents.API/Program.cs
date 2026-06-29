@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Interfaces;
 using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Infrastructure.Data;
@@ -18,6 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<IGetClientesQueryHandler, GetClientesQueryHandler>();
 builder.Services.AddScoped<IGetClienteByIdQueryHandler, GetClienteByIdQueryHandler>();
+builder.Services.AddScoped<ICreateClienteCommandHandler, CreateClienteCommandHandler>();
 
 // OpenApi metadata (required by Scalar)
 builder.Services.AddOpenApi();

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using SiesaAgents.Application.Clientes.Commands;
 
 namespace SiesaAgents.API.Middleware;
 
@@ -15,6 +16,35 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         try
         {
             await next(context);
+        }
+        catch (NitAlreadyExistsException)
+        {
+            var problem = new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflict",
+                Detail = "El NIT/RUC ya está registrado"
+            };
+
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.ContentType = "application/problem+json";
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(problem, JsonOptions));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+            when (IsUniqueConstraintViolation(dbEx))
+        {
+            var problem = new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflict",
+                Detail = "El NIT/RUC ya está registrado"
+            };
+
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.ContentType = "application/problem+json";
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(problem, JsonOptions));
         }
         catch (Exception ex)
         {
@@ -32,5 +62,13 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
 
             await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, JsonOptions));
         }
+    }
+
+    private static bool IsUniqueConstraintViolation(Microsoft.EntityFrameworkCore.DbUpdateException ex)
+    {
+        // PostgreSQL error code 23505 = unique_violation
+        var innerMessage = ex.InnerException?.Message ?? string.Empty;
+        return innerMessage.Contains("23505") || innerMessage.Contains("unique constraint") ||
+               innerMessage.Contains("uk_clientes_nit");
     }
 }
