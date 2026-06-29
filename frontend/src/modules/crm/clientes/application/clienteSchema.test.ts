@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { clienteSchema } from './clienteSchema';
+import { clienteSchema } from '../clienteSchema';
 
 describe('clienteSchema', () => {
   // ---------------------------------------------------------------------------
@@ -26,15 +26,14 @@ describe('clienteSchema', () => {
 
     // THEN: Parse fails
     expect(result.success).toBe(false);
-
-    if (!result.success) {
-      const errorPaths = result.error.issues.map((i) => i.path[0]);
-      // THEN: All 4 required fields are in the error paths
-      expect(errorPaths).toContain('nombre');
-      expect(errorPaths).toContain('nit');
-      expect(errorPaths).toContain('telefono');
-      expect(errorPaths).toContain('ciudad');
-    }
+    // Assert type narrowed — errors always accessible when success is false
+    const errors = (result as Extract<typeof result, { success: false }>).error;
+    const errorPaths = errors.issues.map((i) => i.path[0]);
+    // THEN: All 4 required fields are in the error paths
+    expect(errorPaths).toContain('nombre');
+    expect(errorPaths).toContain('nit');
+    expect(errorPaths).toContain('telefono');
+    expect(errorPaths).toContain('ciudad');
   });
 
   // ---------------------------------------------------------------------------
@@ -50,13 +49,11 @@ describe('clienteSchema', () => {
 
     // THEN: Parse fails and nit, telefono, ciudad are in error paths
     expect(result.success).toBe(false);
-
-    if (!result.success) {
-      const errorPaths = result.error.issues.map((i) => i.path[0]);
-      expect(errorPaths).toContain('nit');
-      expect(errorPaths).toContain('telefono');
-      expect(errorPaths).toContain('ciudad');
-    }
+    const errors = (result as Extract<typeof result, { success: false }>).error;
+    const errorPaths = errors.issues.map((i) => i.path[0]);
+    expect(errorPaths).toContain('nit');
+    expect(errorPaths).toContain('telefono');
+    expect(errorPaths).toContain('ciudad');
   });
 
   // ---------------------------------------------------------------------------
