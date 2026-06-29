@@ -20,7 +20,7 @@ describe('RootLayout — NavigationRail desktop (lg+)', () => {
 
   it('renders NavigationRail wrapper on desktop viewport', async () => {
     await renderWithRouter('/clientes')
-    const rail = document.querySelector('[data-testid="navigation-rail-wrapper"]')
+    const rail = document.querySelector('[data-testid="navigation-rail"]')
     expect(rail).toBeInTheDocument()
   })
 
@@ -44,7 +44,7 @@ describe('RootLayout — NavigationBar mobile (< lg)', () => {
 
   it('renders NavigationBar wrapper on mobile viewport', async () => {
     await renderWithRouter('/clientes')
-    const bar = document.querySelector('[data-testid="navigation-bar-wrapper"]')
+    const bar = document.querySelector('[data-testid="navigation-bar"]')
     expect(bar).toBeInTheDocument()
   })
 })
@@ -52,7 +52,7 @@ describe('RootLayout — NavigationBar mobile (< lg)', () => {
 describe('Active navigation item', () => {
   it('marks Clientes as active when on /clientes route', async () => {
     await renderWithRouter('/clientes')
-    const railWrapper = document.querySelector('[data-testid="navigation-rail-wrapper"]')
+    const railWrapper = document.querySelector('[data-testid="navigation-rail"]')
     expect(railWrapper).toBeInTheDocument()
     const clientesItems = document.querySelectorAll('[aria-label="Clientes"]')
     expect(clientesItems.length).toBeGreaterThan(0)
