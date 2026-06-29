@@ -23,6 +23,24 @@ public static class ClienteEndpoints
             .WithName("GetClientes")
             .WithOpenApi();
 
+        group.MapGet("/{id:guid}", async (
+                Guid id,
+                GetClienteByIdQueryHandler handler,
+                CancellationToken ct) =>
+            {
+                var result = await handler.HandleAsync(new GetClienteByIdQuery(id), ct);
+                return result is null
+                    ? Results.Problem(
+                        title: "Cliente no encontrado",
+                        statusCode: StatusCodes.Status404NotFound,
+                        type: "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+                        instance: $"/api/v1/clientes/{id}",
+                        detail: null)
+                    : Results.Ok(result);
+            })
+            .WithName("GetClienteById")
+            .WithOpenApi();
+
         return app;
     }
 }

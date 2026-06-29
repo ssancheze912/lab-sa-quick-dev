@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { Input } from 'siesa-ui-kit'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
@@ -13,12 +13,12 @@ import { useClientes } from '../application/useClientes'
 const DEBOUNCE_MS = 150
 const SKELETON_COUNT = 5
 
-interface ClientesRouteSearch {
-  selected?: string
-}
-
 /**
- * Story 2.1 — Client list panel (left pane, 280px).
+ * Story 2.1 + 2.2 — Client list panel (left pane, 280px).
+ *
+ * Selection comes from the `$clienteId` route segment (Story 2.2). Mounted by
+ * `ClientesShell` so it lives in both `/clientes` and `/clientes/$clienteId`
+ * without remounting between them.
  *
  * Renders five mutually-exclusive states in order:
  *   1. pending  → skeletons
@@ -31,16 +31,14 @@ export function ClienteListView(): React.ReactElement {
   const { data, status, refetch } = useClientes()
   const navigate = useNavigate()
 
-  // Selection lives in the URL search param so Story 2.2 can lift it into a
-  // route segment without breaking this component. `useSearch` is called once
-  // (rules-of-hooks compliant) but raises when invoked outside a RouterProvider
-  // (e.g. component-level tests in `*.test.tsx` that render this view without
-  // wiring a router) — the try/catch swallows that case and falls back to
-  // "nothing selected".
+  // `strict: false` lets the same component mount on `/clientes` (no id) and
+  // on `/clientes/$clienteId` (id present). Wrapped in try/catch so it stays
+  // testable outside of a RouterProvider (component-level tests render this
+  // view directly).
   let selectedId: string | undefined
   try {
-    const search = useSearch({ strict: false }) as ClientesRouteSearch
-    selectedId = search?.selected
+    const params = useParams({ strict: false }) as { clienteId?: string }
+    selectedId = params?.clienteId
   } catch {
     selectedId = undefined
   }
@@ -67,7 +65,10 @@ export function ClienteListView(): React.ReactElement {
   }, [data, debouncedQuery])
 
   const handleSelect = (id: string): void => {
-    void navigate({ to: '/clientes', search: { selected: id } as never })
+    void navigate({
+      to: '/clientes/$clienteId',
+      params: { clienteId: id },
+    })
   }
 
   const renderBody = (): React.ReactNode => {

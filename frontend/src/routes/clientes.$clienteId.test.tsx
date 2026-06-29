@@ -65,7 +65,8 @@ describe('Route /clientes/$clienteId — Story 2.2 ATDD', () => {
     // THEN: both panels are present
     expect(await screen.findByTestId('client-list-panel')).toBeInTheDocument()
     expect(await screen.findByTestId('cliente-detail-card')).toBeInTheDocument()
-    expect(screen.getByText('Cold Deep Link')).toBeInTheDocument()
+    // Name appears in BOTH the list item (left) and the DescriptionList row (right).
+    expect(screen.getAllByText('Cold Deep Link').length).toBeGreaterThanOrEqual(1)
   })
 
   // ─── AC #6 / R7 — non-existent id → ClienteNotFound, no list remount ─
@@ -117,8 +118,11 @@ describe('Route /clientes/$clienteId — Story 2.2 ATDD', () => {
     // Capture the list panel BEFORE click
     const panelBefore = await screen.findByTestId('client-list-panel')
 
-    // WHEN: user clicks the list item
-    await user.click(screen.getByTestId(`client-list-item-${a.id}`))
+    // WHEN: user clicks the list item (await item presence — the list query
+    // is async so we cannot synchronously `getByTestId` right after the panel
+    // mounts; the panel renders skeletons first).
+    const listItem = await screen.findByTestId(`client-list-item-${a.id}`)
+    await user.click(listItem)
 
     // THEN: URL updated; detail card present; list panel is the SAME DOM node (no remount)
     await waitFor(() => {

@@ -12,6 +12,7 @@ public static class ApplicationServiceCollectionExtensions
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<GetClientesQueryHandler>();
+        services.AddScoped<GetClienteByIdQueryHandler>();
 
         return services;
     }

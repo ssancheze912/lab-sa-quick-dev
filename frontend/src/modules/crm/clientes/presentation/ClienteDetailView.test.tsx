@@ -197,13 +197,15 @@ describe('ClienteDetailView — Story 2.2 ATDD', () => {
 
   // ─── AC #8 / R8 — 500 → ErrorPanel → Reintentar refetches ─────────────
   test('AC #8 / R8 — on 500, renders ErrorPanel; Reintentar refetches and shows the detail card', async () => {
-    // GIVEN: first GET → 500, second GET → 200 with the client
+    // GIVEN: first 3 calls return 500 (the hook auto-retries twice, so the
+    // ErrorPanel only surfaces after the full retry budget is exhausted);
+    // subsequent calls return the client to verify the manual Reintentar leg.
     const cliente = buildClienteFixture({ nombre: 'Recovered Detail' })
     let calls = 0
     server.use(
       http.get(`*/api/v1/clientes/${cliente.id}`, () => {
         calls += 1
-        if (calls === 1) {
+        if (calls <= 3) {
           return HttpResponse.json(
             { type: 'about:blank', title: 'Server Error', status: 500 },
             { status: 500 }

@@ -6,4 +6,10 @@ import type { Cliente } from './Cliente'
  */
 export interface IClienteRepository {
   getAll(search?: string): Promise<Cliente[]>
+  /**
+   * Fetches a single client by id. Throws `ClienteNotFoundError` (from
+   * `./errors`) when the backend responds with 404. Other failures bubble up
+   * as the underlying transport error so TanStack Query can decide to retry.
+   */
+  getById(id: string): Promise<Cliente>
 }

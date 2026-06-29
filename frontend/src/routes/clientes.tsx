@@ -1,27 +1,25 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Outlet, useMatchRoute } from '@tanstack/react-router'
 
-import { ClienteListView } from '@/modules/crm/clientes/presentation/ClienteListView'
-
-interface ClientesRouteSearch {
-  selected?: string
-}
+import { ClientesShell } from '@/modules/crm/clientes/presentation/ClientesShell'
 
 export const Route = createFileRoute('/clientes')({
   component: ClientesPage,
-  validateSearch: (search: Record<string, unknown>): ClientesRouteSearch => ({
-    selected: typeof search.selected === 'string' ? search.selected : undefined,
-  }),
 })
 
 function ClientesPage(): React.ReactElement {
+  const matchRoute = useMatchRoute()
+  // If a child route ($clienteId) is matched, render its content via <Outlet />;
+  // otherwise show the default "select a client" hint in the right panel.
+  const hasChild = matchRoute({ to: '/clientes/$clienteId', fuzzy: true })
   return (
-    <div className="flex h-[calc(100vh-64px)]">
-      <ClienteListView />
-      <section className="flex-1 p-6">
+    <ClientesShell>
+      {hasChild ? (
+        <Outlet />
+      ) : (
         <p className="text-muted-foreground">
           Selecciona un cliente para ver sus detalles
         </p>
-      </section>
-    </div>
+      )}
+    </ClientesShell>
   )
 }
