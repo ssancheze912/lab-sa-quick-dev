@@ -48,13 +48,13 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
 
   return (
     <div data-testid="cliente-detail-content" className="flex flex-1 flex-col p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-slate-900">{data.nombre}</h2>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-bold text-slate-900 pointer-events-none">{data.nombre}</h2>
         <button
           type="button"
           data-testid="edit-cliente-button"
           onClick={() => setIsEditFormOpen(true)}
-          className="flex items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+          className="relative z-10 flex shrink-0 items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
         >
           <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
           Editar

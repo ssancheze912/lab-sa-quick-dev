@@ -263,6 +263,10 @@ None.
 - `ClienteEntity.Update()` method added to encapsulate field mutation and `UpdatedAt` timestamp update.
 - Pre-existing middleware edge case test failures (8 tests) confirmed as pre-existing from Story 2.3 — not introduced by this story.
 - Frontend: 141 tests pass. Backend (Clientes): 40 tests pass.
+- [Correction attempt 2] Backend PUT was returning 405 because the running process was using the old binary (compiled before PUT endpoint was added). Restarted backend process to pick up new binary — PUT now returns 200.
+- [Correction attempt 2] Mobile viewport (Pixel 5): `<h2>` was intercepting clicks on the "Editar" button. Fixed by adding `pointer-events-none` to the `h2` in `ClienteDetailView.tsx` header row and `flex-wrap` to the container. Button now has `relative z-10 shrink-0` for explicit stacking.
+- [Correction attempt 2] `clientes.tsx` route: `cliente-detail-panel` was applying `items-center justify-center` even when a client route was active, causing empty space around the content that intercepted pointer events. Fixed to apply `flex-col` when a child route is active.
+- Playwright E2E: 68 tests pass (20 desktop chromium + 20 mobile-chrome for edit-client.spec.ts + 14 + 14 for api update tests). Flaky parallel test (test 353 "list panel FR27") passes in isolation — pre-existing DB state isolation issue between parallel real-data tests, not introduced by this story.
 
 ### File List
 
@@ -280,7 +284,8 @@ None.
 - `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implemented `update()`
 - `frontend/src/modules/crm/clientes/application/clienteSchema.ts` — added `updateClienteSchema`/`UpdateClienteFormData`
 - `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx` — edit mode support
-- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx` — "Editar" button and overlay
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx` — "Editar" button and overlay; mobile pointer-events-none on h2
+- `frontend/src/routes/_app/clientes.tsx` — conditional flex-col vs items-center for cliente-detail-panel
 - `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs` — added `Update()` method
 - `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` — added `UpdateAsync`
 - `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implemented `UpdateAsync`

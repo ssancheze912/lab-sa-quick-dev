@@ -14,7 +14,10 @@ function ClientesPage() {
   return (
     <div className="flex h-screen">
       {!clienteNotFound && <ClienteListView />}
-      <div data-testid="cliente-detail-panel" className="flex flex-1 items-center justify-center text-slate-400">
+      <div
+        data-testid="cliente-detail-panel"
+        className={`flex flex-1 text-slate-400 ${hasChildRoute ? 'flex-col' : 'items-center justify-center'}`}
+      >
         {hasChildRoute ? (
           <Outlet />
         ) : (
