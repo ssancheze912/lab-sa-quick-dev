@@ -1,34 +1,34 @@
-using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
-
 namespace SiesaAgents.API.Middleware;
 
-public class ExceptionHandlingMiddleware(RequestDelegate next)
+public class ExceptionHandlingMiddleware
 {
+    private readonly RequestDelegate _next;
+    private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+
+    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
         {
-            await next(context);
+            await _next(context);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            context.Response.StatusCode = 500;
+            _logger.LogError(ex, "Unhandled exception");
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             context.Response.ContentType = "application/problem+json";
-
-            var problemDetails = new ProblemDetails
+            await context.Response.WriteAsJsonAsync(new
             {
-                Status = 500,
-                Title = "Internal Server Error",
-                Detail = "An unexpected error occurred."
-            };
-
-            var json = JsonSerializer.Serialize(problemDetails, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                type = "https://tools.ietf.org/html/rfc7807",
+                title = "An unexpected error occurred.",
+                status = 500,
+                detail = ex.Message
             });
-
-            await context.Response.WriteAsync(json);
         }
     }
 }
