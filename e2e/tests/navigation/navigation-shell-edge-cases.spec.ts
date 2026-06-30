@@ -242,10 +242,9 @@ test.describe('[P1] Keyboard accessibility — navigation via keyboard', () => {
     // WHEN: The user Tabs into the page
     await page.keyboard.press('Tab');
 
-    // THEN: Some element inside app-root receives keyboard focus
+    // THEN: Some focusable element inside app-root receives keyboard focus (data-testid is non-empty)
     const focusedElement = await page.evaluate(() => document.activeElement?.getAttribute('data-testid') ?? '');
-    // The focused element should be one of the nav buttons or a focusable child
-    expect(focusedElement.length).toBeGreaterThanOrEqual(0); // non-null assertion that focus moved
+    expect(focusedElement.length).toBeGreaterThan(0); // focus landed on a known testid element
   });
 
   test('[P1] pressing Enter on focused nav-rail-contactos button navigates to /contactos', async ({ page }) => {

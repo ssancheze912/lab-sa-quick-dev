@@ -52,14 +52,6 @@ test.describe('AC1 — Desktop NavigationRail at >= 1024px viewport', () => {
     await page.waitForLoadState('networkidle');
 
     // WHEN: The user clicks the Clientes navigation entry
-    // Intercept navigation to detect SPA behavior (no full reload)
-    let navigationHappened = false;
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame() && frame.url().includes('/clientes')) {
-        navigationHappened = true;
-      }
-    });
-
     await page.click('[data-testid="nav-rail-clientes"]');
 
     // THEN: The URL changes to /clientes without a full page reload
