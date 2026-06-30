@@ -47,6 +47,20 @@ public static class ClienteEndpoints
             .ProducesProblem(StatusCodes.Status500InternalServerError)
             .WithOpenApi();
 
+        app.MapPut("/api/v1/clientes/{id:guid}", async (Guid id, UpdateClienteCommand request, UpdateClienteCommandHandler handler, CancellationToken ct) =>
+        {
+            var command = request with { Id = id };
+            var dto = await handler.Handle(command, ct);
+            return Results.Ok(dto);
+        })
+            .WithName("UpdateCliente")
+            .WithTags("Clientes")
+            .Produces<ClienteDto>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
+            .WithOpenApi();
+
         app.MapDelete("/api/v1/clientes/{id:guid}", async (Guid id, DeleteClienteCommandHandler handler, CancellationToken ct) =>
         {
             var deleted = await handler.Handle(new DeleteClienteCommand(id), ct);

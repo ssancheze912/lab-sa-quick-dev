@@ -34,6 +34,18 @@ public class ExceptionHandlingMiddleware
                 errors
             });
         }
+        catch (NotFoundException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                type = "https://tools.ietf.org/html/rfc7807",
+                title = "Not Found.",
+                status = 404,
+                detail = ex.Message
+            });
+        }
         catch (ConflictException ex)
         {
             context.Response.StatusCode = StatusCodes.Status409Conflict;

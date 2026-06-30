@@ -58,6 +58,12 @@ public class CreateClienteCommandHandlerEdgeCaseTests
             return Task.FromResult(cliente);
         }
 
+        public Task UpdateAsync(ClienteEntity entity, CancellationToken ct)
+        {
+            LastCancellationToken = ct;
+            return Task.CompletedTask;
+        }
+
         public Task<bool> DeleteAsync(Guid id, CancellationToken ct)
         {
             LastCancellationToken = ct;

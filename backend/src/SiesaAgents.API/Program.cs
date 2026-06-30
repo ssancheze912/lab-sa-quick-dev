@@ -39,9 +39,11 @@ builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 
 // Validators
 builder.Services.AddScoped<IValidator<CreateClienteCommand>, CreateClienteCommandValidator>();
+builder.Services.AddScoped<IValidator<UpdateClienteCommand>, UpdateClienteCommandValidator>();
 
 // Command Handlers
 builder.Services.AddScoped<CreateClienteCommandHandler>();
+builder.Services.AddScoped<UpdateClienteCommandHandler>();
 builder.Services.AddScoped<DeleteClienteCommandHandler>();
 
 // OpenAPI

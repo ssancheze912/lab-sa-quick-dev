@@ -1,8 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
+import { PencilSquareIcon } from '@heroicons/react/24/outline'
 import { useCliente } from '../application/useCliente'
 import { useClienteDetailStore } from '../application/clienteDetailStore'
+import { ClienteForm } from './ClienteForm'
 
 interface ClienteDetailViewProps {
   clienteId: string
@@ -11,6 +13,7 @@ interface ClienteDetailViewProps {
 export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   const { data, isLoading, isError } = useCliente(clienteId)
   const setClienteNotFound = useClienteDetailStore((s) => s.setClienteNotFound)
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false)
 
   useEffect(() => {
     setClienteNotFound(!isLoading && (isError || !data))
@@ -45,7 +48,18 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
 
   return (
     <div data-testid="cliente-detail-content" className="flex flex-1 flex-col p-6">
-      <h2 className="mb-6 text-lg font-bold text-slate-900">{data.nombre}</h2>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-slate-900">{data.nombre}</h2>
+        <button
+          type="button"
+          data-testid="edit-cliente-button"
+          onClick={() => setIsEditFormOpen(true)}
+          className="flex items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+        >
+          <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
+          Editar
+        </button>
+      </div>
       <dl className="space-y-4" aria-label="Detalle del cliente">
         <div>
           <dt className="text-sm font-medium text-slate-900">Nombre</dt>
@@ -64,6 +78,41 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
           <dd className="text-sm text-slate-700">{data.ciudad}</dd>
         </div>
       </dl>
+
+      {isEditFormOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-cliente-dialog-title"
+          data-testid="edit-cliente-form-overlay"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onKeyDown={(e) => e.key === 'Escape' && setIsEditFormOpen(false)}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsEditFormOpen(false)
+          }}
+        >
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+            <h3
+              id="edit-cliente-dialog-title"
+              className="mb-4 text-base font-semibold text-slate-900"
+            >
+              Editar cliente
+            </h3>
+            <ClienteForm
+              mode="edit"
+              initialValues={{
+                id: data.id,
+                nombre: data.nombre,
+                nit: data.nit,
+                telefono: data.telefono,
+                ciudad: data.ciudad,
+              }}
+              onClose={() => setIsEditFormOpen(false)}
+              onSuccess={() => setIsEditFormOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

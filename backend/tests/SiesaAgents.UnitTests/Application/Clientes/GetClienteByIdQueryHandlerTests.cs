@@ -26,6 +26,9 @@ public class GetClienteByIdQueryHandlerTests
         public Task<ClienteEntity> CreateAsync(ClienteEntity cliente, CancellationToken ct)
             => Task.FromResult(cliente);
 
+        public Task UpdateAsync(ClienteEntity entity, CancellationToken ct)
+            => Task.CompletedTask;
+
         public Task<bool> DeleteAsync(Guid id, CancellationToken ct)
             => Task.FromResult(true);
 

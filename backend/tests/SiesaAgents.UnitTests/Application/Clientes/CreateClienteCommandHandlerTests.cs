@@ -35,6 +35,9 @@ public class CreateClienteCommandHandlerTests
             return Task.FromResult(cliente);
         }
 
+        public Task UpdateAsync(ClienteEntity entity, CancellationToken ct)
+            => Task.CompletedTask;
+
         public Task<bool> DeleteAsync(Guid id, CancellationToken ct)
             => Task.FromResult(true);
 

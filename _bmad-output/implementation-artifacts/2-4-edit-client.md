@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -20,130 +20,61 @@ so that the client information stays up to date.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add `useUpdateCliente` mutation hook in application layer (AC: #2, #3)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useUpdateCliente.ts`
-  - [ ] Use `useMutation` with `mutationFn: (data: UpdateClienteRequest) => clienteApiRepository.update(data.id, data)`
-  - [ ] `onSuccess`: call `queryClient.invalidateQueries({ queryKey: ['clientes'] })` + `queryClient.invalidateQueries({ queryKey: ['clientes', id] })` + `toast.success('Cliente actualizado correctamente')`
-  - [ ] `onError`: `toast.error('No se pudo guardar. Intenta de nuevo.')`
-  - [ ] Return `{ mutate, isPending, isError }` from the hook
+- [x] Task 1 — Add `useUpdateCliente` mutation hook in application layer (AC: #2, #3)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useUpdateCliente.ts`
+  - [x] Use `useMutation` with `mutationFn: (data: UpdateClienteRequest) => clienteApiRepository.update(data.id, data)`
+  - [x] `onSuccess`: call `queryClient.invalidateQueries({ queryKey: ['clientes'] })` + `queryClient.invalidateQueries({ queryKey: ['clientes', id] })` + `toast.success('Cliente actualizado correctamente')`
+  - [x] `onError`: `toast.error('No se pudo guardar. Intenta de nuevo.')`
+  - [x] Return `{ mutate, isPending, isError }` from the hook
 
-- [ ] Task 2 — Define `UpdateClienteRequest` type in domain layer (AC: #1)
-  - [ ] Add `UpdateClienteRequest` interface to `frontend/src/modules/crm/clientes/domain/Cliente.ts`:
-    ```ts
-    export interface UpdateClienteRequest {
-      id: string;
-      nombre: string;
-      nit: string;
-      telefono: string;
-      ciudad: string;
-    }
-    ```
+- [x] Task 2 — Define `UpdateClienteRequest` type in domain layer (AC: #1)
+  - [x] Add `UpdateClienteRequest` interface to `frontend/src/modules/crm/clientes/domain/Cliente.ts`
 
-- [ ] Task 3 — Add `update(id, data)` method to `IClienteRepository` and `clienteApiRepository` (AC: #2)
-  - [ ] Extend `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` with `update(id: string, data: UpdateClienteRequest): Promise<Cliente>`
-  - [ ] Implement in `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: PUT to `/api/v1/clientes/${id}` via shared `apiClient`
+- [x] Task 3 — Add `update(id, data)` method to `IClienteRepository` and `clienteApiRepository` (AC: #2)
+  - [x] Extend `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` with `update(id: string, data: UpdateClienteRequest): Promise<Cliente>`
+  - [x] Implement in `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: PUT to `/api/v1/clientes/${id}` via shared `apiClient`
 
-- [ ] Task 4 — Add edit mode to `clienteSchema.ts` Zod validation (AC: #1, #3)
-  - [ ] Open `frontend/src/modules/crm/clientes/application/clienteSchema.ts`
-  - [ ] Export `updateClienteSchema` (same shape as `createClienteSchema` but can include `id`):
-    ```ts
-    export const updateClienteSchema = z.object({
-      nombre: z.string().min(1, 'Nombre requerido'),
-      nit: z.string().min(1, 'NIT/RUC requerido'),
-      telefono: z.string().min(1, 'Teléfono requerido'),
-      ciudad: z.string().min(1, 'Ciudad requerida'),
-    });
-    export type UpdateClienteFormData = z.infer<typeof updateClienteSchema>;
-    ```
+- [x] Task 4 — Add edit mode to `clienteSchema.ts` Zod validation (AC: #1, #3)
+  - [x] Added `updateClienteSchema` and `UpdateClienteFormData` to `clienteSchema.ts`
 
-- [ ] Task 5 — Extend `ClienteForm` to support edit mode (AC: #1, #2, #3, #4)
-  - [ ] Modify `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx`
-  - [ ] Add optional props: `mode?: 'create' | 'edit'` and `initialValues?: UpdateClienteFormData & { id: string }`
-  - [ ] When `mode === 'edit'`: use `zodResolver(updateClienteSchema)` + `defaultValues` pre-filled from `initialValues`
-  - [ ] On valid submit in edit mode: call `mutate(formData)` from `useUpdateCliente`
-  - [ ] Close form only in `onSuccess` callback (not immediately)
-  - [ ] "Guardar" button disabled and shows loading state while `isPending === true`
-  - [ ] "Cancelar" button calls `onClose()` without submitting — original data stays unchanged (AC: #4)
-  - [ ] All field labels, placeholders, and error messages remain in Spanish
-  - [ ] Maintain existing `data-testid="cliente-form"` and `data-testid="cliente-form-submit"` attributes
-  - [ ] Maintain WCAG 2.1 AA: explicit `<label>` with `htmlFor` for each input; `aria-required="true"` on all inputs
+- [x] Task 5 — Extend `ClienteForm` to support edit mode (AC: #1, #2, #3, #4)
+  - [x] Modified `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx` with split `ClienteCreateForm`/`ClienteEditForm` internal components
+  - [x] Edit mode uses `zodResolver(updateClienteSchema)` + `defaultValues` pre-filled from `initialValues`
+  - [x] On valid submit in edit mode: calls `mutate({ id, ...data })` from `useUpdateCliente`
+  - [x] "Guardar" button disabled and shows loading state while `isPending === true`
+  - [x] "Cancelar" button calls `onClose()` without submitting
+  - [x] Maintains `data-testid="cliente-form"` and `data-testid="cliente-form-submit"`
+  - [x] WCAG 2.1 AA: `<label>` with `htmlFor`, `aria-required="true"` on all inputs
 
-- [ ] Task 6 — Add "Editar" button to `ClienteDetailView` (AC: #1, #2, #4)
-  - [ ] Modify `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
-  - [ ] Add local `isEditFormOpen: boolean` state
-  - [ ] Add "Editar" button (`PencilSquareIcon` from `@heroicons/react/24/outline`) in the detail panel header
-  - [ ] Button click → sets `isEditFormOpen` to `true`
-  - [ ] When `isEditFormOpen === true`: render `ClienteForm` with `mode="edit"` and `initialValues` set to the current client's data
-  - [ ] Use the same accessible overlay pattern established in Story 2.3 (custom `div[role="dialog"]` with `aria-modal="true"`, escape key handler)
-  - [ ] Pass `onClose={() => setIsEditFormOpen(false)}` and `onSuccess={() => setIsEditFormOpen(false)}` to `ClienteForm`
-  - [ ] Button style: secondary action (`text-slate-600 hover:bg-slate-100 border border-slate-300`) with `PencilSquareIcon`
-  - [ ] Add `data-testid="edit-cliente-button"` to the "Editar" button
-  - [ ] Add `data-testid="edit-cliente-form-overlay"` to the overlay div when open
+- [x] Task 6 — Add "Editar" button to `ClienteDetailView` (AC: #1, #2, #4)
+  - [x] Added `isEditFormOpen` state to `ClienteDetailView`
+  - [x] Added "Editar" button with `PencilSquareIcon`, `data-testid="edit-cliente-button"`
+  - [x] Accessible overlay `div[role="dialog"]` with `aria-modal="true"`, escape key handler, `data-testid="edit-cliente-form-overlay"`
+  - [x] ClienteForm rendered in edit mode with `initialValues` from current `data`
 
-- [ ] Task 7 — Backend: `UpdateClienteCommand`, handler and validator (AC: #2, #3)
-  - [ ] Check if `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommand.cs` and its handler already exist (may have been scaffolded in earlier stories)
-  - [ ] If NOT found, create:
-    - `UpdateClienteCommand.cs`: `record UpdateClienteCommand(Guid Id, string Nombre, string Nit, string Telefono, string Ciudad);`
-    - `UpdateClienteCommandHandler.cs`: fetch entity by Id → throw `NotFoundException` if not found → update fields → `await _repository.UpdateAsync(entity, ct)` → return `ClienteDto`
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Validators/UpdateClienteCommandValidator.cs`:
-    ```csharp
-    RuleFor(x => x.Nombre).NotEmpty().WithMessage("El nombre es requerido");
-    RuleFor(x => x.Nit).NotEmpty().WithMessage("El NIT/RUC es requerido");
-    RuleFor(x => x.Telefono).NotEmpty().WithMessage("El teléfono es requerido");
-    RuleFor(x => x.Ciudad).NotEmpty().WithMessage("La ciudad es requerida");
-    ```
-  - [ ] Register validator in `Program.cs`: `builder.Services.AddScoped<IValidator<UpdateClienteCommand>, UpdateClienteCommandValidator>()`
-  - [ ] In handler `Handle()`: call `await _validator.ValidateAndThrowAsync(command, ct)` before persisting
-  - [ ] `ExceptionHandlingMiddleware` already maps `ValidationException` → 400 (done in Story 2.3)
+- [x] Task 7 — Backend: `UpdateClienteCommand`, handler and validator (AC: #2, #3)
+  - [x] Created `UpdateClienteCommand.cs`, `UpdateClienteCommandHandler.cs`, `UpdateClienteCommandValidator.cs`
+  - [x] Created `NotFoundException.cs` in Domain exceptions
+  - [x] Added `NotFoundException` handling in `ExceptionHandlingMiddleware` (→ 404)
+  - [x] Registered in `Program.cs`
 
-- [ ] Task 8 — Backend: wire `PUT /api/v1/clientes/{id}` endpoint (AC: #2)
-  - [ ] Open `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
-  - [ ] Verify `PUT /api/v1/clientes/{id}` exists and calls `UpdateClienteCommandHandler`
-  - [ ] If it does not exist, add:
-    ```csharp
-    group.MapPut("/{id:guid}", async (Guid id, UpdateClienteRequest request, ...) => { ... })
-         .WithName("UpdateCliente")
-         .Produces<ClienteDto>()
-         .ProducesProblem(400)
-         .ProducesProblem(404)
-         .ProducesProblem(500);
-    ```
-  - [ ] Response 200 OK + updated `ClienteDto` (direct object, no wrapper)
-  - [ ] Response 400 Problem Details if validation fails
-  - [ ] Response 404 Problem Details if `id` not found
+- [x] Task 8 — Backend: wire `PUT /api/v1/clientes/{id}` endpoint (AC: #2)
+  - [x] Added `MapPut` to `ClienteEndpoints.cs` returning 200 OK + `ClienteDto`, 400, 404, 500
 
-- [ ] Task 9 — Backend: `IClienteRepository.UpdateAsync` and implementation (AC: #2)
-  - [ ] Add `UpdateAsync(ClienteEntity entity, CancellationToken ct): Task` to `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` (if not present)
-  - [ ] Implement in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`:
-    ```csharp
-    public async Task UpdateAsync(ClienteEntity entity, CancellationToken ct = default)
-    {
-        _context.Clientes.Update(entity);
-        await _context.SaveChangesAsync(ct);
-    }
-    ```
+- [x] Task 9 — Backend: `IClienteRepository.UpdateAsync` and implementation (AC: #2)
+  - [x] Added `UpdateAsync` to `IClienteRepository` interface
+  - [x] Implemented in `ClienteRepository.cs`
+  - [x] Added `Update()` method to `ClienteEntity` to update fields and set `UpdatedAt`
 
-- [ ] Task 10 — Tests: Frontend unit tests for `useUpdateCliente` and `ClienteForm` edit mode (AC: #2, #3, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useUpdateCliente.test.ts`:
-    - Test: successful mutation invalidates `['clientes']` and `['clientes', id]` query keys
-    - Test: successful mutation shows `toast.success('Cliente actualizado correctamente')`
-    - Test: failed mutation shows `toast.error('No se pudo guardar. Intenta de nuevo.')`
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteForm.edit.test.tsx`:
-    - Test: form renders pre-filled with `initialValues` when `mode="edit"`
-    - Test: all 4 fields are populated from `initialValues`
-    - Test: clearing a required field shows inline error and blocks submit (AC: #3)
-    - Test: "Cancelar" calls `onClose` without calling mutate (AC: #4)
-    - Test: successful submit calls `useUpdateCliente.mutate` with correct payload (AC: #2)
-  - [ ] Run: `pnpm exec vitest run src/modules/crm/clientes/` — all tests must pass
+- [x] Task 10 — Tests: Frontend unit tests for `useUpdateCliente` and `ClienteForm` edit mode (AC: #2, #3, #4)
+  - [x] `useUpdateCliente.test.ts` already existed (ATDD RED phase) — all 11 tests now pass GREEN
+  - [x] `ClienteForm.edit.test.tsx` already existed (ATDD RED phase) — all 19 tests now pass GREEN
+  - [x] `pnpm exec vitest run src/modules/crm/clientes/` — 141 tests pass
 
-- [ ] Task 11 — Tests: Backend unit tests for `UpdateClienteCommandHandler` and validator (AC: #2, #3)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/UpdateClienteCommandHandlerTests.cs`:
-    - Test: valid input → updates entity, returns `ClienteDto` with updated fields
-    - Test: empty `Nombre` → `ValidationException` thrown
-    - Test: empty `Nit` → `ValidationException` thrown
-    - Test: non-existent `Id` → `NotFoundException` thrown → mapped to 404
-    - Add `UpdateAsync` to the fake `IClienteRepository` used in other test files if not present
-  - [ ] Run: `dotnet test tests/SiesaAgents.UnitTests --filter FullyQualifiedName~Clientes` — all tests must pass
+- [x] Task 11 — Tests: Backend unit tests for `UpdateClienteCommandHandler` and validator (AC: #2, #3)
+  - [x] Created `UpdateClienteCommandHandlerTests.cs` with 7 tests (valid input, validation errors, not found)
+  - [x] Added `UpdateAsync` stub to all 5 existing `FakeClienteRepository` implementations
+  - [x] `dotnet test --filter FullyQualifiedName~Clientes` — 40 tests pass
 
 ## Dev Notes
 
@@ -321,6 +252,43 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- Implemented `useUpdateCliente` as a factory-pattern hook accepting optional `onSuccess` callback to avoid passing options to `mutate()` and breaking test assertions.
+- `ClienteForm` was split into `ClienteCreateForm` / `ClienteEditForm` internal components to avoid conditional hook calls — each renders with its own hook instance.
+- `UpdateAsync` stubs added to all 5 existing `FakeClienteRepository` implementations in test files to satisfy the updated `IClienteRepository` interface contract.
+- `NotFoundException` created in Domain exceptions layer; registered in `ExceptionHandlingMiddleware` → HTTP 404 Problem Details.
+- `ClienteEntity.Update()` method added to encapsulate field mutation and `UpdatedAt` timestamp update.
+- Pre-existing middleware edge case test failures (8 tests) confirmed as pre-existing from Story 2.3 — not introduced by this story.
+- Frontend: 141 tests pass. Backend (Clientes): 40 tests pass.
+
 ### File List
+
+**Created:**
+- `frontend/src/modules/crm/clientes/application/useUpdateCliente.ts`
+- `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommand.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommandHandler.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Validators/UpdateClienteCommandValidator.cs`
+- `backend/src/SiesaAgents.Domain/Clientes/Exceptions/NotFoundException.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/UpdateClienteCommandHandlerTests.cs`
+
+**Modified:**
+- `frontend/src/modules/crm/clientes/domain/Cliente.ts` — added `UpdateClienteRequest`
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — added `update()` method
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implemented `update()`
+- `frontend/src/modules/crm/clientes/application/clienteSchema.ts` — added `updateClienteSchema`/`UpdateClienteFormData`
+- `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx` — edit mode support
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx` — "Editar" button and overlay
+- `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs` — added `Update()` method
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` — added `UpdateAsync`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implemented `UpdateAsync`
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — added `PUT /api/v1/clientes/{id}`
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — added `NotFoundException` → 404
+- `backend/src/SiesaAgents.API/Program.cs` — registered validator and handler for UpdateCliente
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs` — added `UpdateAsync` stub
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerEdgeCaseTests.cs` — added `UpdateAsync` stub
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs` — added `UpdateAsync` stub
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs` — added `UpdateAsync` stub
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerEdgeCaseTests.cs` — added `UpdateAsync` stub

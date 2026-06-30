@@ -2,40 +2,43 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PlusIcon } from '@heroicons/react/24/outline'
 import { useCreateCliente } from '../application/useCreateCliente'
-import { createClienteSchema, type CreateClienteFormData } from '../application/clienteSchema'
+import { useUpdateCliente } from '../application/useUpdateCliente'
+import {
+  createClienteSchema,
+  updateClienteSchema,
+  type CreateClienteFormData,
+  type UpdateClienteFormData,
+} from '../application/clienteSchema'
 
-interface ClienteFormProps {
+interface ClienteFormCreateProps {
+  mode?: 'create'
+  initialValues?: undefined
   onClose: () => void
   onSuccess?: () => void
 }
 
-export function ClienteForm({ onClose, onSuccess }: ClienteFormProps) {
-  const { mutate, isPending } = useCreateCliente({
-    onSuccess: () => {
-      onSuccess?.()
-      onClose()
-    },
-  })
+interface ClienteFormEditProps {
+  mode: 'edit'
+  initialValues: UpdateClienteFormData & { id: string }
+  onClose: () => void
+  onSuccess?: () => void
+}
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<CreateClienteFormData>({
-    resolver: zodResolver(createClienteSchema),
-  })
+type ClienteFormProps = ClienteFormCreateProps | ClienteFormEditProps
 
-  const onSubmit = (data: CreateClienteFormData) => {
-    mutate(data)
-  }
-
+function ClienteFormFields({
+  isPending,
+  onClose,
+  errors,
+  register,
+}: {
+  isPending: boolean
+  onClose: () => void
+  errors: Partial<Record<keyof UpdateClienteFormData, { message?: string }>>
+  register: ReturnType<typeof useForm>['register']
+}) {
   return (
-    <form
-      data-testid="cliente-form"
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-      className="flex flex-col gap-4"
-    >
+    <>
       <div className="flex flex-col gap-1">
         <label htmlFor="nombre" className="text-sm font-medium text-slate-700">
           Nombre
@@ -45,6 +48,7 @@ export function ClienteForm({ onClose, onSuccess }: ClienteFormProps) {
           type="text"
           placeholder="Nombre del cliente"
           aria-required="true"
+          autoFocus
           {...register('nombre')}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0e79fd]"
         />
@@ -122,6 +126,101 @@ export function ClienteForm({ onClose, onSuccess }: ClienteFormProps) {
           Guardar
         </button>
       </div>
+    </>
+  )
+}
+
+function ClienteCreateForm({ onClose, onSuccess }: { onClose: () => void; onSuccess?: () => void }) {
+  const { mutate, isPending } = useCreateCliente({
+    onSuccess: () => {
+      onSuccess?.()
+      onClose()
+    },
+  })
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreateClienteFormData>({
+    resolver: zodResolver(createClienteSchema),
+  })
+
+  return (
+    <form
+      data-testid="cliente-form"
+      onSubmit={handleSubmit((data) => mutate(data))}
+      noValidate
+      className="flex flex-col gap-4"
+    >
+      <ClienteFormFields
+        isPending={isPending}
+        onClose={onClose}
+        errors={errors}
+        register={register}
+      />
     </form>
   )
+}
+
+function ClienteEditForm({
+  initialValues,
+  onClose,
+  onSuccess,
+}: {
+  initialValues: UpdateClienteFormData & { id: string }
+  onClose: () => void
+  onSuccess?: () => void
+}) {
+  const { mutate, isPending } = useUpdateCliente({
+    onSuccess: () => {
+      onSuccess?.()
+      onClose()
+    },
+  })
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<UpdateClienteFormData>({
+    resolver: zodResolver(updateClienteSchema),
+    defaultValues: {
+      nombre: initialValues.nombre,
+      nit: initialValues.nit,
+      telefono: initialValues.telefono,
+      ciudad: initialValues.ciudad,
+    },
+  })
+
+  return (
+    <form
+      data-testid="cliente-form"
+      onSubmit={handleSubmit((data) =>
+        mutate({ id: initialValues.id, ...data })
+      )}
+      noValidate
+      className="flex flex-col gap-4"
+    >
+      <ClienteFormFields
+        isPending={isPending}
+        onClose={onClose}
+        errors={errors}
+        register={register}
+      />
+    </form>
+  )
+}
+
+export function ClienteForm(props: ClienteFormProps) {
+  if (props.mode === 'edit') {
+    return (
+      <ClienteEditForm
+        initialValues={props.initialValues}
+        onClose={props.onClose}
+        onSuccess={props.onSuccess}
+      />
+    )
+  }
+  return <ClienteCreateForm onClose={props.onClose} onSuccess={props.onSuccess} />
 }

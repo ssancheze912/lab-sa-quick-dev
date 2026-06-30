@@ -27,6 +27,12 @@ public class ClienteRepository : IClienteRepository
         return cliente;
     }
 
+    public async Task UpdateAsync(ClienteEntity entity, CancellationToken ct)
+    {
+        _context.Clientes.Update(entity);
+        await _context.SaveChangesAsync(ct);
+    }
+
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
     {
         var cliente = await _context.Clientes.FindAsync([id], ct);

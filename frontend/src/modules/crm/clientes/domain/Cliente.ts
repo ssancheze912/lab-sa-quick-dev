@@ -14,3 +14,11 @@ export interface CreateClienteRequest {
   telefono: string
   ciudad: string
 }
+
+export interface UpdateClienteRequest {
+  id: string
+  nombre: string
+  nit: string
+  telefono: string
+  ciudad: string
+}
