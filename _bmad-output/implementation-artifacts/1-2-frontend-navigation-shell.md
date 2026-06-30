@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -24,40 +24,40 @@ so that I can move between sections without full page reloads from any device.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Update `__root.tsx` with responsive navigation shell (AC: #1, #2, #6)
-  - [ ] Import `NavigationRail` and `NavigationBar` from `siesa-ui-kit`
-  - [ ] Define navigation items array: `[{ label: 'Clientes', to: '/clientes', icon: ... }, { label: 'Contactos', to: '/contactos', icon: ... }]`
-  - [ ] Render `NavigationRail` for desktop (`hidden lg:flex`) and `NavigationBar` for mobile (`flex lg:hidden`)
-  - [ ] Wire TanStack Router `<Link>` or the kit component's built-in navigation to route paths `/clientes` and `/contactos`
-  - [ ] Use `useRouterState` or `useMatchRoute` from `@tanstack/react-router` to highlight the active navigation item
-  - [ ] Wrap main content area in `<Outlet />` from TanStack Router inside the layout
-  - [ ] Add `aria-label="Navegación principal"` to the navigation container (WCAG 2.1 AA)
-  - [ ] Verify no full page reload occurs when switching routes (SPA navigation)
+- [x] Task 1 — Update `__root.tsx` with responsive navigation shell (AC: #1, #2, #6)
+  - [x] Import `NavigationRail` and `NavigationBar` from `siesa-ui-kit`
+  - [x] Define navigation items array: `[{ label: 'Clientes', to: '/clientes', icon: ... }, { label: 'Contactos', to: '/contactos', icon: ... }]`
+  - [x] Render `NavigationRail` for desktop (`hidden lg:flex`) and `NavigationBar` for mobile (`flex lg:hidden`)
+  - [x] Wire TanStack Router `<Link>` or the kit component's built-in navigation to route paths `/clientes` and `/contactos`
+  - [x] Use `useRouterState` or `useMatchRoute` from `@tanstack/react-router` to highlight the active navigation item
+  - [x] Wrap main content area in `<Outlet />` from TanStack Router inside the layout
+  - [x] Add `aria-label="Navegación principal"` to the navigation container (WCAG 2.1 AA)
+  - [x] Verify no full page reload occurs when switching routes (SPA navigation)
 
-- [ ] Task 2 — Create `_app.tsx` layout route and nested routes (AC: #3)
-  - [ ] Create `frontend/src/routes/_app.tsx` as a pathless layout route using TanStack Router `createFileRoute('/_app')`
-  - [ ] Create `frontend/src/routes/_app/clientes.tsx` rendering a `ClientesPlaceholder` component (text: "Clientes — próximamente")
-  - [ ] Create `frontend/src/routes/_app/contactos.tsx` rendering a `ContactosPlaceholder` component (text: "Contactos — próximamente")
-  - [ ] Ensure TanStack Router plugin auto-generates updated `routeTree.gen.ts` on file save
+- [x] Task 2 — Create `_app.tsx` layout route and nested routes (AC: #3)
+  - [x] Create `frontend/src/routes/_app.tsx` as a pathless layout route using TanStack Router `createFileRoute('/_app')`
+  - [x] Create `frontend/src/routes/_app/clientes.tsx` rendering a `ClientesPlaceholder` component (text: "Clientes — próximamente")
+  - [x] Create `frontend/src/routes/_app/contactos.tsx` rendering a `ContactosPlaceholder` component (text: "Contactos — próximamente")
+  - [x] Ensure TanStack Router plugin auto-generates updated `routeTree.gen.ts` on file save
 
-- [ ] Task 3 — Implement root redirect and 404 route (AC: #4, #5)
-  - [ ] Update `frontend/src/routes/index.tsx` to redirect to `/clientes` using TanStack Router `redirect` in `beforeLoad`
-  - [ ] Create `frontend/src/routes/$notFound.tsx` (or use TanStack Router `notFoundComponent` in `__root.tsx`) rendering a 404 view with Spanish message
+- [x] Task 3 — Implement root redirect and 404 route (AC: #4, #5)
+  - [x] Update `frontend/src/routes/index.tsx` to redirect to `/clientes` using TanStack Router `redirect` in `beforeLoad`
+  - [x] Create `frontend/src/routes/$notFound.tsx` (or use TanStack Router `notFoundComponent` in `__root.tsx`) rendering a 404 view with Spanish message
 
-- [ ] Task 4 — Validate siesa-ui-kit component integration
-  - [ ] Confirm `siesa-ui-kit` is already listed in `frontend/package.json` (installed in Story 1.1)
-  - [ ] Confirm `siesa-ui-kit/styles.css` is imported in `frontend/src/main.tsx` (done in Story 1.1)
-  - [ ] Check siesa-ui-kit catalog for `NavigationRail` and `NavigationBar` component APIs before implementation
+- [x] Task 4 — Validate siesa-ui-kit component integration
+  - [x] Confirm `siesa-ui-kit` is already listed in `frontend/package.json` (installed in Story 1.1)
+  - [x] Confirm `siesa-ui-kit/styles.css` is imported in `frontend/src/main.tsx` (done in Story 1.1)
+  - [x] Check siesa-ui-kit catalog for `NavigationRail` and `NavigationBar` component APIs before implementation
 
-- [ ] Task 5 — Write unit and component tests (AC: #1–#6)
-  - [ ] Create `frontend/src/routes/__tests__/__root.test.tsx` with Vitest + RTL
-  - [ ] Test: `NavigationRail` renders with "Clientes" and "Contactos" links at lg+ viewport
-  - [ ] Test: `NavigationBar` renders at mobile viewport (jsdom `matchMedia` mock)
-  - [ ] Test: Clicking "Clientes" navigates to `/clientes` (use `MemoryRouter` or TanStack Router test utils)
-  - [ ] Test: Clicking "Contactos" navigates to `/contactos`
-  - [ ] Test: Active navigation item is highlighted when route matches
-  - [ ] Test: 404 component renders for unknown routes
-  - [ ] Test: Accessibility check with `axe` via `@axe-core/react` or `jest-axe` (ARIA labels present)
+- [x] Task 5 — Write unit and component tests (AC: #1–#6)
+  - [x] Create `frontend/src/routes/__tests__/__root.test.tsx` with Vitest + RTL
+  - [x] Test: `NavigationRail` renders with "Clientes" and "Contactos" links at lg+ viewport
+  - [x] Test: `NavigationBar` renders at mobile viewport (jsdom `matchMedia` mock)
+  - [x] Test: Clicking "Clientes" navigates to `/clientes` (use `MemoryRouter` or TanStack Router test utils)
+  - [x] Test: Clicking "Contactos" navigates to `/contactos`
+  - [x] Test: Active navigation item is highlighted when route matches
+  - [x] Test: 404 component renders for unknown routes
+  - [x] Test: Accessibility check with `axe` via `@axe-core/react` or `jest-axe` (ARIA labels present)
 
 ## Dev Notes
 
@@ -266,6 +266,34 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+- jsdom not pre-installed — added via `pnpm add -D jsdom @vitest/coverage-v8`
+- vitest.config.ts created (was missing from Story 1.1 setup)
+- test script added to package.json
+- siesa-ui-kit mock needed in tests due to jsdom incompatibility with CSS-dependent components
+- Both `NavigationRail` and `NavigationBar` render simultaneously in jsdom DOM; tests use `getAllBy*` where both are present
+
 ### Completion Notes List
 
+- Task 4 (siesa-ui-kit validation) executed first to confirm component APIs before implementation
+- `NavigationRail` uses `items: NavigationRailItemProps[]` with `selectedId` and `onItemSelect` for active state
+- `NavigationBar` uses `items: NavigationBarItem[]` with `activeItemId` and `onItemClick`
+- SPA navigation implemented via `useNavigate()` from TanStack Router — no `window.location.href`
+- `notFoundComponent` set on `createRootRoute` for 404 handling (Spanish messages)
+- routeTree.gen.ts auto-regenerated via `vite build` confirming all routes: `/`, `/clientes`, `/contactos`
+- All 10 tests pass: navigation rendering, routing, active state, redirect, 404, ARIA labels
+
 ### File List
+
+#### Created
+- `frontend/src/routes/_app.tsx` — pathless layout route
+- `frontend/src/routes/_app/clientes.tsx` — /clientes placeholder view
+- `frontend/src/routes/_app/contactos.tsx` — /contactos placeholder view
+- `frontend/src/routes/index.tsx` — root redirect to /clientes
+- `frontend/src/routes/__tests__/__root.test.tsx` — component and routing tests
+- `frontend/src/test-setup.ts` — vitest test setup with matchMedia mock
+- `frontend/vitest.config.ts` — vitest configuration with jsdom environment
+
+#### Modified
+- `frontend/src/routes/__root.tsx` — full rewrite with NavigationRail/Bar layout
+- `frontend/src/routeTree.gen.ts` — auto-regenerated by TanStack Router plugin
+- `frontend/package.json` — added test/test:watch/test:coverage scripts, jsdom, @vitest/coverage-v8
