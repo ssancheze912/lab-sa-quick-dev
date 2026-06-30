@@ -1,3 +1,4 @@
+using SiesaAgents.Application.Clientes.DTOs;
 using SiesaAgents.Application.Clientes.Queries;
 
 namespace SiesaAgents.API.Endpoints;
@@ -7,6 +8,11 @@ public static class ClienteEndpoints
     public static void MapClienteEndpoints(this WebApplication app)
     {
         app.MapGet("/api/v1/clientes", async (GetClientesQueryHandler handler, CancellationToken ct) =>
-            Results.Ok(await handler.Handle(new GetClientesQuery(), ct)));
+            Results.Ok(await handler.Handle(new GetClientesQuery(), ct)))
+            .WithName("GetClientes")
+            .WithTags("Clientes")
+            .Produces<IEnumerable<ClienteDto>>()
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
+            .WithOpenApi();
     }
 }

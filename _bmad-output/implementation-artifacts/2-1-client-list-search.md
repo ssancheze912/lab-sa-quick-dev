@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -219,3 +219,25 @@ claude-sonnet-4-6
 - `frontend/src/routes/__root.tsx`
 - `frontend/src/routes/_app.tsx`
 - `frontend/src/routes/_app/clientes.tsx`
+
+## Review Follow-ups (AI)
+
+> Code Review performed: 2026-06-30 | Reviewer: SiesaTeam (AI Agent)
+
+### Critical — Must Fix Before Re-review
+
+- [ ] [AI-Review][CRITICAL] **Missing `$clienteId` dynamic route**: `ClienteListView` navigates to `/clientes/$clienteId` and reads `params['clienteId']`, but `frontend/src/routes/_app/clientes.$clienteId.tsx` does NOT exist. The `routeTree.gen.ts` only has `/clientes`. At runtime TanStack Router cannot resolve the destination; `selectedId` will always be `''` and the nav call will throw. Create `frontend/src/routes/_app/clientes.$clienteId.tsx` with a placeholder component and regenerate `routeTree.gen.ts`.
+- [ ] [AI-Review][CRITICAL] **FluentValidation installed but never used**: `SiesaAgents.Application.csproj` includes `FluentValidation 12.1.1` but zero `AbstractValidator` implementations exist. Company standards mandate FluentValidation on all endpoints. For this story, query parameters (none for GET) are not applicable, but the package presence without use indicates the standard was not followed. At minimum create a `GetClientesQueryValidator` stub or confirm with team that GET-only queries are exempt.
+- [ ] [AI-Review][HIGH] **UUID v4 (Guid.NewGuid) used instead of UUID v7**: `ClienteEntity.Create()` uses `Guid.NewGuid()` which produces random UUIDs (v4). Company standards mandate `uuidv7()` for sequential PKs to prevent index fragmentation. Replace with a `UuidV7` library or implement `Guid.CreateVersion7()` (.NET 9+).
+- [ ] [AI-Review][HIGH] **Credentials committed to git in `appsettings.Development.json`**: `Password=postgres` is tracked in version control. Move to user secrets (`dotnet user-secrets`) or environment variables. The file should only contain `"DefaultConnection": ""` or a placeholder.
+
+### Medium — Should Fix
+
+- [ ] [AI-Review][MED] **No backend integration tests**: Only unit tests exist for the query handler. No test validates the actual HTTP endpoint behavior (status 200, JSON shape, CORS headers). Create `backend/tests/SiesaAgents.IntegrationTests/` with a PostgreSQL TestContainers test for `GET /api/v1/clientes`.
+- [ ] [AI-Review][MED] **`useParams({ strict: false })` type-unsafe cast in `ClienteListView`**: `(params as Record<string, string>)['clienteId']` bypasses TanStack Router's type-safe routing. Once the `$clienteId` route exists, use the typed `useParams` from that route context instead of the non-strict override with manual cast.
+
+### Auto-Fixed by Code Review Agent
+
+- [x] [AI-Review][CRITICAL] **ExceptionHandlingMiddleware exposes `ex.Message` in production**: Fixed — detail is now gated behind `IsDevelopment()` check in `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs`.
+- [x] [AI-Review][MED] **`ClienteEndpoints` had no OpenAPI documentation**: Fixed — added `.WithName()`, `.WithTags()`, `.Produces<>()`, `.ProducesProblem()`, `.WithOpenApi()` decorators to `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`.
+- [x] [AI-Review][MED] **Inline SVGs instead of Heroicons in `EmptyState` and `ErrorPanel`**: Fixed — replaced custom inline SVG paths with `ClipboardDocumentListIcon` and `ExclamationTriangleIcon` from `@heroicons/react/24/outline` in the respective shared components.

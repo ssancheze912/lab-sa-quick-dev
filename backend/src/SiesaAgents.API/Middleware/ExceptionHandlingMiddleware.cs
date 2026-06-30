@@ -22,12 +22,14 @@ public class ExceptionHandlingMiddleware
             _logger.LogError(ex, "Unhandled exception");
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             context.Response.ContentType = "application/problem+json";
+            var isDevelopment = context.RequestServices
+                .GetRequiredService<IWebHostEnvironment>().IsDevelopment();
             await context.Response.WriteAsJsonAsync(new
             {
                 type = "https://tools.ietf.org/html/rfc7807",
                 title = "An unexpected error occurred.",
                 status = 500,
-                detail = ex.Message
+                detail = isDevelopment ? ex.Message : "An internal server error occurred."
             });
         }
     }
