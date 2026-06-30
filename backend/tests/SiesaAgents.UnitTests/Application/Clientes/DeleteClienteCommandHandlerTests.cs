@@ -1,8 +1,10 @@
-using Xunit;
+using FluentValidation;
 using SiesaAgents.Application.Clientes.Commands;
+using SiesaAgents.Application.Clientes.Validators;
 using SiesaAgents.Domain.Clientes.Entities;
 using SiesaAgents.Domain.Clientes.Exceptions;
 using SiesaAgents.Domain.Clientes.Interfaces;
+using Xunit;
 
 namespace SiesaAgents.UnitTests.Application.Clientes;
 
@@ -52,8 +54,10 @@ public class DeleteClienteCommandHandlerTests
             => Task.FromResult(_clientes.Any(c => c.Nit == nit));
     }
 
+    private static readonly IValidator<DeleteClienteCommand> _validator = new DeleteClienteCommandValidator();
+
     private static DeleteClienteCommandHandler BuildHandler(FakeClienteRepository repo)
-        => new DeleteClienteCommandHandler(repo);
+        => new DeleteClienteCommandHandler(repo, _validator);
 
     // ─────────────────────────────────────────────────────────────────────
     // AC2 — Successful deletion of existing client
@@ -123,19 +127,19 @@ public class DeleteClienteCommandHandlerTests
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // AC2 — Empty Guid throws NotFoundException
+    // Validator — Empty Guid throws ValidationException (400 Bad Request)
     // ─────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Handle_EmptyGuidId_ThrowsNotFoundException()
+    public async Task Handle_EmptyGuidId_ThrowsValidationException()
     {
         // Arrange
         var repo = new FakeClienteRepository();
         var handler = BuildHandler(repo);
         var command = new DeleteClienteCommand(Guid.Empty);
 
-        // Act & Assert: empty guid is not found → NotFoundException
-        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
+        // Act & Assert: empty guid fails validation → ValidationException (middleware returns 400)
+        await Assert.ThrowsAsync<ValidationException>(() => handler.Handle(command, CancellationToken.None));
     }
 
     // ─────────────────────────────────────────────────────────────────────

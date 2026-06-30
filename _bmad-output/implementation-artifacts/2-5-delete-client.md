@@ -348,7 +348,12 @@ claude-sonnet-4-6
 - `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — added `delete(id: string): Promise<void>`
 - `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implemented `delete(id)` method
 - `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx` — added Eliminar button, AlertDialog, delete logic
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.delete.test.tsx` — ATDD tests now GREEN
 - `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx` — added mocks for new hooks
 - `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.edge.test.tsx` — added mocks for new hooks
-- `backend/src/SiesaAgents.API/Program.cs` — registered `DeleteClienteCommandValidator`
+- `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommandHandler.cs` — injected IValidator, added ValidateAndThrowAsync call (code-review fix)
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — wired MapDelete endpoint
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — WriteAsync fix for Problem Details content-type
+- `backend/src/SiesaAgents.API/Program.cs` — registered `DeleteClienteCommandValidator` and `DeleteClienteCommandHandler`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/DeleteClienteCommandHandlerTests.cs` — updated for validator injection; empty-guid test now expects ValidationException
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — status `ready-for-dev → in-progress`
