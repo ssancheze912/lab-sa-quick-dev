@@ -119,7 +119,8 @@ test.describe('AC2 — Mobile NavigationBar at < 1024px viewport', () => {
     await page.waitForLoadState('networkidle');
 
     // WHEN: The user taps the Clientes navigation item
-    await page.tap('[data-testid="nav-bar-clientes"]');
+    // Use click instead of tap for cross-browser compatibility (tap requires hasTouch)
+    await page.click('[data-testid="nav-bar-clientes"]');
 
     // THEN: Navigation to /clientes occurs
     await expect(page).toHaveURL('/clientes');
@@ -132,7 +133,8 @@ test.describe('AC2 — Mobile NavigationBar at < 1024px viewport', () => {
     await page.waitForLoadState('networkidle');
 
     // WHEN: The user taps the Contactos navigation item
-    await page.tap('[data-testid="nav-bar-contactos"]');
+    // Use click instead of tap for cross-browser compatibility (tap requires hasTouch)
+    await page.click('[data-testid="nav-bar-contactos"]');
 
     // THEN: Navigation to /contactos occurs
     await expect(page).toHaveURL('/contactos');
