@@ -1,3 +1,6 @@
+using FluentValidation;
+using SiesaAgents.Domain.Clientes.Exceptions;
+
 namespace SiesaAgents.API.Middleware;
 
 public class ExceptionHandlingMiddleware
@@ -16,6 +19,31 @@ public class ExceptionHandlingMiddleware
         try
         {
             await _next(context);
+        }
+        catch (ValidationException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            context.Response.ContentType = "application/problem+json";
+            var errors = ex.Errors.Select(e => new { field = e.PropertyName, message = e.ErrorMessage });
+            await context.Response.WriteAsJsonAsync(new
+            {
+                type = "https://tools.ietf.org/html/rfc7807",
+                title = "Validation failed.",
+                status = 400,
+                errors
+            });
+        }
+        catch (ConflictException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                type = "https://tools.ietf.org/html/rfc7807",
+                title = "Conflict.",
+                status = 409,
+                detail = ex.Message
+            });
         }
         catch (Exception ex)
         {

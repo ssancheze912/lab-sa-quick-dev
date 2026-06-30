@@ -1,5 +1,5 @@
 import type { IClienteRepository } from '../domain/IClienteRepository'
-import type { Cliente } from '../domain/Cliente'
+import type { Cliente, CreateClienteRequest } from '../domain/Cliente'
 import { apiClient } from '../../../../shared/lib/apiClient'
 
 class ClienteApiRepository implements IClienteRepository {
@@ -10,6 +10,11 @@ class ClienteApiRepository implements IClienteRepository {
 
   async getById(id: string): Promise<Cliente> {
     const response = await apiClient.get<Cliente>(`/api/v1/clientes/${id}`)
+    return response.data
+  }
+
+  async create(data: CreateClienteRequest): Promise<Cliente> {
+    const response = await apiClient.post<Cliente>('/api/v1/clientes', data)
     return response.data
   }
 }

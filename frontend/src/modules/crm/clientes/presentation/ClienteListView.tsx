@@ -2,13 +2,17 @@ import { useState, useMemo } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
+import { PlusIcon } from '@heroicons/react/24/outline'
+import { AlertDialog } from 'siesa-ui-kit'
 import { useClientes } from '../application/useClientes'
 import { ClienteListItem } from '../../../../shared/components/ClienteListItem'
 import { EmptyState } from '../../../../shared/components/EmptyState'
 import { ErrorPanel } from '../../../../shared/components/ErrorPanel'
+import { ClienteForm } from './ClienteForm'
 
 export function ClienteListView() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const { data = [], isLoading, isError, refetch } = useClientes()
   const navigate = useNavigate()
   const params = useParams({ strict: false })
@@ -26,7 +30,16 @@ export function ClienteListView() {
 
   return (
     <div data-testid="clientes-list-panel" className="flex h-full w-[280px] flex-shrink-0 flex-col border-r border-slate-200">
-      <div className="p-3">
+      <div className="p-3 flex flex-col gap-2">
+        <button
+          type="button"
+          aria-pressed={isFormOpen}
+          onClick={() => setIsFormOpen(true)}
+          className="flex w-full items-center justify-center gap-1 rounded-md bg-[#0e79fd] px-3 py-2 text-sm text-white hover:bg-[#154ca9]"
+        >
+          <PlusIcon className="h-4 w-4" aria-hidden="true" />
+          Nuevo cliente
+        </button>
         <input
           type="text"
           data-testid="search-clientes"
@@ -37,6 +50,21 @@ export function ClienteListView() {
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#0e79fd] focus:outline-none focus:ring-1 focus:ring-[#0e79fd]"
         />
       </div>
+
+      <AlertDialog
+        isOpen={isFormOpen}
+        title="Nuevo cliente"
+        onCancel={() => setIsFormOpen(false)}
+        hideCancel
+        actions={null}
+        preventCloseOnOverlayClick
+        size="max-w-md"
+      >
+        <ClienteForm
+          onClose={() => setIsFormOpen(false)}
+          onSuccess={() => setIsFormOpen(false)}
+        />
+      </AlertDialog>
 
       <div className="flex-1 overflow-y-auto">
         {isLoading && (

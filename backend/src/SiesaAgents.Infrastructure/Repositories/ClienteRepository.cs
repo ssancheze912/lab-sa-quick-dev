@@ -35,4 +35,7 @@ public class ClienteRepository : IClienteRepository
         await _context.SaveChangesAsync(ct);
         return true;
     }
+
+    public async Task<bool> ExistsByNitAsync(string nit, CancellationToken ct)
+        => await _context.Clientes.AnyAsync(c => c.Nit == nit, ct);
 }

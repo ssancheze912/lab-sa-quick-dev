@@ -51,6 +51,17 @@ vi.mock('sonner', () => ({
   },
 }))
 
+// Mock siesa-ui-kit toast (project uses this library)
+vi.mock('siesa-ui-kit', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+  },
+  ToastProvider: ({ children }: { children: unknown }) => children,
+}))
+
 function createWrapper(queryClient: QueryClient) {
   return ({ children }: { children: React.ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children)

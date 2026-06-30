@@ -1,6 +1,6 @@
 # Story 2.3: Create Client
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -20,15 +20,15 @@ so that the client is available in the system immediately for the whole team.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add `useCreateCliente` mutation hook in application layer (AC: #2, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCreateCliente.ts`
-  - [ ] Use `useMutation` with `mutationFn: (data: CreateClienteRequest) => clienteApiRepository.create(data)`
-  - [ ] `onSuccess`: call `queryClient.invalidateQueries({ queryKey: ['clientes'] })` + `toast.success('Cliente creado correctamente')`
-  - [ ] `onError`: inspect `AxiosError.response.status`; if 409 → `toast.error('El NIT/RUC ya está registrado')`; otherwise → `toast.error('No se pudo guardar. Intenta de nuevo.')`
-  - [ ] Return `{ mutate, isPending, isError }` from the hook
+- [x] Task 1 — Add `useCreateCliente` mutation hook in application layer (AC: #2, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useCreateCliente.ts`
+  - [x] Use `useMutation` with `mutationFn: (data: CreateClienteRequest) => clienteApiRepository.create(data)`
+  - [x] `onSuccess`: call `queryClient.invalidateQueries({ queryKey: ['clientes'] })` + `toast.success('Cliente creado correctamente')`
+  - [x] `onError`: inspect `AxiosError.response.status`; if 409 → `toast.error('El NIT/RUC ya está registrado')`; otherwise → `toast.error('No se pudo guardar. Intenta de nuevo.')`
+  - [x] Return `{ mutate, isPending, isError }` from the hook
 
-- [ ] Task 2 — Define `CreateClienteRequest` type in domain layer (AC: #1)
-  - [ ] Add `frontend/src/modules/crm/clientes/domain/types.ts` (or extend existing) with:
+- [x] Task 2 — Define `CreateClienteRequest` type in domain layer (AC: #1)
+  - [x] Add `frontend/src/modules/crm/clientes/domain/types.ts` (or extend existing) with:
     ```ts
     export interface CreateClienteRequest {
       nombre: string;
@@ -37,88 +37,67 @@ so that the client is available in the system immediately for the whole team.
       ciudad: string;
     }
     ```
-  - [ ] If `types.ts` already exists, add the interface there; do NOT recreate the file
+  - [x] Added to `Cliente.ts` (existing domain file) — `types.ts` did not exist
 
-- [ ] Task 3 — Add `create(data)` method to `IClienteRepository` and `clienteApiRepository` (AC: #2)
-  - [ ] Extend `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` with `create(data: CreateClienteRequest): Promise<Cliente>`
-  - [ ] Implement in `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: POST to `GET /api/v1/clientes` via shared `apiClient`
-  - [ ] Note: `POST /api/v1/clientes` was added in Story 2.2 dev notes (ATDD setup). Confirm endpoint already exists before adding — if it does, skip backend creation task; if not, see Task 7.
+- [x] Task 3 — Add `create(data)` method to `IClienteRepository` and `clienteApiRepository` (AC: #2)
+  - [x] Extend `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` with `create(data: CreateClienteRequest): Promise<Cliente>`
+  - [x] Implement in `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: POST to `/api/v1/clientes` via shared `apiClient`
+  - [x] Endpoint already existed from Story 2.2
 
-- [ ] Task 4 — Implement Zod validation schema for client form (AC: #1, #3)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/clienteSchema.ts`
-  - [ ] Define `createClienteSchema` with `z.object({ nombre: z.string().min(1, 'Nombre requerido'), nit: z.string().min(1, 'NIT/RUC requerido'), telefono: z.string().min(1, 'Teléfono requerido'), ciudad: z.string().min(1, 'Ciudad requerida') })`
-  - [ ] Export `CreateClienteFormData = z.infer<typeof createClienteSchema>`
-  - [ ] If the file already exists (created in Story 2.2 ATDD), extend it rather than overwrite
+- [x] Task 4 — Implement Zod validation schema for client form (AC: #1, #3)
+  - [x] Create `frontend/src/modules/crm/clientes/application/clienteSchema.ts`
+  - [x] Define `createClienteSchema` with `z.object({ nombre: z.string().min(1, 'Nombre requerido'), nit: z.string().min(1, 'NIT/RUC requerido'), telefono: z.string().min(1, 'Teléfono requerido'), ciudad: z.string().min(1, 'Ciudad requerida') })`
+  - [x] Export `CreateClienteFormData = z.infer<typeof createClienteSchema>`
 
-- [ ] Task 5 — Create `ClienteForm` presentation component (AC: #1, #2, #3, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx`
-  - [ ] Use React Hook Form + `zodResolver(createClienteSchema)`
-  - [ ] Fields: Nombre (text), NIT/RUC (text), Teléfono (text), Ciudad (text) — all marked required
-  - [ ] All field labels and placeholders in Spanish
-  - [ ] Inline error messages beneath each field on blur or submit attempt (use `formState.errors`)
-  - [ ] "Guardar" submit button — disabled and shows loading state while `isPending === true`
-  - [ ] "Cancelar" button calls `onClose()` prop without submitting
-  - [ ] On valid submit: call `mutate(formData)` from `useCreateCliente`; close form only in `onSuccess` (not immediately)
-  - [ ] Props: `{ onClose: () => void; onSuccess?: () => void }`
-  - [ ] Add `data-testid="cliente-form"` to the form element
-  - [ ] Add `data-testid="cliente-form-submit"` to the submit button
-  - [ ] WCAG 2.1 AA: each input has explicit `<label>` with `htmlFor` matching input `id`
+- [x] Task 5 — Create `ClienteForm` presentation component (AC: #1, #2, #3, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx`
+  - [x] Use React Hook Form + `zodResolver(createClienteSchema)`
+  - [x] Fields: Nombre (text), NIT/RUC (text), Teléfono (text), Ciudad (text) — all marked required
+  - [x] All field labels and placeholders in Spanish
+  - [x] Inline error messages beneath each field on blur or submit attempt (use `formState.errors`)
+  - [x] "Guardar" submit button — disabled and shows loading state while `isPending === true`
+  - [x] "Cancelar" button calls `onClose()` prop without submitting
+  - [x] On valid submit: call `mutate(formData)` from `useCreateCliente`; close form only in `onSuccess` (not immediately)
+  - [x] Props: `{ onClose: () => void; onSuccess?: () => void }`
+  - [x] Add `data-testid="cliente-form"` to the form element
+  - [x] Add `data-testid="cliente-form-submit"` to the submit button
+  - [x] WCAG 2.1 AA: each input has explicit `<label>` with `htmlFor` matching input `id`
 
-- [ ] Task 6 — Integrate "Nuevo cliente" button and form into `ClienteListView` (AC: #1, #2)
-  - [ ] Modify `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`
-  - [ ] Add a "Nuevo cliente" button at the top of the left panel (above the search input)
-  - [ ] Button click → sets local `isFormOpen: boolean` state to `true`
-  - [ ] When `isFormOpen === true`: render `ClienteForm` (as a slide-over panel or inline modal — see UI notes below)
-  - [ ] Pass `onClose={() => setIsFormOpen(false)}` and `onSuccess={() => setIsFormOpen(false)}` to `ClienteForm`
-  - [ ] Button style: primary action button using Siesa Blue `#0e79fd`, icon `PlusIcon` from `@heroicons/react/24/outline`
+- [x] Task 6 — Integrate "Nuevo cliente" button and form into `ClienteListView` (AC: #1, #2)
+  - [x] Modify `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`
+  - [x] Add a "Nuevo cliente" button at the top of the left panel (above the search input)
+  - [x] Button click → sets local `isFormOpen: boolean` state to `true`
+  - [x] When `isFormOpen === true`: render `ClienteForm` via `AlertDialog` from `siesa-ui-kit`
+  - [x] Pass `onClose={() => setIsFormOpen(false)}` and `onSuccess={() => setIsFormOpen(false)}` to `ClienteForm`
+  - [x] Button style: primary action button using Siesa Blue `#0e79fd`, icon `PlusIcon` from `@heroicons/react/24/outline`
 
-- [ ] Task 7 — Backend: Validate `POST /api/v1/clientes` endpoint with FluentValidation (AC: #2, #3, #4)
-  - [ ] Check if `CreateClienteCommand` and handler already exist (from Story 2.2 ATDD notes — they do per Story 2.2 completion notes)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Validators/CreateClienteCommandValidator.cs`:
-    ```csharp
-    public class CreateClienteCommandValidator : AbstractValidator<CreateClienteCommand>
-    {
-        public CreateClienteCommandValidator()
-        {
-            RuleFor(x => x.Nombre).NotEmpty().WithMessage("Nombre es requerido.");
-            RuleFor(x => x.Nit).NotEmpty().WithMessage("NIT/RUC es requerido.");
-            RuleFor(x => x.Telefono).NotEmpty().WithMessage("Teléfono es requerido.");
-            RuleFor(x => x.Ciudad).NotEmpty().WithMessage("Ciudad es requerida.");
-        }
-    }
-    ```
-  - [ ] Register validator in `Program.cs`: `builder.Services.AddScoped<IValidator<CreateClienteCommand>, CreateClienteCommandValidator>()`
-  - [ ] In `CreateClienteCommandHandler.Handle()`: call `await _validator.ValidateAndThrowAsync(command, ct)` before persisting
-  - [ ] Ensure `ExceptionHandlingMiddleware` maps `ValidationException` → `400 Bad Request` Problem Details
-  - [ ] This resolves `[AI-Review][CRITICAL]` from Story 2.2 review
+- [x] Task 7 — Backend: Validate `POST /api/v1/clientes` endpoint with FluentValidation (AC: #2, #3, #4)
+  - [x] `CreateClienteCommand` and handler already existed from Story 2.2
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Validators/CreateClienteCommandValidator.cs`
+  - [x] Register validator in `Program.cs`: `builder.Services.AddScoped<IValidator<CreateClienteCommand>, CreateClienteCommandValidator>()`
+  - [x] In `CreateClienteCommandHandler.Handle()`: call `await _validator.ValidateAndThrowAsync(command, ct)` before persisting
+  - [x] `ExceptionHandlingMiddleware` maps `ValidationException` → `400 Bad Request` Problem Details
+  - [x] Resolves `[AI-Review][CRITICAL]` from Story 2.2 review
 
-- [ ] Task 8 — Backend: Handle NIT duplicate — 409 Conflict response (AC: #4)
-  - [ ] In `CreateClienteCommandHandler.Handle()` (or in `ClienteRepository.CreateAsync()`): catch the PostgreSQL unique constraint violation on `uk_clientes_nit`
-  - [ ] Throw a domain exception (e.g., `DuplicateNitException` or use `ConflictException`) when NIT already exists
-  - [ ] In `ExceptionHandlingMiddleware`: map this exception type → `409 Conflict` Problem Details with `detail: "El NIT/RUC ya está registrado"`
-  - [ ] Alternatively: check existence via `_repository.ExistsByNitAsync(nit)` before insert, then throw if found
-  - [ ] Endpoint must declare `.ProducesProblem(409)` in `ClienteEndpoints.cs`
+- [x] Task 8 — Backend: Handle NIT duplicate — 409 Conflict response (AC: #4)
+  - [x] Created `ConflictException` in `backend/src/SiesaAgents.Domain/Clientes/Exceptions/ConflictException.cs`
+  - [x] Added `ExistsByNitAsync(nit)` to `IClienteRepository` and implemented in `ClienteRepository`
+  - [x] `CreateClienteCommandHandler.Handle()` checks `ExistsByNitAsync` → throws `ConflictException`
+  - [x] `ExceptionHandlingMiddleware` maps `ConflictException` → `409 Conflict` Problem Details with `detail: "El NIT/RUC ya está registrado"`
+  - [x] Endpoint declares `.ProducesProblem(409)` in `ClienteEndpoints.cs`
 
-- [ ] Task 9 — Tests: Frontend unit tests for `useCreateCliente` and `ClienteForm` (AC: #2, #3, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCreateCliente.test.ts`
-    - [ ] Test: successful mutation → `invalidateQueries(['clientes'])` called + success toast shown
-    - [ ] Test: 409 error → `'El NIT/RUC ya está registrado'` toast shown (not generic error)
-    - [ ] Test: other error → generic error toast shown
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteForm.test.tsx`
-    - [ ] Test: all 4 fields render with correct labels in Spanish
-    - [ ] Test: submitting empty form shows inline errors for all 4 fields; no mutation called
-    - [ ] Test: submitting valid form calls `mutate` with correct payload
-    - [ ] Test: "Cancelar" button calls `onClose` without submitting
-    - [ ] Use `vi.mock('../application/useCreateCliente')` in component tests
-  - [ ] Run: `pnpm --filter frontend test` — all new tests must pass
+- [x] Task 9 — Tests: Frontend unit tests for `useCreateCliente` and `ClienteForm` (AC: #2, #3, #4)
+  - [x] `useCreateCliente.test.ts` existed (ATDD RED phase) — added `siesa-ui-kit` mock, all 8 tests pass
+  - [x] `ClienteForm.test.tsx` existed (ATDD RED phase) — all 16 tests pass
+  - [x] Run: `pnpm exec vitest run src/modules/crm/clientes/` — 75 tests, all pass
 
-- [ ] Task 10 — Tests: Backend unit tests for `CreateClienteCommandHandler` and validator (AC: #2, #3, #4)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs`
-    - [ ] Test: valid input → creates entity, returns `ClienteDto` with correct fields
-    - [ ] Test: empty `Nombre` → `ValidationException` thrown (FluentValidation)
-    - [ ] Test: empty `Nit` → `ValidationException` thrown
-    - [ ] Test: duplicate NIT → appropriate exception thrown → mapped to 409
-  - [ ] Run: `dotnet test tests/SiesaAgents.UnitTests` (from `backend/` directory using `SiesaAgents.slnx`)
+- [x] Task 10 — Tests: Backend unit tests for `CreateClienteCommandHandler` and validator (AC: #2, #3, #4)
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs`
+  - [x] Test: valid input → creates entity, returns `ClienteDto` with correct fields
+  - [x] Test: empty `Nombre` → `ValidationException` thrown (FluentValidation)
+  - [x] Test: empty `Nit` → `ValidationException` thrown
+  - [x] Test: duplicate NIT → `ConflictException` thrown → mapped to 409
+  - [x] Run: `dotnet test tests/SiesaAgents.UnitTests --filter FullyQualifiedName~Clientes` — 20 tests, all pass
 
 ## Dev Notes
 
@@ -290,6 +269,49 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None
+
 ### Completion Notes List
 
+- Used `siesa-ui-kit` `toast` (from `ToastProvider` / `toast` utility) instead of `react-hot-toast` or `sonner` — no external toast library added.
+- Used `siesa-ui-kit` `AlertDialog` as the modal container for `ClienteForm` in `ClienteListView` — no shadcn Dialog needed since siesa-ui-kit has an equivalent.
+- Added `ToastProvider` from `siesa-ui-kit` to `main.tsx` to enable toast notifications globally.
+- `CreateClienteRequest` interface added to `Cliente.ts` (not a new `types.ts` file — existing pattern followed).
+- `useCreateCliente` accepts optional `onSuccess` callback to wire close logic from components, while keeping the hook self-contained for toast notifications.
+- Added `ExistsByNitAsync` to `IClienteRepository` and `ClienteRepository` for pre-check NIT duplicate detection (Approach 1 per architecture.md).
+- Created `ConflictException` in `SiesaAgents.Domain/Clientes/Exceptions/` — clean domain-layer exception.
+- `ExceptionHandlingMiddleware` extended with `ValidationException` (400) and `ConflictException` (409) handlers.
+- `@testing-library/user-event` added as dev dependency (missing from package.json, required by ATDD tests).
+- Added `siesa-ui-kit` mock to `useCreateCliente.test.ts` to allow tests to run without `ToastProvider` context.
+- `aria-pressed={isFormOpen}` added to "Nuevo cliente" button to satisfy existing `ClienteListView.edge.test.tsx` assertion.
+- All 75 frontend clientes module tests pass. All 20 backend Clientes unit tests pass.
+- Resolved `[AI-Review][CRITICAL]` from Story 2.2: FluentValidation now wired on `POST /api/v1/clientes`.
+
 ### File List
+
+**New files created:**
+- `frontend/src/modules/crm/clientes/application/useCreateCliente.ts`
+- `frontend/src/modules/crm/clientes/application/clienteSchema.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteForm.tsx`
+- `backend/src/SiesaAgents.Application/Clientes/Validators/CreateClienteCommandValidator.cs`
+- `backend/src/SiesaAgents.Domain/Clientes/Exceptions/ConflictException.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs`
+
+**Files modified:**
+- `frontend/src/modules/crm/clientes/domain/Cliente.ts` — added `CreateClienteRequest` interface
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — added `create()` method
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implemented `create()` method
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` — added "Nuevo cliente" button + `AlertDialog` with `ClienteForm`
+- `frontend/src/modules/crm/clientes/application/useCreateCliente.test.ts` — added `siesa-ui-kit` mock (ATDD test file)
+- `frontend/src/main.tsx` — added `ToastProvider` wrapper
+- `backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommandHandler.cs` — added validator injection + NIT duplicate check
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — added `.ProducesProblem(409)` to POST endpoint
+- `backend/src/SiesaAgents.API/Program.cs` — registered `IValidator<CreateClienteCommand>`
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — added `ValidationException` and `ConflictException` handlers
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` — added `ExistsByNitAsync()`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implemented `ExistsByNitAsync()`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs` — added `ExistsByNitAsync` to fake repo
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerEdgeCaseTests.cs` — added `ExistsByNitAsync` to fake repos
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs` — added `ExistsByNitAsync` to fake repo
+- `frontend/package.json` — added `@testing-library/user-event` dev dependency
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — updated `2-3-create-client` to `review`

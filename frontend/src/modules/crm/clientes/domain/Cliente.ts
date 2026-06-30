@@ -7,3 +7,10 @@ export interface Cliente {
   createdAt: string
   updatedAt: string
 }
+
+export interface CreateClienteRequest {
+  nombre: string
+  nit: string
+  telefono: string
+  ciudad: string
+}

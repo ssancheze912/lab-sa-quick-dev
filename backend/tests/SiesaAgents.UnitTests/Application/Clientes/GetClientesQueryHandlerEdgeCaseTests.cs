@@ -45,6 +45,9 @@ public class GetClientesQueryHandlerEdgeCaseTests
 
         public Task<bool> DeleteAsync(Guid id, CancellationToken ct)
             => Task.FromResult(true);
+
+        public Task<bool> ExistsByNitAsync(string nit, CancellationToken ct)
+            => Task.FromResult(_clientes.Any(c => c.Nit == nit));
     }
 
     private sealed class ThrowingClienteRepository : IClienteRepository
@@ -66,6 +69,9 @@ public class GetClientesQueryHandlerEdgeCaseTests
             => Task.FromException<ClienteEntity>(_exception);
 
         public Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+            => Task.FromException<bool>(_exception);
+
+        public Task<bool> ExistsByNitAsync(string nit, CancellationToken ct)
             => Task.FromException<bool>(_exception);
     }
 

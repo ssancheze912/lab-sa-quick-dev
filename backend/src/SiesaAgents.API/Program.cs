@@ -1,9 +1,11 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
 using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Application.Clientes.Validators;
 using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
 using SiesaAgents.Infrastructure.Repositories;
@@ -34,6 +36,9 @@ builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 // Query Handlers
 builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<GetClienteByIdQueryHandler>();
+
+// Validators
+builder.Services.AddScoped<IValidator<CreateClienteCommand>, CreateClienteCommandValidator>();
 
 // Command Handlers
 builder.Services.AddScoped<CreateClienteCommandHandler>();

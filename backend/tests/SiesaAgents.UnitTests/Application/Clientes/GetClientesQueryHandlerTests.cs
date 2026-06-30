@@ -28,6 +28,9 @@ public class GetClientesQueryHandlerTests
 
         public Task<bool> DeleteAsync(Guid id, CancellationToken ct)
             => Task.FromResult(true);
+
+        public Task<bool> ExistsByNitAsync(string nit, CancellationToken ct)
+            => Task.FromResult(_clientes.Any(c => c.Nit == nit));
     }
 
     [Fact]
