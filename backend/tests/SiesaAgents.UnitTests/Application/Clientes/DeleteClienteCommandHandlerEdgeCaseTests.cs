@@ -177,24 +177,19 @@ public class DeleteClienteCommandHandlerEdgeCaseTests
     [Fact]
     public async Task Handle_ExistingClient_PassesExactGuidToRepository()
     {
-        // Arrange
-        var expected = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+        // Arrange: create client and capture its auto-generated Id
         var existing = ClienteEntity.Create("Empresa Guid", "900100000-1", "3001000001", "Bogotá");
-
-        // Manually set the Id to the known Guid using reflection (test precision)
-        typeof(ClienteEntity)
-            .GetProperty(nameof(ClienteEntity.Id))!
-            .SetValue(existing, expected);
+        var expectedId = existing.Id;
 
         var repo = new FakeClienteRepository([existing]);
         var handler = BuildHandler(repo);
-        var command = new DeleteClienteCommand(expected);
+        var command = new DeleteClienteCommand(expectedId);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
 
-        // Assert: repository received the exact Guid
-        Assert.Equal(expected, repo.LastDeletedId);
+        // Assert: repository received the exact same Guid as the command
+        Assert.Equal(expectedId, repo.LastDeletedId);
     }
 
     // ─────────────────────────────────────────────────────────────────────
