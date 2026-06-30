@@ -1,10 +1,24 @@
 import { useEffect, useState } from 'react'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
-import { PencilSquareIcon } from '@heroicons/react/24/outline'
+import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { useCliente } from '../application/useCliente'
 import { useClienteDetailStore } from '../application/clienteDetailStore'
+import { useDeleteCliente } from '../application/useDeleteCliente'
+import { useContactosPorCliente } from '../../contactos/application/useContactosPorCliente'
 import { ClienteForm } from './ClienteForm'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../../../shared/components/ui/alert-dialog'
 
 interface ClienteDetailViewProps {
   clienteId: string
@@ -14,6 +28,22 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   const { data, isLoading, isError } = useCliente(clienteId)
   const setClienteNotFound = useClienteDetailStore((s) => s.setClienteNotFound)
   const [isEditFormOpen, setIsEditFormOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const navigate = useNavigate()
+
+  const contactosResult = useContactosPorCliente(clienteId)
+  const hasContacts = ((contactosResult?.data)?.length ?? 0) > 0
+
+  const { mutate, isPending } = useDeleteCliente({
+    onSuccess: () => {
+      if (hasContacts) {
+        toast.success('Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado.')
+      } else {
+        toast.success('Cliente eliminado correctamente')
+      }
+      navigate({ to: '/clientes' })
+    },
+  })
 
   useEffect(() => {
     setClienteNotFound(!isLoading && (isError || !data))
@@ -50,15 +80,27 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
     <div data-testid="cliente-detail-content" className="flex flex-1 flex-col p-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-bold text-slate-900 pointer-events-none">{data.nombre}</h2>
-        <button
-          type="button"
-          data-testid="edit-cliente-button"
-          onClick={() => setIsEditFormOpen(true)}
-          className="relative z-10 flex shrink-0 items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
-        >
-          <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
-          Editar
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            data-testid="edit-cliente-button"
+            onClick={() => setIsEditFormOpen(true)}
+            className="relative z-10 flex shrink-0 items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+          >
+            <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
+            Editar
+          </button>
+          <button
+            type="button"
+            data-testid="delete-cliente-button"
+            aria-label="Eliminar cliente"
+            onClick={() => setIsDeleteDialogOpen(true)}
+            className="relative z-10 flex shrink-0 items-center gap-1 rounded border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+          >
+            <TrashIcon className="h-4 w-4" aria-hidden="true" />
+            Eliminar
+          </button>
+        </div>
       </div>
       <dl className="space-y-4" aria-label="Detalle del cliente">
         <div>
@@ -113,6 +155,33 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
           </div>
         </div>
       )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El cliente <strong>{data.nombre}</strong> será eliminado permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              data-testid="delete-cancel-button"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="delete-confirm-button"
+              aria-label="Confirmar eliminación de cliente"
+              onClick={() => mutate(clienteId)}
+              disabled={isPending}
+            >
+              {isPending ? 'Eliminando...' : 'Confirmar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

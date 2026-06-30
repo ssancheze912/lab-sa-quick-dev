@@ -7,6 +7,18 @@ vi.mock('../application/useCliente', () => ({
   useCliente: vi.fn(),
 }))
 
+vi.mock('../application/useDeleteCliente', () => ({
+  useDeleteCliente: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false })),
+}))
+
+vi.mock('../../contactos/application/useContactosPorCliente', () => ({
+  useContactosPorCliente: vi.fn(() => ({ data: [] })),
+}))
+
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: vi.fn(() => vi.fn()),
+}))
+
 import { useCliente } from '../application/useCliente'
 
 const mockCliente: Cliente = {

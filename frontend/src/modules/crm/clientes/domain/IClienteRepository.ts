@@ -5,4 +5,5 @@ export interface IClienteRepository {
   getById(id: string): Promise<Cliente>
   create(data: CreateClienteRequest): Promise<Cliente>
   update(id: string, data: UpdateClienteRequest): Promise<Cliente>
+  delete(id: string): Promise<void>
 }

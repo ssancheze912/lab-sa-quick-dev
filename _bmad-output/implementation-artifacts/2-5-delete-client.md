@@ -1,6 +1,6 @@
 # Story 2.5: Delete Client
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,71 +22,55 @@ so that the client list only contains active and relevant records.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add `useDeleteCliente` mutation hook in application layer (AC: #2, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts`
-  - [ ] Use `useMutation` with `mutationFn: (id: string) => clienteApiRepository.delete(id)`
-  - [ ] `onSuccess`: call `queryClient.invalidateQueries({ queryKey: ['clientes'] })` + `queryClient.invalidateQueries({ queryKey: ['contactos'] })` + conditional toast based on `hasContacts` flag
-  - [ ] Accept optional `onSuccess` callback parameter (consistent with `useUpdateCliente` pattern)
-  - [ ] `onError`: `toast.error('No se pudo eliminar. Intenta de nuevo.')`
-  - [ ] Return `{ mutate, isPending, isError }` from the hook
+- [x] Task 1 — Add `useDeleteCliente` mutation hook in application layer (AC: #2, #4)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts`
+  - [x] Use `useMutation` with `mutationFn: (id: string) => clienteApiRepository.delete(id)`
+  - [x] `onSuccess`: call `queryClient.invalidateQueries({ queryKey: ['clientes'] })` + `queryClient.invalidateQueries({ queryKey: ['contactos'] })` + conditional toast based on `hasContacts` flag
+  - [x] Accept optional `onSuccess` callback parameter (consistent with `useUpdateCliente` pattern)
+  - [x] `onError`: `toast.error('No se pudo eliminar. Intenta de nuevo.')`
+  - [x] Return `{ mutate, isPending, isError }` from the hook
 
-- [ ] Task 2 — Add `delete(id)` method to `IClienteRepository` and `clienteApiRepository` (AC: #2)
-  - [ ] Extend `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` with `delete(id: string): Promise<void>`
-  - [ ] Implement in `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: DELETE to `/api/v1/clientes/${id}` via shared `apiClient`
+- [x] Task 2 — Add `delete(id)` method to `IClienteRepository` and `clienteApiRepository` (AC: #2)
+  - [x] Extend `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` with `delete(id: string): Promise<void>`
+  - [x] Implement in `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: DELETE to `/api/v1/clientes/${id}` via shared `apiClient`
 
-- [ ] Task 3 — Add confirmation dialog and "Eliminar" button to `ClienteDetailView` (AC: #1, #2, #3)
-  - [ ] Add `isDeleteDialogOpen` local `useState<boolean>` in `ClienteDetailView`
-  - [ ] Add "Eliminar" button with `TrashIcon` from `@heroicons/react/24/outline`, `data-testid="delete-cliente-button"`
-  - [ ] Clicking "Eliminar" sets `isDeleteDialogOpen(true)`
-  - [ ] Render confirmation dialog using `shadcn/ui AlertDialog` (preferred for destructive actions — resolves WCAG focus trap open item from Story 2.3): title "¿Eliminar este cliente?", description with client name, "Confirmar" button (destructive style), "Cancelar" button
-  - [ ] "Confirmar" calls `mutate(clienteId)` and closes dialog
-  - [ ] "Cancelar" sets `isDeleteDialogOpen(false)` without calling mutate
-  - [ ] On successful deletion: navigate to `/clientes` (base route, no client selected) to return panel to empty/default state
-  - [ ] While `isPending`: disable "Confirmar" button and show loading state
+- [x] Task 3 — Add confirmation dialog and "Eliminar" button to `ClienteDetailView` (AC: #1, #2, #3)
+  - [x] Add `isDeleteDialogOpen` local `useState<boolean>` in `ClienteDetailView`
+  - [x] Add "Eliminar" button with `TrashIcon` from `@heroicons/react/24/outline`, `data-testid="delete-cliente-button"`
+  - [x] Clicking "Eliminar" sets `isDeleteDialogOpen(true)`
+  - [x] Render confirmation dialog using AlertDialog (Radix UI via `src/shared/components/ui/alert-dialog.tsx`): title "¿Eliminar este cliente?", description with client name, "Confirmar" button (destructive style), "Cancelar" button
+  - [x] "Confirmar" calls `mutate(clienteId)` and closes dialog
+  - [x] "Cancelar" sets `isDeleteDialogOpen(false)` without calling mutate
+  - [x] On successful deletion: navigate to `/clientes` (base route, no client selected) to return panel to empty/default state
+  - [x] While `isPending`: disable "Confirmar" button and show loading state
 
-- [ ] Task 4 — Determine whether deletion has associated contacts (AC: #4)
-  - [ ] Before calling `mutate`, check if `useContactosPorCliente(clienteId)` returns contacts
-  - [ ] Pass `hasContacts: boolean` flag to the `onSuccess` callback of `useDeleteCliente`
-  - [ ] Toast logic: if `hasContacts === true` → `toast.success('Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado.')`, else → `toast.success('Cliente eliminado correctamente')`
+- [x] Task 4 — Determine whether deletion has associated contacts (AC: #4)
+  - [x] Before calling `mutate`, check if `useContactosPorCliente(clienteId)` returns contacts
+  - [x] Pass `hasContacts: boolean` flag to the `onSuccess` callback of `useDeleteCliente`
+  - [x] Toast logic: if `hasContacts === true` → `toast.success('Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado.')`, else → `toast.success('Cliente eliminado correctamente')`
 
-- [ ] Task 5 — Backend: `DeleteClienteCommand`, handler and validator (AC: #2, #4)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommand.cs` (record with `Guid Id`)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommandHandler.cs`
-    - [ ] Load client by ID, throw `NotFoundException` if not found
-    - [ ] Call `repository.DeleteAsync(id)`
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Validators/DeleteClienteCommandValidator.cs` (validate `Id != Guid.Empty`)
-  - [ ] Register validator and handler in `backend/src/SiesaAgents.API/Program.cs`
+- [x] Task 5 — Backend: `DeleteClienteCommand`, handler and validator (AC: #2, #4)
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommand.cs` (record with `Guid Id`) — already existed
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommandHandler.cs` — already existed
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Validators/DeleteClienteCommandValidator.cs` (validate `Id != Guid.Empty`)
+  - [x] Register validator and handler in `backend/src/SiesaAgents.API/Program.cs`
 
-- [ ] Task 6 — Backend: wire `DELETE /api/v1/clientes/{id}` endpoint (AC: #2)
-  - [ ] Add `MapDelete` to `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
-  - [ ] Returns 204 No Content on success, 404 (Problem Details) if not found, 500 on error
-  - [ ] Database FK: `contactos.cliente_id` has `ON DELETE SET NULL` — EF Core already handles cascading null via DB-level FK constraint (established in Story 1.3)
+- [x] Task 6 — Backend: wire `DELETE /api/v1/clientes/{id}` endpoint (AC: #2)
+  - [x] Add `MapDelete` to `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — already existed
+  - [x] Returns 204 No Content on success, 404 (Problem Details) if not found, 500 on error
+  - [x] Database FK: `contactos.cliente_id` has `ON DELETE SET NULL` — EF Core already handles cascading null via DB-level FK constraint (established in Story 1.3)
 
-- [ ] Task 7 — Backend: `IClienteRepository.DeleteAsync` and implementation (AC: #2)
-  - [ ] Add `DeleteAsync(Guid id): Task` to `IClienteRepository` interface in `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
-  - [ ] Implement in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`: find entity, remove from context, save changes
+- [x] Task 7 — Backend: `IClienteRepository.DeleteAsync` and implementation (AC: #2)
+  - [x] Add `DeleteAsync(Guid id): Task` to `IClienteRepository` interface — already existed
+  - [x] Implement in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — already existed
 
-- [ ] Task 8 — Tests: Frontend unit tests for `useDeleteCliente` and delete dialog in `ClienteDetailView` (AC: #1, #2, #3, #4)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useDeleteCliente.test.ts`
-    - [ ] Test: calls DELETE API with correct id
-    - [ ] Test: invalidates `['clientes']` and `['contactos']` query keys on success
-    - [ ] Test: shows correct toast when no contacts
-    - [ ] Test: shows correct toast when hasContacts = true
-    - [ ] Test: shows error toast on failure
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.delete.test.tsx`
-    - [ ] Test: "Eliminar" button renders with correct testid
-    - [ ] Test: clicking "Eliminar" opens confirmation dialog
-    - [ ] Test: dialog shows "¿Eliminar este cliente?"
-    - [ ] Test: clicking "Cancelar" closes dialog without calling mutate
-    - [ ] Test: clicking "Confirmar" calls mutate with clienteId
-    - [ ] Test: navigates to `/clientes` after successful deletion
+- [x] Task 8 — Tests: Frontend unit tests for `useDeleteCliente` and delete dialog in `ClienteDetailView` (AC: #1, #2, #3, #4)
+  - [x] `frontend/src/modules/crm/clientes/application/useDeleteCliente.test.ts` — pre-existed (ATDD RED phase), now GREEN (11/11 pass)
+  - [x] `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.delete.test.tsx` — pre-existed (ATDD RED phase), now GREEN (13/13 pass)
 
-- [ ] Task 9 — Tests: Backend unit tests for `DeleteClienteCommandHandler` and validator (AC: #2)
-  - [ ] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/DeleteClienteCommandHandlerTests.cs`
-    - [ ] Test: successful deletion (existing client)
-    - [ ] Test: throws NotFoundException when client does not exist
-    - [ ] Test: validator rejects empty Guid
-  - [ ] Add `DeleteAsync` stub to ALL existing `FakeClienteRepository` implementations in test files
+- [x] Task 9 — Tests: Backend unit tests for `DeleteClienteCommandHandler` and validator (AC: #2)
+  - [x] Create `backend/tests/SiesaAgents.UnitTests/Application/Clientes/DeleteClienteCommandHandlerTests.cs` (6 tests, all pass)
+  - [x] All existing `FakeClienteRepository` implementations already had `DeleteAsync` stub
 
 ## Dev Notes
 
@@ -335,6 +319,34 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+- AlertDialog: shadcn not configured, no `components.json`. Installed `@radix-ui/react-alert-dialog` and created custom wrapper at `src/shared/components/ui/alert-dialog.tsx`.
+- Import path fix: `ClienteDetailView.tsx` is at `src/modules/crm/clientes/presentation/`, so alert-dialog import requires `../../../../shared/components/ui/alert-dialog` (4 levels up, not 3).
+- `useContactosPorCliente` mock returns `undefined` by default in tests. Used optional chaining `contactosResult?.data` in component to handle gracefully.
+- Existing `ClienteDetailView.test.tsx` and `ClienteDetailView.edge.test.tsx` needed `useDeleteCliente`, `useContactosPorCliente`, and `useNavigate` mocks added since the component now uses those hooks.
+- Backend Tasks 5, 6, 7 were already fully implemented from a prior run. Only `DeleteClienteCommandValidator.cs` was missing and registration in `Program.cs`.
+- Pre-existing failures in `ExceptionHandlingMiddlewareEdgeCaseTests` (content-type mismatch) — unrelated to this story, pre-existing from Story 2.4.
+
 ### Completion Notes List
 
+- AlertDialog built directly from `@radix-ui/react-alert-dialog` since shadcn CLI is not configured in this project.
+- Created `src/modules/crm/contactos/application/useContactosPorCliente.ts` as stub — contacts module will be implemented in Epic 3.
+- Frontend: 165/165 tests pass across 17 test files.
+- Backend Application layer: 46/46 tests pass (new 6 DeleteClienteCommandHandlerTests + existing 40).
+
 ### File List
+
+**Created:**
+- `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts`
+- `frontend/src/shared/components/ui/alert-dialog.tsx`
+- `frontend/src/modules/crm/contactos/application/useContactosPorCliente.ts`
+- `backend/src/SiesaAgents.Application/Clientes/Validators/DeleteClienteCommandValidator.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/DeleteClienteCommandHandlerTests.cs`
+
+**Modified:**
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — added `delete(id: string): Promise<void>`
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implemented `delete(id)` method
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx` — added Eliminar button, AlertDialog, delete logic
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx` — added mocks for new hooks
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.edge.test.tsx` — added mocks for new hooks
+- `backend/src/SiesaAgents.API/Program.cs` — registered `DeleteClienteCommandValidator`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — status `ready-for-dev → in-progress`

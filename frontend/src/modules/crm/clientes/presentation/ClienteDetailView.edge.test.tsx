@@ -30,6 +30,21 @@ vi.mock('../application/clienteDetailStore', () => ({
   useClienteDetailStore: vi.fn(),
 }))
 
+// Mock useDeleteCliente — not under test in this file
+vi.mock('../application/useDeleteCliente', () => ({
+  useDeleteCliente: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false })),
+}))
+
+// Mock useContactosPorCliente — not under test in this file
+vi.mock('../../contactos/application/useContactosPorCliente', () => ({
+  useContactosPorCliente: vi.fn(() => ({ data: [] })),
+}))
+
+// Mock TanStack Router navigation
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: vi.fn(() => vi.fn()),
+}))
+
 import { useCliente } from '../application/useCliente'
 import { useClienteDetailStore } from '../application/clienteDetailStore'
 
