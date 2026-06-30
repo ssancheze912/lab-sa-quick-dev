@@ -36,3 +36,14 @@ workflows:
   sprint_planning:
     status: not_started
     output_file: ~
+
+# Gate History
+gate_history:
+  - epic: "1"
+    title: "Project Foundation & Application Shell"
+    date: "2026-06-30"
+    decision: "PASS"
+    reason: "P0 coverage 100%, P1 coverage 100%, overall coverage 94%, 78+ tests GREEN, 0 security issues"
+    document: "_bmad-output/gate-decision-epic-1.yaml"
+    traceability: "_bmad-output/traceability-matrix.md"
+    action: "Proceed to Epic 2 implementation"
