@@ -16,6 +16,7 @@ export function ClienteListItem({ cliente, isSelected, onClick }: ClienteListIte
 
   return (
     <div
+      data-testid="cliente-list-item"
       role="button"
       tabIndex={0}
       aria-label={`Cliente ${cliente.nombre}, NIT ${cliente.nit}`}

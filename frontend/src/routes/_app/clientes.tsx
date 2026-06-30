@@ -9,7 +9,7 @@ function ClientesPage() {
   return (
     <div className="flex h-screen">
       <ClienteListView />
-      <div className="flex flex-1 items-center justify-center text-slate-400">
+      <div data-testid="cliente-detail-panel" className="flex flex-1 items-center justify-center text-slate-400">
         <p className="text-sm">Selecciona un cliente para ver sus detalles</p>
       </div>
     </div>

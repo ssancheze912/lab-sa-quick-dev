@@ -5,6 +5,7 @@ interface EmptyStateProps {
 export function EmptyState({ message }: EmptyStateProps) {
   return (
     <div
+      data-testid="empty-state"
       className="flex flex-col items-center justify-center p-6 text-center text-slate-500"
       role="status"
       aria-label="Estado vacío"

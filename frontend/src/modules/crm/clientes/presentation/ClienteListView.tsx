@@ -25,10 +25,11 @@ export function ClienteListView() {
   }, [data, searchQuery])
 
   return (
-    <div className="flex h-full w-[280px] flex-shrink-0 flex-col border-r border-slate-200">
+    <div data-testid="clientes-list-panel" className="flex h-full w-[280px] flex-shrink-0 flex-col border-r border-slate-200">
       <div className="p-3">
         <input
           type="text"
+          data-testid="search-clientes"
           placeholder="Buscar por nombre o NIT..."
           aria-label="Buscar clientes"
           value={searchQuery}

@@ -6,6 +6,7 @@ interface ErrorPanelProps {
 export function ErrorPanel({ message = 'Error al cargar los datos.', onRetry }: ErrorPanelProps) {
   return (
     <div
+      data-testid="error-panel"
       className="flex flex-col items-center justify-center p-6 text-center"
       role="alert"
       aria-label="Panel de error"
