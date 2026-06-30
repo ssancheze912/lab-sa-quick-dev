@@ -42,6 +42,7 @@ public static class ClienteEndpoints
             .WithName("CreateCliente")
             .WithTags("Clientes")
             .Produces<ClienteDto>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status500InternalServerError)
             .WithOpenApi();
 

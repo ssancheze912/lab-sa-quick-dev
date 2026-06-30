@@ -1,6 +1,6 @@
 # Story 2.2: Client Detail View
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -243,3 +243,11 @@ None.
 - `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareEdgeCaseTests.cs` — added `using Xunit;`
 - `backend/tests/SiesaAgents.UnitTests/PlaceholderTests.cs` — added `using Xunit;`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — story status: pending → review
+
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][CRITICAL] `POST /api/v1/clientes` endpoint has NO FluentValidation. Create `backend/src/SiesaAgents.Application/Clientes/Validators/CreateClienteCommandValidator.cs` with `AbstractValidator<CreateClienteCommand>` that validates `Nombre`, `Nit`, `Telefono`, `Ciudad` are non-empty (NotEmpty rule). Register in DI with `builder.Services.AddScoped<IValidator<CreateClienteCommand>, CreateClienteCommandValidator>()`. Call `await validator.ValidateAndThrowAsync(command, ct)` inside `CreateClienteCommandHandler.Handle()` before persisting. Endpoint already has `.ProducesProblem(400)` added by this review.
+- [ ] [AI-Review][CRITICAL] `clienteDetailStore` architecture concern: Zustand global store controlling `ClienteListView` visibility is a UI-layer concern placed in `application/`. On rapid navigation from `/clientes/bad-id` → `/clientes/good-id`, the `useEffect` cleanup does not fire before the next render, briefly hiding the list. Consider replacing with `useMatchRoute` result in the parent route combined with inspecting the child route's error boundary or using React Router's `errorElement` on the `$clienteId` route — this eliminates the global store dependency entirely for layout control.
+- [ ] [AI-Review][MED] `CreateClienteCommand` and `DeleteClienteCommand` (4 files) were added outside story scope for ATDD setup. If `DELETE /api/v1/clientes/{id:guid}` is intended for production, it requires its own story with auth, validation, soft-delete consideration, and cascade rules. If test-only, gate it behind `app.Environment.IsDevelopment()` or remove from production builds.
+- [ ] [AI-Review][MED] `ClienteEntity.Create()` uses `Guid.NewGuid()` (UUIDv4). Company DB standards require UUIDv7 for temporal ordering and index efficiency. Add a `UuidV7` utility or `Ulid` package and replace with `Ulid.NewUlid().ToGuid()`.
+- [ ] [AI-Review][LOW] `useCliente` hook does not expose `error` from TanStack Query. The component renders the same "No se encontró el cliente" message for 404 and 5xx. Expose `error` and distinguish 404 from server errors for correct UX.

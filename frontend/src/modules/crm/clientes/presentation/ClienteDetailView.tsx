@@ -26,7 +26,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
           <Skeleton height={24} width="60%" />
         </div>
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="mb-4">
+          <div key={`skeleton-field-${i}`} className="mb-4">
             <Skeleton height={12} width="30%" className="mb-1" />
             <Skeleton height={16} width="70%" />
           </div>
@@ -46,7 +46,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   return (
     <div data-testid="cliente-detail-content" className="flex flex-1 flex-col p-6">
       <h2 className="mb-6 text-lg font-bold text-slate-900">{data.nombre}</h2>
-      <dl className="space-y-4">
+      <dl className="space-y-4" aria-label="Detalle del cliente">
         <div>
           <dt className="text-sm font-medium text-slate-900">Nombre</dt>
           <dd className="text-sm text-slate-700">{data.nombre}</dd>
