@@ -12,6 +12,7 @@ import { createFileRoute, createRootRoute } from '@tanstack/react-router'
 import { Route as rootRoute } from './routes/__root'
 import { Route as AppRoute } from './routes/_app'
 import { Route as AppClientesRoute } from './routes/_app/clientes'
+import { Route as AppClientesClienteIdRoute } from './routes/_app/clientes.$clienteId'
 
 const rootRouteWithContext = rootRoute
 
@@ -27,6 +28,14 @@ const AppClientesRouteWithContext = AppClientesRoute.update({
   getParentRoute: () => AppRouteWithContext,
 } as never)
 
+const AppClientesClienteIdRouteWithContext = AppClientesClienteIdRoute.update({
+  id: '/_app/clientes/$clienteId',
+  path: '/clientes/$clienteId',
+  getParentRoute: () => AppClientesRouteWithContext,
+} as never)
+
 export const routeTree = rootRouteWithContext.addChildren([
-  AppRouteWithContext.addChildren([AppClientesRouteWithContext]),
+  AppRouteWithContext.addChildren([
+    AppClientesRouteWithContext.addChildren([AppClientesClienteIdRouteWithContext]),
+  ]),
 ])

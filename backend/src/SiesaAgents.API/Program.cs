@@ -32,6 +32,7 @@ builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 
 // Query Handlers
 builder.Services.AddScoped<GetClientesQueryHandler>();
+builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 
 // OpenAPI
 builder.Services.AddOpenApi();

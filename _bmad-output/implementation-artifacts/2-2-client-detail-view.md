@@ -1,6 +1,6 @@
 # Story 2.2: Client Detail View
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -18,56 +18,53 @@ so that I can review all their information without navigating away from the clie
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add `useCliente(id)` TanStack Query hook (AC: #1, #2, #3)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCliente.ts`
-  - [ ] Use `useQuery` with `queryKey: ['clientes', id]`, `queryFn: () => clienteApiRepository.getById(id)`, `enabled: !!id`
-  - [ ] Set `staleTime: 30_000` (consistent with `useClientes`)
-  - [ ] Return `{ data, isLoading, isError }` — no retry needed for 404 scenario (see task notes)
+- [x] Task 1 — Add `useCliente(id)` TanStack Query hook (AC: #1, #2, #3)
+  - [x] Create `frontend/src/modules/crm/clientes/application/useCliente.ts`
+  - [x] Use `useQuery` with `queryKey: ['clientes', id]`, `queryFn: () => clienteApiRepository.getById(id)`, `enabled: !!id`
+  - [x] Set `staleTime: 30_000` (consistent with `useClientes`)
+  - [x] Return `{ data, isLoading, isError }` — no retry needed for 404 scenario (see task notes)
 
-- [ ] Task 2 — Create `ClienteDetailView` presentation component (AC: #1, #2, #3)
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
-  - [ ] Props: `{ clienteId: string }`
-  - [ ] Consume `useCliente(clienteId)` hook
-  - [ ] Loading state: skeleton rows for each field (react-loading-skeleton, NOT spinners)
-  - [ ] Not-found state: when API returns 404 (isError + no data), display a not-found message: "No se encontró el cliente solicitado."
-  - [ ] Success state: display all four fields in a detail panel with labeled rows: Nombre, NIT/RUC, Teléfono, Ciudad
-  - [ ] Add `data-testid="cliente-detail-content"` to the success state container
-  - [ ] All labels in Spanish; field values from the `Cliente` domain interface
+- [x] Task 2 — Create `ClienteDetailView` presentation component (AC: #1, #2, #3)
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+  - [x] Props: `{ clienteId: string }`
+  - [x] Consume `useCliente(clienteId)` hook
+  - [x] Loading state: skeleton rows for each field (react-loading-skeleton, NOT spinners)
+  - [x] Not-found state: when API returns 404 (isError + no data), display a not-found message: "No se encontró el cliente solicitado."
+  - [x] Success state: display all four fields in a detail panel with labeled rows: Nombre, NIT/RUC, Teléfono, Ciudad
+  - [x] Add `data-testid="cliente-detail-content"` to the success state container
+  - [x] All labels in Spanish; field values from the `Cliente` domain interface
 
-- [ ] Task 3 — Create `$clienteId` TanStack Router dynamic route (AC: #1, #2, #3)
-  - [ ] Create `frontend/src/routes/_app/clientes.$clienteId.tsx` (TanStack Router file-based — `$` prefix = dynamic param)
-  - [ ] Export `Route = createFileRoute('/_app/clientes/$clienteId')({...})`
-  - [ ] Access param via `Route.useParams()` — typed, NOT `useParams({ strict: false })` cast
-  - [ ] Render two-panel layout: left = `<ClienteListView />` (reuse existing, 280px), right = `<ClienteDetailView clienteId={clienteId} />`
-  - [ ] Regenerate route tree: `pnpm --filter frontend exec tsr generate` (or `pnpm --filter frontend build` triggers it)
+- [x] Task 3 — Create `$clienteId` TanStack Router dynamic route (AC: #1, #2, #3)
+  - [x] Create `frontend/src/routes/_app/clientes.$clienteId.tsx` (TanStack Router file-based — `$` prefix = dynamic param)
+  - [x] Export `Route = createFileRoute('/_app/clientes/$clienteId')({...})`
+  - [x] Access param via `Route.useParams()` — typed, NOT `useParams({ strict: false })` cast
+  - [x] Render `<ClienteDetailView clienteId={clienteId} />` (layout handled by parent route with Outlet)
+  - [x] Route tree manually updated: `frontend/src/routeTree.gen.ts` (tsr CLI not available in this env)
 
-- [ ] Task 4 — Update `clientes.tsx` parent route to render outlet for nested detail (AC: #1, #5)
-  - [ ] Verify `frontend/src/routes/_app/clientes.tsx` renders `<Outlet />` (or equivalent) in the right panel when a child route (`$clienteId`) is active
-  - [ ] The right panel default state "Selecciona un cliente para ver sus detalles" (data-testid="cliente-detail-panel") must remain when no `$clienteId` is active (Story 2.1 AC5 preserved)
+- [x] Task 4 — Update `clientes.tsx` parent route to render outlet for nested detail (AC: #1, #5)
+  - [x] `frontend/src/routes/_app/clientes.tsx` now uses `useMatchRoute()` + `<Outlet />` in the right panel when `$clienteId` child route is active
+  - [x] The right panel default state "Selecciona un cliente para ver sus detalles" (data-testid="cliente-detail-panel") remains when no `$clienteId` is active
 
-- [ ] Task 5 — Backend: Add `GetClienteByIdQuery` + Handler + Endpoint (AC: #2, #3)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs` — record with `Guid Id`
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs`
-    - [ ] `Handle(query, ct)` calls `_repository.GetByIdAsync(query.Id, ct)`
-    - [ ] Returns `ClienteDto?` — nullable (caller maps null to 404)
-  - [ ] Register handler in `Program.cs`: `builder.Services.AddScoped<GetClienteByIdQueryHandler>()`
-  - [ ] Add `GET /api/v1/clientes/{id}` endpoint in `ClienteEndpoints.cs`:
-    - [ ] Route: `app.MapGet("/api/v1/clientes/{id:guid}", ...)`
-    - [ ] Returns `Results.Ok(dto)` when found, `Results.NotFound()` when null
-    - [ ] Decorate with `.WithName("GetClienteById")`, `.WithTags("Clientes")`, `.Produces<ClienteDto>()`, `.ProducesProblem(404)`, `.ProducesProblem(500)`, `.WithOpenApi()`
+- [x] Task 5 — Backend: Add `GetClienteByIdQuery` + Handler + Endpoint (AC: #2, #3)
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs` — record with `Guid Id`
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs`
+    - [x] `Handle(query, ct)` calls `_repository.GetByIdAsync(query.Id, ct)`
+    - [x] Returns `ClienteDto?` — nullable (caller maps null to 404)
+  - [x] Register handler in `Program.cs`: `builder.Services.AddScoped<GetClienteByIdQueryHandler>()`
+  - [x] Add `GET /api/v1/clientes/{id:guid}` endpoint in `ClienteEndpoints.cs`:
+    - [x] Returns `Results.Ok(dto)` when found, `Results.NotFound()` when null
+    - [x] Decorated with `.WithName("GetClienteById")`, `.WithTags("Clientes")`, `.Produces<ClienteDto>()`, `.ProducesProblem(404)`, `.ProducesProblem(500)`, `.WithOpenApi()`
 
-- [ ] Task 6 — Tests: Backend unit tests for `GetClienteByIdQueryHandler` (AC: #2, #3)
-  - [ ] Add tests to existing `backend/tests/SiesaAgents.UnitTests/Application/Clientes/` or create `GetClienteByIdQueryHandlerTests.cs`
-  - [ ] 3 tests: found → returns ClienteDto with correct field mapping; not found → returns null; Guid.Empty → returns null
-  - [ ] Run: `dotnet test tests/SiesaAgents.UnitTests`
+- [x] Task 6 — Tests: Backend unit tests for `GetClienteByIdQueryHandler` (AC: #2, #3)
+  - [x] Created `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
+  - [x] 3 tests: found → returns ClienteDto with correct field mapping; not found → returns null; Guid.Empty → returns null
+  - [x] All 3 tests pass: `dotnet test` filter `GetClienteByIdQueryHandlerTests` → Passed: 3
 
-- [ ] Task 7 — Tests: Frontend unit tests for `useCliente` and `ClienteDetailView` (AC: #1, #2, #3)
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCliente.test.ts`
-    - [ ] 3 tests: loading state; success returns cliente data; `isError=true` when API returns 404
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx`
-    - [ ] 5 tests: renders skeleton while loading; renders Nombre, NIT, Teléfono, Ciudad on success; renders not-found message on 404; `data-testid="cliente-detail-content"` present on success; absent when not found
-  - [ ] Use `vi.mock('../application/useCliente')` for component tests (isolate from network)
-  - [ ] Run: `pnpm --filter frontend test`
+- [x] Task 7 — Tests: Frontend unit tests for `useCliente` and `ClienteDetailView` (AC: #1, #2, #3)
+  - [x] Created `frontend/src/modules/crm/clientes/application/useCliente.test.ts` (3 tests)
+  - [x] Created `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx` (5 tests)
+  - [x] `vi.mock('../application/useCliente')` used in component tests
+  - [x] All 8 new tests pass
 
 ## Dev Notes
 
@@ -205,6 +202,40 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- All 7 tasks implemented per acceptance criteria.
+- Backend: `GetClienteByIdQuery`, `GetClienteByIdQueryHandler`, `GET /api/v1/clientes/{id:guid}` endpoint added. Handler registered in DI.
+- Frontend: `useCliente` hook (TanStack Query, retry:false for 404), `ClienteDetailView` component (skeleton loading, not-found state, success state with labeled rows), `clientes.$clienteId.tsx` route (typed params via `Route.useParams()`).
+- `clientes.tsx` updated: uses `useMatchRoute()` to conditionally render `<Outlet />` vs default message — Story 2.1 AC5 preserved.
+- Route tree (`routeTree.gen.ts`) manually updated (tsr CLI not installed in this environment).
+- Pre-existing backend test compilation issues (missing `using Xunit;`, missing project references for Infrastructure/API tests) fixed as a side effect.
+- Pre-existing frontend test failures (25 tests in `__root.test.tsx` + `__root.edge-cases.test.tsx` due to missing `QueryClientProvider` in those test setups) were NOT introduced by this story — confirmed by reverting changes and re-running.
+- New tests: Backend 3/3 pass, Frontend 8/8 pass.
+
 ### File List
+
+**New files created:**
+- `frontend/src/modules/crm/clientes/application/useCliente.ts`
+- `frontend/src/modules/crm/clientes/application/useCliente.test.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx`
+- `frontend/src/routes/_app/clientes.$clienteId.tsx`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
+
+**Files modified:**
+- `frontend/src/routes/_app/clientes.tsx` — added `<Outlet />` + `useMatchRoute()` for child route
+- `frontend/src/routeTree.gen.ts` — manually added `/_app/clientes/$clienteId` route
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — added `GET /api/v1/clientes/{id:guid}` endpoint
+- `backend/src/SiesaAgents.API/Program.cs` — registered `GetClienteByIdQueryHandler`
+- `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — added Infrastructure/API project refs + InMemory/TestHost packages
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextTests.cs` — added `using Xunit;`
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextEdgeCaseTests.cs` — added `using Xunit;`
+- `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs` — added `using Xunit;`
+- `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareEdgeCaseTests.cs` — added `using Xunit;`
+- `backend/tests/SiesaAgents.UnitTests/PlaceholderTests.cs` — added `using Xunit;`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — story status: pending → review

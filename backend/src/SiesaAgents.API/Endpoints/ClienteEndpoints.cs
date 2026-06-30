@@ -14,5 +14,17 @@ public static class ClienteEndpoints
             .Produces<IEnumerable<ClienteDto>>()
             .ProducesProblem(StatusCodes.Status500InternalServerError)
             .WithOpenApi();
+
+        app.MapGet("/api/v1/clientes/{id:guid}", async (Guid id, GetClienteByIdQueryHandler handler, CancellationToken ct) =>
+        {
+            var dto = await handler.Handle(new GetClienteByIdQuery(id), ct);
+            return dto is not null ? Results.Ok(dto) : Results.NotFound();
+        })
+            .WithName("GetClienteById")
+            .WithTags("Clientes")
+            .Produces<ClienteDto>()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
+            .WithOpenApi();
     }
 }

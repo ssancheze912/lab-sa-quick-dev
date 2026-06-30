@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace SiesaAgents.UnitTests;
 
 /// <summary>
