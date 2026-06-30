@@ -55,12 +55,32 @@ function RootLayout() {
   return (
     <div className="flex h-screen" data-testid="app-root">
       {/* Desktop: NavigationRail on left */}
-      <nav aria-label="Navegación principal" className="hidden lg:flex">
+      <nav
+        aria-label="Navegación principal"
+        data-testid="nav-rail"
+        className="hidden lg:flex relative"
+      >
         <NavigationRail
           items={railItems}
           selectedId={activeId}
           onItemSelect={handleRailSelect}
         />
+        {/* Per-item overlay buttons for E2E targeting (pointer-events-auto over kit items) */}
+        <div className="absolute inset-0 flex flex-col">
+          {NAV_ITEMS.map((item) => {
+            const isActive = item.id === activeId
+            return (
+              <button
+                key={item.id}
+                data-testid={`nav-rail-${item.id}`}
+                data-active={isActive ? 'true' : undefined}
+                aria-label={item.label}
+                className="flex-1 w-full bg-transparent border-0 cursor-pointer"
+                onClick={() => handleRailSelect(item.id)}
+              />
+            )
+          })}
+        </div>
       </nav>
       {/* Main content */}
       <main className="flex-1 overflow-auto">
@@ -69,14 +89,28 @@ function RootLayout() {
       {/* Mobile: NavigationBar at bottom */}
       <nav
         aria-label="Navegación principal"
-        className="flex lg:hidden fixed bottom-0 w-full"
+        data-testid="nav-bar"
+        className="flex lg:hidden fixed bottom-0 w-full relative"
       >
         <NavigationBar
           items={barItems}
           activeItemId={activeId}
           onItemClick={handleBarClick}
           ariaLabel="Navegación principal"
+          className="w-full"
         />
+        {/* Per-item overlay buttons for E2E targeting */}
+        <div className="absolute inset-0 flex">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              data-testid={`nav-bar-${item.id}`}
+              aria-label={item.label}
+              className="flex-1 h-full bg-transparent border-0 cursor-pointer"
+              onClick={() => handleBarClick(item.id)}
+            />
+          ))}
+        </div>
       </nav>
     </div>
   )
@@ -86,11 +120,14 @@ export const Route = createRootRoute({
   component: RootLayout,
   notFoundComponent: () => (
     <div
+      data-testid="not-found-view"
       role="main"
       className="flex flex-col items-center justify-center h-screen p-8 text-center"
     >
       <h1 className="text-2xl font-bold mb-4">Página no encontrada</h1>
-      <p className="text-gray-600">La página que buscas no existe.</p>
+      <p data-testid="not-found-message" className="text-gray-600">
+        La página que buscas no existe.
+      </p>
       <Link
         to="/clientes"
         className="mt-6 text-blue-600 hover:underline focus:ring-2 focus:ring-blue-500"

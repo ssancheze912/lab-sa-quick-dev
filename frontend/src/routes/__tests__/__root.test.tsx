@@ -89,7 +89,7 @@ describe('Root Navigation Shell', () => {
     render(<RouterProvider router={router} />)
 
     await waitFor(() => {
-      expect(screen.getByTestId('clientes-page')).toBeInTheDocument()
+      expect(screen.getByTestId('clientes-view')).toBeInTheDocument()
     })
 
     expect(screen.getByText('Clientes — próximamente')).toBeInTheDocument()
@@ -100,7 +100,7 @@ describe('Root Navigation Shell', () => {
     render(<RouterProvider router={router} />)
 
     await waitFor(() => {
-      expect(screen.getByTestId('contactos-page')).toBeInTheDocument()
+      expect(screen.getByTestId('contactos-view')).toBeInTheDocument()
     })
 
     expect(screen.getByText('Contactos — próximamente')).toBeInTheDocument()
@@ -141,7 +141,7 @@ describe('Root Navigation Shell', () => {
       expect(router.state.location.pathname).toBe('/clientes')
     })
 
-    expect(screen.getByTestId('clientes-page')).toBeInTheDocument()
+    expect(screen.getByTestId('clientes-view')).toBeInTheDocument()
   })
 
   it('renders 404 page for unknown routes with Spanish message', async () => {
