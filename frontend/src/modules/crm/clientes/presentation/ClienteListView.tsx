@@ -3,7 +3,6 @@ import { useNavigate, useParams } from '@tanstack/react-router'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { PlusIcon } from '@heroicons/react/24/outline'
-import { AlertDialog } from 'siesa-ui-kit'
 import { useClientes } from '../application/useClientes'
 import { ClienteListItem } from '../../../../shared/components/ClienteListItem'
 import { EmptyState } from '../../../../shared/components/EmptyState'
@@ -51,20 +50,30 @@ export function ClienteListView() {
         />
       </div>
 
-      <AlertDialog
-        isOpen={isFormOpen}
-        title="Nuevo cliente"
-        onCancel={() => setIsFormOpen(false)}
-        hideCancel
-        actions={null}
-        preventCloseOnOverlayClick
-        size="max-w-md"
-      >
-        <ClienteForm
-          onClose={() => setIsFormOpen(false)}
-          onSuccess={() => setIsFormOpen(false)}
-        />
-      </AlertDialog>
+      {isFormOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          aria-modal="true"
+        >
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
+            onClick={() => setIsFormOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-label="Nuevo cliente"
+            aria-modal="true"
+            className="relative z-10 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900"
+          >
+            <p className="mb-4 text-sm font-bold leading-5">Nuevo cliente</p>
+            <ClienteForm
+              onClose={() => setIsFormOpen(false)}
+              onSuccess={() => setIsFormOpen(false)}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         {isLoading && (

@@ -45,12 +45,12 @@ export class ClientesPage {
     this.emptyState = page.getByTestId('empty-state');
 
     this.form = page.getByRole('dialog');
-    this.inputNombre = page.getByLabel(/nombre/i);
-    this.inputNit = page.getByLabel(/nit/i);
-    this.inputTelefono = page.getByLabel(/teléfono/i);
-    this.inputCiudad = page.getByLabel(/ciudad/i);
-    this.btnGuardar = page.getByRole('button', { name: /guardar/i });
-    this.btnCancelar = page.getByRole('button', { name: /cancelar/i });
+    this.inputNombre = this.form.getByLabel(/nombre/i);
+    this.inputNit = this.form.getByLabel(/nit/i);
+    this.inputTelefono = this.form.getByLabel(/teléfono/i);
+    this.inputCiudad = this.form.getByLabel(/ciudad/i);
+    this.btnGuardar = this.form.getByRole('button', { name: /guardar/i });
+    this.btnCancelar = this.form.getByRole('button', { name: /cancelar/i });
     this.btnEliminar = page.getByRole('button', { name: /eliminar/i });
     this.btnConfirmarEliminar = page.getByRole('button', { name: /confirmar/i });
   }

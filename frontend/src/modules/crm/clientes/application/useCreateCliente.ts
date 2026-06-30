@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { toast } from 'siesa-ui-kit'
+import { toast } from 'sonner'
 import { clienteApiRepository } from '../infrastructure/clienteApiRepository'
 import type { CreateClienteRequest } from '../domain/Cliente'
 
