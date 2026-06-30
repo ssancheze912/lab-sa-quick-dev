@@ -66,7 +66,7 @@ function RootLayout() {
           onItemSelect={handleRailSelect}
         />
         {/* Per-item overlay buttons for E2E targeting (pointer-events-auto over kit items) */}
-        <div className="absolute inset-0 flex flex-col">
+        <div className="absolute inset-0 flex flex-col" aria-hidden="true">
           {NAV_ITEMS.map((item) => {
             const isActive = item.id === activeId
             return (
@@ -75,6 +75,7 @@ function RootLayout() {
                 data-testid={`nav-rail-${item.id}`}
                 data-active={isActive ? 'true' : undefined}
                 aria-label={item.label}
+                tabIndex={-1}
                 className="flex-1 w-full bg-transparent border-0 cursor-pointer"
                 onClick={() => handleRailSelect(item.id)}
               />
@@ -90,7 +91,7 @@ function RootLayout() {
       <nav
         aria-label="Navegación principal"
         data-testid="nav-bar"
-        className="flex lg:hidden fixed bottom-0 w-full relative"
+        className="flex lg:hidden fixed bottom-0 w-full"
       >
         <NavigationBar
           items={barItems}
@@ -100,12 +101,13 @@ function RootLayout() {
           className="w-full"
         />
         {/* Per-item overlay buttons for E2E targeting */}
-        <div className="absolute inset-0 flex">
+        <div className="absolute inset-0 flex" aria-hidden="true">
           {NAV_ITEMS.map((item) => (
             <button
               key={item.id}
               data-testid={`nav-bar-${item.id}`}
               aria-label={item.label}
+              tabIndex={-1}
               className="flex-1 h-full bg-transparent border-0 cursor-pointer"
               onClick={() => handleBarClick(item.id)}
             />
