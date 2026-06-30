@@ -37,6 +37,18 @@ export class ApiHelper {
     return { status: response.status(), body: await response.json().catch(() => null) };
   }
 
+  async updateCliente(id: string, data: {
+    nombre: string;
+    nit: string;
+    telefono?: string;
+    ciudad?: string;
+  }) {
+    const response = await this.request.put(`${API_BASE_URL}/api/v1/clientes/${id}`, {
+      data,
+    });
+    return { status: response.status(), body: await response.json().catch(() => null) };
+  }
+
   // --- Contactos ---
 
   async createContacto(data: {
