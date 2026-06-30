@@ -63,8 +63,8 @@ public static class ClienteEndpoints
 
         app.MapDelete("/api/v1/clientes/{id:guid}", async (Guid id, DeleteClienteCommandHandler handler, CancellationToken ct) =>
         {
-            var deleted = await handler.Handle(new DeleteClienteCommand(id), ct);
-            return deleted ? Results.NoContent() : Results.NotFound();
+            await handler.Handle(new DeleteClienteCommand(id), ct);
+            return Results.NoContent();
         })
             .WithName("DeleteCliente")
             .WithTags("Clientes")

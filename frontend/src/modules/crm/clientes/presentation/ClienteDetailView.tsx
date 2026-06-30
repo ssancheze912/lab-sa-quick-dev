@@ -80,12 +80,13 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
     <div data-testid="cliente-detail-content" className="flex flex-1 flex-col p-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-bold text-slate-900 pointer-events-none">{data.nombre}</h2>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           <button
             type="button"
             data-testid="edit-cliente-button"
             onClick={() => setIsEditFormOpen(true)}
             className="relative z-10 flex shrink-0 items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+            style={{ pointerEvents: 'auto' }}
           >
             <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
             Editar
@@ -95,7 +96,8 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
             data-testid="delete-cliente-button"
             aria-label="Eliminar cliente"
             onClick={() => setIsDeleteDialogOpen(true)}
-            className="relative z-10 flex shrink-0 items-center gap-1 rounded border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+            className="relative z-20 flex shrink-0 items-center gap-1 rounded border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+            style={{ pointerEvents: 'auto' }}
           >
             <TrashIcon className="h-4 w-4" aria-hidden="true" />
             Eliminar

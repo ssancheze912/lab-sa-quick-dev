@@ -1,6 +1,7 @@
 using Xunit;
 using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Domain.Clientes.Entities;
+using SiesaAgents.Domain.Clientes.Exceptions;
 using SiesaAgents.Domain.Clientes.Interfaces;
 
 namespace SiesaAgents.UnitTests.Application.Clientes;
@@ -59,7 +60,7 @@ public class DeleteClienteCommandHandlerTests
     // ─────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Handle_ExistingClient_ReturnsTrue()
+    public async Task Handle_ExistingClient_CompletesWithoutException()
     {
         // Arrange
         var existing = ClienteEntity.Create("Empresa A", "900123456-1", "3001234567", "Bogotá");
@@ -67,11 +68,8 @@ public class DeleteClienteCommandHandlerTests
         var handler = BuildHandler(repo);
         var command = new DeleteClienteCommand(existing.Id);
 
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.True(result);
+        // Act & Assert: no exception thrown
+        await handler.Handle(command, CancellationToken.None);
     }
 
     [Fact]
@@ -92,22 +90,19 @@ public class DeleteClienteCommandHandlerTests
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // AC2 — Non-existent client returns false (404 via endpoint)
+    // AC2 — Non-existent client throws NotFoundException (404 via middleware)
     // ─────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Handle_NonExistentClient_ReturnsFalse()
+    public async Task Handle_NonExistentClient_ThrowsNotFoundException()
     {
         // Arrange
         var repo = new FakeClienteRepository();
         var handler = BuildHandler(repo);
         var command = new DeleteClienteCommand(Guid.NewGuid());
 
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert: returns false → endpoint maps to 404 Not Found
-        Assert.False(result);
+        // Act & Assert: NotFoundException is thrown → middleware returns 404 Problem Details
+        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
     }
 
     [Fact]
@@ -120,7 +115,7 @@ public class DeleteClienteCommandHandlerTests
         var command = new DeleteClienteCommand(nonExistentId);
 
         // Act
-        await handler.Handle(command, CancellationToken.None);
+        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
 
         // Assert: DeleteAsync was attempted
         Assert.True(repo.DeleteAsyncWasCalled);
@@ -128,22 +123,19 @@ public class DeleteClienteCommandHandlerTests
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // AC2 — Empty Guid should be handled gracefully
+    // AC2 — Empty Guid throws NotFoundException
     // ─────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Handle_EmptyGuidId_ReturnsFalse()
+    public async Task Handle_EmptyGuidId_ThrowsNotFoundException()
     {
         // Arrange
         var repo = new FakeClienteRepository();
         var handler = BuildHandler(repo);
         var command = new DeleteClienteCommand(Guid.Empty);
 
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert: empty guid is not found → returns false
-        Assert.False(result);
+        // Act & Assert: empty guid is not found → NotFoundException
+        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -161,10 +153,9 @@ public class DeleteClienteCommandHandlerTests
         var command = new DeleteClienteCommand(clienteToDelete.Id);
 
         // Act
-        var result = await handler.Handle(command, CancellationToken.None);
+        await handler.Handle(command, CancellationToken.None);
 
         // Assert: deleted client is gone; the other remains
-        Assert.True(result);
         var remaining = await repo.GetAllAsync(CancellationToken.None);
         Assert.DoesNotContain(remaining, c => c.Id == clienteToDelete.Id);
         Assert.Contains(remaining, c => c.Id == clienteToKeep.Id);

@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using SiesaAgents.Domain.Clientes.Exceptions;
@@ -23,10 +25,8 @@ public class ExceptionHandlingMiddleware
         }
         catch (ValidationException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "application/problem+json";
             var errors = ex.Errors.Select(e => new { field = e.PropertyName, message = e.ErrorMessage });
-            await context.Response.WriteAsJsonAsync(new
+            await WriteProblemDetailsAsync(context, StatusCodes.Status400BadRequest, new
             {
                 type = "https://tools.ietf.org/html/rfc7807",
                 title = "Validation failed.",
@@ -36,9 +36,7 @@ public class ExceptionHandlingMiddleware
         }
         catch (NotFoundException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            context.Response.ContentType = "application/problem+json";
-            await context.Response.WriteAsJsonAsync(new
+            await WriteProblemDetailsAsync(context, StatusCodes.Status404NotFound, new
             {
                 type = "https://tools.ietf.org/html/rfc7807",
                 title = "Not Found.",
@@ -48,9 +46,7 @@ public class ExceptionHandlingMiddleware
         }
         catch (ConflictException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status409Conflict;
-            context.Response.ContentType = "application/problem+json";
-            await context.Response.WriteAsJsonAsync(new
+            await WriteProblemDetailsAsync(context, StatusCodes.Status409Conflict, new
             {
                 type = "https://tools.ietf.org/html/rfc7807",
                 title = "Conflict.",
@@ -61,9 +57,7 @@ public class ExceptionHandlingMiddleware
         catch (DbUpdateException dbEx) when (IsUniqueConstraintViolation(dbEx))
         {
             // Unique constraint violation — race condition on NIT duplicate
-            context.Response.StatusCode = StatusCodes.Status409Conflict;
-            context.Response.ContentType = "application/problem+json";
-            await context.Response.WriteAsJsonAsync(new
+            await WriteProblemDetailsAsync(context, StatusCodes.Status409Conflict, new
             {
                 type = "https://tools.ietf.org/html/rfc7807",
                 title = "Conflict.",
@@ -74,18 +68,24 @@ public class ExceptionHandlingMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception");
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "application/problem+json";
             var isDevelopment = context.RequestServices
                 .GetRequiredService<IWebHostEnvironment>().IsDevelopment();
-            await context.Response.WriteAsJsonAsync(new
+            await WriteProblemDetailsAsync(context, StatusCodes.Status500InternalServerError, new
             {
                 type = "https://tools.ietf.org/html/rfc7807",
-                title = "An unexpected error occurred.",
+                title = "Internal Server Error",
                 status = 500,
-                detail = isDevelopment ? ex.Message : "An internal server error occurred."
+                detail = isDevelopment ? ex.Message : "An unexpected error occurred."
             });
         }
+    }
+
+    private static async Task WriteProblemDetailsAsync(HttpContext context, int statusCode, object body)
+    {
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/problem+json; charset=utf-8";
+        var json = JsonSerializer.Serialize(body);
+        await context.Response.WriteAsync(json, Encoding.UTF8);
     }
 
     // Detects PostgreSQL unique constraint violation (code 23505) via reflection to avoid
