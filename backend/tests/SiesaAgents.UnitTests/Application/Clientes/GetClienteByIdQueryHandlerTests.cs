@@ -22,6 +22,12 @@ public class GetClienteByIdQueryHandlerTests
 
         public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
             => Task.FromResult(_clientes.FirstOrDefault(c => c.Id == id));
+
+        public Task<ClienteEntity> CreateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.FromResult(cliente);
+
+        public Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+            => Task.FromResult(true);
     }
 
     [Fact]

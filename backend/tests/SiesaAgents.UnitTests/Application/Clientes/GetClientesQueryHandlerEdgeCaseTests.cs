@@ -39,6 +39,12 @@ public class GetClientesQueryHandlerEdgeCaseTests
 
         public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
             => Task.FromResult(_clientes.FirstOrDefault(c => c.Id == id));
+
+        public Task<ClienteEntity> CreateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.FromResult(cliente);
+
+        public Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+            => Task.FromResult(true);
     }
 
     private sealed class ThrowingClienteRepository : IClienteRepository
@@ -55,6 +61,12 @@ public class GetClientesQueryHandlerEdgeCaseTests
 
         public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
             => Task.FromException<ClienteEntity?>(_exception);
+
+        public Task<ClienteEntity> CreateAsync(ClienteEntity cliente, CancellationToken ct)
+            => Task.FromException<ClienteEntity>(_exception);
+
+        public Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+            => Task.FromException<bool>(_exception);
     }
 
     // ─────────────────────────────────────────────────────────────────────

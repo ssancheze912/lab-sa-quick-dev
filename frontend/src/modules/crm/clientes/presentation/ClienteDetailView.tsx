@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { useCliente } from '../application/useCliente'
+import { useClienteDetailStore } from '../application/clienteDetailStore'
 
 interface ClienteDetailViewProps {
   clienteId: string
@@ -8,6 +10,14 @@ interface ClienteDetailViewProps {
 
 export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
   const { data, isLoading, isError } = useCliente(clienteId)
+  const setClienteNotFound = useClienteDetailStore((s) => s.setClienteNotFound)
+
+  useEffect(() => {
+    setClienteNotFound(!isLoading && (isError || !data))
+    return () => {
+      setClienteNotFound(false)
+    }
+  }, [isLoading, isError, data, setClienteNotFound])
 
   if (isLoading) {
     return (
