@@ -5,3 +5,7 @@ playwright-report/
 test-results/
 dist/
 .env.local
+
+# .NET build artifacts
+backend/**/bin/
+backend/**/obj/
