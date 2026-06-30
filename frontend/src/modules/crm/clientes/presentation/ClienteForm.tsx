@@ -44,6 +44,7 @@ export function ClienteForm({ onClose, onSuccess }: ClienteFormProps) {
           id="nombre"
           type="text"
           placeholder="Nombre del cliente"
+          aria-required="true"
           {...register('nombre')}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0e79fd]"
         />
@@ -60,6 +61,7 @@ export function ClienteForm({ onClose, onSuccess }: ClienteFormProps) {
           id="nit"
           type="text"
           placeholder="NIT o RUC del cliente"
+          aria-required="true"
           {...register('nit')}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0e79fd]"
         />
@@ -76,6 +78,7 @@ export function ClienteForm({ onClose, onSuccess }: ClienteFormProps) {
           id="telefono"
           type="text"
           placeholder="Teléfono de contacto"
+          aria-required="true"
           {...register('telefono')}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0e79fd]"
         />
@@ -92,6 +95,7 @@ export function ClienteForm({ onClose, onSuccess }: ClienteFormProps) {
           id="ciudad"
           type="text"
           placeholder="Ciudad del cliente"
+          aria-required="true"
           {...register('ciudad')}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0e79fd]"
         />

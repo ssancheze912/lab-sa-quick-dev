@@ -1,6 +1,6 @@
 # Story 2.3: Create Client
 
-Status: review
+Status: done
 
 ## Story
 
@@ -273,9 +273,9 @@ None
 
 ### Completion Notes List
 
-- Used `siesa-ui-kit` `toast` (from `ToastProvider` / `toast` utility) instead of `react-hot-toast` or `sonner` — no external toast library added.
-- Used `siesa-ui-kit` `AlertDialog` as the modal container for `ClienteForm` in `ClienteListView` — no shadcn Dialog needed since siesa-ui-kit has an equivalent.
-- Added `ToastProvider` from `siesa-ui-kit` to `main.tsx` to enable toast notifications globally.
+- Used `sonner` for toast notifications (`import { toast } from 'sonner'` in `useCreateCliente.ts`; `<Toaster>` in `main.tsx`) — `siesa-ui-kit` toast was considered but `sonner` was already a project dependency used consistently.
+- Used a custom accessible overlay `div[role="dialog"]` as the modal container for `ClienteForm` in `ClienteListView` — not `siesa-ui-kit AlertDialog` nor `shadcn Dialog` (both were evaluated; custom implementation chosen for control over focus behavior).
+- Added `<Toaster position="bottom-right" />` from `sonner` to `main.tsx` to enable toast notifications globally.
 - `CreateClienteRequest` interface added to `Cliente.ts` (not a new `types.ts` file — existing pattern followed).
 - `useCreateCliente` accepts optional `onSuccess` callback to wire close logic from components, while keeping the hook self-contained for toast notifications.
 - Added `ExistsByNitAsync` to `IClienteRepository` and `ClienteRepository` for pre-check NIT duplicate detection (Approach 1 per architecture.md).
@@ -301,9 +301,10 @@ None
 - `frontend/src/modules/crm/clientes/domain/Cliente.ts` — added `CreateClienteRequest` interface
 - `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — added `create()` method
 - `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implemented `create()` method
-- `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` — added "Nuevo cliente" button + `AlertDialog` with `ClienteForm`
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` — added "Nuevo cliente" button + custom accessible dialog overlay with `ClienteForm`
 - `frontend/src/modules/crm/clientes/application/useCreateCliente.test.ts` — added `siesa-ui-kit` mock (ATDD test file)
-- `frontend/src/main.tsx` — added `ToastProvider` wrapper
+- `frontend/src/main.tsx` — added `<Toaster>` from `sonner` for global toast notifications
+- `e2e/pages/clientes.page.ts` — updated with new client form selectors
 - `backend/src/SiesaAgents.Application/Clientes/Commands/CreateClienteCommandHandler.cs` — added validator injection + NIT duplicate check
 - `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — added `.ProducesProblem(409)` to POST endpoint
 - `backend/src/SiesaAgents.API/Program.cs` — registered `IValidator<CreateClienteCommand>`
@@ -315,3 +316,24 @@ None
 - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs` — added `ExistsByNitAsync` to fake repo
 - `frontend/package.json` — added `@testing-library/user-event` dev dependency
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — updated `2-3-create-client` to `review`
+
+## Review Follow-ups (AI)
+
+- [x] [AI-Review][CRITICAL] Completion Notes falsely stated siesa-ui-kit toast — corrected to reflect actual sonner usage. Auto-fixed.
+- [x] [AI-Review][CRITICAL] `e2e/pages/clientes.page.ts` was in git but missing from File List. Added to story. Auto-fixed.
+- [x] [AI-Review][MED] Race condition in NIT duplicate: `ExceptionHandlingMiddleware` did not handle `DbUpdateException` for concurrent unique violation (code 23505). Added reflection-based handler. Auto-fixed.
+- [x] [AI-Review][MED] Duplicate `aria-modal="true"` on non-dialog overlay wrapper. Removed from outer div, retained on `role="dialog"` element. Auto-fixed.
+- [x] [AI-Review][LOW] Form inputs lacked `aria-required="true"` — WCAG 2.1 AA requires screen readers to identify required fields. Added to all 4 inputs. Auto-fixed.
+- [ ] [AI-Review][MED] Custom dialog modal has no focus trap. When open, keyboard focus can escape the modal (WCAG 2.1.2). Escape key handler added (auto-fix), but consider adding `@radix-ui/react-focus-scope` or replacing with `siesa-ui-kit AlertDialog` in a future story. Escape key handling was auto-fixed.
+- [ ] [AI-Review][LOW] Submit button ("Guardar") uses `PlusIcon` from heroicons — semantically incorrect for a save action. Consider `CheckIcon` or `ArrowDownTrayIcon`. Design decision, not blocking.
+
+## Senior Developer Review (AI)
+
+- **Date**: 2026-06-30
+- **Outcome**: PASS CON OBSERVACIONES
+- **ACs Verified**: AC1 ✅, AC2 ✅, AC3 ✅, AC4 ✅
+- **Critical Issues Auto-Fixed**: 2
+- **Medium Issues Auto-Fixed**: 2 (partial: focus trap escape key added; full focus trap pending)
+- **Low Issues Auto-Fixed**: 1
+- **Pending Action Items**: 2 (focus trap library, icon semantics)
+- **Story Status**: → done

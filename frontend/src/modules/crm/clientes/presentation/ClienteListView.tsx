@@ -53,7 +53,7 @@ export function ClienteListView() {
       {isFormOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
-          aria-modal="true"
+          onKeyDown={(e) => { if (e.key === 'Escape') setIsFormOpen(false) }}
         >
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"

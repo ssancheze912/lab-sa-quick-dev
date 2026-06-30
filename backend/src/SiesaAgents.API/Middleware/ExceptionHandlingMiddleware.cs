@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using SiesaAgents.Domain.Clientes.Exceptions;
 
 namespace SiesaAgents.API.Middleware;
@@ -45,6 +46,19 @@ public class ExceptionHandlingMiddleware
                 detail = ex.Message
             });
         }
+        catch (DbUpdateException dbEx) when (IsUniqueConstraintViolation(dbEx))
+        {
+            // Unique constraint violation — race condition on NIT duplicate
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                type = "https://tools.ietf.org/html/rfc7807",
+                title = "Conflict.",
+                status = 409,
+                detail = "El NIT/RUC ya está registrado"
+            });
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception");
@@ -60,5 +74,16 @@ public class ExceptionHandlingMiddleware
                 detail = isDevelopment ? ex.Message : "An internal server error occurred."
             });
         }
+    }
+
+    // Detects PostgreSQL unique constraint violation (code 23505) via reflection to avoid
+    // direct Npgsql dependency in the API layer.
+    private static bool IsUniqueConstraintViolation(DbUpdateException ex)
+    {
+        var inner = ex.InnerException;
+        if (inner is null) return false;
+        var sqlStateProperty = inner.GetType().GetProperty("SqlState");
+        var sqlState = sqlStateProperty?.GetValue(inner) as string;
+        return sqlState == "23505";
     }
 }
