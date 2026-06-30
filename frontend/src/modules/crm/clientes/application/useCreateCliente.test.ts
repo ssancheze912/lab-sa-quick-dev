@@ -18,6 +18,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 import axios from 'axios'
 import type { AxiosError } from 'axios'
+import { toast } from 'sonner'
 
 // useCreateCliente does not exist yet — this import WILL FAIL (RED phase)
 import { useCreateCliente } from './useCreateCliente'
@@ -142,15 +143,11 @@ describe('useCreateCliente — AC2: Successful mutation', () => {
     // WHEN: mutation succeeds
     result.current.mutate(validPayload)
 
-    // THEN: Success toast with the correct message is shown
+    // THEN: Success toast with the correct message is shown (AC2)
+    // TEA Review auto-fix: original assertion was a no-op (only checked isError).
+    // Project uses 'sonner' for toasts (confirmed in story 2.3 completion notes).
     await waitFor(() => {
-      // Check either react-hot-toast or sonner (project uses one of them)
-      const toastCalls = vi.mocked(
-        // Try to detect which toast lib is used by checking mocks
-        (vi.mocked as unknown as { mock: { calls: unknown[] } })
-      )
-      // The toast message must appear somewhere — hook decides which lib
-      expect(result.current.isError).toBe(false)
+      expect(vi.mocked(toast.success)).toHaveBeenCalledWith('Cliente creado correctamente')
     })
   })
 
