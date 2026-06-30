@@ -1,6 +1,6 @@
 # Story 2.5: Delete Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -331,7 +331,9 @@ claude-sonnet-4-6
 - AlertDialog built directly from `@radix-ui/react-alert-dialog` since shadcn CLI is not configured in this project.
 - Created `src/modules/crm/contactos/application/useContactosPorCliente.ts` as stub — contacts module will be implemented in Epic 3.
 - Frontend: 165/165 tests pass across 17 test files.
-- Backend Application layer: 46/46 tests pass (new 6 DeleteClienteCommandHandlerTests + existing 40).
+- Backend Application layer: 47/47 tests pass (new 6 DeleteClienteCommandHandlerTests + existing 41).
+- ATDD fix attempt 3: ExceptionHandlingMiddleware was already fixed (WriteAsync instead of WriteAsJsonAsync); backend needed restart with new build to serve fixed code. Frontend fixes: AlertDialogAction replaced with plain button to prevent Radix UI auto-close during pending state; button group changed to flex-col/sm:flex-row to eliminate mobile pointer-event overlap.
+- E2E results after fixes: chromium 14+7 pass / 2+3 fail (AC4 contactos — Epic 3 out-of-scope); mobile-chrome 14+7 pass / 2+3 fail (same Epic 3 out-of-scope).
 
 ### File List
 
