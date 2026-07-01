@@ -155,6 +155,8 @@ Two unrelated console-error sources were causing `TC-E2-P1-07 — should log zer
 - `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`
 - `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
 - `backend/src/SiesaAgents.API/Program.cs`
+- `backend/tests/SiesaAgents.IntegrationTests/Repositories/ClienteRepositoryTests.cs` (Task 5: `GetByIdAsync` cases + edge cases)
+- `backend/tests/SiesaAgents.IntegrationTests/Endpoints/ClienteEndpointsTests.cs` (Task 5: `GET /api/v1/clientes/{id}` cases + edge cases)
 
 **Frontend (new)**
 - `frontend/src/modules/crm/clientes/application/hooks/useCliente.ts`
@@ -162,6 +164,8 @@ Two unrelated console-error sources were causing `TC-E2-P1-07 — should log zer
 - `frontend/src/routes/_app/clientes.$clienteId.tsx`
 - `frontend/src/routes/_app/clientes.index.tsx`
 - `frontend/src/shared/lib/suppressKnownVendorWarnings.ts` (ATDD correction)
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteDetailView.test.tsx` (Task 5, ATDD)
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteDetailView.edge-cases.test.tsx` (Task 5, testarch-automate expansion — added post-implementation, missing from this list until the code-review pass)
 
 **Frontend (modified)**
 - `frontend/src/modules/crm/clientes/domain/repositories/IClienteRepository.ts`
@@ -171,3 +175,16 @@ Two unrelated console-error sources were causing `TC-E2-P1-07 — should log zer
 - `frontend/src/routes/-navigation-shell.routing.test.tsx` (test-assertion fixes, see Completion Notes)
 - `frontend/src/main.tsx` (ATDD correction: wires `suppressKnownVendorWarnings`)
 - `frontend/src/shared/components/AppShell.tsx` (ATDD correction: `showSearchButton: false`)
+- `frontend/src/test/msw/handlers.ts` (Task 5: `GET /api/v1/clientes/:id` success + 404 handlers — missing from this list until the code-review pass)
+
+**E2E (new)**
+- `e2e/tests/clientes/client-detail-view.spec.ts` (Task 5: TC-E2-P1-06, TC-E2-P1-07)
+
+**E2E (modified)**
+- `e2e/pages/clientes.page.ts` (added detail-panel locators + `gotoDetail()` — missing from this list until the code-review pass)
+
+## Review Follow-ups (AI)
+
+- [ ] [AI-Review][High] `ClienteListView.tsx`'s `selected` derivation (`pathname.match(/^\/clientes\/(.+)$/)`) matches any literal segment under `/clientes/`, not specifically the `$clienteId` route. This will silently mis-mark a list item as selected once a sibling static route exists under `/clientes/` (e.g. Story 2.3's create-client entry point, if routed as `/clientes/nuevo`). Replace with a check scoped to the actual `$clienteId` route match (e.g. via `router.state.matches`) without reintroducing the `useParams({ strict: false })` crash in the isolated `renderWithRouter` test harness. See `_bmad-output/implementation-artifacts/review-2-2-client-detail-view.md` finding #7.
+- [ ] [AI-Review][Medium] Frontend test suite (`vitest run`) has a reproduced, order-dependent flake in `-navigation-shell.routing.test.tsx` ("AC4 - Root redirect" test), most likely caused by the shared singleton `queryClient`/MSW handler state leaking across test files. Needs a dedicated isolation fix (e.g. per-test `QueryClient` instances or stricter `beforeEach`/`afterEach` resets) rather than a one-off patch. See review finding #14.
+- [ ] [AI-Review][Medium] `ClienteDetailView` renders both the true 404 ("Cliente no encontrado") and generic 500/network errors ("No se pudo cargar el cliente") under the same `data-testid="cliente-not-found"`, which the E2E `ClientesPage.detailNotFound` locator also relies on. Add a distinct test id (e.g. `cliente-detail-error`) for the generic-error branch so future E2E/RTL assertions can distinguish "record doesn't exist" from "backend unavailable." See review finding #17.

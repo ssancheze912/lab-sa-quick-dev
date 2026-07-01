@@ -12,9 +12,14 @@ story_key: '2-2-client-detail-view'
 
 ## Initial Discovery
 
-- **Git state**: clean working tree, all Story 2.2 work already committed (commits `5b89ae5`..`814f673`).
-- **Undocumented Changes**: None. `git diff 5b89ae5^..814f673 --name-only` (30 files) matches the story's File List exactly (backend new/modified, frontend new/modified, e2e, MSW handlers, docs artifacts).
-- **Missing Files**: None.
+- **Git state**: clean working tree, all Story 2.2 work already committed (commits `29a44c0`..`814f673`, 5 commits: ATDD red, implementation, ATDD correction, automate expansion, test-review report).
+- **Undocumented Changes vs Story File List**: `git diff 29a44c0~1..814f673 --name-only` (29 files) does **not** match the story's File List exactly. The following real, substantive changes are missing from the "File List" section of the story:
+  - `e2e/pages/clientes.page.ts` — extended with detail-panel locators (`detailPanel`, `detailEmptyState`, `detailNotFound`, `detailLoading`) and a new `gotoDetail()` method. Not mentioned anywhere in the story.
+  - `frontend/src/modules/crm/clientes/presentation/components/ClienteDetailView.edge-cases.test.tsx` — new file (testarch-automate expansion, 13 tests), not in File List.
+  - `backend/tests/SiesaAgents.IntegrationTests/Endpoints/ClienteEndpointsTests.cs` and `.../Repositories/ClienteRepositoryTests.cs` — both modified with new Story 2.2 cases.
+  - `e2e/tests/clientes/client-detail-view.spec.ts` — new file, required by Task 5, absent from File List.
+  - The story's "File List" section only enumerates production app code (backend Application/Domain/Infrastructure/API + frontend hooks/components/routes) plus two ATDD-correction support files — it omits every test file across both stacks and the E2E page object. This is a MEDIUM documentation-completeness finding (see below), not a functional gap — all files exist and were reviewed.
+- **Missing Files**: None — everything referenced in Tasks/Completion Notes exists on disk.
 - **Project context file**: no `project-context.md` found in repo; review relies on `.claude/agent-memory/sa-quick-dev/company-standards.md` (loaded) and the architecture doc references cited in the story's Dev Notes.
 
 ## Review Plan
@@ -49,7 +54,7 @@ story_key: '2-2-client-detail-view'
 ### Frontend
 
 6. **Routing restructure was necessary and is correctly justified.** The dev notes document why `_app/clientes.tsx` was changed from a leaf route rendering both panels to a parent route with `<Outlet/>` plus sibling leaf routes `clientes.index.tsx` (empty state) and `clientes.$clienteId.tsx` (detail state). This is the standard TanStack Router pattern for this exact "list + swappable detail panel" layout and matches the company's file-based routing convention (`$` prefix for dynamic param). Verified working via the full test suite and E2E deep-link test.
-7. **Selection state via `useRouterState` instead of `useParams({ strict: false })` — pragmatic, but slightly fragile.** `ClienteListView.tsx:17-18` derives `clienteId` by regex-matching `pathname` (`/^\/clientes\/(.+)$/`) rather than a route-typed param accessor. This works correctly today (verified by tests) and the dev notes explain the `useParams({ strict: false })` alternative would throw in the isolated test harness — an acceptable, narrowly-scoped pragmatic choice, not a violation, but worth flagging as technical debt: a future route restructure could silently break this regex without a type error (no compile-time coupling to the route tree). Low severity — no fix applied given the "minimal complexity" mandate and passing test coverage.
+7. **[HIGH] Selection state via a hand-rolled pathname regex instead of a route-typed param accessor is a real latent regression risk, not just cosmetic debt.** `ClienteListView.tsx:18` derives the "currently selected" id via `pathname.match(/^\/clientes\/(.+)$/)?.[1]` rather than `Route.useParams()`. This regex matches **any** literal segment under `/clientes/`, not specifically the `$clienteId` dynamic route. The moment a sibling route is added under `/clientes/` with a static segment (e.g. Story 2.3 adding a `/clientes/nuevo` creation route, which this same pipeline run is about to implement next) this regex will silently capture `"nuevo"` as if it were a `clienteId` and mark a `ClientListItem` as falsely `selected` — with no compile-time signal and no test currently guarding against it. The dev's own Completion Notes document that `useParams({ strict: false })` was tried and reverted because it throws inside the isolated `renderWithRouter` harness used by Story 2.1's pre-existing list tests — a legitimate constraint, but the chosen workaround (bare regex) is broader than necessary. A safer middle ground (e.g. checking `router.state.matches` for the specific `_app/clientes/$clienteId` route id, or maintaining a small denylist of known static sibling segments) would close the gap without touching the test harness. **Not auto-fixed**: doing so risks either reintroducing the test-harness break the dev already diagnosed, or making assumptions about Story 2.3's not-yet-implemented route shape — both exceed this story's minimal-complexity mandate. Logged as a Review Follow-up for attention before/alongside Story 2.3.
 8. **`listMembership` cross-check workaround (avoiding the doomed 404 request) is unusual but well-justified and appropriately scoped.** The technique (querying the already-fetched `['clientes']` list to decide whether to even issue the by-id request) is a workaround for a genuine, well-documented browser-level constraint (Chromium logs `console.error` for any >=400 response regardless of how JS handles it), not a design smell. It's isolated to the `/clientes/:clienteId` route only (not baked into `useCliente`/`ClienteDetailView` themselves, preserving standalone testability, as the dev notes explain was a deliberate reversal of a tighter-but-more-coupled first attempt). Documented thoroughly in both `useCliente.ts` and `ClienteDetailView.tsx` inline comments. No action needed.
 9. **`console.error` monkey-patch (`suppressKnownVendorWarnings.ts`) — verified narrowly scoped, but is a global mutable side effect that deserves scrutiny.** It overrides `console.error` globally from `main.tsx`. The regex + exact prop-name check (`startIcon`/`endIcon` only) is tight and well-commented, and it's justified as unpatchable vendor behavior (confirmed via bundle inspection per the dev notes). Still, patching `console.error` app-wide is inherently risky for future maintainers (silent by design — a badly-scoped future edit to the regex could mask real errors). Acceptable for this story's scope (fixing a genuine vendor bug blocking NFR6) — flagged as a suggestion to add a unit test asserting the filter does NOT suppress unrelated `console.error` calls (currently unverified by any automated test).
 10. **Query key convention — compliant.** `useCliente` uses `['clientes', id]` (array form), matching the architecture's mandated convention.
@@ -58,20 +63,22 @@ story_key: '2-2-client-detail-view'
 
 ### Tests
 
-13. **Backend: 67/67 passing (17 unit + 50 integration)** — verified by direct `dotnet test` run in this review (story doc claims 61/61; test count grew due to the `test(story-2.2): expand automated coverage` commit after the story doc's own record was last updated — not a discrepancy, just a stale count in Completion Notes; not worth correcting given no functional impact).
-14. **Frontend: 89/89 passing** — verified by direct `vitest run` in this review (story doc claims 77/77 for the same reason as above — coverage expanded post-recording).
+13. **Backend: 67/67 passing (17 unit + 50 integration), re-verified live against a real PostgreSQL instance in this review** (`dotnet test tests/SiesaAgents.UnitTests` → 17/17; `dotnet test tests/SiesaAgents.IntegrationTests` → 50/50). Story doc's Dev Agent Record claims "61/61" — the higher live count is because the `test(story-2.2): expand automated coverage` commit added cases after that note was last written; not a discrepancy, just a stale figure with no functional impact.
+14. **[MEDIUM] Frontend: NOT reliably green — a real, reproduced order-dependent flake exists in `-navigation-shell.routing.test.tsx`.** `vitest run` (full suite, 9 files / 89 tests) was executed twice in this review: the first run failed `Navigation shell routing > AC4 - Root redirect > should redirect from "/" to "/clientes"` with `Unable to find an element by: [data-testid="clientes-view"]`; the same test passes in isolation and the full suite passed clean (89/89) on the very next run with no code changes in between. This directly contradicts the story's Dev Agent Record ("77/77 passed" — also a stale count, real total is 89). Root cause is almost certainly shared mutable state across test files — `-navigation-shell.routing.test.tsx` uses the app's real singleton `queryClient` directly (only cleared in that file's own `beforeEach`), which can race with MSW handler resets from other files when run in the same worker. This is a genuine test-suite hygiene gap (not a Story 2.2 feature defect) that undermines confidence in CI gating for this suite going forward — logged as a Review Follow-up.
 15. **E2E**: `TC-E2-P1-06` "should load and display the correct client" and "should not redirect" both depend on `apiHelper.createCliente()` → `POST /api/v1/clientes`, which is Story 2.3 scope (not yet implemented, confirmed returns `405`). Per explicit review scope instructions, this is **not** treated as a Story 2.2 defect — it is a pre-existing, documented, out-of-scope dependency gap that will resolve once Story 2.3 lands. `TC-E2-P1-07` (not-found + zero console errors) and the AC #4 empty-state E2E test do not depend on `POST` and are unaffected.
 16. **Test coverage of the AC/Task matrix is comprehensive**: success/loading/not-found/empty states unit-tested in isolation (`ClienteDetailView.test.tsx`, `ClienteDetailView.edge-cases.test.tsx`), routing-level navigation tested (`-navigation-shell.routing.test.tsx`), backend `GetByIdAsync`/endpoint tested for existing/missing/deleted/malformed-guid/empty-guid cases. No placeholder/no-op assertions found.
+17. **[MEDIUM] `ClienteDetailView` collapses two distinct failure semantics onto one `data-testid="cliente-not-found"`.** A real 404 ("Cliente no encontrado") and a generic 500/network failure ("No se pudo cargar el cliente") render under the identical test id (`ClienteDetailView.tsx:78-101`). Unit tests correctly disambiguate via text content today, but `ClientesPage.detailNotFound` in the E2E page object (`e2e/pages/clientes.page.ts:49`) selects purely by this shared test id, meaning no current E2E assertion can distinguish "record doesn't exist" (AC #3's actual contract, and the story's flagged R7 risk) from "backend is down." A distinct test id for the generic-error branch (e.g. `cliente-detail-error`) would keep these meaningfully different states separable for future E2E coverage. Logged as a Review Follow-up.
 
 ## Severity Summary
 
 | Severity | Count |
 |---|---|
 | Critical | 0 |
-| Warning | 0 |
-| Suggestion | 3 (#7 regex-based selection coupling, #9 missing negative test for console-error filter, #5 malformed-guid assertion could be more specific) |
+| High | 1 (#7 regex-based selection is a real latent regression risk ahead of Story 2.3) |
+| Medium | 3 (#14 frontend suite flake, #17 shared not-found/error test id, File List documentation gap) |
+| Low / Suggestion | 3 (#9 missing negative test for console-error filter, #5 malformed-guid assertion could be more specific, `listMembership` best-effort-not-guaranteed comment) |
 
-No auto-fixable defects were found — all three suggestions are pre-existing, low-risk, already-justified design trade-offs documented in the story's own Dev Notes, not bugs. Per the "minimal complexity" mandate, no refactor was applied; they are logged as optional follow-up items only.
+No changes were auto-applied to source code. Rationale: the HIGH finding's correct fix is constrained by a test-harness limitation the dev already diagnosed and worked around deliberately; forcing a different fix in an autonomous pass risks reintroducing that break or over-assuming Story 2.3's not-yet-built route shape. The MEDIUM test-flake is an infra/isolation issue in a shared, pre-existing test file, not a Story 2.2 regression — it deserves a dedicated, deliberate fix rather than a rushed patch during this review. The File List documentation gap **was** corrected directly (safe, zero code risk) — see below.
 
 ## Acceptance Criteria Verdict
 
@@ -102,8 +109,20 @@ No auto-fixable defects were found — all three suggestions are pre-existing, l
 - [x] Heroicons used
 - [x] Tests: xUnit + EF Core/Npgsql (backend), Vitest + RTL + MSW (frontend), Playwright (E2E) — all present and passing except the one documented out-of-scope E2E gap
 
+## Fix Outcome
+
+- **Action Taken**: Story's "File List" section corrected directly (added the 5 previously undocumented files) — see story file. All other findings converted to Review Follow-up action items in the story rather than auto-fixed, per the rationale in the Severity Summary above.
+- **Fixed Count**: 1 (File List documentation gap)
+- **Task Count**: 3 (HIGH selection-fragility regex, MEDIUM frontend suite flake, MEDIUM shared not-found/error test id)
+- **Recommended Status**: `done`
+
 ## Final Verdict
 
-**PASS**
+**PASS WITH OBSERVATIONS**
 
-Rationale: All 4 Acceptance Criteria are implemented and verified (AC2's only gap is an out-of-scope E2E dependency on Story 2.3's not-yet-built `POST` endpoint, explicitly excluded from this review's scope per instructions). Zero critical or warning-level issues found. Backend and frontend test suites pass in full (67/67 and 89/89 respectively, re-verified live in this review). Architecture, CQRS, UUID/DateTimeOffset, Scalar, Problem Details, and folder-structure conventions are all compliant. Three low-severity suggestions were logged for optional future follow-up; none block this story and none required auto-correction.
+Rationale: All 4 Acceptance Criteria are implemented and verified in code and tests (AC2's only gap is an out-of-scope E2E dependency on Story 2.3's not-yet-built `POST` endpoint, explicitly excluded from this review's scope per instructions). Zero critical issues found. Backend test suite passes in full, re-verified live against real PostgreSQL (67/67: 17 unit + 50 integration). Architecture, CQRS, UUID/DateTimeOffset, Scalar, Problem Details, and folder-structure conventions are all compliant. However, one HIGH-severity latent regression risk (regex-based selection matching, likely to break silently once Story 2.3 adds a sibling `/clientes/` route) and two MEDIUM issues (a reproduced, real frontend test flake, and a shared test id conflating two distinct failure semantics) were found and are not blocking but do require follow-up attention — logged as action items in the story rather than blocking this story's completion, consistent with the minimal-complexity principle and the story's own documented scope boundary.
+
+## Status Sync
+
+- **Story File Status**: Updated to `done`.
+- **Sprint Status YAML**: Synced — `2-2-client-detail-view: done`.
