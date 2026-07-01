@@ -22,6 +22,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SiesaAgents.API\SiesaAgents.API.csproj" />
+    <ProjectReference Include="..\..\src\SiesaAgents.Application\SiesaAgents.Application.csproj" />
+    <ProjectReference Include="..\..\src\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
     <ProjectReference Include="..\..\src\SiesaAgents.Infrastructure\SiesaAgents.Infrastructure.csproj" />
   </ItemGroup>
 

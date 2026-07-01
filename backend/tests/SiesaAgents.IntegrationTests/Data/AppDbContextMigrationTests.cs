@@ -49,20 +49,26 @@ public class AppDbContextMigrationTests
     }
 
     [Fact]
-    public async Task Database_DoesNotContainDomainTables_ClientesOrContactos()
+    public async Task Database_ContainsClientesTable_ButNotContactos()
     {
         // GIVEN a connection to siesa_agents_db
         await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
 
-        // WHEN querying information_schema.tables for domain tables out of scope for this story
+        // WHEN querying information_schema.tables for domain tables
         await using var command = new NpgsqlCommand(
-            "SELECT COUNT(*) FROM information_schema.tables WHERE table_name IN ('clientes', 'contactos');",
+            "SELECT table_name FROM information_schema.tables WHERE table_name IN ('clientes', 'contactos');",
             connection);
-        var count = (long)(await command.ExecuteScalarAsync() ?? 0L);
+        await using var reader = await command.ExecuteReaderAsync();
+        var tableNames = new List<string>();
+        while (await reader.ReadAsync())
+        {
+            tableNames.Add(reader.GetString(0));
+        }
 
-        // THEN no domain tables exist yet (clientes/contactos are out of scope until Epic 2/3)
-        Assert.Equal(0, count);
+        // THEN `clientes` exists (Story 2.1) but `contactos` does not yet (out of scope until Epic 3)
+        Assert.Contains("clientes", tableNames);
+        Assert.DoesNotContain("contactos", tableNames);
     }
 
     [Fact]

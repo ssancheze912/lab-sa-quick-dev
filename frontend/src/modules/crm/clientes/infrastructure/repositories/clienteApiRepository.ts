@@ -1,0 +1,14 @@
+import { apiClient } from '@/shared/lib/apiClient'
+import type { Cliente } from '@/modules/crm/clientes/domain/entities/Cliente'
+import type { IClienteRepository } from '@/modules/crm/clientes/domain/repositories/IClienteRepository'
+
+class ClienteApiRepository implements IClienteRepository {
+  async getAll(searchTerm?: string): Promise<Cliente[]> {
+    const { data } = await apiClient.get<Cliente[]>('/api/v1/clientes', {
+      params: searchTerm ? { q: searchTerm } : undefined,
+    })
+    return data
+  }
+}
+
+export const clienteApiRepository = new ClienteApiRepository()

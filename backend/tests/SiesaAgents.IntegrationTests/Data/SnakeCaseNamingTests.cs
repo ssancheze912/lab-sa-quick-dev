@@ -109,7 +109,7 @@ public class SnakeCaseNamingTests
     }
 
     [Fact]
-    public void AppDbContext_HasZeroDbSetProperties()
+    public void AppDbContext_HasExactlyTheClientesDbSet()
     {
         // GIVEN the compiled AppDbContext type
         var type = typeof(AppDbContext);
@@ -121,8 +121,8 @@ public class SnakeCaseNamingTests
                         p.PropertyType.GetGenericTypeDefinition().Name.StartsWith("DbSet", StringComparison.Ordinal))
             .ToList();
 
-        // THEN there are zero DbSet<T> properties (scope boundary: no domain entities in this story)
-        Assert.Empty(dbSetProperties);
+        // THEN exactly one DbSet<T> property exists: Clientes (Story 2.1 — first domain entity)
+        Assert.Single(dbSetProperties, p => p.Name == "Clientes");
     }
 
     private static int FindMatchingBrace(string source, int openBraceIndex)
