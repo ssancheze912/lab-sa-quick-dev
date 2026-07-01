@@ -1,0 +1,20 @@
+{
+  "name": "siesa-agents",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "dotnet run --project backend/src/SiesaAgents.API --launch-profile http",
+    "build:frontend": "pnpm --filter frontend build",
+    "build:backend": "dotnet build backend/SiesaAgents.sln",
+    "test:e2e": "playwright test",
+    "test:e2e:foundation": "playwright test e2e/tests/foundation",
+    "test:unit:frontend": "pnpm --filter frontend test:unit",
+    "test:integration:backend": "dotnet test backend/tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj",
+    "test:unit:backend": "dotnet test backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1"
+  }
+}

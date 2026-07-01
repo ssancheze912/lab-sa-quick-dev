@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- NU1903 comes from a transitive Microsoft.OpenApi 2.0.0 pulled by Microsoft.AspNetCore.OpenApi 10.0.9;
+         upgrading to Microsoft.OpenApi 3.x breaks the source generator. Suppress until upstream ships a fix. -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SiesaAgents.Application\SiesaAgents.Application.csproj" />
+    <ProjectReference Include="..\SiesaAgents.Infrastructure\SiesaAgents.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.16.7" />
+  </ItemGroup>
+
+</Project>

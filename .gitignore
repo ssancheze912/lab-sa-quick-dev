@@ -1,0 +1,40 @@
+# Node / pnpm
+node_modules/
+.pnpm-store/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Vite / build
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
+# .NET / build artifacts
+backend/**/bin/
+backend/**/obj/
+backend/**/*.user
+backend/**/*.suo
+backend/**/.vs/
+backend/TestResults/
+backend/**/*.nupkg
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
+# OS
+.DS_Store
+Thumbs.db

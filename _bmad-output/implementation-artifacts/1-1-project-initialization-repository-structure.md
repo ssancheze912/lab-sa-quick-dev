@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -22,51 +22,51 @@ so that the team has a working development environment with both servers running
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Initialize frontend project (AC: #1, #4)
-  - [ ] Run `pnpm create vite@latest frontend -- --template react-ts` at project root
-  - [ ] Configure `tsconfig.app.json` with `"strict": true`, `"noImplicitAny": true`, `"strictNullChecks": true`
-  - [ ] Install runtime dependencies: `pnpm add @tanstack/react-router @tanstack/react-query zustand axios react-hook-form zod @hookform/resolvers react-loading-skeleton siesa-ui-kit`
-  - [ ] Install dev dependencies: `pnpm add -D vitest @testing-library/react @testing-library/jest-dom msw @tanstack/router-plugin @tanstack/router-devtools`
-  - [ ] Install TailwindCSS v4: `pnpm add tailwindcss @tailwindcss/vite`
-  - [ ] Initialize shadcn/ui: `pnpx shadcn@latest init && pnpx shadcn@latest add dialog breadcrumb`
-  - [ ] Configure `vite.config.ts` with `@tailwindcss/vite` plugin and `@tanstack/router-plugin/vite`
-  - [ ] Create `src/app/providers/QueryProvider.tsx` wrapping `QueryClientProvider` with a configured `QueryClient`
-  - [ ] Create `src/shared/lib/queryClient.ts` exporting the singleton `QueryClient`
-  - [ ] Create `src/shared/lib/apiClient.ts` — Axios instance with `baseURL: import.meta.env.VITE_API_URL` and JSON interceptors
-  - [ ] Create `.env.development` with `VITE_API_URL=http://localhost:5000`
-  - [ ] Create `src/routes/__root.tsx` as the TanStack Router root route (shell layout placeholder)
-  - [ ] Create `src/main.tsx` wiring `RouterProvider` inside `QueryProvider`
-  - [ ] Verify `pnpm run dev` starts on port 5173 with zero TypeScript errors
+- [x] Task 1 — Initialize frontend project (AC: #1, #4)
+  - [x] Run `pnpm create vite@latest frontend -- --template react-ts` at project root
+  - [x] Configure `tsconfig.app.json` with `"strict": true`, `"noImplicitAny": true`, `"strictNullChecks": true`
+  - [x] Install runtime dependencies: `pnpm add @tanstack/react-router @tanstack/react-query zustand axios react-hook-form zod @hookform/resolvers react-loading-skeleton siesa-ui-kit`
+  - [x] Install dev dependencies: `pnpm add -D vitest @testing-library/react @testing-library/jest-dom msw @tanstack/router-plugin @tanstack/router-devtools`
+  - [x] Install TailwindCSS v4: `pnpm add tailwindcss @tailwindcss/vite`
+  - [ ] Initialize shadcn/ui: `pnpx shadcn@latest init && pnpx shadcn@latest add dialog breadcrumb` — deferred (shadcn init is interactive; will be initialized in Story 1.2 when actual components are needed)
+  - [x] Configure `vite.config.ts` with `@tailwindcss/vite` plugin and `@tanstack/router-plugin/vite`
+  - [x] Create `src/app/providers/QueryProvider.tsx` wrapping `QueryClientProvider` with a configured `QueryClient`
+  - [x] Create `src/shared/lib/queryClient.ts` exporting the singleton `QueryClient`
+  - [x] Create `src/shared/lib/apiClient.ts` — Axios instance with `baseURL: import.meta.env.VITE_API_URL` and JSON interceptors
+  - [x] Create `.env.development` with `VITE_API_URL=http://localhost:5000`
+  - [x] Create `src/routes/__root.tsx` as the TanStack Router root route (shell layout placeholder)
+  - [x] Create `src/main.tsx` wiring `RouterProvider` inside `QueryProvider`
+  - [x] Verify `pnpm run dev` starts on port 5173 with zero TypeScript errors
 
-- [ ] Task 2 — Initialize backend solution (AC: #2, #5)
-  - [ ] Create solution: `dotnet new sln -n SiesaAgents`
-  - [ ] Create API project: `dotnet new webapi -n SiesaAgents.API --no-openapi -o src/SiesaAgents.API`
-  - [ ] Create Application layer: `dotnet new classlib -n SiesaAgents.Application -o src/SiesaAgents.Application`
-  - [ ] Create Domain layer: `dotnet new classlib -n SiesaAgents.Domain -o src/SiesaAgents.Domain`
-  - [ ] Create Infrastructure layer: `dotnet new classlib -n SiesaAgents.Infrastructure -o src/SiesaAgents.Infrastructure`
-  - [ ] Create unit tests project: `dotnet new xunit -n SiesaAgents.UnitTests -o tests/SiesaAgents.UnitTests`
-  - [ ] Add all projects to solution: `dotnet sln add src/SiesaAgents.API src/SiesaAgents.Application src/SiesaAgents.Domain src/SiesaAgents.Infrastructure tests/SiesaAgents.UnitTests`
-  - [ ] Add project references: API → Application → Domain; API → Infrastructure → Domain; UnitTests → Application + Domain
-  - [ ] Add NuGet packages to API: `dotnet add src/SiesaAgents.API package Scalar.AspNetCore`
-  - [ ] Add NuGet packages to Application: `dotnet add src/SiesaAgents.Application package FluentValidation`
-  - [ ] Add NuGet packages to Infrastructure: `dotnet add src/SiesaAgents.Infrastructure package Npgsql.EntityFrameworkCore.PostgreSQL`
-  - [ ] Configure `Program.cs` with `app.MapScalarApiReference()` — NEVER `app.UseSwagger()`
-  - [ ] Remove default WeatherForecast endpoints and models from the generated API project
-  - [ ] Verify `dotnet build SiesaAgents.sln` succeeds with zero errors
-  - [ ] Verify Scalar page loads at `http://localhost:5000/scalar` after `dotnet run`
+- [x] Task 2 — Initialize backend solution (AC: #2, #5)
+  - [x] Create solution: `dotnet new sln -n SiesaAgents`
+  - [x] Create API project: `dotnet new webapi -n SiesaAgents.API --no-openapi -o src/SiesaAgents.API`
+  - [x] Create Application layer: `dotnet new classlib -n SiesaAgents.Application -o src/SiesaAgents.Application`
+  - [x] Create Domain layer: `dotnet new classlib -n SiesaAgents.Domain -o src/SiesaAgents.Domain`
+  - [x] Create Infrastructure layer: `dotnet new classlib -n SiesaAgents.Infrastructure -o src/SiesaAgents.Infrastructure`
+  - [x] Create unit tests project: `dotnet new xunit -n SiesaAgents.UnitTests -o tests/SiesaAgents.UnitTests`
+  - [x] Add all projects to solution: `dotnet sln add src/SiesaAgents.API src/SiesaAgents.Application src/SiesaAgents.Domain src/SiesaAgents.Infrastructure tests/SiesaAgents.UnitTests`
+  - [x] Add project references: API → Application → Domain; API → Infrastructure → Domain; UnitTests → Application + Domain
+  - [x] Add NuGet packages to API: `dotnet add src/SiesaAgents.API package Scalar.AspNetCore` (also added `Microsoft.AspNetCore.OpenApi` — Scalar consumes the OpenAPI metadata)
+  - [x] Add NuGet packages to Application: `dotnet add src/SiesaAgents.Application package FluentValidation`
+  - [x] Add NuGet packages to Infrastructure: `dotnet add src/SiesaAgents.Infrastructure package Npgsql.EntityFrameworkCore.PostgreSQL`
+  - [x] Configure `Program.cs` with `app.MapScalarApiReference()` — NEVER `app.UseSwagger()`
+  - [x] Remove default WeatherForecast endpoints and models from the generated API project
+  - [x] Verify `dotnet build SiesaAgents.sln` succeeds with zero errors (also zero warnings)
+  - [x] Verify Scalar page loads at `http://localhost:5000/scalar` after `dotnet run`
 
-- [ ] Task 3 — Configure CORS (AC: #3)
-  - [ ] In `Program.cs`, register CORS policy allowing origin `http://localhost:5173`
-  - [ ] Apply `app.UseCors()` before `app.MapScalarApiReference()` and endpoint mappings
-  - [ ] Verify: open browser dev tools, frontend request to backend returns no CORS errors
+- [x] Task 3 — Configure CORS (AC: #3)
+  - [x] In `Program.cs`, register CORS policy allowing origin `http://localhost:5173`
+  - [x] Apply `app.UseCors()` before `app.MapScalarApiReference()` and endpoint mappings
+  - [x] Verify: preflight OPTIONS request returns `Access-Control-Allow-Origin: http://localhost:5173`
 
-- [ ] Task 4 — Add `ExceptionHandlingMiddleware` stub (AC: implicit for Story 1.3 prep)
-  - [ ] Create `src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` catching all exceptions and returning Problem Details RFC 7807 format
-  - [ ] Register middleware in `Program.cs` before routing: `app.UseMiddleware<ExceptionHandlingMiddleware>()`
+- [x] Task 4 — Add `ExceptionHandlingMiddleware` stub (AC: implicit for Story 1.3 prep)
+  - [x] Create `src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` catching all exceptions and returning Problem Details RFC 7807 format
+  - [x] Register middleware in `Program.cs` before routing: `app.UseMiddleware<ExceptionHandlingMiddleware>()`
 
-- [ ] Task 5 — Configure `appsettings.Development.json`
-  - [ ] Add placeholder `ConnectionStrings:DefaultConnection` pointing to `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres`
-  - [ ] Add `AllowedOrigins` array with `http://localhost:5173` for CORS config to read from
+- [x] Task 5 — Configure `appsettings.Development.json`
+  - [x] Add placeholder `ConnectionStrings:DefaultConnection` pointing to `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres`
+  - [x] Add `AllowedOrigins` array with `http://localhost:5173` for CORS config to read from
 
 ## Dev Notes
 
@@ -178,10 +178,67 @@ siesa-agents/
 
 ### Agent Model Used
 
-claude-sonnet-4-6
+claude-opus-4-7
 
 ### Debug Log References
 
+- Frontend TypeScript strict compile: `cd frontend && pnpm exec tsc --noEmit -p tsconfig.app.json` → exit 0
+- Backend build: `cd backend && dotnet build SiesaAgents.sln` → `Build succeeded. 0 Warning(s). 0 Error(s).`
+- Backend runtime: `dotnet run --launch-profile http` → listening on `http://localhost:5000`; `GET /scalar` returns 302 → `/scalar/` (200) with the Siesa Agents API doc page
+- CORS preflight: `curl -i -H "Origin: http://localhost:5173" -X OPTIONS -H "Access-Control-Request-Method: GET" http://localhost:5000/scalar` → `Access-Control-Allow-Origin: http://localhost:5173`
+- ATDD (Playwright chromium): `pnpm exec playwright test e2e/tests/foundation/project-initialization.spec.ts --project=chromium` → 7 passed (0 failed)
+
 ### Completion Notes List
 
+- **All 7 ATDD tests pass** covering AC1 (frontend serves on 5173 with no TS/runtime errors, `data-testid="app-root"` present), AC3 (CORS from 5173 → 5000 clean, no browser CORS errors), and AC4 (no Vite TS error overlay).
+- **AC2** (Scalar loads at `/scalar`) verified manually via curl (200 after redirect). Scalar consumes OpenAPI metadata from `Microsoft.AspNetCore.OpenApi` — this package was added in addition to `Scalar.AspNetCore` since Scalar needs the OpenAPI JSON produced by `AddOpenApi()`/`MapOpenApi()`.
+- **AC5** (`dotnet build SiesaAgents.sln`): Build succeeded — 0 warnings, 0 errors.
+- **Note on NU1903:** The `Microsoft.AspNetCore.OpenApi 10.0.9` template pulls a transitive `Microsoft.OpenApi 2.0.0` that triggers NU1903 (high-severity advisory GHSA-v5pm-xwqc-g5wc). Bumping to `Microsoft.OpenApi 3.x` directly breaks the source generator (`IOpenApiMediaType.Example` becomes read-only). The pragmatic fix is `<NoWarn>$(NoWarn);NU1903</NoWarn>` in `SiesaAgents.API.csproj` with a TODO comment. Revisit when `Microsoft.AspNetCore.OpenApi` ships against `Microsoft.OpenApi 3.x`.
+- **Note on .sln vs .slnx:** .NET 10 SDK defaults to the new `.slnx` format when running `dotnet new sln`. The AC explicitly says `SiesaAgents.sln`, so the solution was recreated with `--format sln` to produce the classic `.sln` file that the AC references.
+- **Note on shadcn/ui init deferred:** `pnpx shadcn@latest init` is interactive (prompts for style, base color, etc.) and cannot run in this non-interactive session. It will be initialized in Story 1.2 when the navigation shell is built and actual shadcn components (`dialog`, `breadcrumb`) are consumed by real UI.
+- **Playwright:** Playwright pinned to `1.55.1` to match the browser binaries available in this environment. Two symlinks (`chromium-1193 → chromium-1194`, `chromium_headless_shell-1193 → chromium_headless_shell-1194`) were added to `/opt/pw-browsers/` for local test execution — this is a session-only workaround and not part of the app code.
+- **pnpm workspace:** Created root `package.json` and `pnpm-workspace.yaml` referencing `frontend/`. This enables the `pnpm --filter frontend dev` command that Playwright's `webServer` config expects.
+
 ### File List
+
+**Repository root**
+- `package.json` (new) — pnpm workspace root with dev/build/test scripts
+- `pnpm-workspace.yaml` (new) — workspace declaring `frontend/` as a package
+- `pnpm-lock.yaml` (generated)
+
+**Frontend (`frontend/`)** — all new via `pnpm create vite@latest`:
+- `frontend/package.json`
+- `frontend/tsconfig.app.json` — strict mode + noImplicitAny + strictNullChecks + `@/*` path alias
+- `frontend/tsconfig.json`
+- `frontend/tsconfig.node.json`
+- `frontend/vite.config.ts` — TanStack Router plugin, Tailwind v4 plugin, React plugin, port 5173 strict
+- `frontend/vitest.config.ts` — Vitest configuration; environment is `node` for Story 1.1, must switch to `jsdom` in Story 1.2 when React component tests appear
+- `frontend/.oxlintrc.json` — oxlint config for React + TypeScript rules
+- `frontend/index.html` — `data-testid="app-root"` on `#root`; title "Siesa Agents"; lang="es"
+- `frontend/.env.development` — `VITE_API_URL=http://localhost:5000`
+- `frontend/src/main.tsx` — RouterProvider inside QueryProvider inside StrictMode
+- `frontend/src/index.css` — `@import "tailwindcss"` + minimal reset
+- `frontend/src/routes/__root.tsx` — TanStack Router root layout
+- `frontend/src/routes/index.tsx` — placeholder home route ("Siesa Agents" heading)
+- `frontend/src/routeTree.gen.ts` (auto-generated by the router plugin)
+- `frontend/src/shared/lib/queryClient.ts` — singleton QueryClient with 60s staleTime
+- `frontend/src/shared/lib/apiClient.ts` — Axios instance reading `VITE_API_URL`
+- `frontend/src/app/providers/QueryProvider.tsx` — QueryClientProvider wrapper
+- Empty scaffolded folders: `src/modules/`, `src/shared/{components/ui,hooks,types,constants}/`, `src/app/{store,config}/`, `src/infrastructure/{api,storage}/`
+
+**Backend (`backend/`)** — new .NET 10 solution:
+- `backend/SiesaAgents.sln`
+- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` (Microsoft.AspNetCore.OpenApi, Scalar.AspNetCore, NoWarn NU1903)
+- `backend/src/SiesaAgents.API/Program.cs` — Scalar + CORS + ExceptionHandlingMiddleware + `/` → `/scalar` redirect
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — RFC 7807 Problem Details
+- `backend/src/SiesaAgents.API/Endpoints/` (empty placeholder)
+- `backend/src/SiesaAgents.API/appsettings.json`
+- `backend/src/SiesaAgents.API/appsettings.Development.json` — ConnectionStrings:DefaultConnection + AllowedOrigins
+- `backend/src/SiesaAgents.API/Properties/launchSettings.json` — HTTP profile on port 5000
+- `backend/src/SiesaAgents.Application/SiesaAgents.Application.csproj` (FluentValidation)
+- Empty scaffolded folders: `Application/{Commands,Queries,DTOs,Validators,Interfaces}/`
+- `backend/src/SiesaAgents.Domain/SiesaAgents.Domain.csproj`
+- Empty scaffolded folders: `Domain/{Entities,ValueObjects,Aggregates,Events,Services}/`
+- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` (Npgsql.EntityFrameworkCore.PostgreSQL)
+- Empty scaffolded folders: `Infrastructure/{Data,Data/Configurations,Data/Migrations,Repositories,Services}/`
+- `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` (xUnit; references Application + Domain)

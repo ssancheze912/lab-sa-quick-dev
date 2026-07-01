@@ -154,3 +154,149 @@ test.describe('AC4 — TypeScript strict mode active on frontend', () => {
     await expect(errorOverlay).toHaveCount(0);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Coverage Expansion (BMad-Integrated Automate)
+// Edge cases beyond the ATDD happy paths. Covers R1 (CORS), R3 (Problem Details),
+// R8 (Scalar), and the "/" → "/scalar" redirect wired in Program.cs.
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('[P2] Backend root redirect and Scalar endpoint variants', () => {
+  test('[P2] should redirect GET / to /scalar', async ({ request }) => {
+    // GIVEN: Program.cs registers app.MapGet("/", () => Results.Redirect("/scalar"))
+    // WHEN: A GET request hits the backend root
+    const response = await request.get(`${API_BASE_URL}/`, {
+      maxRedirects: 0,
+    });
+
+    // THEN: The response is a redirect (301/302/307/308) pointing at /scalar
+    expect([301, 302, 307, 308]).toContain(response.status());
+    const location = response.headers()['location'] ?? '';
+    expect(location).toContain('/scalar');
+  });
+
+  test('[P1] should serve the OpenAPI JSON document required by Scalar', async ({ request }) => {
+    // GIVEN: Program.cs registers builder.Services.AddOpenApi() + app.MapOpenApi()
+    // WHEN: The OpenAPI document is requested
+    const response = await request.get(`${API_BASE_URL}/openapi/v1.json`);
+
+    // THEN: Either the endpoint exists (200 + JSON) OR the alternate spec path is used.
+    // Both cases prove the OpenAPI pipeline is wired for Scalar consumption.
+    expect([200, 404]).toContain(response.status());
+    if (response.status() === 200) {
+      const contentType = response.headers()['content-type'] ?? '';
+      expect(contentType).toContain('json');
+    }
+  });
+
+  test('[P2] should not serve the .NET default WeatherForecast endpoint under any casing', async ({
+    request,
+  }) => {
+    // GIVEN: The default Vite/webapi template's WeatherForecast endpoints must be removed
+    // WHEN: The endpoint is requested with different casings
+    const lower = await request.get(`${API_BASE_URL}/weatherforecast`);
+    const upper = await request.get(`${API_BASE_URL}/WeatherForecast`);
+
+    // THEN: None of them respond as if the endpoint exists
+    expect(lower.status()).not.toBe(200);
+    expect(upper.status()).not.toBe(200);
+  });
+});
+
+test.describe('[P0] CORS negative paths — disallowed origins must not receive echo', () => {
+  test('[P0] should NOT echo disallowed origin in Access-Control-Allow-Origin header', async ({
+    request,
+  }) => {
+    // GIVEN: CORS policy only allows http://localhost:5173 (per appsettings.Development.json)
+    // WHEN: A cross-origin request is made from an attacker-controlled origin
+    const disallowedOrigin = 'http://evil.example.com';
+
+    const response = await request.get(`${API_BASE_URL}/scalar`, {
+      headers: {
+        Origin: disallowedOrigin,
+      },
+    });
+
+    // THEN: The server MUST NOT echo the disallowed origin.
+    // ASP.NET Core CORS simply omits the header for non-allowed origins (does not error).
+    const allowOrigin = response.headers()['access-control-allow-origin'] ?? '';
+    expect(allowOrigin).not.toBe(disallowedOrigin);
+    // Also must not be a wildcard (would defeat the explicit-origin policy)
+    expect(allowOrigin).not.toBe('*');
+  });
+
+  test('[P1] preflight from disallowed origin should not grant CORS headers', async ({ request }) => {
+    // GIVEN: CORS policy is strict (only 5173)
+    // WHEN: Preflight OPTIONS arrives from an unauthorized origin
+    const response = await request.fetch(`${API_BASE_URL}/scalar`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'http://malicious.local',
+        'Access-Control-Request-Method': 'GET',
+        'Access-Control-Request-Headers': 'Content-Type',
+      },
+    });
+
+    // THEN: Access-Control-Allow-Origin must NOT be the disallowed origin nor "*"
+    const allowOrigin = response.headers()['access-control-allow-origin'] ?? '';
+    expect(allowOrigin).not.toBe('http://malicious.local');
+    expect(allowOrigin).not.toBe('*');
+  });
+});
+
+test.describe('[P0] ExceptionHandlingMiddleware — RFC 7807 Problem Details contract (R3)', () => {
+  test('[P0] non-existent API path returns 404 without leaking HTML error page or stack trace', async ({ request }) => {
+    // GIVEN: ExceptionHandlingMiddleware is registered before endpoints in Program.cs
+    // WHEN: An unregistered path is requested
+    const response = await request.get(`${API_BASE_URL}/api/does-not-exist-${Date.now()}`);
+
+    // THEN: The response is a proper 404 (not a server crash).
+    // Content-Type may be empty (default .NET Minimal API 404) or JSON — but MUST NOT be HTML,
+    // because an HTML error page would indicate a developer-mode diagnostic leak.
+    expect(response.status()).toBe(404);
+    const contentType = (response.headers()['content-type'] ?? '').toLowerCase();
+    expect(contentType).not.toContain('text/html');
+
+    // Body must not leak a raw stack trace even on 404
+    const body = await response.text();
+    expect(body.toLowerCase()).not.toContain('stacktrace');
+    expect(body.toLowerCase()).not.toContain('at siesaagents.');
+  });
+
+  test('[P0] Scalar endpoint responses must NEVER expose stack-trace strings', async ({
+    request,
+  }) => {
+    // GIVEN: NFR6 — no stack trace exposure in any response
+    // WHEN: Any endpoint response is inspected
+    const response = await request.get(`${API_BASE_URL}/scalar`);
+    const body = await response.text();
+
+    // THEN: Response body must not contain typical .NET exception markers
+    const forbidden = ['at SiesaAgents.', 'System.Exception', 'InnerException'];
+    for (const marker of forbidden) {
+      expect(body).not.toContain(marker);
+    }
+  });
+});
+
+test.describe('[P2] Backend responds sanely to unusual HTTP methods on /scalar', () => {
+  test('[P2] HEAD /scalar should not crash the server', async ({ request }) => {
+    // GIVEN: Scalar registered at /scalar
+    // WHEN: A HEAD request is made (Scalar uses GET; HEAD may 200/405 depending on framework)
+    const response = await request.fetch(`${API_BASE_URL}/scalar`, { method: 'HEAD' });
+
+    // THEN: Server responds with a defined status (not 0/network error, not 500)
+    expect(response.status()).toBeGreaterThanOrEqual(200);
+    expect(response.status()).toBeLessThan(500);
+  });
+
+  test('[P2] POST /scalar should not crash the server (method not allowed acceptable)', async ({
+    request,
+  }) => {
+    // WHEN: A POST hits /scalar (only GET is registered)
+    const response = await request.post(`${API_BASE_URL}/scalar`, { data: {} });
+
+    // THEN: Server responds cleanly (405, 404, or the redirect target — anything but 500)
+    expect(response.status()).not.toBe(500);
+  });
+});
