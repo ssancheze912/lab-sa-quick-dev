@@ -9,6 +9,7 @@ frontend/.vite/
 
 # Playwright
 playwright-report/
+playwright-results/
 test-results/
 blob-report/
 playwright/.cache/
