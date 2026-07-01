@@ -6,6 +6,7 @@ dist/
 # Vite / Frontend
 frontend/dist/
 frontend/.vite/
+frontend/.tanstack/
 
 # Playwright
 playwright-report/

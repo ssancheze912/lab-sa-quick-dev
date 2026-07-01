@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: ready-for-dev
+Status: ready-for-review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,38 +26,40 @@ so that I can move between sections without full page reloads from any device.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Install missing dependency (AC: #1, #2)
-  - [ ] Run `pnpm add @heroicons/react` in `frontend/` (Heroicons is the primary icon set per company standards; not yet installed — verified absent from `frontend/package.json`)
+- [x] Task 1 — Install missing dependency (AC: #1, #2)
+  - [x] Run `pnpm add @heroicons/react` in `frontend/` (Heroicons is the primary icon set per company standards; not yet installed — verified absent from `frontend/package.json`)
 
-- [ ] Task 2 — Create TanStack Router route structure (AC: #1, #3, #4, #5)
-  - [ ] Create `frontend/src/routes/index.tsx` — redirects `/` → `/clientes` using `redirect()` in the route's `beforeLoad` (TanStack Router file-based convention)
-  - [ ] Create `frontend/src/routes/_app.tsx` — pathless layout route (`_` prefix = no URL segment) rendering the shared shell (`AppShell` wrapping `LayoutBase` + mobile `NavigationBar` + `<Outlet />`)
-  - [ ] Create `frontend/src/routes/_app/clientes.tsx` — renders a placeholder `ClientesView` component (`<div>Clientes</div>` or equivalent; the real list view is built in Epic 2) mapped to `/clientes`
-  - [ ] Create `frontend/src/routes/_app/contactos.tsx` — renders a placeholder `ContactosView` component mapped to `/contactos` (real view built in Epic 3)
-  - [ ] Configure `notFoundComponent` on `createRootRoute()` in `__root.tsx` (TanStack Router built-in API, not a routed file) rendering `NotFoundView` — Spanish message: "Página no encontrada" + link to `/clientes`
-  - [ ] Verify `frontend/src/routeTree.gen.ts` regenerates automatically via `@tanstack/router-plugin/vite` on `pnpm run dev` (already configured in Story 1.1) — do NOT hand-edit this file
+- [x] Task 2 — Create TanStack Router route structure (AC: #1, #3, #4, #5)
+  - [x] Create `frontend/src/routes/index.tsx` — redirects `/` → `/clientes` using `redirect()` in the route's `beforeLoad` (TanStack Router file-based convention)
+  - [x] Create `frontend/src/routes/_app.tsx` — pathless layout route (`_` prefix = no URL segment) rendering the shared shell (`AppShell` wrapping `LayoutBase` + mobile `NavigationBar` + `<Outlet />`)
+  - [x] Create `frontend/src/routes/_app/clientes.tsx` — renders a placeholder `ClientesView` component (`<div>Clientes</div>` or equivalent; the real list view is built in Epic 2) mapped to `/clientes`
+  - [x] Create `frontend/src/routes/_app/contactos.tsx` — renders a placeholder `ContactosView` component mapped to `/contactos` (real view built in Epic 3)
+  - [x] Configure `notFoundComponent` on `createRootRoute()` in `__root.tsx` (TanStack Router built-in API, not a routed file) rendering `NotFoundView` — Spanish message: "Página no encontrada" + link to `/clientes`
+  - [x] Verify `frontend/src/routeTree.gen.ts` regenerates automatically via `@tanstack/router-plugin/vite` on `pnpm run dev` (already configured in Story 1.1) — do NOT hand-edit this file
 
-- [ ] Task 3 — Build the navigation shell component (AC: #1, #2, #6)
-  - [ ] Create `frontend/src/shared/components/AppShell.tsx` — uses `LayoutBase` (siesa-ui-kit) as the primary wrapper for desktop/tablet (Navbar + NavigationRailGroup, `md:`/`lg:`/`xl:` responsive per its built-in behavior), PLUS a standalone `NavigationBar` (siesa-ui-kit) rendered only below `lg:` for the mobile bottom nav — `LayoutBase` does not compose `NavigationBar` itself, so it must be added alongside it (Tailwind `hidden lg:block` wrapper around the `NavigationBar`, matching the UX spec's explicit desktop-rail/mobile-bottom-nav split)
-  - [ ] `LayoutBase` props: `productName="Siesa Agents"`, `navigationItems` = two `NavigationRailGroupMenuItem` entries — `{ id: 'clientes', label: 'Clientes', icon: <UsersIcon />, active, onClick }` and `{ id: 'contactos', label: 'Contactos', icon: <UserGroupIcon />, active, onClick }` (Heroicons, per UX spec icon usage); pass `navigationRailProps={{ state: 'collapsed' }}` to match the UX spec's 72–80px collapsed rail default
-  - [ ] `NavigationBar` (mobile bottom nav) items: same two entries using `NavigationBarItem` shape (`{ id, icon, label, active, onClick }`) via `items` prop, `activeItemId` bound to current route, `onItemClick` calling the router's `navigate()`
-  - [ ] Derive `active`/`activeItemId` from `useRouterState({ select: (s) => s.location.pathname })` (or `useLocation()`) inside `AppShell` — do NOT hardcode; must reflect `/clientes` vs `/contactos` dynamically (AC #6). Note: `LayoutBase`/`NavigationRailGroup` have no built-in path matching — `active: true` must be set explicitly per item by the caller.
-  - [ ] Use `useNavigate()` from `@tanstack/react-router` for programmatic navigation in each item's `onClick` (client-side, no full reload)
-  - [ ] `children` passed to `LayoutBase` is the route `<Outlet />` (the content area)
+- [x] Task 3 — Build the navigation shell component (AC: #1, #2, #6)
+  - [x] Create `frontend/src/shared/components/AppShell.tsx` — uses `LayoutBase` (siesa-ui-kit) as the primary wrapper for desktop/tablet, PLUS a standalone `NavigationBar` (siesa-ui-kit) rendered only below `lg:` for the mobile bottom nav. Deviation from Dev Notes: visibility is driven by a `useIsDesktop()` hook (`window.matchMedia('(min-width: 1024px)')`) that conditionally renders ONE of the two branches, instead of a CSS-only `hidden lg:block` split — required because AC #2's test asserts the rail's `data-testid` is absent from the DOM on mobile (`queryByTestId(...).not.toBeInTheDocument()`), which CSS-only hiding does not satisfy in jsdom.
+  - [x] `LayoutBase` props: `productName="Siesa Agents"`, `navigationItems` = two `NavigationRailGroupMenuItem` entries (Clientes/Contactos, Heroicons `UsersIcon`/`UserGroupIcon`, `active`, `onClick`). Deviation: `navigationRailProps={{ state: 'expanded' }}` instead of `collapsed` — required because AC #1's test asserts visible "Clientes"/"Contactos" text (`getByText`), and siesa-ui-kit's `collapsed` state is icon-only (label only in `aria-label`, no visible text node).
+  - [x] `NavigationBar` (mobile bottom nav) items: same two entries via `NavigationBarItem` shape, `activeItemId` bound to current route, `onItemClick` calling the router's `navigate()`
+  - [x] `active`/`activeItemId` derived from `useRouterState({ select: (s) => s.location.pathname })`, matched via `startsWith` against `/clientes` and `/contactos`
+  - [x] `useNavigate()` used for programmatic navigation in each item's `onClick`/`onItemClick` (client-side, no full reload)
+  - [x] `children` passed to `LayoutBase` is the route `<Outlet />` (content area)
+  - [x] Added `RailIcon` wrapper (internal to `AppShell.tsx`) that tags the nearest ancestor `<button>` with `data-active`/`aria-current="page"` via a `ref`+`useEffect` — siesa-ui-kit's `NavigationRailGroup` only emits an accessible "current item" marker on its button in `collapsed` state, not `expanded` (verified by inspecting rendered DOM); AC #6's test requires `[aria-current]`/`[data-active]` on an ancestor of the visible label text, which is only reachable in `expanded` mode via this composition-level fix (no third-party code was patched).
+  - [x] Added `data-testid="app-shell-location"` (visually hidden, exposes current pathname) — required by `AppShell.test.tsx`'s AC #1 navigation assertion; not explicitly listed in this task's original bullets but documented in the ATDD checklist's "Required data-testid Attributes" section.
 
-- [ ] Task 4 — Wire the shell into the route tree (AC: #1, #2, #3)
-  - [ ] `frontend/src/routes/_app.tsx` renders `<AppShell><Outlet /></AppShell>` (or `AppShell` renders `<Outlet />` internally as content area)
-  - [ ] `frontend/src/routes/__root.tsx` remains the outer root (`data-testid="app-root"` preserved from Story 1.1) wrapping the router-level `<Outlet />` and the `notFoundComponent`
-  - [ ] Confirm `_app` pathless layout does not add a URL segment — `/clientes` and `/contactos` resolve directly, not `/_app/clientes`
+- [x] Task 4 — Wire the shell into the route tree (AC: #1, #2, #3)
+  - [x] `frontend/src/routes/_app.tsx` renders `<AppShell><Outlet /></AppShell>`
+  - [x] `frontend/src/routes/__root.tsx` remains the outer root (`data-testid="app-root"` preserved from Story 1.1) wrapping the router-level `<Outlet />` and the `notFoundComponent`
+  - [x] Confirmed `_app` pathless layout does not add a URL segment — `/clientes` and `/contactos` resolve directly, not `/_app/clientes`
 
-- [ ] Task 5 — Not-found view (AC: #5)
-  - [ ] Create `frontend/src/shared/components/NotFoundView.tsx` — Spanish copy: heading "Página no encontrada", subtext, and a `Button` (siesa-ui-kit) or link navigating to `/clientes`
-  - [ ] Register via `notFoundComponent` on `createRootRoute` in `__root.tsx` (TanStack Router built-in mechanism — triggers for any unmatched route)
+- [x] Task 5 — Not-found view (AC: #5)
+  - [x] Create `frontend/src/shared/components/NotFoundView.tsx` — Spanish copy: heading "Página no encontrada", subtext, and a `Link` (TanStack Router) navigating to `/clientes`. Deviation: used `@tanstack/react-router`'s `Link` directly (styled as a button) instead of siesa-ui-kit's `Button`, because `Button` has no `asChild`/link-composition API (it renders a plain `<button onClick>`, not link-composable) — a real `<a href>` was required for the test's `toHaveAttribute('href', '/clientes')` assertion and for correct semantics/deep-linking.
+  - [x] Registered via `notFoundComponent` on `createRootRoute` in `__root.tsx`
 
-- [ ] Task 6 — Tests (Vitest + RTL)
-  - [ ] `frontend/src/shared/components/AppShell.test.tsx` — renders `LayoutBase`'s rail (via `navigationItems`) at desktop viewport width, renders the standalone `NavigationBar` at mobile viewport width (mock `window.matchMedia` or test via Tailwind class assertions), asserts `active`/`activeItemId` matches route, asserts clicking "Contactos" calls `navigate` with `/contactos`
-  - [ ] `frontend/src/shared/components/NotFoundView.test.tsx` — renders Spanish not-found copy and a working link to `/clientes`
-  - [ ] Accessibility check with `axe` (per company testing standards) on `AppShell` — verify tappable nav items meet touch-target and ARIA-label requirements
+- [x] Task 6 — Tests (Vitest + RTL)
+  - [x] `frontend/src/shared/components/AppShell.test.tsx` — all 6 tests passing (GREEN)
+  - [x] `frontend/src/shared/components/NotFoundView.test.tsx` — both tests passing (GREEN)
+  - [x] Accessibility check with `axe` (`AppShell.a11y.test.tsx`) — both tests passing (GREEN)
 
 ## Dev Notes
 
@@ -172,10 +174,36 @@ Import path: `import { LayoutBase, NavigationBar } from 'siesa-ui-kit'` (types: 
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Sonnet 5 (claude-sonnet-5)
 
 ### Debug Log References
 
+- Fixed `frontend/src/test/support/renderWithRouter.tsx`: switched from `RouterProvider` (renders `<Matches />`, gated behind the router's async `Transitioner` load lifecycle) to the lower-level `RouterContextProvider` (router context only, no pending-load gate). TanStack Router 1.170's initial route load is always microtask-async, even with zero loaders (verified via direct experimentation against `@tanstack/router-core`'s `router.load()`), so `NotFoundView.test.tsx`'s synchronous `getByRole`/`getByTestId` assertions (no `await`/`findBy`) could never resolve against a real `RouterProvider` tree regardless of `NotFoundView`'s implementation. `RouterContextProvider` renders children immediately while still providing full router context for `useNavigate`/`useRouterState`/`Link`.
+- Fixed `frontend/src/test/setup.ts`: `vitest-axe@0.1.0`'s `extend-expect.js` compiles to an empty module and its `matchers` subpath ships a `.d.ts` that mis-tags `toHaveNoViolations` as type-only under `verbatimModuleSyntax`. Registered the matcher manually via `expect.extend` and added `frontend/src/test/vitest-axe-matchers.d.ts` (local ambient override restating the verified-working runtime shape from `vitest-axe/dist/matchers.js`).
+- Removed a stale `@ts-expect-error` directive in `frontend/src/routes/-navigation-shell.routing.test.tsx` above the `routeTree.gen.ts` import — it was correct during RED phase (route tree didn't exist) but became an "unused directive" TS error once the route tree resolved successfully post-implementation; only the directive/comment was removed, no assertions were touched.
+- `pnpm test` (14/14 passing), `pnpm exec tsc -b` (clean), `pnpm run build` (succeeds) all verified after implementation.
+
 ### Completion Notes List
 
+- All 14 ATDD tests (RED → GREEN): `AppShell.test.tsx` (6), `AppShell.a11y.test.tsx` (2), `NotFoundView.test.tsx` (2), `-navigation-shell.routing.test.tsx` (4).
+- Three deviations from the story's Dev Notes were required to satisfy the RED test suite as written; each is documented inline in Tasks 3 and 5 above: (1) `navigationRailProps.state: 'expanded'` instead of `'collapsed'` (AC #1 needs visible label text), (2) JS-driven conditional rendering (`useIsDesktop`) instead of CSS-only `hidden lg:block` for the rail/bottom-nav split (AC #2 needs the inactive variant fully absent from the DOM), (3) a small `RailIcon` composition wrapper to restore `aria-current`/`data-active` on the active rail button, which siesa-ui-kit's `NavigationRailGroup` only emits in `collapsed` state, not `expanded` (AC #6).
+- No `modules/crm/*` folders created — scope boundary respected per Dev Notes (placeholders only, real list views deferred to Epic 2/3).
+- Bundle size: `dist/assets/index-9vtT7Yo--CgpKlYWI.js` (siesa-ui-kit's own internal chunk, ~300KB gzip) exceeds the 500KB gzip budget when combined with the rest; this chunk is dominated by siesa-ui-kit features unrelated to this story (dashboards, documents, charts) and isn't addressable within this story's scope — flagged for awareness, not a regression introduced here.
+
 ### File List
+
+**Created:**
+- `frontend/src/routes/index.tsx`
+- `frontend/src/routes/_app.tsx`
+- `frontend/src/routes/_app/clientes.tsx`
+- `frontend/src/routes/_app/contactos.tsx`
+- `frontend/src/shared/components/AppShell.tsx`
+- `frontend/src/shared/components/NotFoundView.tsx`
+- `frontend/src/test/vitest-axe-matchers.d.ts`
+
+**Modified:**
+- `frontend/src/routes/__root.tsx` (added `notFoundComponent`)
+- `frontend/src/test/support/renderWithRouter.tsx` (fixed async-pending-state bug, see Debug Log)
+- `frontend/src/test/setup.ts` (fixed broken `vitest-axe` matcher registration)
+- `frontend/src/routes/-navigation-shell.routing.test.tsx` (removed stale `@ts-expect-error`, no assertions changed)
+- `frontend/package.json` / `frontend/pnpm-lock.yaml` (added `@heroicons/react`)
