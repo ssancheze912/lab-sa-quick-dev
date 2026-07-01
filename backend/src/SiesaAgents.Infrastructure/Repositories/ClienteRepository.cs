@@ -36,13 +36,25 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
 
     public async Task<ClienteEntity?> UpdateAsync(ClienteEntity cliente, CancellationToken ct)
     {
-        var tracked = await dbContext.Clientes.FirstOrDefaultAsync(c => c.Id == cliente.Id, ct);
-        if (tracked is null)
+        var exists = await dbContext.Clientes.AnyAsync(c => c.Id == cliente.Id, ct);
+        if (!exists)
         {
             return null;
         }
 
+        // `cliente` arrives already mutated (via ClienteEntity.Update) and, in
+        // the current call path, already tracked by this same scoped
+        // DbContext (loaded upstream via GetByIdAsync) — EF Core's identity
+        // map means SaveChangesAsync persists its pending changes directly.
+        // Marking it explicitly as Modified makes that dependency explicit
+        // instead of relying on a second identity-map lookup, so this method
+        // also behaves correctly if ever called with a `cliente` that is not
+        // already tracked (e.g. reconstructed from a DTO in a future caller).
+        dbContext.Entry(cliente).State = dbContext.Entry(cliente).State == EntityState.Detached
+            ? EntityState.Modified
+            : dbContext.Entry(cliente).State;
+
         await dbContext.SaveChangesAsync(ct);
-        return tracked;
+        return cliente;
     }
 }

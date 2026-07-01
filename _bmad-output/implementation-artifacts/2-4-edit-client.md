@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -183,3 +183,29 @@ Claude Sonnet 5 (sa-dev-story sub-agent, BMAD dev-story workflow)
 - `frontend/src/modules/crm/clientes/application/hooks/useUpdateCliente.test.tsx`
 - `frontend/src/test/msw/handlers.ts`
 - `e2e/tests/clientes/edit-client.spec.ts`
+
+## Code Review Report
+
+### Reviewer
+Sonnet 5 (sa-code-review sub-agent, BMAD code-review workflow) — 2026-07-01
+
+### Verification performed
+- Full backend suite executed against local PostgreSQL: 54/54 unit + 88/88 integration tests passed (numbers include prior-story regression tests; no failures, no skips).
+- Full frontend suite executed: 159/159 Vitest+RTL tests passed across 14 files.
+- `tsc --noEmit`: zero type errors. `dotnet build`: zero warnings/errors (excluding pre-existing `NU1903` advisory unrelated to this story). `oxlint`: only pre-existing TanStack Router fast-refresh warnings, none introduced by this story.
+- Manually traced all 7 ACs against implementation and test coverage (component, integration, and E2E levels) — all covered, including self-exclusion (AC #7), 409 conflict with data-preservation (AC #5), and zero-network-call Cancelar (AC #6).
+- Verified company-standards compliance: UUID PK (`Guid`), `DateTimeOffset` for `UpdatedAt`, FluentValidation on the `PUT` endpoint (Minimal API, no auto-validation), CQRS command/handler split, manual DTO mapping (no AutoMapper, consistent with Story 2.3), Scalar (no Swagger usage introduced), snake_case DB columns unchanged, Spanish UI text / English code identifiers, `siesa-ui-kit` components (`Button`, `Input`, `AlertDialog`) used before any custom UI.
+
+### Findings
+
+**Critical:** none.
+
+**Warning (auto-fixed):**
+1. `ClienteRepository.UpdateAsync` re-queried the entity by `Id` and saved that re-queried instance, never applying any explicit mutation from the `cliente` parameter it received. The only reason this worked correctly at runtime is that the handler's `GetByIdAsync` call and `UpdateAsync`'s internal lookup share the same scoped `AppDbContext`, so EF Core's identity map transparently returns the same already-mutated tracked instance. Confirmed via cross-request integration tests (`PutClientes_WithValidPayload_ChangeIsPersistedAndVisibleOnSubsequentGet`) and SQL query logging that persistence does work today — this is a design fragility, not a functional bug: the method silently depends on an implicit identity-map side effect rather than an explicit `Update`/attach call, and would silently no-op if ever invoked with a detached entity (e.g., reconstructed from a DTO by a future caller) or if `GetByIdAsync` were ever changed to use `AsNoTracking()`. **Fixed**: `UpdateAsync` now checks existence via `AnyAsync` and explicitly marks the passed-in `cliente` as `Modified` when detached, then saves and returns that same instance — making the persistence contract explicit instead of relying on an implicit identity-map coincidence. Verified: all 142 backend tests still pass after the change. File: `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`.
+
+**Suggestions (not blocking, no action taken — within approved scope):**
+1. `ClienteEntity.Update` duplicates `Create`'s four `ArgumentException` guard blocks verbatim rather than extracting a shared private `Validate(...)` helper. This is explicitly sanctioned by the story's own Dev Notes ("reuses the exact same required-field validation as Create") and Task 1's instruction not to alter `Create`; flagging only as a minor DRY observation for a future story, not a defect.
+2. `ClienteRepository.UpdateAsync`'s existence check plus `SaveChangesAsync` issues two round-trips to Postgres (`AnyAsync` + update) in the explicit/detached path; negligible for this entity's expected volume, no action needed.
+
+### Verdict
+**PASS.** All 7 acceptance criteria are implemented and verified with passing tests at unit, integration, component, and E2E levels. One warning-level design-fragility issue was found and auto-fixed with no regressions. No critical issues. Story marked `done`.
