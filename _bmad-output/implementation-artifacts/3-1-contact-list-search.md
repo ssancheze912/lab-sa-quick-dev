@@ -1,6 +1,6 @@
 # Story 3.1: Contact List & Search
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -194,3 +194,15 @@ Claude Sonnet 5 (claude-sonnet-5)
 - `frontend/src/shared/components/ErrorPanel.tsx`
 - `frontend/src/test/factories/contacto.factory.ts`
 - `frontend/src/test/msw/handlers.ts`
+
+## Code Review
+
+**Verdict**: PASS
+**Reviewer**: SiesaTeam (AI Agent, Adversarial Senior Developer persona)
+**Date**: 2026-07-01
+**Full report**: `_bmad-output/review-3-1-contact-list-search.md`
+
+- Critical/High: 0
+- Medium: 1 — File List does not include files added post-dev by `testarch-automate` (`ContactoRepositoryEdgeCasesTests.cs`, `ContactoListView.edge-cases.test.tsx`, `ContactoListView.resilience.edge-cases.test.tsx`); process artifact of pipeline ordering, non-blocking.
+- Low: 2 — no dedicated test for `contactoApiRepository`'s unused `?q=` branch (by design, not wired to UI this story); two `Task.Delay` calls in backend tests lack an explanatory comment (already flagged by TEA test-review, 96/100).
+- All 5 ACs independently re-verified against code and passing tests (backend 32/32 Contacto tests, frontend 33/33 Contacto tests, full frontend suite 262/262, backend build 0 errors). Schema-reuse non-negotiable constraint (no new migration, `ContactoConfiguration.cs` FK untouched) independently confirmed via git diff and `HasPendingModelChanges()`.
