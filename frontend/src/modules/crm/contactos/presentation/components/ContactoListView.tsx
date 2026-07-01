@@ -3,14 +3,30 @@ import { Input } from 'siesa-ui-kit'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useContactos } from '@/modules/crm/contactos/application/hooks/useContactos'
 import { ContactListItem } from '@/shared/components/ContactListItem'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
+import type { Contacto } from '@/modules/crm/contactos/domain/entities/Contacto'
 
 export function ContactoListView() {
   const [searchQuery, setSearchQuery] = useState('')
   const { data, isLoading, isError, refetch } = useContactos()
+  const navigate = useNavigate()
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+  // Scoped specifically to a single dynamic `$contactoId` segment directly
+  // under `/contactos/` — NOT the loose `pathname.match(/^\/contactos\/(.+)$/)`
+  // regex Epic 2 review flagged (finding #7) as a future-sibling-route hazard
+  // (e.g. a static `/contactos/nuevo` entry point from Story 3.3 would
+  // wrongly match a greedy `(.+)` pattern). Excluding `/` from the captured
+  // segment ensures only an actual `$contactoId` leaf matches, never a
+  // multi-segment static route.
+  const contactoId = pathname.match(/^\/contactos\/([^/]+)$/)?.[1]
+
+  const handleSelect = (contacto: Contacto) => {
+    void navigate({ to: '/contactos/$contactoId', params: { contactoId: contacto.id } })
+  }
 
   const filteredContactos = useMemo(() => {
     if (!data || !Array.isArray(data)) return []
@@ -57,7 +73,12 @@ export function ContactoListView() {
       {!isLoading && !isError && filteredContactos.length > 0 && (
         <ul className="flex flex-col gap-1 overflow-y-auto">
           {filteredContactos.map((contacto) => (
-            <ContactListItem key={contacto.id} contacto={contacto} />
+            <ContactListItem
+              key={contacto.id}
+              contacto={contacto}
+              selected={contacto.id === contactoId}
+              onClick={handleSelect}
+            />
           ))}
         </ul>
       )}

@@ -37,6 +37,7 @@ builder.Services.AddScoped<DeleteClienteCommandHandler>();
 
 builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
 builder.Services.AddScoped<GetContactosQueryHandler>();
+builder.Services.AddScoped<GetContactoByIdQueryHandler>();
 
 // Registered before any test-only IStartupFilter (e.g. WebApplicationFactory.ConfigureWebHost)
 // so ExceptionHandlingMiddleware and UseRouting() wrap the composed pipeline from the

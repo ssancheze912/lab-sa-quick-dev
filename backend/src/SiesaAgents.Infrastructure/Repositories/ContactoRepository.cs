@@ -22,4 +22,9 @@ public class ContactoRepository(AppDbContext dbContext) : IContactoRepository
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(ct);
     }
+
+    public async Task<ContactoEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+    {
+        return await dbContext.Contactos.FirstOrDefaultAsync(c => c.Id == id, ct);
+    }
 }

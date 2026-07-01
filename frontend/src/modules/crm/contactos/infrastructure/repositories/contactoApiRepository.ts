@@ -9,6 +9,11 @@ class ContactoApiRepository implements IContactoRepository {
     })
     return data
   }
+
+  async getById(id: string): Promise<Contacto> {
+    const { data } = await apiClient.get<Contacto>(`/api/v1/contactos/${id}`)
+    return data
+  }
 }
 
 export const contactoApiRepository = new ContactoApiRepository()
