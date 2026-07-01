@@ -1,7 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +38,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history"))
            .UseSnakeCaseNamingConvention());
 
+// Story 2.1 — Clientes read side.
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<GetClientesQueryHandler>();
+
 var app = builder.Build();
 
 // Global exception handler → RFC 7807 Problem Details.
@@ -50,6 +58,9 @@ app.MapScalarApiReference(options =>
 });
 
 app.MapGet("/", () => Results.Redirect("/scalar"));
+
+// Story 2.1 — Clientes endpoints.
+app.MapClienteEndpoints();
 
 // Test-only endpoints: only registered when SIESA_TEST_ENDPOINTS=1 (used by integration tests).
 // Never enabled in production or development runs.

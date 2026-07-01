@@ -1,15 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using SiesaAgents.Domain.Clientes.Entities;
 
 namespace SiesaAgents.Infrastructure.Data;
 
 /// <summary>
 /// Root EF Core DbContext for the SiesaAgents backend.
 ///
-/// Scope note (Story 1.3): Intentionally declares NO <see cref="DbSet{TEntity}"/> properties.
-/// Domain tables are added by later stories:
-///   - <c>clientes</c>  → Epic 2 Story 2.1
-///   - <c>contactos</c> → Epic 3 Story 3.1
+/// Scope note:
+///   - Story 1.3 established the empty <c>InitialCreate</c> migration + snake_case history table.
+///   - Story 2.1 (this story) adds <c>DbSet&lt;ClienteEntity&gt;</c> and the <c>clientes</c> table.
+///   - <c>contactos</c> remains scheduled for Epic 3 Story 3.1.
 ///
 /// Naming convention: snake_case is applied globally via
 /// <c>DbContextOptionsBuilder.UseSnakeCaseNamingConvention()</c> configured at DI registration
@@ -24,6 +25,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// Kept public so integration tests and DI registration can reference the exact same value.
     /// </summary>
     public const string MigrationsHistoryTableName = "__ef_migrations_history";
+
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -50,7 +53,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         base.OnModelCreating(builder);
 
-        // Auto-discover future IEntityTypeConfiguration<> classes under Data/Configurations/.
+        // Auto-discover IEntityTypeConfiguration<> classes under Data/Configurations/.
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 }

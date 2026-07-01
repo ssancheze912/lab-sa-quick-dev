@@ -86,8 +86,8 @@ public class DatabaseMigrationTests : IAsyncLifetime
         Assert.Contains(applied, m => m.EndsWith("_InitialCreate", StringComparison.Ordinal));
     }
 
-    [Fact(DisplayName = "[P1] AC#1 — Only ONE migration exists (a single empty InitialCreate)")]
-    public async Task Migrations_OnlyOneInitialCreateMigrationExists()
+    [Fact(DisplayName = "[P1] AC#1 — InitialCreate migration ships as the first migration")]
+    public async Task Migrations_InitialCreate_IsFirst()
     {
         SkipIfPostgresUnavailable();
 
@@ -102,13 +102,14 @@ public class DatabaseMigrationTests : IAsyncLifetime
         // WHEN inspecting the migrations shipped in the Infrastructure assembly
         var known = ctx.Database.GetMigrations().ToList();
 
-        // THEN exactly one migration is defined and it is the InitialCreate
-        Assert.Single(known);
+        // THEN InitialCreate is present as the first shipped migration (Story 1.3).
+        // Story 2.1 appends AddClientesTable — additional migrations are expected.
+        Assert.NotEmpty(known);
         Assert.EndsWith("_InitialCreate", known[0], StringComparison.Ordinal);
     }
 
-    [Fact(DisplayName = "[P1] AC#2 — After migrate, __ef_migrations_history is the ONLY EF-managed table")]
-    public async Task Migrate_OnlyEfMigrationsHistoryTableExists()
+    [Fact(DisplayName = "[P1] AC#2 — After migrate, __ef_migrations_history is present alongside domain tables")]
+    public async Task Migrate_EfMigrationsHistoryTableExists()
     {
         SkipIfPostgresUnavailable();
 
@@ -124,7 +125,7 @@ public class DatabaseMigrationTests : IAsyncLifetime
             await ctx.Database.MigrateAsync();
         }
 
-        // THEN only __ef_migrations_history exists in the public schema
+        // THEN __ef_migrations_history exists.
         await using var conn = new NpgsqlConnection(TestConnectionString);
         await conn.OpenAsync();
 
@@ -142,12 +143,11 @@ public class DatabaseMigrationTests : IAsyncLifetime
             }
         }
 
-        Assert.Single(tables);
-        Assert.Equal("__ef_migrations_history", tables[0]);
+        Assert.Contains("__ef_migrations_history", tables);
     }
 
-    [Fact(DisplayName = "[P1] AC#2 — Domain tables 'clientes' and 'contactos' do NOT exist (scope: empty migration)")]
-    public async Task Migrate_DomainTables_DoNotExist()
+    [Fact(DisplayName = "[P1] AC#2 — Domain table 'contactos' does NOT exist yet (arrives in Epic 3 Story 3.1)")]
+    public async Task Migrate_ContactosTable_DoesNotExistYet()
     {
         SkipIfPostgresUnavailable();
 
@@ -163,14 +163,14 @@ public class DatabaseMigrationTests : IAsyncLifetime
             await ctx.Database.MigrateAsync();
         }
 
-        // THEN neither `clientes` (Epic 2 Story 2.1) nor `contactos` (Epic 3 Story 3.1) exist yet
+        // THEN `contactos` remains scheduled for Epic 3 Story 3.1.
         await using var conn = new NpgsqlConnection(TestConnectionString);
         await conn.OpenAsync();
 
         await using var cmd = new NpgsqlCommand(
             @"SELECT COUNT(*) FROM information_schema.tables
               WHERE table_schema = 'public'
-                AND table_name IN ('clientes', 'contactos');", conn);
+                AND table_name = 'contactos';", conn);
 
         var count = Convert.ToInt64((await cmd.ExecuteScalarAsync())!);
         Assert.Equal(0L, count);
@@ -221,8 +221,8 @@ public class DatabaseMigrationTests : IAsyncLifetime
         Assert.DoesNotContain("ProductVersion", columns);
     }
 
-    [Fact(DisplayName = "[P2] AC#4 — AppDbContext model has NO entity types (empty initial migration guard)")]
-    public void AppDbContext_Model_HasNoEntityTypes()
+    [Fact(DisplayName = "[P2] AC#4 — AppDbContext model registers ClienteEntity (added by Story 2.1)")]
+    public void AppDbContext_Model_HasClienteEntity()
     {
         // GIVEN an AppDbContext instantiated with any options
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -236,10 +236,11 @@ public class DatabaseMigrationTests : IAsyncLifetime
         var userEntityTypes = ctx.Model
             .GetEntityTypes()
             .Where(e => !e.ClrType.FullName!.Contains("Microsoft.EntityFrameworkCore", StringComparison.Ordinal))
+            .Select(e => e.ClrType.Name)
             .ToList();
 
-        // THEN NO domain entity types are declared (scope note: no DbSet<>s in this story)
-        Assert.Empty(userEntityTypes);
+        // THEN ClienteEntity is registered (contactos arrives in Epic 3 Story 3.1).
+        Assert.Contains("ClienteEntity", userEntityTypes);
     }
 
     private static async Task<bool> IsPostgresReachableAsync()

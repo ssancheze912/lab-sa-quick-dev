@@ -31,14 +31,27 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { routeTree } from '../routeTree.gen'
 
+/**
+ * Story 2.1 update: /clientes now uses TanStack Query, so the router must be
+ * wrapped in a QueryClientProvider — otherwise the useClientes() hook throws
+ * during route rendering.
+ */
 function renderAt(initialPath: string) {
   const history = createMemoryHistory({ initialEntries: [initialPath] })
   const router = createRouter({ routeTree, history })
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 0 } },
+  })
   return {
     router,
-    ...render(<RouterProvider router={router} />),
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    ),
   }
 }
 

@@ -27,7 +27,7 @@ public class AppDbContextUnitTests
     // AC #4 — snake_case naming is applied globally at the model level.
     // ---------------------------------------------------------------------
 
-    [Fact(DisplayName = "[P1][unit] AC#4 — Built model exposes only the EF-internal HistoryRow entity")]
+    [Fact(DisplayName = "[P1][unit] AC#4 — Built model exposes EF-internal + the domain entities added so far")]
     public void Model_OnlyEfInternalEntityTypesArePresent()
     {
         // GIVEN options equivalent to Program.cs registration
@@ -37,13 +37,19 @@ public class AppDbContextUnitTests
         using var ctx = new AppDbContext(options);
         var entityTypes = ctx.Model.GetEntityTypes().ToList();
 
-        // THEN every declared entity is internal to EF (i.e. no domain leakage)
+        // THEN every declared entity is either internal to EF or belongs to the SiesaAgents.Domain namespace.
+        // Prevents accidental leakage from unrelated assemblies (e.g. Infrastructure/API types being mapped).
         Assert.All(entityTypes, e =>
-            Assert.StartsWith("Microsoft.EntityFrameworkCore", e.ClrType.FullName ?? string.Empty, StringComparison.Ordinal));
+        {
+            var fullName = e.ClrType.FullName ?? string.Empty;
+            var isInternal = fullName.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal);
+            var isDomain = fullName.StartsWith("SiesaAgents.Domain.", StringComparison.Ordinal);
+            Assert.True(isInternal || isDomain, $"Unexpected entity type mapped: {fullName}");
+        });
     }
 
-    [Fact(DisplayName = "[P1][unit] AC#4 — No IEntityTypeConfiguration<> was registered (empty story scope)")]
-    public void Model_HasZeroDomainEntityTypes()
+    [Fact(DisplayName = "[P1][unit] AC#4 — Story 2.1 registers ClienteEntity via ApplyConfigurationsFromAssembly")]
+    public void Model_HasClienteEntityRegistered()
     {
         // GIVEN AppDbContext with the same options shape used in production DI
         var options = BuildOptions();
@@ -53,10 +59,11 @@ public class AppDbContextUnitTests
         var domainEntities = ctx.Model.GetEntityTypes()
             .Where(e => !(e.ClrType.FullName ?? string.Empty)
                 .StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal))
+            .Select(e => e.ClrType.Name)
             .ToList();
 
-        // THEN the domain is empty (guards against future accidental DbSet<> additions in this story)
-        Assert.Empty(domainEntities);
+        // THEN ClienteEntity is registered by Story 2.1's ClienteConfiguration.
+        Assert.Contains("ClienteEntity", domainEntities);
     }
 
     [Fact(DisplayName = "[P2][unit] AC#4 — Snake-case naming convention is registered on the DbContextOptions")]
@@ -134,8 +141,8 @@ public class AppDbContextUnitTests
     // Postgres-independent: GetMigrations() reads the compiled Infrastructure assembly.
     // ---------------------------------------------------------------------
 
-    [Fact(DisplayName = "[P1][unit] AC#1 — Exactly one migration is defined in the Infrastructure assembly")]
-    public void GetMigrations_ExposesExactlyOneInitialCreateMigration()
+    [Fact(DisplayName = "[P1][unit] AC#1 — InitialCreate migration is the first declared migration")]
+    public void GetMigrations_InitialCreate_IsFirst()
     {
         // GIVEN the DbContext with its assembly-scanned migrations
         var options = BuildOptions();
@@ -144,28 +151,31 @@ public class AppDbContextUnitTests
         // WHEN listing declared migrations (does not touch the database)
         var declared = ctx.Database.GetMigrations().ToList();
 
-        // THEN exactly one migration is declared and it is InitialCreate
-        Assert.Single(declared);
+        // THEN the first migration is Story 1.3's InitialCreate.
+        // Additional migrations (Story 2.1 AddClientesTable, ...) are expected.
+        Assert.NotEmpty(declared);
         Assert.EndsWith("_InitialCreate", declared[0], StringComparison.Ordinal);
     }
 
-    [Fact(DisplayName = "[P2][unit] AC#1 — InitialCreate migration name has the expected timestamp+name shape")]
-    public void GetMigrations_InitialCreate_HasTimestampPrefix()
+    [Fact(DisplayName = "[P2][unit] AC#1 — Every declared migration name uses the timestamp+name shape")]
+    public void GetMigrations_All_HaveTimestampPrefix()
     {
         // GIVEN the migrations shipped by Infrastructure
         var options = BuildOptions();
         using var ctx = new AppDbContext(options);
-        var name = ctx.Database.GetMigrations().Single();
 
-        // WHEN the name is split on '_'
-        var parts = name.Split('_', 2);
+        foreach (var name in ctx.Database.GetMigrations())
+        {
+            // WHEN the name is split on '_'
+            var parts = name.Split('_', 2);
 
-        // THEN the prefix is a 14-digit timestamp and the suffix is 'InitialCreate'
-        Assert.Equal(2, parts.Length);
-        Assert.Equal(14, parts[0].Length);
-        Assert.True(parts[0].All(char.IsDigit),
-            $"Migration prefix must be an all-digit timestamp; got '{parts[0]}'");
-        Assert.Equal("InitialCreate", parts[1]);
+            // THEN prefix is a 14-digit timestamp and suffix is a non-empty descriptor
+            Assert.Equal(2, parts.Length);
+            Assert.Equal(14, parts[0].Length);
+            Assert.True(parts[0].All(char.IsDigit),
+                $"Migration prefix must be an all-digit timestamp; got '{parts[0]}'");
+            Assert.False(string.IsNullOrWhiteSpace(parts[1]));
+        }
     }
 
     // ---------------------------------------------------------------------

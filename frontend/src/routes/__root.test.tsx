@@ -33,18 +33,30 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { routeTree } from '../routeTree.gen'
 
 /**
  * Build a fresh router pointing at the given initial path.
- * Each test gets its own router + history for full isolation.
+ * Each test gets its own router + history + QueryClient for full isolation.
+ *
+ * Note (Story 2.1): the /clientes route now uses TanStack Query via
+ * useClientes(), so the RouterProvider must be wrapped in a
+ * QueryClientProvider even for tests that assert only on the shell.
  */
 function renderAt(initialPath: string) {
   const history = createMemoryHistory({ initialEntries: [initialPath] })
   const router = createRouter({ routeTree, history })
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 0 } },
+  })
   return {
     router,
-    ...render(<RouterProvider router={router} />),
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    ),
   }
 }
 
