@@ -1,6 +1,6 @@
 # Story 3.2: Contact Detail View
 
-Status: ready-for-review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
