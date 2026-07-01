@@ -60,6 +60,18 @@ export const clienteValidationErrorProblemDetails = {
   },
 }
 
+/**
+ * RFC 7807 Problem Details body for the DELETE 404 case (Story 2.5, AC #6) —
+ * mirrors `clienteNotFoundProblemDetails`'s shape, used specifically by
+ * `DELETE /api/v1/clientes/{id}` tests to keep intent explicit at call sites.
+ */
+export const clienteDeleteNotFoundProblemDetails = {
+  type: 'https://tools.ietf.org/html/rfc7231#section-6.5.4',
+  title: 'Not Found',
+  status: 404,
+  detail: 'Cliente no encontrado.',
+}
+
 export const handlers = [
   http.get(CLIENTES_ENDPOINT, () => {
     return HttpResponse.json(defaultClientesList, { status: 200 })
@@ -86,5 +98,12 @@ export const handlers = [
       { ...defaultCliente, ...body, id: params.id as string },
       { status: 200 },
     )
+  }),
+  // Story 2.5: DELETE /api/v1/clientes/:id default success handler (204 No
+  // Content, no `X-Had-Associated-Contacts` header — the "zero contacts"
+  // variant, AC #2). Individual tests override this via `server.use(...)`
+  // for the with-contacts (header present, AC #3) and 404 (AC #6) paths.
+  http.delete(CLIENTE_BY_ID_ENDPOINT, () => {
+    return new HttpResponse(null, { status: 204 })
   }),
 ]

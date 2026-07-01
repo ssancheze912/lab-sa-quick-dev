@@ -468,4 +468,148 @@ public class ClienteRepositoryTests : IAsyncLifetime
         Assert.Equal("Self Update Renombrado", result!.Nombre);
         Assert.Equal(seeded.Nit, result.Nit);
     }
+
+    // --- Story 2.5: DeleteAsync (AC #2, #3, #6) ---------------------------------
+    //
+    // RED PHASE: IClienteRepository.DeleteAsync does not exist yet (Story 2.5,
+    // Task 2), and ContactoEntity/the contactos table do not exist yet (Story
+    // 2.5, Task 1). These tests define the expected contract: DeleteAsync
+    // removes the client and returns true for an existing Id, returns false
+    // (404 case) for a non-existent Id, and — the single most important test
+    // in the epic (R2/TC-E2-P0-03) — deleting a client with associated
+    // contacts orphans those contacts (cliente_id set to NULL by the
+    // database's ON DELETE SET NULL FK behavior) rather than cascade-deleting
+    // them. This MUST run against real PostgreSQL (this test class already
+    // does), since EF Core InMemory does not enforce FK ON DELETE behavior.
+
+    private async Task<ContactoEntity> SeedContactoAsync(string nombre, Guid? clienteId)
+    {
+        var contacto = ContactoEntity.Create(nombre, "Analista", "3000000000", "contacto@ejemplo.co", clienteId);
+        _context.Set<ContactoEntity>().Add(contacto);
+        await _context.SaveChangesAsync();
+        return contacto;
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithExistingIdAndNoAssociatedContacts_RemovesTheClienteAndReturnsTrue()
+    {
+        // GIVEN an existing seeded client with zero associated contacts
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Eliminar Sin Contactos {suffix}", $"DEL{suffix}");
+        var repository = new ClienteRepository(_context);
+
+        // WHEN deleting it via DeleteAsync
+        var result = await repository.DeleteAsync(seeded.Id, CancellationToken.None);
+        _createdIds.Remove(seeded.Id);
+
+        // THEN true is returned and the client no longer exists
+        Assert.True(result);
+        var refetched = await repository.GetByIdAsync(seeded.Id, CancellationToken.None);
+        Assert.Null(refetched);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithNonExistentId_ReturnsFalse()
+    {
+        // GIVEN a well-formed Id that matches no seeded client
+        var repository = new ClienteRepository(_context);
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN attempting to delete it
+        var result = await repository.DeleteAsync(nonExistentId, CancellationToken.None);
+
+        // THEN false is returned — no exception, this is the 404 case
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_DoesNotThrowWhenCalledTwiceForTheSameId_SecondCallReturnsFalse()
+    {
+        // GIVEN an existing seeded client, already deleted once
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Doble Delete {suffix}", $"DBLDEL{suffix}");
+        var repository = new ClienteRepository(_context);
+        var first = await repository.DeleteAsync(seeded.Id, CancellationToken.None);
+        _createdIds.Remove(seeded.Id);
+
+        // WHEN attempting to delete the same Id a second time
+        var second = await repository.DeleteAsync(seeded.Id, CancellationToken.None);
+
+        // THEN the first call succeeds, the second returns false (already gone), no exception
+        Assert.True(first);
+        Assert.False(second);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithClienteThatHasAssociatedContacts_OrphansTheContactsInsteadOfCascadeDeletingThem()
+    {
+        // GIVEN a client with two associated contacts (R2/TC-E2-P0-03 — the
+        // single most important test in the epic)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Con Contactos {suffix}", $"CC{suffix}");
+        var contactoA = await SeedContactoAsync($"Contacto A {suffix}", seeded.Id);
+        var contactoB = await SeedContactoAsync($"Contacto B {suffix}", seeded.Id);
+        var repository = new ClienteRepository(_context);
+
+        // WHEN deleting the client via DeleteAsync
+        var result = await repository.DeleteAsync(seeded.Id, CancellationToken.None);
+        _createdIds.Remove(seeded.Id);
+
+        // THEN the client is deleted successfully
+        Assert.True(result);
+
+        // AND both contacts STILL EXIST in the database (NOT cascade-deleted) —
+        // queried via a fresh context to bypass any stale identity-map state
+        await using var freshContext = new AppDbContext(
+            new DbContextOptionsBuilder<AppDbContext>()
+                .UseNpgsql(ConnectionString, npgsql => { })
+                .ReplaceService<IHistoryRepository, SnakeCaseNpgsqlHistoryRepository>()
+                .Options);
+        var survivingA = await freshContext.Set<ContactoEntity>().FirstOrDefaultAsync(c => c.Id == contactoA.Id);
+        var survivingB = await freshContext.Set<ContactoEntity>().FirstOrDefaultAsync(c => c.Id == contactoB.Id);
+        Assert.NotNull(survivingA);
+        Assert.NotNull(survivingB);
+
+        // AND their ClienteId was set to NULL by the database's FK ON DELETE
+        // SET NULL behavior (not application-level pre-delete logic) — this is
+        // the R2 risk this test exists specifically to close
+        Assert.Null(survivingA!.ClienteId);
+        Assert.Null(survivingB!.ClienteId);
+
+        // Cleanup (contacts are not tracked by `_createdIds`, which is Cliente-scoped)
+        freshContext.Set<ContactoEntity>().RemoveRange(survivingA, survivingB);
+        await freshContext.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithClienteThatHasNoAssociatedContacts_ContactCountIsZeroAfterDeletion()
+    {
+        // GIVEN a client with no associated contacts, and an unrelated contact
+        // attached to a DIFFERENT client (guards against a query that
+        // accidentally counts/affects all contacts, not just this client's)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Sin Contactos Propios {suffix}", $"SCP{suffix}");
+        var otherCliente = await SeedAsync($"Otro Cliente {suffix}", $"OTRO{suffix}");
+        var unrelatedContacto = await SeedContactoAsync($"Contacto Ajeno {suffix}", otherCliente.Id);
+        var repository = new ClienteRepository(_context);
+
+        // WHEN deleting the client with zero contacts of its own
+        var result = await repository.DeleteAsync(seeded.Id, CancellationToken.None);
+        _createdIds.Remove(seeded.Id);
+
+        // THEN the deletion succeeds and the unrelated contact is untouched
+        Assert.True(result);
+        await using var freshContext = new AppDbContext(
+            new DbContextOptionsBuilder<AppDbContext>()
+                .UseNpgsql(ConnectionString, npgsql => { })
+                .ReplaceService<IHistoryRepository, SnakeCaseNpgsqlHistoryRepository>()
+                .Options);
+        var stillAssociated = await freshContext.Set<ContactoEntity>()
+            .FirstOrDefaultAsync(c => c.Id == unrelatedContacto.Id);
+        Assert.NotNull(stillAssociated);
+        Assert.Equal(otherCliente.Id, stillAssociated!.ClienteId);
+
+        freshContext.Set<ContactoEntity>().Remove(stillAssociated);
+        await freshContext.SaveChangesAsync();
+    }
 }

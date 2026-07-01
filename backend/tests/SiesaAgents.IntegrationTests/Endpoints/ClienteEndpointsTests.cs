@@ -1003,4 +1003,183 @@ public class ClienteEndpointsTests : IClassFixture<TestApiFactory>, IAsyncLifeti
         // THEN the request fails gracefully (400 Bad Request), never a 500
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    // --- Story 2.5: DELETE /api/v1/clientes/{id} (AC #2, #3, #6) ----------------
+    //
+    // RED PHASE: `DELETE /api/v1/clientes/{id}` does not exist yet (Story 2.5,
+    // Task 2), and ContactoEntity/the contactos table do not exist yet (Story
+    // 2.5, Task 1). These tests define the expected contract:
+    //   - Existing Id, no contacts -> 204 No Content, no X-Had-Associated-
+    //     Contacts header (or "false")
+    //   - Existing Id, with contacts -> 204 No Content, X-Had-Associated-
+    //     Contacts: true header (Task 3)
+    //   - Non-existent Id -> 404 Not Found (AC #6)
+
+    private async Task<ContactoEntity> SeedContactoAsync(string nombre, Guid? clienteId)
+    {
+        await using var context = CreateContext();
+        var contacto = ContactoEntity.Create(nombre, "Analista", "3000000000", "contacto@ejemplo.co", clienteId);
+        context.Set<ContactoEntity>().Add(contacto);
+        await context.SaveChangesAsync();
+        return contacto;
+    }
+
+    [Fact]
+    public async Task DeleteClientes_WithExistingIdAndNoContacts_ReturnsNoContent()
+    {
+        // GIVEN an existing seeded client with zero associated contacts
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Delete Endpoint {suffix}", $"DELEP{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling DELETE /api/v1/clientes/{id}
+        var response = await client.DeleteAsync($"/api/v1/clientes/{seeded.Id}");
+        _createdIds.Remove(seeded.Id);
+
+        // THEN the response is 204 No Content
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteClientes_WithExistingIdAndNoContacts_DoesNotIncludeTheHadAssociatedContactsHeaderAsTrue()
+    {
+        // GIVEN an existing seeded client with zero associated contacts
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Delete Sin Header {suffix}", $"DSH{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling DELETE /api/v1/clientes/{id}
+        var response = await client.DeleteAsync($"/api/v1/clientes/{seeded.Id}");
+        _createdIds.Remove(seeded.Id);
+
+        // THEN the X-Had-Associated-Contacts header is absent or explicitly "false" —
+        // never "true" for a client with no contacts (Task 3 contract)
+        var headerPresent = response.Headers.TryGetValues("X-Had-Associated-Contacts", out var values);
+        if (headerPresent)
+        {
+            Assert.DoesNotContain("true", values!, StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    [Fact]
+    public async Task DeleteClientes_WithExistingIdAndNoContacts_ClientIsNoLongerRetrievableAfterwards()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Delete Persistencia {suffix}", $"DPS{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN deleting it and then attempting to fetch it again
+        await client.DeleteAsync($"/api/v1/clientes/{seeded.Id}");
+        _createdIds.Remove(seeded.Id);
+        var response = await client.GetAsync($"/api/v1/clientes/{seeded.Id}");
+
+        // THEN the client is genuinely gone — a subsequent GET returns 404
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteClientes_WithExistingIdAndAssociatedContacts_ReturnsNoContentWithHadAssociatedContactsHeaderTrue()
+    {
+        // GIVEN an existing client with an associated contact
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Delete Con Contacto {suffix}", $"DCC{suffix}");
+        var contacto = await SeedContactoAsync($"Contacto Endpoint {suffix}", seeded.Id);
+        var client = _factory.CreateClient();
+
+        // WHEN calling DELETE /api/v1/clientes/{id}
+        var response = await client.DeleteAsync($"/api/v1/clientes/{seeded.Id}");
+        _createdIds.Remove(seeded.Id);
+
+        // THEN the response is 204 No Content with the header signaling contacts existed
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.True(response.Headers.TryGetValues("X-Had-Associated-Contacts", out var values));
+        Assert.Contains("true", values!, StringComparer.OrdinalIgnoreCase);
+
+        // Cleanup: the contact survives the delete (R2) but is test-scoped, remove it directly
+        await using var context = CreateContext();
+        var toRemove = await context.Set<ContactoEntity>().FindAsync(contacto.Id);
+        if (toRemove is not null)
+        {
+            context.Set<ContactoEntity>().Remove(toRemove);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    [Fact]
+    public async Task DeleteClientes_WithNonExistentId_ReturnsNotFound()
+    {
+        // GIVEN a well-formed UUID with no matching client
+        var client = _factory.CreateClient();
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN calling DELETE /api/v1/clientes/{id}
+        var response = await client.DeleteAsync($"/api/v1/clientes/{nonExistentId}");
+
+        // THEN the response is 404 Not Found (AC #6)
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteClientes_WithNonExistentId_DoesNotReturnAFalseSuccessStatus()
+    {
+        // GIVEN a well-formed UUID with no matching client
+        var client = _factory.CreateClient();
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN calling DELETE /api/v1/clientes/{id}
+        var response = await client.DeleteAsync($"/api/v1/clientes/{nonExistentId}");
+
+        // THEN the response is never a 2xx success status for a non-existent id
+        Assert.False((int)response.StatusCode is >= 200 and < 300);
+    }
+
+    [Fact]
+    public async Task DeleteClientes_WithMalformedGuidRouteSegment_ReturnsNotFoundNot500()
+    {
+        // GIVEN a route segment that is not a parseable GUID (route constraint is `{id:guid}`)
+        var client = _factory.CreateClient();
+
+        // WHEN calling DELETE /api/v1/clientes/not-a-guid
+        var response = await client.DeleteAsync("/api/v1/clientes/not-a-guid");
+
+        // THEN the request fails gracefully at routing/binding, never a 500
+        Assert.NotEqual(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteClientes_CalledTwiceInSuccession_SecondCallReturnsNotFound()
+    {
+        // GIVEN an existing seeded client, already deleted once
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Delete Doble {suffix}", $"DDB{suffix}");
+        var client = _factory.CreateClient();
+        var first = await client.DeleteAsync($"/api/v1/clientes/{seeded.Id}");
+        _createdIds.Remove(seeded.Id);
+
+        // WHEN calling DELETE a second time for the same (now-deleted) id
+        var second = await client.DeleteAsync($"/api/v1/clientes/{seeded.Id}");
+
+        // THEN the first call succeeds, the second returns 404 (idempotent-safe, no 500)
+        Assert.Equal(HttpStatusCode.NoContent, first.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, second.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteClientes_DoesNotAffectOtherClientesInTheList()
+    {
+        // GIVEN two existing clients
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var toDelete = await SeedAsync($"A Eliminar {suffix}", $"AELIM{suffix}");
+        var toKeep = await SeedAsync($"A Conservar {suffix}", $"ACONS{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN deleting one of them
+        await client.DeleteAsync($"/api/v1/clientes/{toDelete.Id}");
+        _createdIds.Remove(toDelete.Id);
+
+        // THEN the other client is unaffected and still retrievable
+        var response = await client.GetAsync($"/api/v1/clientes/{toKeep.Id}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
 }

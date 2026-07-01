@@ -1,12 +1,41 @@
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, vi, beforeEach } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { renderWithRouter } from '@/test/support/renderWithRouter'
 import { server } from '@/test/msw/server'
-import { CLIENTE_BY_ID_ENDPOINT, clienteNotFoundProblemDetails } from '@/test/msw/handlers'
+import {
+  CLIENTE_BY_ID_ENDPOINT,
+  clienteNotFoundProblemDetails,
+  clienteDeleteNotFoundProblemDetails,
+} from '@/test/msw/handlers'
 import { createCliente } from '@/test/factories/cliente.factory'
 import { ClienteDetailView } from './ClienteDetailView'
+
+// --- Story 2.5: "Eliminar" trigger + confirmation dialog (AC #1-#6) --------
+//
+// RED PHASE: `ClienteDetailView.tsx` has no "Eliminar" button/delete dialog
+// yet (Story 2.5, Task 5). These tests define the expected contract: an
+// "Eliminar" button opens a SECOND, independent AlertDialog; confirming
+// triggers the delete mutation and shows the correct toast variant; the
+// right panel returns to its empty/default state on success; Cancelar and
+// Esc/backdrop dismissal make zero DELETE calls.
+//
+// `toast` is mocked the same way as `useDeleteCliente.test.tsx` so assertions
+// on exact Spanish copy don't depend on the real toast implementation
+// rendering into the DOM in a way `screen` can reliably query synchronously.
+vi.mock('siesa-ui-kit', async () => {
+  const actual = await vi.importActual<typeof import('siesa-ui-kit')>('siesa-ui-kit')
+  return {
+    ...actual,
+    toast: {
+      success: vi.fn(),
+      error: vi.fn(),
+      warning: vi.fn(),
+      info: vi.fn(),
+    },
+  }
+})
 
 // RED PHASE: ClienteDetailView.tsx and useCliente do not exist yet
 // (Story 2.2, Tasks 2-3). These tests define the expected detail-view
@@ -24,6 +53,10 @@ function renderDetail(clienteId?: string) {
 }
 
 describe('ClienteDetailView', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   describe('AC #1/#2 - success state renders Nombre, NIT/RUC, Teléfono, Ciudad', () => {
     test('should display the Nombre label and value', async () => {
       // GIVEN: the backend returns a known client for the given id
@@ -364,6 +397,351 @@ describe('ClienteDetailView', () => {
       // WHEN/THEN: the detail panel behind the dialog still shows the
       // original persisted value — no premature/local mutation (AC #6, R8)
       expect(screen.getByText('Bogotá')).toBeInTheDocument()
+    })
+  })
+
+  // --- Story 2.5: "Eliminar" trigger + confirmation dialog --------------------
+
+  describe('AC #1 - "Eliminar" opens a confirmation dialog', () => {
+    test('should render an "Eliminar" button when a client is successfully loaded', async () => {
+      // GIVEN: the backend returns a known client
+      const cliente = createCliente()
+      server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })))
+
+      // WHEN: the detail view renders and the client loads
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+
+      // THEN: an "Eliminar" button is present alongside "Editar"
+      expect(screen.getByRole('button', { name: /eliminar/i })).toBeInTheDocument()
+    })
+
+    test('should NOT render an "Eliminar" button while the client is still loading', () => {
+      // GIVEN: the backend request has not resolved yet
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, async () => {
+          await new Promise((resolve) => setTimeout(resolve, 50))
+          return HttpResponse.json(createCliente(), { status: 200 })
+        }),
+      )
+
+      // WHEN: the detail view first renders
+      renderDetail(createCliente().id)
+
+      // THEN: no "Eliminar" button is rendered yet (only in the loaded success branch)
+      expect(screen.queryByRole('button', { name: /eliminar/i })).not.toBeInTheDocument()
+    })
+
+    test('should open a confirmation dialog asking "¿Eliminar este cliente?" when "Eliminar" is clicked (TC-E2-P0-04)', async () => {
+      // GIVEN: a loaded client detail view
+      const cliente = createCliente()
+      server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })))
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+
+      // WHEN: the user clicks "Eliminar"
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+
+      // THEN: a confirmation dialog opens with the exact Spanish copy
+      await waitFor(() => {
+        expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument()
+      })
+    })
+
+    test('should show "Confirmar" and "Cancelar" actions in the delete confirmation dialog', async () => {
+      // GIVEN: a loaded client detail view
+      const cliente = createCliente()
+      server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })))
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+
+      // WHEN: the user clicks "Eliminar"
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+
+      // THEN: both "Confirmar" and "Cancelar" actions are present
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /confirmar/i })).toBeInTheDocument()
+      })
+      expect(screen.getByRole('button', { name: /cancelar/i })).toBeInTheDocument()
+    })
+
+    test('should open a delete dialog SEPARATE from the edit dialog (does not reuse/nest it)', async () => {
+      // GIVEN: a loaded client detail view
+      const cliente = createCliente()
+      server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })))
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+
+      // WHEN: the user opens "Eliminar"
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+      await waitFor(() => {
+        expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument()
+      })
+
+      // THEN: the edit form (ClienteForm fields) is NOT rendered inside this dialog
+      expect(screen.queryByLabelText(/^nombre$/i)).not.toBeInTheDocument()
+    })
+  })
+
+  describe('AC #2 - confirming deletion of a client with NO associated contacts', () => {
+    test('should call DELETE /api/v1/clientes/{id} when "Confirmar" is clicked', async () => {
+      // GIVEN: a loaded client detail view with the delete dialog open
+      const cliente = createCliente()
+      let deleteCallCount = 0
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })),
+        http.delete(CLIENTE_BY_ID_ENDPOINT, () => {
+          deleteCallCount += 1
+          return new HttpResponse(null, { status: 204 })
+        }),
+      )
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+      await waitFor(() => expect(screen.getByRole('button', { name: /confirmar/i })).toBeInTheDocument())
+
+      // WHEN: the user clicks "Confirmar"
+      await user.click(screen.getByRole('button', { name: /confirmar/i }))
+
+      // THEN: exactly one DELETE call is made
+      await waitFor(() => {
+        expect(deleteCallCount).toBe(1)
+      })
+    })
+
+    test('should return the right panel to the empty/default state after successful deletion (FR27)', async () => {
+      // GIVEN: a loaded client detail view with the delete dialog open
+      const cliente = createCliente()
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })),
+        http.delete(CLIENTE_BY_ID_ENDPOINT, () => new HttpResponse(null, { status: 204 })),
+      )
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+      await waitFor(() => expect(screen.getByRole('button', { name: /confirmar/i })).toBeInTheDocument())
+
+      // WHEN: the user confirms the deletion
+      await user.click(screen.getByRole('button', { name: /confirmar/i }))
+
+      // THEN: the view transitions back to the empty/default state
+      await waitFor(() => {
+        expect(screen.getByTestId('cliente-detail-empty')).toBeInTheDocument()
+      })
+      expect(screen.queryByTestId('cliente-detail-panel')).not.toBeInTheDocument()
+    })
+
+    test('should show the toast "Cliente eliminado correctamente" after deleting a client with no contacts (TC-E2-P2-07)', async () => {
+      // GIVEN: a loaded client detail view with the delete dialog open
+      const { toast } = await import('siesa-ui-kit')
+      const cliente = createCliente()
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })),
+        http.delete(CLIENTE_BY_ID_ENDPOINT, () => new HttpResponse(null, { status: 204 })),
+      )
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+      await waitFor(() => expect(screen.getByRole('button', { name: /confirmar/i })).toBeInTheDocument())
+
+      // WHEN: the user confirms the deletion
+      await user.click(screen.getByRole('button', { name: /confirmar/i }))
+
+      // THEN: the exact success toast copy is shown
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith('Cliente eliminado correctamente')
+      })
+    })
+  })
+
+  describe('AC #3 - confirming deletion of a client WITH associated contacts', () => {
+    test('should show the orphaning toast copy when the backend signals associated contacts existed (TC-E2-P0-04)', async () => {
+      // GIVEN: a loaded client detail view whose delete response signals
+      // associated contacts were orphaned (X-Had-Associated-Contacts: true)
+      const { toast } = await import('siesa-ui-kit')
+      const cliente = createCliente()
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })),
+        http.delete(CLIENTE_BY_ID_ENDPOINT, () =>
+          new HttpResponse(null, {
+            status: 204,
+            headers: { 'X-Had-Associated-Contacts': 'true' },
+          }),
+        ),
+      )
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+      await waitFor(() => expect(screen.getByRole('button', { name: /confirmar/i })).toBeInTheDocument())
+
+      // WHEN: the user confirms the deletion
+      await user.click(screen.getByRole('button', { name: /confirmar/i }))
+
+      // THEN: the exact orphaning toast copy is shown, never the plain variant (R11)
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith(
+          'Cliente eliminado. Sus contactos asociados quedaron sin cliente asignado.',
+        )
+      })
+      expect(toast.success).not.toHaveBeenCalledWith('Cliente eliminado correctamente')
+    })
+
+    test('should also return the right panel to the empty/default state when the client had associated contacts', async () => {
+      // GIVEN: a loaded client detail view whose delete response signals contacts existed
+      const cliente = createCliente()
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })),
+        http.delete(CLIENTE_BY_ID_ENDPOINT, () =>
+          new HttpResponse(null, {
+            status: 204,
+            headers: { 'X-Had-Associated-Contacts': 'true' },
+          }),
+        ),
+      )
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+      await waitFor(() => expect(screen.getByRole('button', { name: /confirmar/i })).toBeInTheDocument())
+
+      // WHEN: the user confirms the deletion
+      await user.click(screen.getByRole('button', { name: /confirmar/i }))
+
+      // THEN: the view transitions back to the empty/default state, same as the no-contacts case
+      await waitFor(() => {
+        expect(screen.getByTestId('cliente-detail-empty')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('AC #4 - "Cancelar" in the confirmation dialog', () => {
+    test('should close the dialog and make zero DELETE calls when "Cancelar" is clicked (TC-E2-P1-11)', async () => {
+      // GIVEN: a loaded client detail view with the delete dialog open
+      const cliente = createCliente()
+      let deleteCallCount = 0
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })),
+        http.delete(CLIENTE_BY_ID_ENDPOINT, () => {
+          deleteCallCount += 1
+          return new HttpResponse(null, { status: 204 })
+        }),
+      )
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+      await waitFor(() => expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument())
+
+      // WHEN: the user clicks "Cancelar"
+      await user.click(screen.getByRole('button', { name: /cancelar/i }))
+
+      // THEN: the dialog closes
+      await waitFor(() => {
+        expect(screen.queryByText('¿Eliminar este cliente?')).not.toBeInTheDocument()
+      })
+      // AND: zero DELETE API calls were made
+      expect(deleteCallCount).toBe(0)
+    })
+
+    test('should leave the client record unchanged in the system after "Cancelar"', async () => {
+      // GIVEN: a loaded client detail view with the delete dialog open
+      const cliente = createCliente()
+      server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })))
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+      await waitFor(() => expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument())
+
+      // WHEN: the user clicks "Cancelar"
+      await user.click(screen.getByRole('button', { name: /cancelar/i }))
+      await waitFor(() => expect(screen.queryByText('¿Eliminar este cliente?')).not.toBeInTheDocument())
+
+      // THEN: the detail panel still shows the original client (not deleted)
+      expect(screen.getByTestId('cliente-detail-panel')).toBeInTheDocument()
+    })
+  })
+
+  describe('AC #5 - dismissing via Esc key or backdrop click (not explicit Cancelar)', () => {
+    test('should make zero DELETE calls when the dialog is dismissed via the Esc key (R9, TC-E2-P2-03)', async () => {
+      // GIVEN: a loaded client detail view with the delete dialog open
+      const cliente = createCliente()
+      let deleteCallCount = 0
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })),
+        http.delete(CLIENTE_BY_ID_ENDPOINT, () => {
+          deleteCallCount += 1
+          return new HttpResponse(null, { status: 204 })
+        }),
+      )
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+      await waitFor(() => expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument())
+
+      // WHEN: the user presses Esc instead of clicking an explicit action
+      await user.keyboard('{Escape}')
+
+      // THEN: the dialog closes and zero DELETE calls were made
+      await waitFor(() => {
+        expect(screen.queryByText('¿Eliminar este cliente?')).not.toBeInTheDocument()
+      })
+      expect(deleteCallCount).toBe(0)
+    })
+
+    test('should NOT delete the client when the dialog is dismissed via Esc (client remains in detail view)', async () => {
+      // GIVEN: a loaded client detail view with the delete dialog open
+      const cliente = createCliente()
+      server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })))
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+      await waitFor(() => expect(screen.getByText('¿Eliminar este cliente?')).toBeInTheDocument())
+
+      // WHEN: the user presses Esc
+      await user.keyboard('{Escape}')
+      await waitFor(() => expect(screen.queryByText('¿Eliminar este cliente?')).not.toBeInTheDocument())
+
+      // THEN: the client detail panel is still showing (not deleted, not empty state)
+      expect(screen.getByTestId('cliente-detail-panel')).toBeInTheDocument()
+    })
+  })
+
+  describe('AC #6 - DELETE for a non-existent id returns 404 without a false-success toast', () => {
+    test('should NOT show a success toast when the backend returns 404 on delete confirmation', async () => {
+      // GIVEN: a loaded client detail view whose delete request will 404
+      // (e.g. already deleted by another user/tab)
+      const { toast } = await import('siesa-ui-kit')
+      const cliente = createCliente()
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })),
+        http.delete(CLIENTE_BY_ID_ENDPOINT, () =>
+          HttpResponse.json(clienteDeleteNotFoundProblemDetails, { status: 404 }),
+        ),
+      )
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /^eliminar$/i }))
+      await waitFor(() => expect(screen.getByRole('button', { name: /confirmar/i })).toBeInTheDocument())
+
+      // WHEN: the user confirms the deletion and the backend returns 404
+      await user.click(screen.getByRole('button', { name: /confirmar/i }))
+
+      // THEN: no false-success toast is shown
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalled()
+      })
+      expect(toast.success).not.toHaveBeenCalled()
     })
   })
 })

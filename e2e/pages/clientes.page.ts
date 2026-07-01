@@ -112,6 +112,17 @@ export class ClientesPage {
       .click();
   }
 
+  /** Opens the delete confirmation dialog from the detail panel's "Eliminar" trigger (Story 2.5). */
+  async abrirDialogoEliminar() {
+    await this.btnEliminar.click();
+    await expect(this.page.getByText('¿Eliminar este cliente?')).toBeVisible();
+  }
+
+  /** Confirms deletion in the open confirmation dialog (Story 2.5, AC #2/#3). */
+  async confirmarEliminar() {
+    await this.btnConfirmarEliminar.click();
+  }
+
   async buscar(termino: string) {
     await this.searchInput.fill(termino);
   }

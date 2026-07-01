@@ -49,9 +49,14 @@ public class AppDbContextMigrationTests
     }
 
     [Fact]
-    public async Task Database_ContainsClientesTable_ButNotContactos()
+    public async Task Database_ContainsClientesTable_AndContactosTableAsOfStory25()
     {
         // GIVEN a connection to siesa_agents_db
+        //
+        // RED PHASE (Story 2.5, Task 1): as of Story 2.5, `contactos` is
+        // introduced (minimal ContactoEntity + migration, needed to prove the
+        // FK ON DELETE SET NULL orphaning behavior, R2). This supersedes the
+        // Story 2.1-era expectation that `contactos` did not exist yet.
         await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
 
@@ -66,9 +71,51 @@ public class AppDbContextMigrationTests
             tableNames.Add(reader.GetString(0));
         }
 
-        // THEN `clientes` exists (Story 2.1) but `contactos` does not yet (out of scope until Epic 3)
+        // THEN both `clientes` (Story 2.1) and `contactos` (Story 2.5) exist
         Assert.Contains("clientes", tableNames);
-        Assert.DoesNotContain("contactos", tableNames);
+        Assert.Contains("contactos", tableNames);
+    }
+
+    [Fact]
+    public async Task Database_ContactosClienteIdForeignKey_HasOnDeleteSetNullBehavior()
+    {
+        // GIVEN a connection to siesa_agents_db
+        //
+        // RED PHASE (Story 2.5, Task 1, R2 — the single most important test in
+        // the epic): the `fk_contactos_clientes` FK constraint on
+        // `contactos.cliente_id` must be configured with ON DELETE SET NULL,
+        // NOT the EF Core/Postgres default (NO ACTION) and NOT CASCADE — a
+        // misconfiguration here would either block client deletion entirely or
+        // silently destroy contact records.
+        await using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        // WHEN querying pg_constraint for the FK's delete rule
+        await using var command = new NpgsqlCommand(
+            @"SELECT confdeltype FROM pg_constraint
+              WHERE conname = 'fk_contactos_clientes' AND contype = 'f';",
+            connection);
+        var deleteRule = await command.ExecuteScalarAsync() as string;
+
+        // THEN the delete rule is 'n' (SET NULL) per Postgres's pg_constraint.confdeltype encoding
+        Assert.Equal("n", deleteRule);
+    }
+
+    [Fact]
+    public async Task Database_ContactosTable_HasClienteIdIndex()
+    {
+        // GIVEN a connection to siesa_agents_db
+        await using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        // WHEN querying pg_indexes for the documented index name (architecture.md)
+        await using var command = new NpgsqlCommand(
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'contactos' AND indexname = 'ix_contactos_cliente_id';",
+            connection);
+        var count = (long)(await command.ExecuteScalarAsync() ?? 0L);
+
+        // THEN the ix_contactos_cliente_id index exists
+        Assert.Equal(1, count);
     }
 
     [Fact]
