@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -155,3 +155,13 @@ Claude Sonnet 5 (claude-sonnet-5)
 - `backend/src/SiesaAgents.Infrastructure/Data/Migrations/20260701042935_InitialCreate.Designer.cs` (new, generated)
 - `backend/src/SiesaAgents.Infrastructure/Data/Migrations/AppDbContextModelSnapshot.cs` (new, generated)
 - `backend/src/SiesaAgents.Infrastructure/Data/Migrations/.gitkeep` (deleted — replaced by real migration files)
+- `backend/SiesaAgents.sln` (modified — added `SiesaAgents.IntegrationTests` project)
+- `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` (modified — added project references for `AppDbContext`/middleware unit tests)
+- `backend/tests/SiesaAgents.UnitTests/Data/ModelBuilderExtensionsTests.cs` (new — added during ATDD/automate coverage expansion)
+- `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs` (new — added during ATDD/automate coverage expansion)
+- `backend/tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj` (new)
+- `backend/tests/SiesaAgents.IntegrationTests/Support/TestApiFactory.cs` (new)
+- `backend/tests/SiesaAgents.IntegrationTests/Data/AppDbContextMigrationTests.cs` (new)
+- `backend/tests/SiesaAgents.IntegrationTests/Data/AppDbContextConfigurationTests.cs` (new)
+- `backend/tests/SiesaAgents.IntegrationTests/Data/SnakeCaseNamingTests.cs` (new)
+- `backend/tests/SiesaAgents.IntegrationTests/Middleware/ExceptionHandlingMiddlewareTests.cs` (new)
