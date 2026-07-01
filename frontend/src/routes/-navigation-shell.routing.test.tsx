@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
@@ -29,11 +29,12 @@ function renderAppAt(initialPath: string) {
     routeTree,
     history: createMemoryHistory({ initialEntries: [initialPath] }),
   })
-  return render(
+  const result = render(
     <QueryProvider>
       <RouterProvider router={router} />
     </QueryProvider>,
   )
+  return { ...result, router }
 }
 
 describe('Navigation shell routing', () => {
@@ -141,7 +142,7 @@ describe('Navigation shell routing', () => {
           http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })),
         )
         const user = userEvent.setup()
-        renderAppAt('/clientes')
+        const { router } = renderAppAt('/clientes')
         const item = await screen.findByText('Comercializadora Andina SAS')
 
         // WHEN: the user clicks the client item
@@ -149,7 +150,7 @@ describe('Navigation shell routing', () => {
 
         // THEN: the URL updates to /clientes/:clienteId (FR30 deep linking)
         await waitFor(() => {
-          expect(window.location.pathname).toBe(`/clientes/${cliente.id}`)
+          expect(router.state.location.pathname).toBe(`/clientes/${cliente.id}`)
         })
       })
 
@@ -193,10 +194,10 @@ describe('Navigation shell routing', () => {
         await user.click(item)
 
         // THEN: the right panel shows Nombre, NIT/RUC, Teléfono, Ciudad
-        await screen.findByTestId('cliente-detail-panel')
-        expect(screen.getByText('900555666')).toBeInTheDocument()
-        expect(screen.getByText('3009998877')).toBeInTheDocument()
-        expect(screen.getByText('Medellín')).toBeInTheDocument()
+        const detailPanel = await screen.findByTestId('cliente-detail-panel')
+        expect(within(detailPanel).getByText('900555666')).toBeInTheDocument()
+        expect(within(detailPanel).getByText('3009998877')).toBeInTheDocument()
+        expect(within(detailPanel).getByText('Medellín')).toBeInTheDocument()
       })
     })
 

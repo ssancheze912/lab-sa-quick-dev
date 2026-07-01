@@ -3,14 +3,23 @@ import { Input } from 'siesa-ui-kit'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useClientes } from '@/modules/crm/clientes/application/hooks/useClientes'
 import { ClientListItem } from '@/shared/components/ClientListItem'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
+import type { Cliente } from '@/modules/crm/clientes/domain/entities/Cliente'
 
 export function ClienteListView() {
   const [searchQuery, setSearchQuery] = useState('')
   const { data, isLoading, isError, refetch } = useClientes()
+  const navigate = useNavigate()
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const clienteId = pathname.match(/^\/clientes\/(.+)$/)?.[1]
+
+  const handleSelect = (cliente: Cliente) => {
+    void navigate({ to: '/clientes/$clienteId', params: { clienteId: cliente.id } })
+  }
 
   const filteredClientes = useMemo(() => {
     if (!data) return []
@@ -49,7 +58,12 @@ export function ClienteListView() {
       {!isLoading && !isError && filteredClientes.length > 0 && (
         <ul className="flex flex-col gap-1 overflow-y-auto">
           {filteredClientes.map((cliente) => (
-            <ClientListItem key={cliente.id} cliente={cliente} />
+            <ClientListItem
+              key={cliente.id}
+              cliente={cliente}
+              selected={cliente.id === clienteId}
+              onClick={handleSelect}
+            />
           ))}
         </ul>
       )}

@@ -9,4 +9,6 @@ namespace SiesaAgents.Domain.Repositories;
 public interface IClienteRepository
 {
     Task<IReadOnlyList<ClienteEntity>> GetAllAsync(string? searchTerm, CancellationToken ct);
+
+    Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct);
 }

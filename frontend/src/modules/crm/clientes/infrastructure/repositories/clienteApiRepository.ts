@@ -9,6 +9,11 @@ class ClienteApiRepository implements IClienteRepository {
     })
     return data
   }
+
+  async getById(id: string): Promise<Cliente> {
+    const { data } = await apiClient.get<Cliente>(`/api/v1/clientes/${id}`)
+    return data
+  }
 }
 
 export const clienteApiRepository = new ClienteApiRepository()

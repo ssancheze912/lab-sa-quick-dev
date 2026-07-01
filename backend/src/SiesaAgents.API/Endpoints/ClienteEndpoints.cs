@@ -17,6 +17,17 @@ public static class ClienteEndpoints
             .WithName("GetClientes")
             .WithTags("Clientes");
 
+        app.MapGet("/api/v1/clientes/{id:guid}", async (
+                Guid id,
+                GetClienteByIdQueryHandler handler,
+                CancellationToken ct) =>
+            {
+                var result = await handler.HandleAsync(new GetClienteByIdQuery(id), ct);
+                return result is null ? Results.NotFound() : Results.Ok(result);
+            })
+            .WithName("GetClienteById")
+            .WithTags("Clientes");
+
         return app;
     }
 }

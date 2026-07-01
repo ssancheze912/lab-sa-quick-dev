@@ -22,4 +22,9 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(ct);
     }
+
+    public async Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
+    {
+        return await dbContext.Clientes.FirstOrDefaultAsync(c => c.Id == id, ct);
+    }
 }
