@@ -1182,4 +1182,88 @@ public class ClienteEndpointsTests : IClassFixture<TestApiFactory>, IAsyncLifeti
         var response = await client.GetAsync($"/api/v1/clientes/{toKeep.Id}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
+
+    // --- Edge cases (testarch-automate expansion, Story 2.5) -------------------
+
+    [Fact]
+    public async Task DeleteClientes_WithNonExistentId_ReturnsProblemDetailsWithoutStackTrace()
+    {
+        // GIVEN a well-formed UUID with no matching client — mirrors the
+        // Problem Details/NFR6 assertion already applied to GET's 404, not
+        // previously verified for DELETE's 404 response body
+        var client = _factory.CreateClient();
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN calling DELETE /api/v1/clientes/{id}
+        var response = await client.DeleteAsync($"/api/v1/clientes/{nonExistentId}");
+        var rawJson = await response.Content.ReadAsStringAsync();
+
+        // THEN no stack trace or technical exception details leak (NFR6)
+        Assert.DoesNotContain("StackTrace", rawJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("System.Exception", rawJson, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task DeleteClientes_WithGuidEmptyRouteSegment_ReturnsNotFoundNot500()
+    {
+        // GIVEN the well-formed but all-zeros GUID — same special-case guard
+        // already applied to GET/PUT's Guid.Empty route segment (AC #3/#7
+        // precedent), not previously verified for DELETE
+        var client = _factory.CreateClient();
+
+        // WHEN calling DELETE /api/v1/clientes/00000000-0000-0000-0000-000000000000
+        var response = await client.DeleteAsync($"/api/v1/clientes/{Guid.Empty}");
+
+        // THEN the response is 404 Not Found, never a 500
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteClientes_WithClienteThatHasAssociatedContacts_ContactsSurviveWithOtherFieldsIntactViaEndpoint()
+    {
+        // GIVEN an existing client with an associated contact carrying
+        // distinguishable field values — end-to-end (through the real HTTP
+        // pipeline, not just the repository) confirmation that only ClienteId
+        // is nulled, no other contact data is touched or lost
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Delete Campos Intactos {suffix}", $"DCI{suffix}");
+        var contacto = await SeedContactoAsync($"Contacto Campos {suffix}", seeded.Id);
+        var client = _factory.CreateClient();
+
+        // WHEN calling DELETE /api/v1/clientes/{id}
+        var response = await client.DeleteAsync($"/api/v1/clientes/{seeded.Id}");
+        _createdIds.Remove(seeded.Id);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        // THEN the contact survives with its non-FK fields exactly as seeded
+        await using var context = CreateContext();
+        var surviving = await context.Set<ContactoEntity>().FindAsync(contacto.Id);
+        Assert.NotNull(surviving);
+        Assert.Equal(contacto.Nombre, surviving!.Nombre);
+        Assert.Equal(contacto.Cargo, surviving.Cargo);
+        Assert.Equal(contacto.Telefono, surviving.Telefono);
+        Assert.Equal(contacto.Email, surviving.Email);
+        Assert.Null(surviving.ClienteId);
+
+        context.Set<ContactoEntity>().Remove(surviving);
+        await context.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task DeleteClientes_ResponseHasNoBodyOnSuccess()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Delete Sin Body {suffix}", $"DSB{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling DELETE /api/v1/clientes/{id}
+        var response = await client.DeleteAsync($"/api/v1/clientes/{seeded.Id}");
+        _createdIds.Remove(seeded.Id);
+        var rawBody = await response.Content.ReadAsStringAsync();
+
+        // THEN 204 No Content carries no response body, per REST convention
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Empty(rawBody);
+    }
 }

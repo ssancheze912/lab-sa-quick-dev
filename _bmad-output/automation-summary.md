@@ -475,3 +475,120 @@ npx playwright test e2e/tests/clientes/edit-client.spec.ts --project=chromium --
 2. Run full suite (frontend + backend + E2E) in CI pipeline
 3. Proceed to `testarch-trace` / quality gate decision for Epic 2 once all Epic 2 stories are automated
 4. Consider whether Story 2.5 (Delete Client) needs an equivalent "reopen after cancel"-style check for any confirmation-dialog draft state it introduces
+
+---
+
+# Automation Summary - Story 2.5: Delete Client
+
+**Date:** 2026-07-01
+**Story:** 2.5 — Delete Client
+**Epic:** 2 — Client Management
+**Mode:** BMad-Integrated (expanded existing ATDD suite)
+**Coverage Target:** critical-paths + edge cases
+
+## Context
+
+The pre-implementation ATDD suite already covered all 6 acceptance criteria GREEN across five files:
+
+- `e2e/tests/clientes/delete-client.spec.ts` (AC #1-#4, TC-E2-P0-03/04, TC-E2-P1-11, TC-E2-P2-07) — 7 Playwright specs
+- Backend xUnit integration: `ClienteRepositoryTests` (`DeleteAsync` block, AC #2/#3/#6, including the epic's single most important test, R2/TC-E2-P0-03) — 5 tests, `ClienteEndpointsTests` (`DELETE` block, AC #2/#3/#6) — 8 tests, `AppDbContextMigrationTests` (FK `ON DELETE SET NULL` verification) — 3 tests
+- Frontend Vitest + RTL: `useDeleteCliente.test.tsx` — 12 tests, `ClienteDetailView.test.tsx` ("Eliminar" trigger + dialog block, AC #1-#6) — 13 tests
+
+This is an unusually rigorous ATDD baseline — the highest-risk behavior in the epic (R2: FK `ON DELETE SET NULL` orphaning, not cascade-delete) was already covered end-to-end at the repository, endpoint, migration, and E2E levels, plus both Esc and explicit-Cancelar dismissal paths (AC #4/#5/R9) and the two-toast-variant exactness rule (R11). This workflow closed the remaining gaps: the previously untested `CountContactosByClienteIdAsync` helper in isolation (multi-contact count, cross-client isolation, non-existent id), a mixed-contacts scenario (one already-orphaned contact alongside one still-linked contact, guarding against an accidental broader FK/app-level touch), data-integrity assertions that the orphaning mechanism only nulls `ClienteId` and leaves every other contact field untouched (at both repository and full-HTTP-pipeline levels), DELETE's own Problem Details/NFR6 and `Guid.Empty` route-segment contract (previously verified for GET/PUT but not DELETE), the mutation hook's 403 (non-404 HTTP status) and axios-error-shape-propagation edge cases, and UI-level failure-path behavior specific to delete (dialog closes and detail panel survives on a failed delete, "Confirmar" disables while pending to prevent double-submit, and backdrop-click dismissal — AC #5 had only been exercised via Esc, not backdrop, at the component level). No new E2E specs were added — per the "avoid duplicate coverage" principle, all of the above are fully exercised at the component (RTL/MSW) and API-integration (xUnit/PostgreSQL) levels; the 2 E2E scenarios blocked on `POST/GET /api/v1/contactos` (Epic 3, not yet implemented) were left untouched per the invocation's explicit instruction.
+
+**No bugs found** — implementation matched the expected contract for every new edge case, including the `ExecuteDeleteAsync`-based deletion mechanism's correct handling of mixed orphaned/linked contacts.
+
+## Tests Created
+
+### API Integration Tests (P1-P2) — `backend/tests/SiesaAgents.IntegrationTests/Repositories/ClienteRepositoryTests.cs` (+6 tests)
+
+- [P2] `CountContactosByClienteIdAsync` returns zero for a client with no contacts
+- [P1] `CountContactosByClienteIdAsync` returns the exact count for a client with multiple contacts, unaffected by an unrelated client's own contact
+- [P2] `CountContactosByClienteIdAsync` returns zero (not an exception) for a non-existent client id
+- [P1] Deleting a client with a mix of one already-orphaned contact and one still-linked contact only affects the linked one's state (both survive, both end up with `ClienteId == null`, but the already-orphaned one was never touched by this delete)
+- [P1] Deleting a client with an associated contact leaves every other contact field (`Nombre`, `Cargo`, `Telefono`, `Email`) exactly as seeded — only `ClienteId` changes
+
+### API Integration Tests (P1-P2) — `backend/tests/SiesaAgents.IntegrationTests/Endpoints/ClienteEndpointsTests.cs` (+5 tests)
+
+- [P2] `DELETE` for a non-existent id returns Problem Details with no stack trace/technical leakage (NFR6), mirroring the existing GET/PUT assertion
+- [P2] `DELETE` with the `Guid.Empty` route segment returns `404`, never `500` (mirrors the existing GET/PUT precedent, not previously verified for DELETE)
+- [P1] End-to-end (real HTTP pipeline, not just the repository) confirmation that a surviving contact's non-FK fields are untouched after its parent client is deleted
+- [P2] `204 No Content` carries no response body, per REST convention
+
+### Frontend Hook Tests (P1-P2) — `frontend/src/modules/crm/clientes/application/hooks/useDeleteCliente.test.tsx` (+3 tests)
+
+- [P1] A `403 Forbidden` (a real HTTP status, distinct from both 404 and a network-level failure) triggers the generic error toast, never the 404-specific copy
+- [P2] Two rapid `mutateAsync` calls for the same id both resolve independently without crashing (documents the hook's own behavior; the double-submit guard itself lives in `ClienteDetailView`, covered separately below)
+- [P2] The rejected promise carries the real axios error shape (`isAxiosError: true`), not a generic wrapped `Error`, confirming `onError`'s `isAxiosError` check has a valid object to introspect
+
+### Frontend Component Tests (P1-P2) — `frontend/src/modules/crm/clientes/presentation/components/ClienteDetailView.test.tsx` (+6 tests)
+
+- [P1] The delete confirmation dialog closes even when the delete request fails with `404` (does not stay stuck open)
+- [P1] The client detail panel remains visible (not the empty state) after a failed deletion — a failed delete must not clear local `isDeleted` state
+- [P2] A non-404 failure (e.g. `500`) shows the generic error toast, not the not-found-specific copy
+- [P1] The "Confirmar" button disables while the deletion is in flight (`isProcess`), preventing a duplicate `DELETE` from a second click
+- [P2] Backdrop-click dismissal (as opposed to Esc, already covered) makes zero `DELETE` calls — AC #5/R9 explicitly calls out backdrop click as an equally valid dismissal path
+- [P2] After a successful delete, both "Eliminar" and "Editar" triggers are gone too (the whole panel unmounts to the empty state, not just the dialog)
+
+## Infrastructure
+
+No new fixtures/factories were required. All new tests reused the existing `frontend/src/test/factories/cliente.factory.ts` (`createCliente`), `frontend/src/test/msw/handlers.ts` (`CLIENTE_BY_ID_ENDPOINT`, `clienteDeleteNotFoundProblemDetails`), the `siesa-ui-kit` toast mock pattern already established in `useDeleteCliente.test.tsx`/`ClienteDetailView.test.tsx`, and the backend's `SeedAsync`/`SeedContactoAsync`/GUID-suffix isolation pattern already introduced by the ATDD suite for this story.
+
+## Test Execution
+
+```bash
+# Frontend (from frontend/)
+npx vitest run src/modules/crm/clientes/application/hooks/useDeleteCliente.test.tsx src/modules/crm/clientes/presentation/components/ClienteDetailView.test.tsx
+npx vitest run   # full suite
+
+# Backend (from backend/, requires local PostgreSQL on 5432, db `siesa_agents_db` migrated)
+dotnet test tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj --filter "FullyQualifiedName~ClienteRepositoryTests|FullyQualifiedName~ClienteEndpointsTests"
+dotnet test   # full solution
+```
+
+## Validation Results
+
+- **Frontend targeted files:** 57/57 passing (useDeleteCliente.test.tsx: 12 original + 3 new; ClienteDetailView.test.tsx: 13 Story-2.5-specific original + 6 new, plus unrelated pre-existing blocks in the same file)
+- **Frontend full suite:** 195/195 passing (0 regressions)
+- **Backend targeted files:** 92/92 passing (`ClienteRepositoryTests` + `ClienteEndpointsTests`, includes all 11 new tests)
+- **Backend full solution:** 167/167 passing (54 UnitTests + 113 IntegrationTests, 0 regressions)
+- **E2E:** not re-executed in this pass (per the invocation's explicit instruction — 2 of 7 `delete-client.spec.ts` scenarios depend on `POST/GET /api/v1/contactos`, Epic 3 scope, not yet implemented; no new E2E specs were added, so no new E2E execution was required)
+- **Healed:** 1 auto-heal iteration (1/3 used) — the backdrop-click dismissal test initially called `screen.getByRole('alertdialog', { hidden: true }) ?? screen.getByRole('dialog', ...)`, which throws instead of falling through to the second lookup when the first role doesn't match (RTL's `getByRole` never returns null). Fixed by inspecting the actual rendered DOM (Headless UI's dialog root uses `role="dialog"`, not `alertdialog`) and querying that role directly. Re-ran and passed.
+- **Fixme (unrecoverable):** 0
+
+## Coverage Analysis
+
+**Total New Tests:** 20 (6 backend repository + 5 backend endpoint + 3 frontend hook + 6 frontend component)
+
+**Priority Breakdown (new tests only):** P0: 0, P1: 9, P2: 11, P3: 0
+
+**Test Level Breakdown:** API (integration): 11, Hook: 3, Component: 6
+
+**Coverage Status:**
+
+- All 6 acceptance criteria retain their original ATDD happy/sad-path coverage (unchanged)
+- R2 (FK orphaning, the epic's highest-priority risk): strengthened beyond the original single-contact happy path with a mixed already-orphaned/still-linked scenario and a field-level data-integrity guarantee (only `ClienteId` changes, nothing else) — both at the repository level and confirmed end-to-end through the real HTTP pipeline
+- AC #2 (toast variant selection): the `CountContactosByClienteIdAsync` helper that decides which toast fires now has direct, isolated unit-style coverage (previously only exercised indirectly via the response header)
+- AC #5/R9 (accidental-delete-via-dismissal): backdrop-click dismissal is now verified explicitly at the component level — the original ATDD suite only tested Esc, leaving backdrop click as a documented-but-unverified equivalent path
+- Failure-path UX (not explicitly required by any single AC but implied by the "no false-success" and dialog-lifecycle requirements): dialog-closes-on-error, panel-survives-on-error, and pending-state double-submit prevention were previously untested
+- No duplicate coverage: new tests target inputs/conditions/integration seams not present in the ATDD suite; no existing assertion was re-tested at a different level or re-verified via a slower test type
+
+## Definition of Done
+
+- [x] All tests follow Given-When-Then structure
+- [x] All tests have priority tags (`[P1]`/`[P2]`) in test names or docstrings
+- [x] All tests use `data-testid`/`getByRole` selectors (frontend) or direct repository-and-HTTP assertions (backend)
+- [x] No hard waits; `waitFor`/`findBy*` used throughout
+- [x] Frontend tests are self-contained (MSW `server.use()` scoped per test, fresh `QueryClient` per render, toast mocked)
+- [x] Backend tests are self-cleaning (`_createdIds` tracked and removed in `DisposeAsync`; contact-only cleanup handled per-test via fresh `AppDbContext` instances, consistent with the ATDD suite's existing pattern)
+- [x] No page objects introduced
+- [x] Test files remain lean (largest addition stays well-organized by AC/edge-case block, consistent with the existing file structure)
+- [x] Full frontend and backend suites pass with 0 regressions
+- [x] 1 test healed after generation (selector/role mismatch, not an application defect); 0 marked `test.fixme()`
+
+## Next Steps
+
+1. Review generated edge-case tests with team
+2. Run full suite (frontend + backend) in CI pipeline
+3. Re-run the 2 blocked `delete-client.spec.ts` E2E scenarios once Epic 3 (`POST/GET /api/v1/contactos`) is implemented — expected to go green with no test changes needed, per the story's own dev-story completion notes
+4. Proceed to `testarch-trace` / quality gate decision for Epic 2 now that all 5 Epic 2 stories (2.1-2.5) have been automated

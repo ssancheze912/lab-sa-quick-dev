@@ -284,4 +284,75 @@ describe('useDeleteCliente', () => {
       expect(toast.error).toHaveBeenCalledWith('No se pudo eliminar. Intenta de nuevo.')
     })
   })
+
+  // --- Edge cases (testarch-automate expansion, Story 2.5) -------------------
+
+  test('should call toast.error with the generic message for a 403 Forbidden response (status present but not 404)', async () => {
+    // GIVEN the backend rejects with 403 — a real HTTP status distinct from
+    // both 404 and network-level failure, guarding against any status-range
+    // check (e.g. `>= 400`) that would misclassify this as "not found"
+    const cliente = createCliente()
+    server.use(http.delete(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json({}, { status: 403 })))
+    const { toast } = await import('siesa-ui-kit')
+    const { result } = renderUseDeleteCliente()
+
+    // WHEN the mutation fails with 403
+    await result.current.mutateAsync(cliente.id).catch(() => null)
+
+    // THEN the generic error toast fires, not the 404-specific copy
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('No se pudo eliminar. Intenta de nuevo.')
+    })
+    expect(toast.error).not.toHaveBeenCalledWith('El cliente ya no existe.')
+  })
+
+  test('mutating twice in a row (e.g. a rapid double-confirm) issues two independent DELETE calls, both resolving successfully', async () => {
+    // GIVEN a client whose delete endpoint always succeeds — this hook has
+    // no built-in de-duplication, so the calling component (ClienteDetailView)
+    // is responsible for disabling the trigger while `isPending`; this test
+    // documents the hook's own behavior in isolation (idempotent-safe, no
+    // crash) rather than asserting a guard that lives elsewhere
+    const cliente = createCliente()
+    let deleteCallCount = 0
+    server.use(
+      http.delete(CLIENTE_BY_ID_ENDPOINT, () => {
+        deleteCallCount += 1
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const { result } = renderUseDeleteCliente()
+
+    // WHEN mutateAsync is invoked twice in immediate succession for the same id
+    await Promise.all([
+      result.current.mutateAsync(cliente.id),
+      result.current.mutateAsync(cliente.id),
+    ])
+
+    // THEN both calls reach the backend and resolve without throwing
+    expect(deleteCallCount).toBe(2)
+  })
+
+  test('should propagate the underlying error object (not a wrapped/generic Error) on rejection', async () => {
+    // GIVEN a 404 failure
+    const cliente = createCliente()
+    server.use(
+      http.delete(CLIENTE_BY_ID_ENDPOINT, () =>
+        HttpResponse.json(clienteDeleteNotFoundProblemDetails, { status: 404 }),
+      ),
+    )
+    const { result } = renderUseDeleteCliente()
+
+    // WHEN the mutation rejects
+    let caught: unknown
+    try {
+      await result.current.mutateAsync(cliente.id)
+    } catch (err) {
+      caught = err
+    }
+
+    // THEN the caught error is axios's own error shape (isAxiosError-compatible),
+    // not a hand-rolled Error the onError branch would fail to introspect
+    expect(caught).toBeDefined()
+    expect((caught as { isAxiosError?: boolean }).isAxiosError).toBe(true)
+  })
 })

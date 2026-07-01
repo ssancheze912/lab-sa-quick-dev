@@ -619,4 +619,141 @@ public class ClienteRepositoryTests : IAsyncLifetime
         freshContext.Set<ContactoEntity>().Remove(stillAssociated);
         await freshContext.SaveChangesAsync();
     }
+
+    // --- Edge cases (testarch-automate expansion, Story 2.5) -------------------
+
+    [Fact]
+    public async Task CountContactosByClienteIdAsync_WithNoAssociatedContacts_ReturnsZero()
+    {
+        // GIVEN a client with zero associated contacts — direct unit coverage
+        // of the helper used by DeleteClienteCommandHandler to pick the toast
+        // variant (AC #2), not previously exercised on its own
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Conteo Cero {suffix}", $"CNT0{suffix}");
+        var repository = new ClienteRepository(_context);
+
+        // WHEN counting contacts for that client
+        var count = await repository.CountContactosByClienteIdAsync(seeded.Id, CancellationToken.None);
+
+        // THEN zero is returned
+        Assert.Equal(0, count);
+    }
+
+    [Fact]
+    public async Task CountContactosByClienteIdAsync_WithMultipleAssociatedContacts_ReturnsExactCount()
+    {
+        // GIVEN a client with three associated contacts and an unrelated
+        // client with its own contact (guards against a query that counts
+        // globally instead of per-client)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Conteo Multiple {suffix}", $"CNTM{suffix}");
+        await SeedContactoAsync($"Contacto Uno {suffix}", seeded.Id);
+        await SeedContactoAsync($"Contacto Dos {suffix}", seeded.Id);
+        var contactoTres = await SeedContactoAsync($"Contacto Tres {suffix}", seeded.Id);
+        var otherCliente = await SeedAsync($"Otro Conteo {suffix}", $"CNTOTRO{suffix}");
+        await SeedContactoAsync($"Contacto Ajeno Conteo {suffix}", otherCliente.Id);
+        var repository = new ClienteRepository(_context);
+
+        // WHEN counting contacts for the target client
+        var count = await repository.CountContactosByClienteIdAsync(seeded.Id, CancellationToken.None);
+
+        // THEN exactly three are counted, not the unrelated client's contact
+        Assert.Equal(3, count);
+
+        // Cleanup: contacts are not Cliente-scoped in _createdIds
+        await using var freshContext = new AppDbContext(
+            new DbContextOptionsBuilder<AppDbContext>()
+                .UseNpgsql(ConnectionString, npgsql => { })
+                .ReplaceService<IHistoryRepository, SnakeCaseNpgsqlHistoryRepository>()
+                .Options);
+        freshContext.Set<ContactoEntity>().RemoveRange(
+            await freshContext.Set<ContactoEntity>()
+                .Where(c => c.Nombre.EndsWith(suffix))
+                .ToListAsync());
+        await freshContext.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task CountContactosByClienteIdAsync_WithNonExistentClienteId_ReturnsZeroNotAnException()
+    {
+        // GIVEN a well-formed clienteId that matches no client or contacts
+        var repository = new ClienteRepository(_context);
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN counting contacts for that id
+        var count = await repository.CountContactosByClienteIdAsync(nonExistentId, CancellationToken.None);
+
+        // THEN zero is returned, no exception
+        Assert.Equal(0, count);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithClienteThatHasAMixOfContactsAlreadyOrphanedAndStillLinked_OnlyOrphansTheLinkedOnes()
+    {
+        // GIVEN a client with two contacts: one already orphaned (ClienteId
+        // null from a prior unrelated operation) and one still linked to this
+        // client — guards against the FK's SET NULL behavior (or any
+        // accidental app-level pass) touching rows that aren't actually
+        // associated with the client being deleted
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Mixto Contactos {suffix}", $"MIX{suffix}");
+        var linked = await SeedContactoAsync($"Contacto Vinculado {suffix}", seeded.Id);
+        var alreadyOrphaned = await SeedContactoAsync($"Contacto Ya Huerfano {suffix}", null);
+        var repository = new ClienteRepository(_context);
+
+        // WHEN deleting the client
+        var result = await repository.DeleteAsync(seeded.Id, CancellationToken.None);
+        _createdIds.Remove(seeded.Id);
+
+        // THEN the deletion succeeds and only the previously-linked contact
+        // is (still) orphaned; the already-orphaned one is untouched
+        Assert.True(result);
+        await using var freshContext = new AppDbContext(
+            new DbContextOptionsBuilder<AppDbContext>()
+                .UseNpgsql(ConnectionString, npgsql => { })
+                .ReplaceService<IHistoryRepository, SnakeCaseNpgsqlHistoryRepository>()
+                .Options);
+        var survivingLinked = await freshContext.Set<ContactoEntity>().FirstOrDefaultAsync(c => c.Id == linked.Id);
+        var survivingOrphan = await freshContext.Set<ContactoEntity>().FirstOrDefaultAsync(c => c.Id == alreadyOrphaned.Id);
+        Assert.NotNull(survivingLinked);
+        Assert.NotNull(survivingOrphan);
+        Assert.Null(survivingLinked!.ClienteId);
+        Assert.Null(survivingOrphan!.ClienteId);
+
+        freshContext.Set<ContactoEntity>().RemoveRange(survivingLinked, survivingOrphan);
+        await freshContext.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithClienteThatHasAssociatedContacts_PreservesTheContactsOtherFieldsUnchanged()
+    {
+        // GIVEN a client with one associated contact carrying distinguishable
+        // field values — guards against the orphaning mechanism (FK SET
+        // NULL) accidentally clearing/mutating any column besides ClienteId
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Preserva Campos {suffix}", $"PRES{suffix}");
+        var contacto = await SeedContactoAsync($"Contacto Intacto {suffix}", seeded.Id);
+        var repository = new ClienteRepository(_context);
+
+        // WHEN deleting the client
+        await repository.DeleteAsync(seeded.Id, CancellationToken.None);
+        _createdIds.Remove(seeded.Id);
+
+        // THEN the surviving contact's non-FK fields are exactly as seeded
+        await using var freshContext = new AppDbContext(
+            new DbContextOptionsBuilder<AppDbContext>()
+                .UseNpgsql(ConnectionString, npgsql => { })
+                .ReplaceService<IHistoryRepository, SnakeCaseNpgsqlHistoryRepository>()
+                .Options);
+        var surviving = await freshContext.Set<ContactoEntity>().FirstOrDefaultAsync(c => c.Id == contacto.Id);
+        Assert.NotNull(surviving);
+        Assert.Equal(contacto.Nombre, surviving!.Nombre);
+        Assert.Equal(contacto.Cargo, surviving.Cargo);
+        Assert.Equal(contacto.Telefono, surviving.Telefono);
+        Assert.Equal(contacto.Email, surviving.Email);
+        Assert.Null(surviving.ClienteId);
+
+        freshContext.Set<ContactoEntity>().Remove(surviving);
+        await freshContext.SaveChangesAsync();
+    }
 }
