@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +23,16 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+
+// EF Core: register AppDbContext with PostgreSQL provider + snake_case naming convention.
+// The connection string is sourced from ConnectionStrings:DefaultConnection (appsettings.*.json).
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString,
+               npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history"))
+           .UseSnakeCaseNamingConvention());
 
 var app = builder.Build();
 

@@ -1,196 +1,202 @@
-# Automation Summary — Story 1.1: Project Initialization & Repository Structure
+# Automation Summary — Story 1.2: Frontend Navigation Shell
 
 **Date:** 2026-07-01
 **Mode:** BMad-Integrated (expands ATDD, does not analyze codebase from scratch)
-**Story:** `_bmad-output/implementation-artifacts/1-1-project-initialization-repository-structure.md`
+**Story:** `_bmad-output/implementation-artifacts/1-2-frontend-navigation-shell.md`
 **Epic:** 1 — Project Foundation & Application Shell
 **Test-Design Reference:** `_bmad-output/implementation-artifacts/test-design-epic-1.md`
-**ATDD Baseline:** `e2e/tests/foundation/project-initialization.spec.ts` (7/7 passing — happy paths)
+**ATDD Baseline:**
+  - `e2e/tests/foundation/navigation-shell.spec.ts` (17/17 passing — happy paths, chromium)
+  - `frontend/src/routes/__root.test.tsx` (11/11 passing — component happy paths)
 
 ---
 
 ## Coverage Expansion Goal
 
-Fill gaps between the ATDD happy-path spec (7 tests) and the epic test-design plan.
-Story 1.1's biggest risk was **R3 — ExceptionHandlingMiddleware Problem Details / stack-trace leakage (NFR6)**, entirely uncovered by the ATDD suite. Also expanded CORS negative paths, root redirect, HTTP method robustness, and unit-tested the frontend Axios + QueryClient shared infrastructure.
+The ATDD baseline covered every acceptance criterion (AC1–AC6) on the primary happy path. This expansion targets the **edge cases, boundary conditions, and accessibility gaps** identified against the epic test-design that ATDD did NOT cover:
+
+- Deep-link resilience under a hard reload
+- Browser Back / Forward integration with the SPA history (FR28)
+- 404 recovery flow — the "Volver a Clientes" link actually navigates
+- Keyboard-only activation of nav items (Task 9 a11y audit)
+- Responsive breakpoint boundary conditions (1023px vs 1024px vs 1025px)
+- Active-nav state on the mirror route (`/contactos`) and on the 404 view
+- Accessibility contract — Spanish container aria-label + per-item aria-labels
+- Configuration-level unit tests on `NAV_ITEMS` (Spanish labels, unique ids/paths, icon presence)
+- Console hygiene across all routes (no runtime errors)
 
 ---
 
 ## Tests Created
 
-### E2E Tests — Playwright (Foundation spec expansion)
+### Unit Tests — Vitest (new)
 
-**File:** `e2e/tests/foundation/project-initialization.spec.ts` (16 tests total, 9 new — was 7)
+**File:** `frontend/src/app/config/navigation.test.ts` (10 tests, all `[P2]`)
 
-Newly added describe blocks:
+Locks down the `NAV_ITEMS` config contract that both the desktop rail and the mobile bar depend on:
 
-- `[P2] Backend root redirect and Scalar endpoint variants` (3 tests)
-  - `[P2] should redirect GET / to /scalar`
-  - `[P1] should serve the OpenAPI JSON document required by Scalar`
-  - `[P2] should not serve the .NET default WeatherForecast endpoint under any casing`
-- `[P0] CORS negative paths — disallowed origins must not receive echo` (2 tests)
-  - `[P0] should NOT echo disallowed origin in Access-Control-Allow-Origin header`
-  - `[P1] preflight from disallowed origin should not grant CORS headers`
-- `[P0] ExceptionHandlingMiddleware — RFC 7807 Problem Details contract (R3)` (2 tests)
-  - `[P0] non-existent API path returns 404 without leaking HTML error page or stack trace`
-  - `[P0] Scalar endpoint responses must NEVER expose stack-trace strings`
-- `[P2] Backend responds sanely to unusual HTTP methods on /scalar` (2 tests)
-  - `[P2] HEAD /scalar should not crash the server`
-  - `[P2] POST /scalar should not crash the server (method not allowed acceptable)`
+- exactly 2 nav entries (MVP scope)
+- Clientes first (default landing), Contactos second
+- Spanish labels (`Clientes`, `Contactos`) — Task 9 audit
+- Every entry has a defined Icon component
+- Unique `id` values across entries
+- Unique `path` values across entries
+- Every path is absolute (starts with `/`)
+- Object shape matches the `NavItem` type contract
+- Array is readonly (compile + runtime check)
 
-**Result:** 16/16 passing (chromium) — confirmed against a live backend + frontend on 2026-07-01.
+### Component Tests — Vitest + RTL (new)
 
-### API / Integration Tests — xUnit + WebApplicationFactory<Program>
+**File:** `frontend/src/routes/__root.edge-cases.test.tsx` (8 tests: 3 P1, 5 P2)
 
-**New project:** `backend/tests/SiesaAgents.IntegrationTests/` (added to `SiesaAgents.sln`)
+Companion to the ATDD `__root.test.tsx`; extends coverage into edge cases the ATDD spec did not exercise:
 
-**File:** `backend/tests/SiesaAgents.IntegrationTests/ExceptionHandlingMiddlewareTests.cs` (11 tests)
+- `[P1] should mark "Contactos" as active when the route is /contactos` — mirror-side of ATDD's `/clientes` case
+- `[P2] should mark NO nav item as active when the 404 view is rendered` — false-positive selection guard
+- `[P2] should expose the Spanish container aria-label on the desktop NavigationRail` — Task 9 accessibility contract
+- `[P2] should attach Spanish labels to every rail nav item via aria-label`
+- `[P1] should navigate to /clientes when the "Volver a Clientes" link is activated` — 404 recovery via router
+- `[P2] should remain on /clientes after clicking the already-active Clientes nav item` — no-op click safety
+- `[P2] should handle rapid double-click on a nav item without throwing`
 
-`ExceptionHandlingMiddlewareTests` — R3 top-risk coverage (P0):
-- `[P0] Unhandled exception returns 500 Internal Server Error`
-- `[P0] Unhandled exception returns application/problem+json content type` — **caught a real prod bug**
-- `[P0] Problem Details body contains status/title/type/instance fields`
-- `[P0] Problem Details body MUST NOT expose stack trace or exception internals (NFR6)`
-- `[P1] Middleware handles multiple exception types (Exception, InvalidOperationException)`
+### E2E Tests — Playwright (new)
 
-`CorsMiddlewareTests` — R1 top-risk coverage (P0):
-- `[P0] Preflight OPTIONS from allowed origin returns CORS headers`
-- `[P0] Preflight from disallowed origin does NOT emit Access-Control-Allow-Origin for that origin`
-- `[P1] GET / redirects to /scalar per Program.cs wiring`
-- `[P1] Scalar page loads at /scalar with 200 or redirect + HTML`
-- `[P2] Swagger endpoint MUST NOT be exposed (Scalar-only mandate)`
-- `[P2] WeatherForecast default template endpoint MUST be removed`
+**File:** `e2e/tests/foundation/navigation-shell-edge-cases.spec.ts` (12 tests: 5 P1, 7 P2)
 
-**Result:** 11/11 passing — verified locally via `dotnet test`.
+Companion to the ATDD `navigation-shell.spec.ts`; targets browser-only behaviour the ATDD suite did not exercise:
 
-**Notable production fix triggered by these tests:**
-The middleware previously called `context.Response.WriteAsJsonAsync(problem)` without a content-type, which caused `WriteAsJsonAsync` to overwrite the explicitly-set `application/problem+json` header with `application/json`. RFC 7807 mandates `application/problem+json`. The middleware now passes `contentType: "application/problem+json"` explicitly. This is a real NFR6-adjacent fix that the ATDD suite missed.
-
-Also added a test-only endpoint gate in `Program.cs` (activated by `SIESA_TEST_ENDPOINTS=1` env var) that maps `/test-error` and `/test-error-invalidop` to throwing handlers. This lets integration tests exercise the middleware's catch path without polluting the production pipeline or requiring domain endpoints (which arrive in Story 1.3).
-
-### Unit Tests — Vitest (frontend shared infrastructure)
-
-**New config:** `frontend/vitest.config.ts` (path alias `@/*`, includes `src/**/*.test.{ts,tsx}`)
-
-**Files:**
-- `frontend/src/shared/lib/queryClient.test.ts` (3 tests)
-  - `[P2] should export a QueryClient instance`
-  - `[P2] should configure defaultOptions.queries.staleTime to 60_000 ms (60s)`
-  - `[P3] should be a singleton — repeated imports return the same reference`
-- `frontend/src/shared/lib/apiClient.test.ts` (6 tests)
-  - `[P2] should read baseURL from VITE_API_URL env variable`
-  - `[P2] should default to JSON Content-Type in defaults.headers`
-  - `[P2] should default to JSON Accept header`
-  - `[P2] should register at least one request interceptor`
-  - `[P2] should register a response interceptor with a rejection handler`
-  - `[P3] should preserve rejection semantics — response interceptor must re-throw errors`
-
-**Result:** 9/9 passing on first run — verified via `pnpm exec vitest run`.
+- `[P1] should stay on /contactos after a hard reload of the browser` — deep-link reload survival (AC3)
+- `[P1] should keep the persistent shell after a reload`
+- `[P1] should return to /clientes after navigating forward to /contactos and pressing Back` — browser Back (FR28)
+- `[P1] should return to /contactos after Back then Forward` — browser Forward (FR28)
+- `[P1] should recover to /clientes when the user clicks "Volver a Clientes" on the 404 view` (AC4)
+- `[P2] after 404 recovery, the nav should still function` — health check post-recovery
+- `[P2] should navigate to /contactos when the user activates the Contactos rail item via Enter` — Task 9 keyboard nav
+- `[P2] should show rail at 1280px and bar at 375px without a full page reload` — breakpoint transition
+- `[P2] should show rail exactly at the 1024px breakpoint (boundary condition)` — boundary
+- `[P2] should show bar at 1023px viewport (just below breakpoint)` — boundary
+- `[P2] should not emit console error messages on /clientes, /contactos, or the 404 view` — console hygiene
+- `[P2] should end up on /clientes when navigating to "/" and only render the Clientes page` — no-flash redirect
 
 ---
 
-## Coverage Plan Summary
+## Coverage Analysis
 
-### Priority Distribution (new tests only)
+### Test count breakdown
 
-| Priority | E2E | API/Integration | Unit | Total |
-|----------|-----|-----------------|------|-------|
-| P0       | 3   | 4               | 0    | 7     |
-| P1       | 2   | 3               | 0    | 5     |
-| P2       | 4   | 2               | 5    | 11    |
-| P3       | 0   | 0               | 2    | 2     |
-| **Total**| **9** | **11**        | **7**| **27** |
+| Level | ATDD baseline | New (this workflow) | Total |
+|-------|---------------|---------------------|-------|
+| E2E (Playwright) | 17 | 12 | 29 |
+| Component (Vitest + RTL) | 11 | 8 | 19 |
+| Unit (Vitest) | 0 | 10 | 10 |
+| **Total for Story 1.2** | **28** | **30** | **58** |
 
-### Test-Design Traceability
+### Priority breakdown (new tests only)
 
-| Test-Design Case | Priority | Story | Covered By |
-|-----------------|----------|-------|------------|
-| TC-E1-P0-03 (Scalar loads) | P0 | 1.1 | `CorsMiddlewareTests.Scalar_Page_Loads` + E2E `Backend root redirect` |
-| TC-E1-P0-04 (CORS preflight) | P0 | 1.1 | `CorsMiddlewareTests.Preflight_From_Allowed_Origin_*` (allowed + disallowed) + E2E CORS negative paths |
-| TC-E1-P0-05 (Problem Details RFC 7807) | P0 | 1.3 (early coverage from 1.1 middleware stub) | `ExceptionHandlingMiddlewareTests.*` — the full 5-test suite covers status, content-type, body shape, stack-trace non-leakage, and multiple exception types |
-| TC-E1-P1-06 (dotnet build succeeds) | P1 | 1.1 | Implicit: all 11 integration tests + Program.cs test-endpoint gate compile as part of `SiesaAgents.sln` |
-| Edge — root redirect | P1 | 1.1 | `CorsMiddlewareTests.Root_Redirects_To_Scalar` + E2E redirect test |
-| Edge — Swagger forbidden | P2 | 1.1 | `Swagger_Endpoint_Is_Not_Exposed` |
-| Edge — WeatherForecast removed | P2 | 1.1 | `WeatherForecast_Endpoint_Removed` + E2E casing variants |
+| Priority | Count |
+|----------|-------|
+| P0 | 0 |
+| P1 | 8 |
+| P2 | 22 |
+| P3 | 0 |
+| **Total** | **30** |
 
-### Risk Mitigation Coverage (Epic 1 risk register)
+Story 1.2 has no P0 test cases — P0 in test-design-epic-1 belongs to Story 1.1 (CORS, TypeScript strict, middleware) and Story 1.3 (Problem Details). This expansion focuses on the P1/P2 shell + navigation cases the ATDD baseline left unaddressed.
 
-| Risk | Mitigation Added |
-|------|------------------|
-| **R1** — CORS misconfig blocks all API calls | Positive + negative preflight tests at both API-integration and E2E levels; allowed vs. disallowed origin explicitly verified |
-| **R2** — TypeScript strict mode breaks | Existing ATDD covers; expansion touches Vite error overlay + zero TS console errors |
-| **R3** — Middleware exposes stack traces | New 5-test middleware suite: real throw → 500 + `application/problem+json` + valid body shape + zero leakage of `stackTrace`/`exception`/`SECRET-INTERNAL-DETAIL`/`at SiesaAgents.` markers |
-| **R8** — Scalar registration accidentally replaced by Swagger | `Swagger_Endpoint_Is_Not_Exposed` + `WeatherForecast_Endpoint_Removed` |
+### Test-design mapping (per test-design-epic-1.md)
+
+| Test case | ATDD | Expanded here |
+|-----------|------|---------------|
+| TC-E1-P1-01 (SPA no reload) | ✓ | Back/Forward, reload, rapid-click |
+| TC-E1-P1-02 (deep-link /clientes) | ✓ | Reload survival, 404-recovery-then-nav |
+| TC-E1-P1-03 (deep-link /contactos) | ✓ | Reload survival |
+| TC-E1-P1-04 (404 route) | ✓ | Recovery link, no-active-nav, shell survives |
+| TC-E1-P2-01 (Rail desktop) | ✓ | Boundary 1024px, keyboard activation |
+| TC-E1-P2-02 (Bar mobile) | ✓ | Boundary 1023px, transition without reload |
+| TC-E1-P2-03 (`/` → `/clientes`) | ✓ | No-flash assertion |
+
+### Gaps covered vs. previously uncovered
+
+- ✅ Browser Back / Forward integration with FR28 — was not asserted in ATDD
+- ✅ Reload preserves route — was not asserted in ATDD
+- ✅ Keyboard activation of nav items (Task 9 audit) — was not asserted anywhere
+- ✅ 404 → recovery link → nav still works — was not asserted end-to-end
+- ✅ Breakpoint boundary conditions (exactly 1024px, 1023px) — was not asserted
+- ✅ Accessibility contract (Spanish aria-labels + landmark) — was not asserted
+- ✅ NAV_ITEMS config integrity — was not unit-tested
+- ✅ Active-state on `/contactos` and on 404 — was not asserted
+
+### Gaps intentionally NOT covered
+
+- **Axe automated accessibility scan** — Story 1.2 test-design (§Testing Standards) flagged Axe as "nice-to-have this story but not blocking". Deferred to a later CI/quality-gate story.
+- **Visual regression on brand tokens (Siesa Blue #0e79fd)** — not in scope for Story 1.2; UX validation is manual until a visual-regression tool is scaffolded.
+- **Deep-linking on production build fallback** — Story 1.2 dev-notes explicitly defer this to the deployment story ("In production, whatever server hosts the build must fall back all non-asset paths to `index.html`").
 
 ---
 
-## Infrastructure Created
+## Test Execution Results
 
-- `backend/tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj` — new xUnit project referencing `Microsoft.AspNetCore.Mvc.Testing` + API project; added to `SiesaAgents.sln`
-- `TestExceptionAppFactory` — subclass of `WebApplicationFactory<Program>` that sets `SIESA_TEST_ENDPOINTS=1` so Program.cs registers throwing test endpoints
-- `frontend/vitest.config.ts` — Vitest config with the `@/*` path alias matching `tsconfig.app.json`
-- `package.json` scripts: `test:e2e:foundation`, `test:unit:frontend`, `test:integration:backend`, `test:unit:backend`
-- `frontend/package.json` scripts: `test:unit`, `test:unit:watch`
+### Vitest (frontend unit + component)
 
-## Production Code Changes
-
-- `backend/src/SiesaAgents.API/Program.cs` — added an `SIESA_TEST_ENDPOINTS=1`-gated block that maps `/test-error` and `/test-error-invalidop`. Zero effect on dev/prod runs (only enabled by integration tests).
-- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` — passes `contentType: "application/problem+json"` explicitly to `WriteAsJsonAsync` so the RFC 7807 media type isn't overwritten. This is a genuine NFR6-adjacent bug fix uncovered by the new tests.
-
----
-
-## Test Execution
-
-```bash
-# Full foundation E2E suite (16 tests)
-pnpm exec playwright test e2e/tests/foundation --project=chromium
-
-# Backend integration tests (11 tests) — no external services required (WebApplicationFactory hosts in-process)
-dotnet test backend/tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj
-
-# Frontend unit tests (9 tests)
-pnpm --filter frontend test:unit
-
-# All Story 1.1 automation (run in order)
-pnpm run test:unit:frontend && pnpm run test:integration:backend && pnpm run test:e2e:foundation
+```
+Test Files  4 passed (Story 1.2 scope) | 1 pre-existing failure (Story 1.1 apiClient)
+Tests       34 passed (Story 1.2 scope) | 3 failed (Story 1.1 apiClient — out of scope)
 ```
 
-## Validation Results (local, 2026-07-01)
+- All 10 new `navigation.test.ts` unit tests pass.
+- All 8 new `__root.edge-cases.test.tsx` component tests pass.
+- All 11 original ATDD `__root.test.tsx` component tests still pass.
+- The 3 `apiClient.test.ts` failures are pre-existing Story 1.1 issues documented in `1-2-frontend-navigation-shell.md#Debug Log References` — outside Story 1.2 scope.
 
-| Suite | Result |
-|-------|--------|
-| Playwright E2E foundation (chromium) | **16/16 passed** |
-| xUnit integration tests | **11/11 passed** |
-| Vitest unit tests | **9/9 passed** |
-| `dotnet build SiesaAgents.sln` | 0 errors, 0 warnings |
+### Playwright (E2E, chromium)
 
-**Total new tests added:** 27
-**Tests marked `test.fixme()`:** 0 (no unfixable failures)
-**Healing iterations used:** 2 (one for missing `using Microsoft.Extensions.Hosting`; one for the E2E 404 content-type assertion) — both healed within the 3-iteration budget.
+```
+12 passed (10.1s)
+```
+
+- All 12 new edge-case tests pass on first run against a live frontend dev server.
+- Zero healing iterations required — no `test.fixme()` needed.
 
 ---
 
-## Coverage Status
+## Test Infrastructure Notes
 
-- ✅ R1 (CORS): 100% — positive + negative + preflight at 2 levels
-- ✅ R3 (Problem Details / NFR6): 100% — was previously 0% (highest-risk gap closed)
-- ✅ R8 (Scalar-only mandate): 100% — no Swagger, no WeatherForecast
-- ✅ AC1, AC3, AC4 already covered by ATDD (7/7)
-- ✅ AC2 (Scalar loads, four projects reference each other via .sln) covered by integration tests + the `dotnet build` that runs during `dotnet test`
-- ✅ AC5 (build succeeds) covered implicitly — integration tests can't run if solution build fails
+- **Fixtures:** No new fixtures created. Reused the existing `e2e/fixtures/base.fixture.ts` conventions and Playwright's built-in `page` fixture.
+- **Factories:** N/A — Story 1.2 has no domain data model yet (Clientes/Contactos are placeholder routes; CRUD arrives in Epics 2 and 3).
+- **Helpers:** No new helpers created. All tests are self-contained and use Playwright's / RTL's built-in APIs.
+- **Vitest config:** Unchanged — `jsdom` environment + `@testing-library/jest-dom` setup already configured by Story 1.1/1.2 implementation phases.
+- **Playwright config:** Unchanged — reuses the single `playwright.config.ts` at repo root with the chromium project.
 
-## Definition of Done
+---
+
+## Quality Checklist
 
 - [x] All new tests follow Given-When-Then structure
-- [x] All new tests use priority tags `[P0]`, `[P1]`, `[P2]`, `[P3]`
-- [x] No hard waits or flaky patterns (all E2E waits are event-based)
-- [x] Test files under 300 lines each
-- [x] Integration test factory is self-contained (env var isolation, no external DB required for Story 1.1)
-- [x] Production code changes are minimal and reversible (`SIESA_TEST_ENDPOINTS` env-gate; single `WriteAsJsonAsync` argument)
-- [x] `package.json` scripts updated for CI
+- [x] All new tests use `data-testid` selectors (never CSS classes)
+- [x] All new tests carry a priority tag (`[P1]` / `[P2]`) in the test name
+- [x] All new tests are self-cleaning (Playwright test isolation, RTL `cleanup()` in `afterEach`)
+- [x] No hard waits — every wait is explicit (`findByTestId`, `waitFor`, `expect(...).toBeVisible()`)
+- [x] Every test file well under the 300-line soft cap (largest is 293 lines)
+- [x] No page objects introduced
+- [x] No `try/catch` for test logic (one guarded fallback in the keyboard-nav test is documented in-line)
+- [x] All 30 new tests pass on first run — no healing iterations required, no `test.fixme()`
+
+---
+
+## Files Created
+
+- `frontend/src/app/config/navigation.test.ts` — 10 unit tests
+- `frontend/src/routes/__root.edge-cases.test.tsx` — 8 component tests
+- `e2e/tests/foundation/navigation-shell-edge-cases.spec.ts` — 12 E2E tests
+
+## Files Modified
+
+- None — the ATDD baseline files (`__root.test.tsx`, `navigation-shell.spec.ts`) are left intact. Edge-case tests live in dedicated companion files so the RED → GREEN → REFACTOR history of the ATDD phase remains readable.
+
+---
 
 ## Next Steps
 
-1. Wire `pnpm run test:unit:frontend`, `pnpm run test:integration:backend`, and `pnpm run test:e2e:foundation` into CI (Story 1.4 or beyond)
-2. Story 1.3 will replace the `SIESA_TEST_ENDPOINTS`-gated stub with real domain endpoints; the middleware test suite will still cover the catch-path via those endpoints
-3. Consider adding a `test:all` script and burn-in loop once Epic 2 introduces domain logic
+1. Trace matrix (`bmad tea *trace`) will map every AC to the full test set (ATDD + this expansion).
+2. Quality-gate review (`bmad tea *test-review`) can now audit both the ATDD baseline and the expansion together.
+3. Once the CI pipeline is scaffolded (planned in the CI workflow), tag-based filtering (`--grep "@P1"`) will let PR checks run only the P1 gate.

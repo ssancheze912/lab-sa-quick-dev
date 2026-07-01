@@ -224,13 +224,34 @@ public class CorsMiddlewareTests : IClassFixture<WebApplicationFactory<Program>>
 /// The test endpoints (/test-error, /test-error-invalidop) are compiled into Program.cs
 /// but only registered when the environment variable is set — keeps the pipeline
 /// (and its ExceptionHandlingMiddleware ordering) 100% identical to production.
+///
+/// The factory captures the previous value of SIESA_TEST_ENDPOINTS before mutating the
+/// process env and restores it on Dispose so it does NOT leak across test classes
+/// (which would break tests such as <c>AppDbContextStartupNegativeTests</c>).
 /// </summary>
 public class TestExceptionAppFactory : WebApplicationFactory<Program>
 {
+    private const string EnvVarName = "SIESA_TEST_ENDPOINTS";
+    private string? _previousEnvValue;
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
         // Program.cs reads this env var to register the throwing test endpoints.
-        Environment.SetEnvironmentVariable("SIESA_TEST_ENDPOINTS", "1");
+        _previousEnvValue = Environment.GetEnvironmentVariable(EnvVarName);
+        Environment.SetEnvironmentVariable(EnvVarName, "1");
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        try
+        {
+            // Restore whatever value (or absence) was set before this factory ran.
+            Environment.SetEnvironmentVariable(EnvVarName, _previousEnvValue);
+        }
+        finally
+        {
+            base.Dispose(disposing);
+        }
     }
 }
