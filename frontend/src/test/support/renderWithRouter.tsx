@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { render } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   createRootRoute,
   createRoute,
@@ -23,11 +24,22 @@ import {
  * still providing full router context, so router hooks resolve synchronously
  * against `initialPath`.
  *
+ * `withQueryClient` (opt-in, defaults to false to avoid changing behavior for
+ * existing callers like AppShell/NotFoundView tests): wraps `ui` in a FRESH
+ * `QueryClientProvider` per call (provider isolation pattern — see
+ * component-tdd.md) so TanStack Query hooks (`useClientes`, etc.) resolve
+ * inside a real QueryClient with zero state bleed between tests. Retries are
+ * disabled so error-path tests (ErrorPanel/network failure) resolve
+ * immediately instead of retrying for several seconds.
+ *
  * Given a component under test that reads/writes router state,
  * When it's rendered via this helper at a given path,
  * Then router hooks resolve exactly as they would in the real app shell.
  */
-export function renderWithRouter(ui: ReactNode, { initialPath = '/' }: { initialPath?: string } = {}) {
+export function renderWithRouter(
+  ui: ReactNode,
+  { initialPath = '/', withQueryClient = false }: { initialPath?: string; withQueryClient?: boolean } = {},
+) {
   const rootRoute = createRootRoute()
   const testRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -41,5 +53,15 @@ export function renderWithRouter(ui: ReactNode, { initialPath = '/' }: { initial
     history: createMemoryHistory({ initialEntries: [initialPath] }),
   })
 
-  return render(<RouterContextProvider router={router}>{ui}</RouterContextProvider>)
+  const tree = <RouterContextProvider router={router}>{ui}</RouterContextProvider>
+
+  if (!withQueryClient) {
+    return render(tree)
+  }
+
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  })
+
+  return render(<QueryClientProvider client={queryClient}>{tree}</QueryClientProvider>)
 }

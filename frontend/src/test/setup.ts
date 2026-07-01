@@ -1,5 +1,6 @@
-import { expect } from 'vitest'
+import { afterAll, afterEach, beforeAll, expect } from 'vitest'
 import '@testing-library/jest-dom/vitest'
+import { server } from '@/test/msw/server'
 // `vitest-axe` (0.1.0) ships broken type declarations for its `matchers`
 // subpath (its `toHaveNoViolations` re-export is mis-tagged as type-only
 // under `verbatimModuleSyntax`) and an empty compiled `extend-expect.js`.
@@ -8,6 +9,13 @@ import '@testing-library/jest-dom/vitest'
 import { toHaveNoViolations } from 'vitest-axe/matchers'
 
 expect.extend({ toHaveNoViolations })
+
+// MSW: intercept all `/api/v1/...` calls at the network layer (network-first
+// pattern — handlers are active BEFORE any component/test triggers a fetch).
+// `onUnhandledRequest: 'error'` fails fast on any endpoint tests forgot to mock.
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
 declare module 'vitest' {
   interface Assertion {
