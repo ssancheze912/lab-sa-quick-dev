@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { createCliente, createClientes } from '@/test/factories/cliente.factory'
-import { createContactos } from '@/test/factories/contacto.factory'
+import { createContacto, createContactos } from '@/test/factories/contacto.factory'
 
 /**
  * Default MSW request handlers for `/api/v1/clientes` (Story 2.1) and
@@ -83,6 +83,27 @@ export const CONTACTOS_ENDPOINT = '*/api/v1/contactos'
 
 export const defaultContactosList = createContactos(5)
 
+/**
+ * Story 3.2 — Contact Detail View. Mirrors CLIENTE_BY_ID_ENDPOINT's pattern.
+ * Individual tests override this default handler via `server.use(...)` for
+ * the 404/error paths, per network-first.md.
+ */
+export const CONTACTO_BY_ID_ENDPOINT = '*/api/v1/contactos/:id'
+
+export const defaultContacto = createContacto()
+
+/**
+ * RFC 7807 Problem Details body for the 404 case (Story 3.2, AC #3), matching
+ * the backend's `GET /api/v1/contactos/{id}` contract — no stack trace / no
+ * technical leakage per NFR6.
+ */
+export const contactoNotFoundProblemDetails = {
+  type: 'https://tools.ietf.org/html/rfc7231#section-6.5.4',
+  title: 'Not Found',
+  status: 404,
+  detail: 'Contacto no encontrado.',
+}
+
 export const handlers = [
   http.get(CLIENTES_ENDPOINT, () => {
     return HttpResponse.json(defaultClientesList, { status: 200 })
@@ -91,6 +112,11 @@ export const handlers = [
   // seeded contacts). Individual tests override via `server.use(...)`.
   http.get(CONTACTOS_ENDPOINT, () => {
     return HttpResponse.json(defaultContactosList, { status: 200 })
+  }),
+  // Story 3.2: GET /api/v1/contactos/:id default success handler (200 OK).
+  // Individual tests override via `server.use(...)` for the 404 path.
+  http.get(CONTACTO_BY_ID_ENDPOINT, ({ params }) => {
+    return HttpResponse.json({ ...defaultContacto, id: params.id as string }, { status: 200 })
   }),
   http.get(CLIENTE_BY_ID_ENDPOINT, ({ params }) => {
     return HttpResponse.json({ ...defaultCliente, id: params.id as string }, { status: 200 })

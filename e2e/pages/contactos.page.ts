@@ -27,8 +27,11 @@ export class ContactosPage {
   readonly btnEliminar: Locator;
   readonly btnConfirmarEliminar: Locator;
 
-  // Detail
+  // Detail (Story 3.2)
   readonly detailPanel: Locator;
+  readonly detailEmptyState: Locator;
+  readonly detailNotFound: Locator;
+  readonly detailLoading: Locator;
   readonly clienteAsociadoLink: Locator;
 
   constructor(page: Page) {
@@ -52,12 +55,21 @@ export class ContactosPage {
     this.btnConfirmarEliminar = page.getByRole('button', { name: /confirmar/i });
 
     this.detailPanel = page.getByTestId('contacto-detail-panel');
+    this.detailEmptyState = page.getByTestId('contacto-detail-empty');
+    this.detailNotFound = page.getByTestId('contacto-not-found');
+    this.detailLoading = page.getByTestId('contacto-detail-loading');
     this.clienteAsociadoLink = page.getByTestId('cliente-asociado-link');
   }
 
   async goto() {
     await this.page.goto('/contactos');
     await this.page.waitForURL('**/contactos**');
+  }
+
+  /** Navigates directly to /contactos/:contactoId (deep link, Story 3.2 AC #2). */
+  async gotoDetail(contactoId: string) {
+    await this.page.goto(`/contactos/${contactoId}`);
+    await this.page.waitForURL(`**/contactos/${contactoId}`);
   }
 
   async abrirFormularioNuevo() {

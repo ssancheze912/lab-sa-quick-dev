@@ -280,4 +280,54 @@ describe('ContactoListView', () => {
       expect(screen.queryByText(/Npgsql|PostgresException/i)).not.toBeInTheDocument()
     })
   })
+
+  // --- Story 3.2: wiring ContactListItem's onClick to navigation -------------
+  //
+  // RED PHASE: `ContactoListView.tsx` renders `<ContactListItem>` without the
+  // `onClick`/`selected` props wired yet (Story 3.1 left them inert; Story
+  // 3.2, Task 4 activates them). Mirrors `ClienteListView`'s equivalent
+  // wiring — clicking a row navigates to `/contactos/$contactoId` via
+  // TanStack Router's `useNavigate`, and `selected` is derived from the
+  // current route's `$contactoId` param (scoped match, NOT the loose
+  // `pathname.match(/^\/contactos\/(.+)$/)` regex Epic 2 review flagged as a
+  // future-sibling-route hazard — see Dev Notes/Task 4).
+
+  describe('AC #1 - selecting a contact navigates to /contactos/:contactoId', () => {
+    test('should mark the ContactListItem matching the current $contactoId route param as selected', async () => {
+      // GIVEN: the list is loaded and the current route is /contactos/:contactoId
+      // for one of the contacts (mirrors ClienteListView's `selected` derivation)
+      const contactos = createContactos(2)
+      const [target] = contactos
+      server.use(http.get(CONTACTOS_ENDPOINT, () => HttpResponse.json(contactos, { status: 200 })))
+
+      // WHEN: the list renders while the route is at that contact's detail URL
+      renderWithRouter(<ContactoListView />, {
+        initialPath: `/contactos/${target.id}`,
+        withQueryClient: true,
+      })
+      const items = await screen.findAllByTestId('contacto-list-item')
+
+      // THEN: exactly one item is marked aria-selected="true" — the one
+      // matching the route's contactoId, scoped to the actual $contactoId
+      // route match (not a loose regex that would also match future sibling
+      // static routes under /contactos/)
+      const selectedItems = items.filter((item) => item.getAttribute('aria-selected') === 'true')
+      expect(selectedItems).toHaveLength(1)
+      expect(within(selectedItems[0]).getByText(target.nombre)).toBeInTheDocument()
+    })
+
+    test('should NOT mark any item as selected when on the bare /contactos route (no contactoId)', async () => {
+      // GIVEN: the list is loaded with contacts
+      const contactos = createContactos(2)
+      server.use(http.get(CONTACTOS_ENDPOINT, () => HttpResponse.json(contactos, { status: 200 })))
+
+      // WHEN: the list renders at the bare /contactos route (AC #4 scenario)
+      renderList()
+      const items = await screen.findAllByTestId('contacto-list-item')
+
+      // THEN: no item is marked as selected
+      const selectedItems = items.filter((item) => item.getAttribute('aria-selected') === 'true')
+      expect(selectedItems).toHaveLength(0)
+    })
+  })
 })

@@ -253,4 +253,93 @@ public class ContactoRepositoryTests : IAsyncLifetime
         Assert.Null(survivingA!.ClienteId);
         Assert.Null(survivingB!.ClienteId);
     }
+
+    // --- Story 3.2: GetByIdAsync (AC #1, #2, #3) --------------------------------
+    //
+    // RED PHASE: IContactoRepository.GetByIdAsync does not exist yet (Story 3.2,
+    // Task 1). These tests define the expected contract: returns the matching
+    // entity for an existing Id, and null (no exception) for a non-existent Id.
+    // Mirrors ClienteRepositoryTests' GetByIdAsync coverage exactly.
+
+    [Fact]
+    public async Task GetByIdAsync_WithExistingId_ReturnsTheMatchingEntity()
+    {
+        // GIVEN a seeded contact
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Detalle Contacto {suffix}", "Analista", "3000000001", $"detalle.{suffix}@ejemplo.co");
+        var repository = new ContactoRepository(_context);
+
+        // WHEN fetching by its Id
+        var result = await repository.GetByIdAsync(seeded.Id, CancellationToken.None);
+
+        // THEN the matching entity is returned with the correct Id
+        Assert.NotNull(result);
+        Assert.Equal(seeded.Id, result!.Id);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WithNonExistentId_ReturnsNull()
+    {
+        // GIVEN a well-formed Id that matches no seeded contact
+        var repository = new ContactoRepository(_context);
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN fetching by that Id
+        var result = await repository.GetByIdAsync(nonExistentId, CancellationToken.None);
+
+        // THEN null is returned — no exception thrown at repository level
+        Assert.Null(result);
+    }
+
+    // --- Edge cases (mirrors ClienteRepositoryTests' GetByIdAsync edge cases) --
+
+    [Fact]
+    public async Task GetByIdAsync_WithGuidEmpty_ReturnsNullNotAnException()
+    {
+        // GIVEN the well-formed but all-zeros GUID explicitly called out in the
+        // story's AC #3 example ("a well-formed UUID with no matching record") —
+        // guards against any accidental special-casing of Guid.Empty
+        var repository = new ContactoRepository(_context);
+
+        // WHEN fetching by Guid.Empty
+        var result = await repository.GetByIdAsync(Guid.Empty, CancellationToken.None);
+
+        // THEN it is treated identically to any other non-existent Id — null, no exception
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_DoesNotReturnAContactoDeletedAfterBeingSeeded()
+    {
+        // GIVEN a contact that was seeded and then removed from the database
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Eliminado Contacto {suffix}", "Analista", "3000000002", $"eliminado.{suffix}@ejemplo.co");
+        _context.Set<ContactoEntity>().Remove(seeded);
+        await _context.SaveChangesAsync();
+        _createdContactoIds.Remove(seeded.Id);
+        var repository = new ContactoRepository(_context);
+
+        // WHEN fetching by the now-deleted contact's Id
+        var result = await repository.GetByIdAsync(seeded.Id, CancellationToken.None);
+
+        // THEN null is returned, consistent with the non-existent-Id contract
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WithExistingId_ReturnsEntityWithAssociatedClienteId()
+    {
+        // GIVEN a contact associated with a client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var cliente = await SeedClienteAsync($"Cliente Detalle GetById {suffix}", $"GBI{suffix}");
+        var seeded = await SeedAsync($"Contacto Asociado {suffix}", "Gerente", "3000000003", $"asociado.{suffix}@ejemplo.co", cliente.Id);
+        var repository = new ContactoRepository(_context);
+
+        // WHEN fetching by its Id
+        var result = await repository.GetByIdAsync(seeded.Id, CancellationToken.None);
+
+        // THEN the returned entity carries the correct ClienteId (not cleared/altered)
+        Assert.NotNull(result);
+        Assert.Equal(cliente.Id, result!.ClienteId);
+    }
 }
