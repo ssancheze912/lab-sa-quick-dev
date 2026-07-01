@@ -35,11 +35,46 @@ export const clienteNotFoundProblemDetails = {
   detail: 'Cliente no encontrado.',
 }
 
+/**
+ * RFC 7807 Problem Details body for the 409 duplicate-NIT/RUC case
+ * (Story 2.3, AC #5, TC-E2-P0-02, R1) — no stack trace / DB text per NFR6.
+ */
+export const clienteNitConflictProblemDetails = {
+  type: 'https://tools.ietf.org/html/rfc7231#section-6.5.8',
+  title: 'Conflict',
+  status: 409,
+  detail: 'El NIT/RUC ya está registrado',
+}
+
+/**
+ * FluentValidation-shaped 400 Bad Request body (Story 2.3, AC #4, TC-E2-P0-05)
+ * for the empty-required-fields case.
+ */
+export const clienteValidationErrorProblemDetails = {
+  type: 'https://tools.ietf.org/html/rfc7231#section-6.5.1',
+  title: 'One or more validation errors occurred.',
+  status: 400,
+  errors: {
+    nombre: ['Este campo es obligatorio'],
+    nit: ['Este campo es obligatorio'],
+  },
+}
+
 export const handlers = [
   http.get(CLIENTES_ENDPOINT, () => {
     return HttpResponse.json(defaultClientesList, { status: 200 })
   }),
   http.get(CLIENTE_BY_ID_ENDPOINT, ({ params }) => {
     return HttpResponse.json({ ...defaultCliente, id: params.id as string }, { status: 200 })
+  }),
+  // Story 2.3: POST /api/v1/clientes default success handler (201 Created).
+  // Individual tests override this via `server.use(...)` for the 409/400
+  // paths (TC-E2-P0-02, TC-E2-P0-05), per network-first.md.
+  http.post(CLIENTES_ENDPOINT, async ({ request }) => {
+    const body = (await request.json()) as Partial<typeof defaultCliente>
+    return HttpResponse.json(
+      { ...createCliente(), ...body },
+      { status: 201 },
+    )
   }),
 ]

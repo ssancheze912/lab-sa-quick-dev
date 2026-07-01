@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -329,5 +330,235 @@ public class ClienteEndpointsTests : IClassFixture<TestApiFactory>, IAsyncLifeti
 
         // THEN the endpoint returns 404, consistent with the never-existed case
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    // --- Story 2.3: POST /api/v1/clientes (AC #2, #4, #5) -----------------------
+    //
+    // RED PHASE: `POST /api/v1/clientes` does not exist yet (Story 2.3, Task 3).
+    // These tests define the expected contract:
+    //   - Valid payload -> 201 Created + ClienteDto (TC-E2-P0-06 backend leg)
+    //   - Duplicate NIT/RUC -> 409 Conflict, Spanish detail, no tech leakage (TC-E2-P0-01, R1)
+    //   - Empty/whitespace-only required fields -> 400 Bad Request with field errors (TC-E2-P0-05, R3)
+
+    private static object ValidPayload(string suffix) => new
+    {
+        nombre = $"Cliente POST {suffix}",
+        nit = $"POST{suffix}",
+        telefono = "3009998877",
+        ciudad = "Barranquilla",
+    };
+
+    [Fact]
+    public async Task PostClientes_WithValidPayload_ReturnsCreated()
+    {
+        // GIVEN a valid client payload
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/clientes
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", ValidPayload(suffix));
+
+        // THEN the response is 201 Created
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var created = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        if (created is not null) _createdIds.Add(created.Id);
+    }
+
+    [Fact]
+    public async Task PostClientes_WithValidPayload_ReturnsBodyMatchingSubmittedFields()
+    {
+        // GIVEN a valid client payload
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+        var payload = ValidPayload(suffix);
+
+        // WHEN calling POST /api/v1/clientes
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+        var created = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        if (created is not null) _createdIds.Add(created.Id);
+
+        // THEN the returned ClienteDto reflects the submitted values (TC-E2-P0-06 backend leg)
+        Assert.NotNull(created);
+        Assert.NotEqual(Guid.Empty, created!.Id);
+        Assert.Equal($"Cliente POST {suffix}", created.Nombre);
+        Assert.Equal($"POST{suffix}", created.Nit);
+        Assert.Equal("3009998877", created.Telefono);
+        Assert.Equal("Barranquilla", created.Ciudad);
+    }
+
+    [Fact]
+    public async Task PostClientes_WithValidPayload_IncludesLocationHeaderPointingToGetById()
+    {
+        // GIVEN a valid client payload
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/clientes
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", ValidPayload(suffix));
+        var created = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        if (created is not null) _createdIds.Add(created.Id);
+
+        // THEN the Location header points to GET /api/v1/clientes/{id} per REST convention
+        Assert.NotNull(response.Headers.Location);
+        Assert.Contains($"/api/v1/clientes/{created!.Id}", response.Headers.Location!.ToString());
+    }
+
+    [Fact]
+    public async Task PostClientes_WithDuplicateNit_ReturnsConflict()
+    {
+        // GIVEN a client already persisted with a known NIT/RUC
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var existing = await SeedAsync($"Original Conflicto {suffix}", $"CONF{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN posting a second client with the same NIT/RUC but a different Nombre
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nombre = "Empresa Diferente",
+            nit = existing.Nit,
+            telefono = "3001112233",
+            ciudad = "Cali",
+        });
+
+        // THEN the response is 409 Conflict (TC-E2-P0-01, R1)
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostClientes_WithDuplicateNit_ReturnsProblemDetailsWithSpanishMessageAndNoTechnicalLeakage()
+    {
+        // GIVEN a client already persisted with a known NIT/RUC
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var existing = await SeedAsync($"Original Detalle {suffix}", $"CONFD{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN posting a duplicate-NIT client
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nombre = "Empresa Duplicada",
+            nit = existing.Nit,
+            telefono = "3001112233",
+            ciudad = "Cali",
+        });
+        var rawJson = await response.Content.ReadAsStringAsync();
+
+        // THEN the Problem Details body's `detail` reads exactly the Spanish
+        // user-facing message (NFR6) — no DB constraint name, stack trace, or
+        // "Npgsql"/"23505"/"DbUpdateException" text should leak to the client.
+        Assert.Contains("El NIT/RUC ya está registrado", rawJson);
+        Assert.DoesNotContain("Npgsql", rawJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("DbUpdateException", rawJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("StackTrace", rawJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("uk_clientes_nit", rawJson, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task PostClientes_WithDuplicateNit_DoesNotPersistASecondRecord()
+    {
+        // GIVEN a client already persisted with a known NIT/RUC
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var existing = await SeedAsync($"Original Conteo {suffix}", $"CONFC{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN posting a duplicate-NIT client (rejected with 409)
+        await client.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nombre = "Empresa No Persistida",
+            nit = existing.Nit,
+            telefono = "3001112233",
+            ciudad = "Cali",
+        });
+
+        // THEN only the original record with that NIT exists — no duplicate was persisted
+        await using var context = CreateContext();
+        var count = await context.Clientes.CountAsync(c => c.Nit == existing.Nit);
+        Assert.Equal(1, count);
+    }
+
+    [Fact]
+    public async Task PostClientes_WithEmptyNombreAndMissingNit_ReturnsBadRequest()
+    {
+        // GIVEN a payload with an empty Nombre and an omitted Nit (bypasses the UI
+        // entirely, proving backend validation is independent of frontend Zod, R3)
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/clientes
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nombre = "",
+            telefono = "3000000000",
+            ciudad = "Bogotá",
+        });
+
+        // THEN the response is 400 Bad Request (TC-E2-P0-05)
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostClientes_WithEmptyNombreAndMissingNit_ReturnsFieldLevelErrorsForBoth()
+    {
+        // GIVEN a payload with an empty Nombre and an omitted Nit
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/clientes
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nombre = "",
+            telefono = "3000000000",
+            ciudad = "Bogotá",
+        });
+        var rawJson = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(rawJson);
+
+        // THEN FluentValidation field-level error details are present for both fields
+        // (errors: { nombre: [...], nit: [...] } shape, case-insensitive key lookup)
+        var errors = doc.RootElement.GetProperty("errors");
+        var keys = errors.EnumerateObject().Select(p => p.Name.ToLowerInvariant()).ToList();
+        Assert.Contains("nombre", keys);
+        Assert.Contains("nit", keys);
+    }
+
+    [Fact]
+    public async Task PostClientes_WithAllFieldsWhitespaceOnly_ReturnsBadRequest()
+    {
+        // GIVEN a payload where every required field is whitespace-only
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/clientes
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nombre = "   ",
+            nit = "   ",
+            telefono = "   ",
+            ciudad = "   ",
+        });
+
+        // THEN the response is 400 Bad Request — NotEmpty()'s trim-aware check
+        // rejects whitespace-only values, not just null/empty (TC-E2-P0-05)
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostClientes_WithInvalidPayload_DoesNotPersistAnyRecord()
+    {
+        // GIVEN the current count of clientes matching a unique marker NIT that
+        // would only exist if the invalid payload were (incorrectly) persisted
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+
+        // WHEN posting an invalid (whitespace-only) payload carrying a traceable NIT
+        await client.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nombre = "   ",
+            nit = $"SHOULD-NOT-PERSIST-{suffix}",
+            telefono = "   ",
+            ciudad = "   ",
+        });
+
+        // THEN no record with that NIT was persisted (validation failure blocks insert)
+        await using var context = CreateContext();
+        var exists = await context.Clientes.AnyAsync(c => c.Nit == $"SHOULD-NOT-PERSIST-{suffix}");
+        Assert.False(exists);
     }
 }

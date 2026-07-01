@@ -296,4 +296,49 @@ public class ClienteRepositoryTests : IAsyncLifetime
         // THEN null is returned, consistent with the non-existent-Id contract
         Assert.Null(result);
     }
+
+    // --- Story 2.3: AddAsync (AC #2, #4, #5) ------------------------------------
+    //
+    // RED PHASE: IClienteRepository.AddAsync does not exist yet (Story 2.3,
+    // Task 1). These tests define the expected contract: persists a valid
+    // client, and lets a Postgres unique-violation on `uk_clientes_nit`
+    // propagate as a DbUpdateException (no pre-check query — DB constraint is
+    // the race-condition-safe source of truth per Dev Notes).
+
+    [Fact]
+    public async Task AddAsync_WithValidCliente_PersistsItAndIsRetrievableAfterwards()
+    {
+        // GIVEN a new, valid ClienteEntity built via the domain factory
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var cliente = ClienteEntity.Create($"Nuevo Cliente {suffix}", $"AA{suffix}", "3000000001", "Medellín");
+        var repository = new ClienteRepository(_context);
+
+        // WHEN persisting it via AddAsync
+        await repository.AddAsync(cliente, CancellationToken.None);
+        _createdIds.Add(cliente.Id);
+
+        // THEN it can be retrieved back from the database by Id
+        var persisted = await repository.GetByIdAsync(cliente.Id, CancellationToken.None);
+        Assert.NotNull(persisted);
+        Assert.Equal(cliente.Nombre, persisted!.Nombre);
+        Assert.Equal(cliente.Nit, persisted.Nit);
+    }
+
+    [Fact]
+    public async Task AddAsync_WithDuplicateNit_ThrowsDbUpdateExceptionFromUniqueConstraint()
+    {
+        // GIVEN an already-persisted client with a known NIT/RUC
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var existing = await SeedAsync($"Original Cliente {suffix}", $"DUP{suffix}");
+        var repository = new ClienteRepository(_context);
+
+        // WHEN attempting to add a second client with the same NIT/RUC (different Nombre)
+        var duplicate = ClienteEntity.Create($"Otro Nombre {suffix}", existing.Nit, "3000000002", "Cali");
+
+        // THEN the database's uk_clientes_nit unique constraint rejects the insert
+        // as a DbUpdateException — no application-level pre-check query is used,
+        // relying on the DB as the race-condition-safe source of truth.
+        await Assert.ThrowsAsync<DbUpdateException>(
+            async () => await repository.AddAsync(duplicate, CancellationToken.None));
+    }
 }
