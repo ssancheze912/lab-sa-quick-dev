@@ -12,8 +12,16 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const execFileAsync = promisify(execFile);
 
 const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
+const FRONTEND_ROOT = path.resolve(__dirname, '../../../frontend');
+const TSCONFIG_APP_PATH = path.join(FRONTEND_ROOT, 'tsconfig.app.json');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AC1: Frontend server starts on port 5173 with no errors
@@ -152,5 +160,48 @@ test.describe('AC4 — TypeScript strict mode active on frontend', () => {
     // Vite renders compilation errors in a data-testid="vite-error-overlay" or similar overlay
     const errorOverlay = page.locator('vite-error-overlay');
     await expect(errorOverlay).toHaveCount(0);
+  });
+
+  test('should have strict TypeScript flags enabled in tsconfig.app.json', async () => {
+    // GIVEN: The frontend project has been initialized
+    // WHEN: tsconfig.app.json is read from disk
+
+    const raw = await fs.readFile(TSCONFIG_APP_PATH, 'utf-8');
+    // tsconfig files may contain comments; strip them before JSON.parse
+    const withoutComments = raw.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    const config = JSON.parse(withoutComments);
+
+    // THEN: strict, noImplicitAny and strictNullChecks are explicitly enabled
+    expect(config.compilerOptions?.strict).toBe(true);
+    expect(config.compilerOptions?.noImplicitAny).toBe(true);
+    expect(config.compilerOptions?.strictNullChecks).toBe(true);
+  });
+
+  test('should compile with zero TypeScript errors via tsc --noEmit', async () => {
+    // GIVEN: The frontend project source compiles under strict mode
+    // WHEN: The TypeScript compiler is run directly against tsconfig.app.json
+    test.setTimeout(120_000);
+
+    let stdout = '';
+    let stderr = '';
+    let exitCode = 0;
+    try {
+      const result = await execFileAsync(
+        'pnpm',
+        ['exec', 'tsc', '--noEmit', '-p', 'tsconfig.app.json'],
+        { cwd: FRONTEND_ROOT, timeout: 110_000 }
+      );
+      stdout = result.stdout;
+      stderr = result.stderr;
+    } catch (error) {
+      const execError = error as { stdout?: string; stderr?: string; code?: number };
+      stdout = execError.stdout ?? '';
+      stderr = execError.stderr ?? '';
+      exitCode = execError.code ?? 1;
+    }
+
+    // THEN: The compiler emits zero errors (exit code 0, no "error TS" lines)
+    expect(exitCode).toBe(0);
+    expect(stdout + stderr).not.toMatch(/error TS\d+/);
   });
 });

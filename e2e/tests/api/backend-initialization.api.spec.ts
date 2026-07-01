@@ -8,13 +8,22 @@
  * Acceptance Criteria covered:
  *   AC2 — Backend starts on port 5000, Scalar loads at /scalar,
  *          four Clean Architecture projects referenced in SiesaAgents.sln
- *   AC5 — dotnet build SiesaAgents.sln succeeds with zero errors (verified via
- *          runtime behavior: all endpoints respond — build failure would prevent this)
+ *   AC5 — dotnet build SiesaAgents.sln succeeds with zero errors or warnings
+ *          (verified directly via `dotnet build` CLI invocation, and via
+ *          runtime behavior as a secondary proxy signal)
  */
 
 import { test, expect } from '@playwright/test';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const execFileAsync = promisify(execFile);
 
 const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:5000';
+const BACKEND_ROOT = path.resolve(__dirname, '../../../backend');
+const SOLUTION_PATH = path.join(BACKEND_ROOT, 'SiesaAgents.sln');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AC2: Backend .NET 10 starts on port 5000 and Scalar API docs load at /scalar
@@ -108,6 +117,19 @@ test.describe('AC2 — Backend server initialization and Scalar API documentatio
     // THEN: The preflight succeeds (200 or 204 — not 403 or 0)
     expect([200, 204]).toContain(response.status());
   });
+
+  test('should have SiesaAgents.sln referencing the four Clean Architecture projects', async () => {
+    // GIVEN: The backend solution has been created at backend/SiesaAgents.sln
+    // WHEN: The solution file is read from disk
+
+    const slnContent = await fs.readFile(SOLUTION_PATH, 'utf-8');
+
+    // THEN: All four Clean Architecture projects are referenced in the .sln
+    expect(slnContent).toContain('SiesaAgents.API');
+    expect(slnContent).toContain('SiesaAgents.Application');
+    expect(slnContent).toContain('SiesaAgents.Domain');
+    expect(slnContent).toContain('SiesaAgents.Infrastructure');
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -142,5 +164,32 @@ test.describe('AC5 — Backend solution builds and runs successfully', () => {
     const contentType = response.headers()['content-type'] ?? '';
     // Should be JSON, not HTML (Problem Details is application/problem+json or application/json)
     expect(contentType).toContain('json');
+  });
+
+  test('should build SiesaAgents.sln with zero errors and zero warnings via dotnet build CLI', async () => {
+    // GIVEN: The backend solution exists at backend/SiesaAgents.sln with all four projects
+    // WHEN: `dotnet build SiesaAgents.sln` is executed directly (not just inferred from runtime)
+    test.setTimeout(180_000);
+
+    let stdout = '';
+    let exitCode = 0;
+    try {
+      const result = await execFileAsync(
+        'dotnet',
+        ['build', 'SiesaAgents.sln', '--configuration', 'Debug'],
+        { cwd: BACKEND_ROOT, timeout: 170_000 }
+      );
+      stdout = result.stdout;
+    } catch (error) {
+      const execError = error as { stdout?: string; code?: number };
+      stdout = execError.stdout ?? '';
+      exitCode = execError.code ?? 1;
+    }
+
+    // THEN: The build succeeds (exit code 0) with no reported errors or warnings
+    expect(exitCode).toBe(0);
+    expect(stdout).not.toMatch(/\d+ Error\(s\)/i);
+    expect(stdout).toMatch(/0 Warning\(s\)/i);
+    expect(stdout).toMatch(/0 Error\(s\)/i);
   });
 });
