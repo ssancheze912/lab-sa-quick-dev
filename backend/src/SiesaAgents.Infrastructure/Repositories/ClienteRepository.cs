@@ -27,4 +27,10 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
     {
         return await dbContext.Clientes.FirstOrDefaultAsync(c => c.Id == id, ct);
     }
+
+    public async Task AddAsync(ClienteEntity cliente, CancellationToken ct)
+    {
+        dbContext.Clientes.Add(cliente);
+        await dbContext.SaveChangesAsync(ct);
+    }
 }

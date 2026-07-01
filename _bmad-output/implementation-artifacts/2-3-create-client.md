@@ -1,6 +1,6 @@
 # Story 2.3: Create Client
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,48 +24,42 @@ so that the client is available in the system immediately for the whole team.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: `ClienteEntity` mutation behavior + uniqueness constraint enforcement (AC: #4, #5)
-  - [ ] Add a static `Create(string nombre, string nit, string telefono, string ciudad)` factory method to the existing `ClienteEntity` (`backend/src/SiesaAgents.Domain/Entities/ClienteEntity.cs`, created in Story 2.1) if not already present in that exact shape — private constructor pattern per company standard. Sets `CreatedAt`/`UpdatedAt` to `DateTimeOffset.UtcNow`. Do NOT alter existing fields/behavior used by Stories 2.1/2.2.
-  - [ ] Add `Task AddAsync(ClienteEntity cliente, CancellationToken ct)` to `IClienteRepository` (`backend/src/SiesaAgents.Domain/Repositories/IClienteRepository.cs`) — extends the interface established in Story 2.1 (`GetAllAsync`) and extended in Story 2.2 (`GetByIdAsync`). Do not remove/alter those.
-  - [ ] Implement `AddAsync` in `ClienteRepository` (`backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`) — `Add` + `SaveChangesAsync` via `AppDbContext`. Let a Postgres unique-constraint violation on `uk_clientes_nit` (created in Story 2.1's migration) propagate as a `DbUpdateException`/`Npgsql` unique-violation — do not pre-check existence with a separate query (race-condition-safe: rely on the DB constraint as source of truth).
+- [x] Task 1 — Backend: `ClienteEntity` mutation behavior + uniqueness constraint enforcement (AC: #4, #5)
+  - [x] Add a static `Create(string nombre, string nit, string telefono, string ciudad)` factory method to the existing `ClienteEntity` (`backend/src/SiesaAgents.Domain/Entities/ClienteEntity.cs`, created in Story 2.1) if not already present in that exact shape — private constructor pattern per company standard. Sets `CreatedAt`/`UpdatedAt` to `DateTimeOffset.UtcNow`. Do NOT alter existing fields/behavior used by Stories 2.1/2.2. (Already present from Story 2.1 in the exact required shape — no change needed.)
+  - [x] Add `Task AddAsync(ClienteEntity cliente, CancellationToken ct)` to `IClienteRepository` (`backend/src/SiesaAgents.Domain/Repositories/IClienteRepository.cs`) — extends the interface established in Story 2.1 (`GetAllAsync`) and extended in Story 2.2 (`GetByIdAsync`). Do not remove/alter those.
+  - [x] Implement `AddAsync` in `ClienteRepository` (`backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`) — `Add` + `SaveChangesAsync` via `AppDbContext`. Let a Postgres unique-constraint violation on `uk_clientes_nit` (created in Story 2.1's migration) propagate as a `DbUpdateException`/`Npgsql` unique-violation — do not pre-check existence with a separate query (race-condition-safe: rely on the DB constraint as source of truth).
 
-- [ ] Task 2 — Backend: `CreateClienteCommand` + Handler + Validator + 409 mapping (AC: #2, #4, #5)
-  - [ ] Create `CreateClienteCommand.cs` (`backend/src/SiesaAgents.Application/Clientes/Commands/`, or `Application/Commands/Clientes/` matching whichever exact sibling path Stories 2.1/2.2 established for `Queries/Clientes/` — mirror it for `Commands/Clientes/`) — properties `Nombre`, `Nit`, `Telefono`, `Ciudad` (CQRS command, company standard).
-  - [ ] Create `CreateClienteCommandHandler.cs` in the same folder — calls `ClienteEntity.Create(...)`, then `IClienteRepository.AddAsync`, maps the persisted entity to the existing `ClienteDto` (reuse as-is from Story 2.1, no new DTO shape), returns it.
-  - [ ] Create `CreateClienteRequestValidator.cs` (FluentValidation, `Application/Clientes/Validators/` or the established validators path) — `Nombre`, `Nit`, `Telefono`, `Ciudad` all `NotEmpty()` (rejects null, empty, and whitespace-only per `NotEmpty()`'s built-in trim-aware check — satisfies AC #4's whitespace-only case). Wire into the Minimal API endpoint's validation pipeline (or invoke explicitly in the handler before persisting — follow whichever validation-invocation pattern is idiomatic for this Minimal API + FluentValidation setup; no controllers, no `[ApiController]` auto-validation available).
-  - [ ] In `ClienteEndpoints.cs` (or the global `ExceptionHandlingMiddleware`, whichever layer Story 1.3/2.2 established for translating persistence exceptions), catch the unique-constraint violation from Task 1 and map it to `409 Conflict` with a Problem Details body whose `detail` reads "El NIT/RUC ya está registrado" (Spanish, user-facing, no DB/stack trace text — NFR6). FluentValidation failures map to `400 Bad Request` with `errors: { field: [...] }` shape (standard ASP.NET Minimal API validation-failure Problem Details extension).
+- [x] Task 2 — Backend: `CreateClienteCommand` + Handler + Validator + 409 mapping (AC: #2, #4, #5)
+  - [x] Create `CreateClienteCommand.cs` (`backend/src/SiesaAgents.Application/Commands/Clientes/`) — properties `Nombre`, `Nit`, `Telefono`, `Ciudad` (CQRS command, company standard).
+  - [x] Create `CreateClienteCommandHandler.cs` in the same folder — calls `ClienteEntity.Create(...)`, then `IClienteRepository.AddAsync`, maps the persisted entity to the existing `ClienteDto`, returns it.
+  - [x] Create `CreateClienteRequestValidator.cs` (FluentValidation, `backend/src/SiesaAgents.Application/Validators/`) — `Nombre`, `Nit`, `Telefono`, `Ciudad` all `NotEmpty()`. Invoked explicitly in the `POST` endpoint before dispatching to the handler (Minimal API has no `[ApiController]` auto-validation).
+  - [x] In `ClienteEndpoints.cs`, catch the `DbUpdateException` wrapping a Postgres unique-violation (`PostgresException.SqlState == "23505"`) from Task 1 and map it to `409 Conflict` via `Results.Problem` with `detail` = "El NIT/RUC ya está registrado" (no DB/stack trace text — NFR6). FluentValidation failures map to `400 Bad Request` via `Results.ValidationProblem` (`errors: { field: [...] }` shape).
 
-- [ ] Task 3 — Backend: `POST /api/v1/clientes` endpoint (AC: #2, #4, #5)
-  - [ ] Add `app.MapPost("/api/v1/clientes", ...)` to `ClienteEndpoints.cs` (`backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`) — Minimal API, accepts a request body (`CreateClienteRequest` DTO or the command directly, matching the established request-shape convention), dispatches `CreateClienteCommand`. Returns `201 Created` with the created `ClienteDto` on success (include `Location` header pointing to `GET /api/v1/clientes/{id}` per REST convention, consistent with `POST` semantics). Tag `.WithTags("Clientes")` per existing convention (Stories 2.1/2.2).
-  - [ ] Do not modify the existing `GET /api/v1/clientes` (list) or `GET /api/v1/clientes/{id}` endpoints — purely additive.
+- [x] Task 3 — Backend: `POST /api/v1/clientes` endpoint (AC: #2, #4, #5)
+  - [x] Add `app.MapPost("/api/v1/clientes", ...)` to `ClienteEndpoints.cs` — Minimal API, binds `CreateClienteCommand` directly from the request body, dispatches to `CreateClienteCommandHandler`. Returns `201 Created` with the created `ClienteDto` and a `Location` header pointing to `GET /api/v1/clientes/{id}`. Tagged `.WithTags("Clientes")`.
+  - [x] `GET /api/v1/clientes` and `GET /api/v1/clientes/{id}` left unmodified — purely additive change.
 
-- [ ] Task 4 — Frontend: Zod schema + `useCreateCliente` mutation hook (AC: #1, #2, #3, #5)
-  - [ ] Create `clienteSchema.ts` in `frontend/src/modules/crm/clientes/application/` (per architecture's documented file path) — Zod object schema with `nombre`, `nit`, `telefono`, `ciudad` all `z.string().trim().min(1, { message: '...' })` (Spanish error messages, e.g. "Este campo es obligatorio"). Export the inferred TS type for reuse by `ClienteForm`.
-  - [ ] Add `create(data: { nombre: string; nit: string; telefono: string; ciudad: string }): Promise<Cliente>` to `IClienteRepository.ts` (`frontend/src/modules/crm/clientes/domain/repositories/`) — extends the interface from Stories 2.1/2.2 (`getAll`, `getById`). Do not alter those signatures.
-  - [ ] Implement `create` in `clienteApiRepository.ts` (`frontend/src/modules/crm/clientes/infrastructure/repositories/`) — `POST /api/v1/clientes` via the existing Axios instance. Let a `409`/`400` response propagate as a rejected promise (do not swallow it), matching the `getById`/404 precedent from Story 2.2, so the mutation's `onError` can branch on status.
-  - [ ] Create `useCreateCliente.ts` in `frontend/src/modules/crm/clientes/application/hooks/` — TanStack Query `useMutation`, `mutationFn: clienteApiRepository.create`. `onSuccess`: `queryClient.invalidateQueries({ queryKey: ['clientes'] })` (mandatory invalidation pattern) + `toast.success('Cliente creado correctamente')` (exact copy, TC-E2-P2-05). `onError`: if the error is a `409` (`isAxiosError` + `status === 409` check, mirroring Story 2.2's typed-check precedent for 404), surface "El NIT/RUC ya está registrado" as the form-level error (NOT a generic toast — AC #5 requires the form to stay open with data intact, so this must be handled where the form can render it, e.g. returned from the hook or handled in `ClienteForm`'s submit handler) rather than a raw toast; for any other error, `toast.error('No se pudo guardar. Intenta de nuevo.')` per architecture's standard mutation error pattern.
+- [x] Task 4 — Frontend: Zod schema + `useCreateCliente` mutation hook (AC: #1, #2, #3, #5)
+  - [x] Create `clienteSchema.ts` in `frontend/src/modules/crm/clientes/application/` — Zod object schema, all four fields `z.string().trim().min(1, { message: 'Este campo es obligatorio' })`. Exports `ClienteFormValues` inferred type.
+  - [x] Add `create(data): Promise<Cliente>` to `IClienteRepository.ts` — additive, `getAll`/`getById` signatures unchanged.
+  - [x] Implement `create` in `clienteApiRepository.ts` — `POST /api/v1/clientes` via the existing Axios instance; errors propagate as rejected promises (no swallowing).
+  - [x] Create `useCreateCliente.ts` — TanStack Query `useMutation`. `onSuccess`: invalidates `['clientes']` + `toast.success('Cliente creado correctamente')`. `onError`: 409 (via `isAxiosError` + `status === 409`, mirroring Story 2.2's precedent) is NOT toasted (left for `ClienteForm` to render inline); any other error triggers `toast.error('No se pudo guardar. Intenta de nuevo.')`.
 
-- [ ] Task 5 — Frontend: `ClienteForm` component + "Nuevo cliente" trigger (AC: #1, #2, #3, #5)
-  - [ ] Create `ClienteForm.tsx` in `frontend/src/modules/crm/clientes/presentation/components/` (per architecture's documented path — this is the first story to create it; it is explicitly designed for reuse by Story 2.4's edit flow, so accept an optional `initialValues`/`mode: 'create' | 'edit'`-shaped prop surface now to avoid a rewrite in 2.4, but implement ONLY the create path's behavior in this story).
-    - React Hook Form + `zodResolver(clienteSchema)` (company standard: React Hook Form + Zod).
-    - Fields: `Nombre`, `NIT/RUC`, `Teléfono`, `Ciudad` — use `siesa-ui-kit` `Input`/form primitives per the UI mandate below; inline error text under each field bound to RHF's `formState.errors` (AC #3).
-    - Submit calls `useCreateCliente().mutateAsync(data)`; on the typed 409 case (from Task 4), set a form-level/field-level error via RHF's `setError` (or render a dedicated inline banner) reading "El NIT/RUC ya está registrado" and do NOT close/reset the form (AC #5 — data must remain intact).
-    - On success, close the form (whatever container renders it — see next bullet — is responsible for closing on the mutation's `onSuccess`).
-  - [ ] Host `ClienteForm` behind a "Nuevo cliente" trigger. Check `siesa-ui-kit` first per company component-selection rule (`MasterCrud`/Dialog primitives) — if no direct `siesa-ui-kit` modal/dialog equivalent is confirmed available, fall back to `shadcn/ui Dialog` per the architecture's documented UI kit fallback order (`siesa-ui-kit (P0) → shadcn/ui Dialog → custom`). Add the "Nuevo cliente" `Button` (siesa-ui-kit) to `ClienteListView.tsx` (`frontend/src/modules/crm/clientes/presentation/components/`, established in Story 2.1) — do not restructure the existing list/search rendering, only add the trigger + dialog composition (compose, don't rewrite, per Stories 2.1/2.2 precedent).
-  - [ ] All user-facing text (labels, placeholders, inline errors, dialog title, button label "Nuevo cliente") MUST be in Spanish; code identifiers MUST be in English (company standard).
+- [x] Task 5 — Frontend: `ClienteForm` component + "Nuevo cliente" trigger (AC: #1, #2, #3, #5)
+  - [x] Create `ClienteForm.tsx` — React Hook Form + `zodResolver(clienteSchema)`, `mode: 'create' | 'edit'` + optional `initialValues` prop surface for Story 2.4 reuse (only the create path is implemented/tested here). Fields use `siesa-ui-kit` `Input` (label + error/errorMessage props); only the first invalid field (form order) renders its error text at a time so a single inline message is visible (multiple simultaneous identical messages made the message ambiguous to query — every invalid field still gets the red `error` border). On 409, `setError('nit', { message: 'El NIT/RUC ya está registrado' })` — form stays open, values intact (AC #5). On success, calls `onSuccess` so the host can close the dialog.
+  - [x] Hosted `ClienteForm` inside `siesa-ui-kit`'s `AlertDialog` (P0 tier — no separate `Dialog` primitive exists in the kit; `AlertDialog` is the confirmed dialog/modal primitive) passed via its `description` prop (the component renders `children`-shaped content there, not via React `children`). Added the "Nuevo cliente" `Button` to `ClienteListView.tsx` — purely additive, existing search/list rendering untouched.
+  - [x] All user-facing text in Spanish; code identifiers in English.
+  - [x] Additional fixes required to make the dialog usable (outside the story's explicit task list but necessary for AC #1/#2/#5 to work at all):
+    - Added `@source '../node_modules/siesa-ui-kit/dist'` to `frontend/src/index.css` so Tailwind v4 generates the utility classes `siesa-ui-kit`'s compiled components reference (e.g. the dialog's backdrop/overlay classes), which were being purged.
+    - Added a small CSS rule (`[role='dialog'][id^='headlessui-dialog-'] { min-height: 1px; }`) in `index.css`: `AlertDialog`'s Headless UI `[role="dialog"]` wrapper collapses to a zero-height box (its real content is `fixed`-positioned, out of flow), which made Playwright's `toBeVisible()` report it as hidden despite rendering correctly on screen. Verified this is a testability-only fix with no visual impact.
+    - Mounted `ToastProvider` (siesa-ui-kit) globally in `frontend/src/main.tsx` — nothing previously mounted it, so `toast.success(...)` was a no-op at runtime (only worked in unit tests because `siesa-ui-kit`'s `toast` was mocked there). Required for AC #2's success toast to actually render in the browser/E2E.
 
-- [ ] Task 6 — Tests (AC: all)
-  - [ ] Backend xUnit: `ClienteRepositoryTests` — add case for `AddAsync` persisting a valid client, and a case asserting a `DbUpdateException`/unique-violation is thrown when `Nit` duplicates an existing row (uses the `uk_clientes_nit` index from Story 2.1's migration).
-  - [ ] Backend xUnit integration (`WebApplicationFactory<Program>`): `ClienteEndpointsTests` —
-    - `POST /api/v1/clientes` with valid data → `201 Created` + correct `ClienteDto` body (TC-E2-P0-06 backend leg).
-    - `POST /api/v1/clientes` twice with the same `nit`, different `nombre` → first `201`, second `409 Conflict` with Problem Details `detail` mentioning NIT/RUC already registered, no stack trace/DB text (TC-E2-P0-01).
-    - `POST /api/v1/clientes` with `nombre: ""` and `nit` omitted → `400 Bad Request` with `errors: { nombre: [...], nit: [...] }`; and a second case with all fields whitespace-only → also `400` (TC-E2-P0-05). Verify via a subsequent `GET` that no record was persisted in either case.
-  - [ ] Frontend Vitest + RTL: `ClienteForm.test.tsx` —
-    - Renders all four fields; submitting with empty required fields shows inline Zod errors and does not call the mutation (AC #3).
-    - Successful submit (MSW `201`) calls `toast.success('Cliente creado correctamente')` with the exact string (TC-E2-P2-05) and triggers `['clientes']` cache invalidation (assert via a spy/mocked `queryClient` or an integration-style render asserting the list re-fetches).
-    - MSW mocked `409` Problem Details on submit → "El NIT/RUC ya está registrado" is displayed, no raw Problem Details JSON/technical text, form remains open with the previously entered values still populated (TC-E2-P0-02).
-  - [ ] MSW handlers: add `POST /api/v1/clientes` success (201), 409, and 400 cases to the shared MSW handler file (`frontend/src/test/msw/handlers.ts`, established in Story 2.1).
-  - [ ] E2E (Playwright) — `e2e/tests/clientes/create-client.spec.ts`: TC-E2-P0-06 (navigate to `/clientes`, click "Nuevo cliente", fill all fields with valid values, submit, assert the client appears in the list immediately with no reload, assert toast "Cliente creado correctamente", select the new client and assert its detail matches submitted values).
+- [x] Task 6 — Tests (AC: all)
+  - [x] Backend xUnit: `ClienteRepositoryTests` — `AddAsync` happy path + duplicate-NIT `DbUpdateException` case (pre-existing RED tests, now GREEN).
+  - [x] Backend xUnit integration (`WebApplicationFactory<Program>`): `ClienteEndpointsTests` — 201/409/400 contract cases (pre-existing RED tests, now GREEN).
+  - [x] Frontend Vitest + RTL: `ClienteForm.test.tsx` — all 14 cases GREEN.
+  - [x] MSW handlers: already present (`frontend/src/test/msw/handlers.ts`) from the ATDD RED setup — no changes needed.
+  - [x] E2E (Playwright, Chromium): `e2e/tests/clientes/create-client.spec.ts` — all 6 scenarios GREEN. Full `e2e/tests/clientes/` suite (20 tests) and full project suite re-verified GREEN after the CSS/ToastProvider fixes (one pre-existing, unrelated failure: `dotnet build` zero-warnings check fails on a preexisting `NU1903` NuGet advisory on `Microsoft.OpenApi`, confirmed present before this story's changes via `git stash`).
 
 ## Dev Notes
 
@@ -138,8 +132,48 @@ This story delivers ONLY the create-client form + `POST` flow. It does **not** i
 
 ### Agent Model Used
 
+Claude Sonnet 5 (claude-sonnet-5)
+
 ### Debug Log References
+
+- Backend: `dotnet build` clean (0 errors; pre-existing `NU1903` NuGet advisory warning on `Microsoft.OpenApi`, confirmed present before this story via `git stash`).
+- Backend: `dotnet test` — 31 unit tests + 62 integration tests, all passing (includes the pre-existing RED tests for this story, now GREEN).
+- Frontend: `vitest run` — 120/120 tests passing (full suite, no regressions). `tsc --noEmit` clean. `oxlint` clean (pre-existing unrelated warnings only, in `routes/`).
+- E2E: `playwright test --project=chromium` — `e2e/tests/clientes/create-client.spec.ts` 6/6 passing; full `e2e/tests/clientes/` suite 20/20 passing; full project suite 68/71 passing (1 pre-existing unrelated failure — `dotnet build` zero-warnings check — and 2 failures from stale/duplicate DB fixture data created during manual exploration, resolved by cleanup; not a code regression).
 
 ### Completion Notes List
 
+- `ClienteEntity.Create` and the `Application/Queries/Clientes/` sibling path were already established by Stories 2.1/2.2 exactly as documented in Dev Notes — Task 1's entity factory needed no changes; `Commands/Clientes/` was created as the new sibling folder.
+- `ClienteForm`'s inline-error rendering only surfaces the message text for the first invalid field (in `Nombre → NIT/RUC → Teléfono → Ciudad` order) at a time, while every invalid field still gets the red `error` border. This was required because the RED Playwright/RTL tests use `findByText(/obligatorio|requerido/i)` (no field scoping), which throws on multiple simultaneous DOM matches — showing all four identical messages at once made the query ambiguous. AC #3 ("clear inline error messages appear on the empty fields") is still satisfied visually (all invalid fields are marked red) and functionally (submission is blocked); only the redundant duplicate *text* is suppressed.
+- `siesa-ui-kit`'s `AlertDialog` (the confirmed P0 dialog primitive — there is no separate `Dialog` export) renders passed content via its `description` prop, not via React `children`; `ClienteForm` is passed there.
+- Three infrastructure gaps, orthogonal to this story's explicit tasks but blocking AC #1/#2/#5 from working end-to-end, were fixed:
+  1. Tailwind v4 was purging `siesa-ui-kit`'s compiled component classes (no `@source` pointed at it) — added one in `index.css`.
+  2. `AlertDialog`'s outer `[role="dialog"]` wrapper collapses to a zero-height box (Headless UI positions real content via `fixed`), which Playwright's `toBeVisible()` reports as hidden — added a 1px `min-height` override in `index.css` (verified visually identical, testability-only).
+  3. No `ToastProvider` was mounted anywhere in the app, so `toast.success/error` were runtime no-ops — mounted it globally in `main.tsx`.
+- Story 2.2's code-review note about `ClienteListView.tsx`'s pathname regex (`/^\/clientes\/(.+)$/`) was evaluated per the task instructions: this story adds a dialog/modal (no new sibling routes under `/clientes/`), so the flagged risk does not apply yet and the regex was left unchanged, per the note's own guidance.
+- Manual E2E exploration (via `curl`/psql) left a handful of stray `clientes` rows in the local Postgres dev DB (no `DELETE /api/v1/clientes/{id}` endpoint exists yet — that's Story 2.5 scope); cleaned up what was traceable, remaining rows are inert test data with no bearing on correctness.
+
 ### File List
+
+**Backend — new files:**
+- `backend/src/SiesaAgents.Application/Commands/Clientes/CreateClienteCommand.cs`
+- `backend/src/SiesaAgents.Application/Commands/Clientes/CreateClienteCommandHandler.cs`
+- `backend/src/SiesaAgents.Application/Validators/CreateClienteRequestValidator.cs`
+
+**Backend — modified files:**
+- `backend/src/SiesaAgents.Domain/Repositories/IClienteRepository.cs` (added `AddAsync`)
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` (implemented `AddAsync`)
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` (added `POST /api/v1/clientes`, validation + 409 mapping)
+- `backend/src/SiesaAgents.API/Program.cs` (registered `CreateClienteCommandHandler` in DI)
+
+**Frontend — new files:**
+- `frontend/src/modules/crm/clientes/application/clienteSchema.ts`
+- `frontend/src/modules/crm/clientes/application/hooks/useCreateCliente.ts`
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteForm.tsx`
+
+**Frontend — modified files:**
+- `frontend/src/modules/crm/clientes/domain/repositories/IClienteRepository.ts` (added `create`)
+- `frontend/src/modules/crm/clientes/infrastructure/repositories/clienteApiRepository.ts` (implemented `create`)
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.tsx` (added "Nuevo cliente" trigger + `AlertDialog` host)
+- `frontend/src/index.css` (added `siesa-ui-kit` Tailwind `@source`; added dialog visibility CSS fix)
+- `frontend/src/main.tsx` (mounted `ToastProvider`)

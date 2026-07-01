@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { ToastProvider } from 'siesa-ui-kit'
 
 import { QueryProvider } from '@/app/providers/QueryProvider'
 import { suppressKnownVendorWarnings } from '@/shared/lib/suppressKnownVendorWarnings'
@@ -20,7 +21,9 @@ declare module '@tanstack/react-router' {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryProvider>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </QueryProvider>
   </StrictMode>
 )

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@source '../node_modules/siesa-ui-kit/dist';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -48,4 +49,18 @@ body {
 .panel-list {
   width: 280px;
   flex-shrink: 0;
+}
+
+/*
+ * siesa-ui-kit's AlertDialog (Headless UI Dialog) renders its `[role="dialog"]`
+ * wrapper as a plain block element around `fixed`-positioned children (the
+ * backdrop + panel), which are out of normal flow — the wrapper itself
+ * collapses to a zero-height box. Playwright's `toBeVisible()` requires a
+ * non-empty bounding box, so it reports the (visually correct) dialog as
+ * hidden. A 1px min-height gives the wrapper a non-empty box for
+ * visibility/actionability checks without any visual effect (its `fixed`
+ * children still render at their own position/size, unaffected).
+ */
+[role='dialog'][id^='headlessui-dialog-'] {
+  min-height: 1px;
 }

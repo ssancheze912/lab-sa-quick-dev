@@ -1,9 +1,17 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using SiesaAgents.Application.Commands.Clientes;
 using SiesaAgents.Application.Queries.Clientes;
+using SiesaAgents.Application.Validators;
 
 namespace SiesaAgents.API.Endpoints;
 
 public static class ClienteEndpoints
 {
+    // Postgres error code for a unique-constraint violation (23505).
+    private const string UniqueViolationSqlState = "23505";
+
     public static IEndpointRouteBuilder MapClienteEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/v1/clientes", async (
@@ -28,6 +36,37 @@ public static class ClienteEndpoints
             .WithName("GetClienteById")
             .WithTags("Clientes");
 
+        app.MapPost("/api/v1/clientes", async (
+                CreateClienteCommand command,
+                CreateClienteCommandHandler handler,
+                CancellationToken ct) =>
+            {
+                var validator = new CreateClienteRequestValidator();
+                var validationResult = validator.Validate(command);
+                if (!validationResult.IsValid)
+                {
+                    return Results.ValidationProblem(validationResult.ToDictionary());
+                }
+
+                try
+                {
+                    var created = await handler.HandleAsync(command, ct);
+                    return Results.Created($"/api/v1/clientes/{created.Id}", created);
+                }
+                catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+                {
+                    return Results.Problem(
+                        statusCode: StatusCodes.Status409Conflict,
+                        title: "Conflict",
+                        detail: "El NIT/RUC ya está registrado");
+                }
+            })
+            .WithName("CreateCliente")
+            .WithTags("Clientes");
+
         return app;
     }
+
+    private static bool IsUniqueViolation(DbUpdateException ex) =>
+        ex.InnerException is PostgresException { SqlState: UniqueViolationSqlState };
 }

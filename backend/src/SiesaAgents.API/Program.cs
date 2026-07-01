@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Commands.Clientes;
 using SiesaAgents.Application.Queries.Clientes;
 using SiesaAgents.Domain.Repositories;
 using SiesaAgents.Infrastructure.Data;
@@ -29,6 +30,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<GetClienteByIdQueryHandler>();
+builder.Services.AddScoped<CreateClienteCommandHandler>();
 
 // Registered before any test-only IStartupFilter (e.g. WebApplicationFactory.ConfigureWebHost)
 // so ExceptionHandlingMiddleware and UseRouting() wrap the composed pipeline from the

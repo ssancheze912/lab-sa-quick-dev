@@ -1,17 +1,19 @@
 import { useMemo, useState } from 'react'
-import { Input } from 'siesa-ui-kit'
+import { Input, Button, AlertDialog } from 'siesa-ui-kit'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useClientes } from '@/modules/crm/clientes/application/hooks/useClientes'
 import { ClientListItem } from '@/shared/components/ClientListItem'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
+import { ClienteForm } from '@/modules/crm/clientes/presentation/components/ClienteForm'
 import type { Cliente } from '@/modules/crm/clientes/domain/entities/Cliente'
 
 export function ClienteListView() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const { data, isLoading, isError, refetch } = useClientes()
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
@@ -40,19 +42,38 @@ export function ClienteListView() {
         element") and violates NFR6 (zero console errors). The icon is
         positioned manually instead of relying on that prop.
       */}
-      <div className="relative w-full">
-        <MagnifyingGlassIcon
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden="true"
-        />
-        <Input
-          data-testid="cliente-search-input"
-          placeholder="Buscar cliente por nombre o NIT/RUC"
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          className="pl-10"
-        />
+      <div className="flex items-center gap-2">
+        <div className="relative w-full">
+          <MagnifyingGlassIcon
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            data-testid="cliente-search-input"
+            placeholder="Buscar cliente por nombre o NIT/RUC"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Button
+          leftIcon={<PlusIcon className="h-4 w-4" aria-hidden="true" />}
+          onClick={() => setIsCreateDialogOpen(true)}
+        >
+          Nuevo cliente
+        </Button>
       </div>
+
+      <AlertDialog
+        isOpen={isCreateDialogOpen}
+        title="Nuevo cliente"
+        onCancel={() => setIsCreateDialogOpen(false)}
+        hideCancel
+        actions={null}
+        description={
+          <ClienteForm mode="create" onSuccess={() => setIsCreateDialogOpen(false)} />
+        }
+      />
 
       {isLoading && (
         <div data-testid="clientes-list-loading">
