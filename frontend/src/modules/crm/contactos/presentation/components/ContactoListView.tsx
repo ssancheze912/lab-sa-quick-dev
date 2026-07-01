@@ -1,17 +1,19 @@
 import { useMemo, useState } from 'react'
-import { Input } from 'siesa-ui-kit'
+import { Input, Button, AlertDialog } from 'siesa-ui-kit'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useContactos } from '@/modules/crm/contactos/application/hooks/useContactos'
 import { ContactListItem } from '@/shared/components/ContactListItem'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
+import { ContactoForm } from '@/modules/crm/contactos/presentation/components/ContactoForm'
 import type { Contacto } from '@/modules/crm/contactos/domain/entities/Contacto'
 
 export function ContactoListView() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const { data, isLoading, isError, refetch } = useContactos()
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
@@ -54,7 +56,24 @@ export function ContactoListView() {
             className="pl-10"
           />
         </div>
+        <Button
+          leftIcon={<PlusIcon className="h-4 w-4" aria-hidden="true" />}
+          onClick={() => setIsCreateDialogOpen(true)}
+        >
+          Nuevo contacto
+        </Button>
       </div>
+
+      <AlertDialog
+        isOpen={isCreateDialogOpen}
+        title="Nuevo contacto"
+        onCancel={() => setIsCreateDialogOpen(false)}
+        hideCancel
+        actions={null}
+        description={
+          <ContactoForm mode="create" onSuccess={() => setIsCreateDialogOpen(false)} />
+        }
+      />
 
       {isLoading && (
         <div data-testid="contactos-list-loading">

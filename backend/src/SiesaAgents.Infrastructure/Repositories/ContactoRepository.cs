@@ -27,4 +27,10 @@ public class ContactoRepository(AppDbContext dbContext) : IContactoRepository
     {
         return await dbContext.Contactos.FirstOrDefaultAsync(c => c.Id == id, ct);
     }
+
+    public async Task AddAsync(ContactoEntity contacto, CancellationToken ct)
+    {
+        dbContext.Contactos.Add(contacto);
+        await dbContext.SaveChangesAsync(ct);
+    }
 }

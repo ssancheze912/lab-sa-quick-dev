@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
 using SiesaAgents.Application.Commands.Clientes;
+using SiesaAgents.Application.Commands.Contactos;
 using SiesaAgents.Application.Queries.Clientes;
 using SiesaAgents.Application.Queries.Contactos;
 using SiesaAgents.Domain.Repositories;
@@ -38,6 +39,7 @@ builder.Services.AddScoped<DeleteClienteCommandHandler>();
 builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
 builder.Services.AddScoped<GetContactosQueryHandler>();
 builder.Services.AddScoped<GetContactoByIdQueryHandler>();
+builder.Services.AddScoped<CreateContactoCommandHandler>();
 
 // Registered before any test-only IStartupFilter (e.g. WebApplicationFactory.ConfigureWebHost)
 // so ExceptionHandlingMiddleware and UseRouting() wrap the composed pipeline from the

@@ -40,7 +40,7 @@ export class ContactosPage {
     this.navLinkContactos = page.getByRole('link', { name: /contactos/i });
 
     this.searchInput = page.getByPlaceholder(/buscar contacto/i);
-    this.contactoRows = page.getByTestId('contacto-row');
+    this.contactoRows = page.getByTestId('contacto-list-item');
     this.btnNuevoContacto = page.getByRole('button', { name: /nuevo contacto/i });
     this.filtroSinCliente = page.getByRole('checkbox', { name: /sin cliente/i });
 
@@ -96,7 +96,7 @@ export class ContactosPage {
 
   async seleccionarContacto(nombre: string) {
     await this.page
-      .getByTestId('contacto-row')
+      .getByTestId('contacto-list-item')
       .filter({ hasText: nombre })
       .click();
   }
