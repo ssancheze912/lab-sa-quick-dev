@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { createCliente, createClientes } from '@/test/factories/cliente.factory'
+import { createContactos } from '@/test/factories/contacto.factory'
 
 /**
  * Default MSW request handlers for `/api/v1/clientes` (Story 2.1) and
@@ -72,9 +73,24 @@ export const clienteDeleteNotFoundProblemDetails = {
   detail: 'Cliente no encontrado.',
 }
 
+/**
+ * Story 3.1 — Contact List & Search. Mirrors the CLIENTES_ENDPOINT pattern
+ * above; individual tests override this default handler via `server.use(...)`
+ * for empty-list / search-empty / error / retry-success scenarios, per
+ * network-first.md.
+ */
+export const CONTACTOS_ENDPOINT = '*/api/v1/contactos'
+
+export const defaultContactosList = createContactos(5)
+
 export const handlers = [
   http.get(CLIENTES_ENDPOINT, () => {
     return HttpResponse.json(defaultClientesList, { status: 200 })
+  }),
+  // Story 3.1: GET /api/v1/contactos default success handler (200 OK, 5
+  // seeded contacts). Individual tests override via `server.use(...)`.
+  http.get(CONTACTOS_ENDPOINT, () => {
+    return HttpResponse.json(defaultContactosList, { status: 200 })
   }),
   http.get(CLIENTE_BY_ID_ENDPOINT, ({ params }) => {
     return HttpResponse.json({ ...defaultCliente, id: params.id as string }, { status: 200 })
