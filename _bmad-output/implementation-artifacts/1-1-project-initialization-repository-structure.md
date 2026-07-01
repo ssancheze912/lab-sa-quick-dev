@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: review
+Status: done
 
 ## Story
 
@@ -240,7 +240,7 @@ claude-sonnet-4-6
 - `backend/src/SiesaAgents.Domain/SiesaAgents.Domain.csproj`
 - `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj`
 - `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj`
-- Empty Clean Architecture folders created for future stories: `Endpoints/` (API); `Commands/`, `Queries/`, `DTOs/`, `Validators/`, `Interfaces/` (Application); `Entities/`, `ValueObjects/`, `Aggregates/`, `Events/`, `Services/` (Domain); `Data/{Configurations,Migrations}/`, `Repositories/`, `Services/` (Infrastructure)
+- Empty Clean Architecture folders created for future stories: `Endpoints/` (API); `Commands/`, `Queries/`, `DTOs/`, `Validators/`, `Interfaces/` (Application); `Entities/`, `ValueObjects/`, `Aggregates/`, `Events/`, `Services/` (Domain); `Data/{Configurations,Migrations}/`, `Repositories/`, `Services/` (Infrastructure) — each with a `.gitkeep` placeholder so git tracks the empty directory (fixed during code review; folders were previously untracked/missing since git does not track empty directories without a placeholder file)
 
 **Root / workspace / test infra**
 - `package.json` (new — pnpm workspace root, `@playwright/test` devDependency)
@@ -248,3 +248,53 @@ claude-sonnet-4-6
 - `pnpm-lock.yaml` (new — root lockfile)
 - `e2e/tests/api/backend-initialization.api.spec.ts` (modified — fixed `0 Error(s)` regex false-negative)
 - `e2e/tests/foundation/project-initialization.spec.ts` (modified — fixed comment-stripping regex corrupting `"@/*"` path-alias JSON value)
+- `backend/src/SiesaAgents.API/Endpoints/.gitkeep`, `backend/src/SiesaAgents.Application/{Commands,Queries,DTOs,Validators,Interfaces}/.gitkeep`, `backend/src/SiesaAgents.Domain/{Entities,ValueObjects,Aggregates,Events,Services}/.gitkeep`, `backend/src/SiesaAgents.Infrastructure/{Data/Configurations,Data/Migrations,Repositories,Services}/.gitkeep` (added during code review — see Senior Developer Review below)
+
+## Senior Developer Review (AI)
+
+**Reviewer**: SiesaTeam (AI Agent, adversarial code review)
+**Date**: 2026-07-01
+**Outcome**: Changes Requested → Auto-Fixed → Approved
+
+### Summary
+
+Verified the implementation against all 5 ACs with real command execution (not simulated): `dotnet build SiesaAgents.sln` (0 Warnings, 0 Errors), `tsc --noEmit -p tsconfig.app.json` (0 errors), live `dotnet run` + `pnpm run dev` servers probed with curl and the project's own Playwright ATDD suite (44/44 API-level tests passing against the real running backend). Browser-driven Playwright tests remain blocked in this sandbox (no Chromium binary, consistent with the Dev Agent Record's documented finding) — 2/2 non-browser tests in that spec pass.
+
+### Findings
+
+**[HIGH] False claim in File List — empty Clean Architecture folders not actually created (Fixed)**
+The Dev Agent Record's Completion Notes / File List claimed empty folders were created for future stories: `Endpoints/` (API), `Commands/Queries/DTOs/Validators/Interfaces` (Application), `Entities/ValueObjects/Aggregates/Events/Services` (Domain), `Data/{Configurations,Migrations}/Repositories/Services` (Infrastructure). Verification (`find backend/src ...`) showed **none of these folders existed** — Application, Domain, and Infrastructure projects contained only their `.csproj` file, and API contained only `Middleware/` and `Properties/`. Root cause: the folders were likely created without a placeholder file, and since git does not track empty directories, they were never persisted, or were removed by an intermediate step. This is a direct violation of the mandatory backend folder structure defined in company-standards.md and architecture.md, and blocks Story 1.3+ from having the expected scaffold to add files into. **Auto-fixed**: recreated all 15 folders with `.gitkeep` placeholders; re-verified `dotnet build SiesaAgents.sln` still succeeds with 0 Warnings/0 Errors after the change.
+
+**[MEDIUM] No unit test files exist despite a dedicated UnitTests project**
+`backend/tests/SiesaAgents.UnitTests/` contains only the `.csproj` — zero test files. Acceptable for this scaffolding-only story per Dev Notes ("no domain entities... all future stories"), but flagged so Story 1.3+ does not treat the empty test project as already covering foundation logic (CORS policy selection, exception middleware) that currently has zero unit-level coverage (only E2E/API-level coverage via Playwright).
+
+**[MEDIUM] `ExceptionHandlingMiddleware` swallows exception details with no logging**
+`backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` catches `Exception` and returns a generic Problem Details response — correct for not leaking stack traces (NFR6-aligned), but there is no `ILogger` call before returning the response. In production this means unhandled exceptions are silently swallowed with zero observability. Low risk for this foundation story (no business logic yet to throw), but should not be copied forward as-is once real endpoints exist in later stories.
+
+**[LOW] `AllowedOrigins` fallback duplicated in two places**
+`Program.cs` falls back to `["http://localhost:5173"]` if `AllowedOrigins` is missing from configuration, while `appsettings.Development.json` also defines the same value explicitly. Not a bug (belt-and-suspenders is reasonable for a dev-only default), but worth noting so the hardcoded fallback isn't forgotten/left stale when non-dev environments are introduced.
+
+**[LOW] Root `package.json`/`pnpm-workspace.yaml` added as out-of-scope supporting infra**
+Confirmed as accurately disclosed in Dev Notes/Completion Notes (not hidden) — added only to make the pre-existing root `playwright.config.ts` runnable. No action needed; documentation is honest about the scope creep.
+
+### AC Verification
+
+| AC | Status | Evidence |
+|----|--------|----------|
+| AC1 (Vite dev server, TS strict) | PASS | `pnpm run dev` served HTTP 200 on 5173; `tsconfig.app.json` has `strict/noImplicitAny/strictNullChecks: true` |
+| AC2 (Backend :5000, Scalar, 4-project sln) | PASS | `dotnet run` served `/scalar` (302→200 via redirect, confirmed via curl -L and live Playwright run); `.sln` references all 4 projects |
+| AC3 (CORS) | PASS | `Access-Control-Allow-Origin: http://localhost:5173` header confirmed via curl and Playwright OPTIONS preflight test |
+| AC4 (zero TS errors, strict flags) | PASS | `tsc --noEmit -p tsconfig.app.json` exits 0 |
+| AC5 (`dotnet build` zero errors/warnings) | PASS | Verified directly: `0 Warning(s)`, `0 Error(s)` |
+
+### Test Coverage Assessment
+
+44/44 API-level ATDD tests pass against live servers (independently re-executed, not just trusted from the Dev Agent Record). Browser-driven tests (6 in `project-initialization.spec.ts`) cannot execute in this sandbox (missing Chromium binary) — consistent with, and independently reproduced from, the Dev Agent Record's documented limitation. TEA test-quality review (`test-review-1-1-project-initialization-repository-structure.md`) scored the suite 93/100 (A+), zero Critical/High violations.
+
+### Action Items
+
+None outstanding — the one HIGH finding was auto-fixed in this review session (folders + `.gitkeep` recreated, build re-verified). MEDIUM/LOW findings are advisory for future stories, not blocking for this story's scope.
+
+### Change Log
+
+- 2026-07-01: Senior Developer Review (AI) completed. Auto-fixed missing Clean Architecture empty folders (added `.gitkeep` placeholders to 15 directories across API/Application/Domain/Infrastructure). Re-verified `dotnet build` (0/0) and `tsc --noEmit` (0 errors) after fix. Outcome: Approved.
