@@ -1,6 +1,6 @@
 # Story 3.1: Contact List & Search
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,54 +24,54 @@ so that I can quickly find any contact regardless of their client association.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: `IContactoRepository` + EF repository on top of the EXISTING `contactos` schema (AC: #1, #2)
-  - [ ] **Do NOT create a new migration and do NOT modify `ContactoConfiguration.cs`'s FK definition.** `ContactoEntity` (`backend/src/SiesaAgents.Domain/Entities/ContactoEntity.cs`), `ContactoConfiguration.cs` (`backend/src/SiesaAgents.Infrastructure/Data/Configurations/`), the `Contactos` DbSet on `AppDbContext`, and migration `20260701084227_AddContactoEntity` already exist (Story 2.5) with `Id`, `Nombre`, `Cargo`, `Telefono`, `Email`, `ClienteId` (`Guid?`), `CreatedAt`/`UpdatedAt` (`DateTimeOffset`), FK `fk_contactos_clientes` `ON DELETE SET NULL`. This story is purely additive on top of that (TC-E3-P0-01 gate — Epic constraint).
-  - [ ] Create `IContactoRepository` interface in `backend/src/SiesaAgents.Domain/Repositories/IContactoRepository.cs`, mirroring `IClienteRepository`'s exact shape/style — this story only needs the read path: `Task<IReadOnlyList<ContactoEntity>> GetAllAsync(string? searchTerm, CancellationToken ct)`. Do NOT add `Create`/`Update`/`Delete`/`GetById` methods yet (those belong to Stories 3.2/3.3/3.4/3.5 — keep scope tight, same discipline as Story 2.1).
-  - [ ] Create `ContactoRepository : IContactoRepository` in `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` — `GetAllAsync` implements a case-insensitive filter that matches `searchTerm` against `Nombre` **OR** `Email` (both fields, per AC #2/R6 — a single-field check on `Nombre` alone fails this story) using `EF.Functions.ILike` (Postgres-native case-insensitive matching, same pattern as `ClienteRepository.GetAllAsync`), ordered by `CreatedAt` descending by default.
+- [x] Task 1 — Backend: `IContactoRepository` + EF repository on top of the EXISTING `contactos` schema (AC: #1, #2)
+  - [x] **Do NOT create a new migration and do NOT modify `ContactoConfiguration.cs`'s FK definition.** `ContactoEntity` (`backend/src/SiesaAgents.Domain/Entities/ContactoEntity.cs`), `ContactoConfiguration.cs` (`backend/src/SiesaAgents.Infrastructure/Data/Configurations/`), the `Contactos` DbSet on `AppDbContext`, and migration `20260701084227_AddContactoEntity` already exist (Story 2.5) with `Id`, `Nombre`, `Cargo`, `Telefono`, `Email`, `ClienteId` (`Guid?`), `CreatedAt`/`UpdatedAt` (`DateTimeOffset`), FK `fk_contactos_clientes` `ON DELETE SET NULL`. This story is purely additive on top of that (TC-E3-P0-01 gate — Epic constraint). Verified untouched.
+  - [x] Create `IContactoRepository` interface in `backend/src/SiesaAgents.Domain/Repositories/IContactoRepository.cs`, mirroring `IClienteRepository`'s exact shape/style — this story only needs the read path: `Task<IReadOnlyList<ContactoEntity>> GetAllAsync(string? searchTerm, CancellationToken ct)`. Do NOT add `Create`/`Update`/`Delete`/`GetById` methods yet (those belong to Stories 3.2/3.3/3.4/3.5 — keep scope tight, same discipline as Story 2.1).
+  - [x] Create `ContactoRepository : IContactoRepository` in `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs` — `GetAllAsync` implements a case-insensitive filter that matches `searchTerm` against `Nombre` **OR** `Email` (both fields, per AC #2/R6 — a single-field check on `Nombre` alone fails this story) using `EF.Functions.ILike` (Postgres-native case-insensitive matching, same pattern as `ClienteRepository.GetAllAsync`), ordered by `CreatedAt` descending by default.
 
-- [ ] Task 2 — Backend: Query handler + DTO + endpoint (AC: #1, #2)
-  - [ ] Create `ContactoDto.cs` in `backend/src/SiesaAgents.Application/DTOs/` — `Id`, `Nombre`, `Cargo`, `Telefono`, `Email`, `ClienteId` (nullable), `CreatedAt` (map from `ContactoEntity`).
-  - [ ] Create `GetContactosQuery.cs` + `GetContactosQueryHandler.cs` in `backend/src/SiesaAgents.Application/Queries/Contactos/` (flat `Application/{Kind}/{Domain}/` — actual on-disk convention confirmed across Epic 2, NOT the architecture doc's illustrative `Application/Contactos/Queries/` path) — CQRS query pattern, takes optional `string? SearchTerm`, calls `IContactoRepository.GetAllAsync`, maps to `IReadOnlyList<ContactoDto>`.
-  - [ ] Create `ContactoEndpoints.cs` in `backend/src/SiesaAgents.API/Endpoints/` — Minimal API (NO controllers): `app.MapGet("/api/v1/contactos", ...)` accepting optional `string? q` query param, dispatches `GetContactosQuery`, returns `200 OK` with the DTO list. Register the endpoint group in `Program.cs` (`app.MapContactoEndpoints()`, matching the exact pattern `app.MapClienteEndpoints()` already uses). Tag `.WithTags("Contactos")`, name `"GetContactos"` (documented via Scalar automatically — no extra action needed).
-  - [ ] Register `GetContactosQueryHandler` in DI (`Program.cs`), alongside the existing Cliente query/command handler registrations.
-  - [ ] This backend search endpoint (`GET /api/v1/contactos?q=`) is a fallback/independent path per architecture — the PRIMARY filtering strategy for AC #2 is client-side (see Task 4). Both paths must filter on Nombre AND Email independently (TC-E3-P2-07 tests the backend path in isolation).
+- [x] Task 2 — Backend: Query handler + DTO + endpoint (AC: #1, #2)
+  - [x] Create `ContactoDto.cs` in `backend/src/SiesaAgents.Application/DTOs/` — `Id`, `Nombre`, `Cargo`, `Telefono`, `Email`, `ClienteId` (nullable), `CreatedAt` (map from `ContactoEntity`).
+  - [x] Create `GetContactosQuery.cs` + `GetContactosQueryHandler.cs` in `backend/src/SiesaAgents.Application/Queries/Contactos/` (flat `Application/{Kind}/{Domain}/` — actual on-disk convention confirmed across Epic 2, NOT the architecture doc's illustrative `Application/Contactos/Queries/` path) — CQRS query pattern, takes optional `string? SearchTerm`, calls `IContactoRepository.GetAllAsync`, maps to `IReadOnlyList<ContactoDto>`.
+  - [x] Create `ContactoEndpoints.cs` in `backend/src/SiesaAgents.API/Endpoints/` — Minimal API (NO controllers): `app.MapGet("/api/v1/contactos", ...)` accepting optional `string? q` query param, dispatches `GetContactosQuery`, returns `200 OK` with the DTO list. Register the endpoint group in `Program.cs` (`app.MapContactoEndpoints()`, matching the exact pattern `app.MapClienteEndpoints()` already uses). Tag `.WithTags("Contactos")`, name `"GetContactos"` (documented via Scalar automatically — no extra action needed).
+  - [x] Register `GetContactosQueryHandler` in DI (`Program.cs`), alongside the existing Cliente query/command handler registrations.
+  - [x] This backend search endpoint (`GET /api/v1/contactos?q=`) is a fallback/independent path per architecture — the PRIMARY filtering strategy for AC #2 is client-side (see Task 4). Both paths must filter on Nombre AND Email independently (TC-E3-P2-07 tests the backend path in isolation).
 
-- [ ] Task 3 — Backend: schema-reuse regression test (AC: cross-cutting, mandatory gate)
-  - [ ] Add an xUnit integration test asserting no pending EF Core model changes exist for the `contactos` table after adding `ContactoRepository`/`GetContactosQuery`/`ContactoEndpoints` (e.g., assert `AppDbContextModelSnapshot.cs` reflects no diff, or use `dotnet ef migrations has-pending-model-changes` equivalent check) — TC-E3-P0-01, non-negotiable per Test Design.
-  - [ ] Add (or confirm still green) an xUnit integration test against real/TestContainers PostgreSQL that creates a client, creates contacts via the **new** `POST`-less seeding (direct `AppDbContext` insert is fine here since `POST /api/v1/contactos` doesn't exist until Story 3.3) with `ClienteId` set, deletes the client, and asserts the contacts still exist with `ClienteId == null` — TC-E3-P0-02 regression gate proving this story's new repository/endpoint layer sits correctly on top of the unchanged FK behavior (`fk_contactos_clientes`, `ON DELETE SET NULL` from Story 2.5). Do NOT use EF Core InMemory for this specific test (FK behavior is not enforced by InMemory).
+- [x] Task 3 — Backend: schema-reuse regression test (AC: cross-cutting, mandatory gate)
+  - [x] Add an xUnit integration test asserting no pending EF Core model changes exist for the `contactos` table after adding `ContactoRepository`/`GetContactosQuery`/`ContactoEndpoints` (e.g., assert `AppDbContextModelSnapshot.cs` reflects no diff, or use `dotnet ef migrations has-pending-model-changes` equivalent check) — TC-E3-P0-01, non-negotiable per Test Design. Implemented as `ContactoSchemaReuseTests.cs`.
+  - [x] Add (or confirm still green) an xUnit integration test against real/TestContainers PostgreSQL that creates a client, creates contacts via the **new** `POST`-less seeding (direct `AppDbContext` insert is fine here since `POST /api/v1/contactos` doesn't exist until Story 3.3) with `ClienteId` set, deletes the client, and asserts the contacts still exist with `ClienteId == null` — TC-E3-P0-02 regression gate proving this story's new repository/endpoint layer sits correctly on top of the unchanged FK behavior (`fk_contactos_clientes`, `ON DELETE SET NULL` from Story 2.5). Do NOT use EF Core InMemory for this specific test (FK behavior is not enforced by InMemory). Already present in `ContactoRepositoryTests.cs` (ATDD) — confirmed green.
 
-- [ ] Task 4 — Frontend: `contactos` module scaffolding + domain/application/infrastructure layers (AC: #1, #2, #3, #5)
-  - [ ] Create Clean Architecture module skeleton at `frontend/src/modules/crm/contactos/`, mirroring `frontend/src/modules/crm/clientes/` structure exactly:
-    - `domain/entities/Contacto.ts` — TypeScript interface: `id: string`, `nombre: string`, `cargo: string`, `telefono: string`, `email: string`, `clienteId: string | null`, `createdAt: string` (ISO string from API).
-    - `domain/repositories/IContactoRepository.ts` — interface: `getAll(searchTerm?: string): Promise<Contacto[]>`.
+- [x] Task 4 — Frontend: `contactos` module scaffolding + domain/application/infrastructure layers (AC: #1, #2, #3, #5)
+  - [x] Create Clean Architecture module skeleton at `frontend/src/modules/crm/contactos/`, mirroring `frontend/src/modules/crm/clientes/` structure exactly:
+    - `domain/entities/Contacto.ts` — TypeScript interface: `id: string`, `nombre: string`, `cargo: string`, `telefono: string`, `email: string`, `clienteId: string | null`, `createdAt: string` (ISO string from API). Already existed (ATDD scaffolding), confirmed matching shape.
+    - `domain/repositories/IContactoRepository.ts` — interface: `getAll(searchTerm?: string): Promise<Contacto[]>`. Already existed (ATDD scaffolding), confirmed matching shape.
     - `infrastructure/repositories/contactoApiRepository.ts` — Axios implementation of `IContactoRepository`, calls `GET /api/v1/contactos` (optionally with `?q=`, used only for the independent backend-search fallback path; this story's primary UX path filters client-side).
     - `application/hooks/useContactos.ts` — TanStack Query hook, `queryKey: ['contactos']` (canonical key per architecture — do NOT use a string key; this key must be reused consistently by Stories 3.2–3.5's create/update/delete hooks for `invalidateQueries` to work, per Test Design R4/Note #7), `queryFn` calls `contactoApiRepository.getAll()` (no search param — fetch ALL records once, filter client-side), staleTime per project convention (mirror `useClientes.ts`).
-  - [ ] Create `presentation/components/ContactoListView.tsx` — the `/contactos` view's list panel. Renders:
+  - [x] Create `presentation/components/ContactoListView.tsx` — the `/contactos` view's list panel. Renders:
     - A search `Input` (siesa-ui-kit) bound to local `useState<string>` (NOT Zustand — architecture mandates local React state for `searchQuery`, same as `ClienteListView`).
     - The filtered list via `useMemo` over the `useContactos()` cache data, matching `nombre` OR `email` case-insensitively against the search term (client-side filter — the <1s/1,000-records NFR1/NFR10 path, double Epic 2's 500-record benchmark).
     - Each row showing `Nombre`, `Cargo`, and `Email` (AC #1/TC-E3-P2-05) — reuse the `ClientListItem` pattern conceptually but create a `ContactListItem.tsx` (contact fields differ from client fields; do not force-fit `ClientListItem`).
-  - [ ] Create `ContactListItem.tsx` in `frontend/src/shared/components/` (shared/reusable, matching the precedent set by `ClientListItem.tsx`) — displays `nombre`, `cargo`, `email`; accepts `onClick`/`selected` props for forward compatibility with Story 3.2's detail navigation (do NOT implement `onClick` navigation yet — out of this story's scope).
-  - [ ] Reuse the EXISTING `EmptyState.tsx` in `frontend/src/shared/components/` (already supports a variant prop per Story 2.1/architecture's Component Strategy: `search-empty` · `no-contacts` · `no-clients`) — add/confirm the `'no-contacts'` variant renders distinct copy guiding the user to create the first contact. Do NOT create a new EmptyState component.
-  - [ ] Reuse the EXISTING `ErrorPanel.tsx` in `frontend/src/shared/components/` (already implements `onRetry: () => void` + "Reintentar" button per Story 2.1) — no changes needed, just import and wire it (AC #5).
+  - [x] Create `ContactListItem.tsx` in `frontend/src/shared/components/` (shared/reusable, matching the precedent set by `ClientListItem.tsx`) — displays `nombre`, `cargo`, `email`; accepts `onClick`/`selected` props for forward compatibility with Story 3.2's detail navigation (do NOT implement `onClick` navigation yet — out of this story's scope).
+  - [x] Reuse the EXISTING `EmptyState.tsx` in `frontend/src/shared/components/` (already supports a variant prop per Story 2.1/architecture's Component Strategy: `search-empty` · `no-contacts` · `no-clients`) — add/confirm the `'no-contacts'` variant renders distinct copy guiding the user to create the first contact. Do NOT create a new EmptyState component. Confirmed already present and correct.
+  - [x] Reuse the EXISTING `ErrorPanel.tsx` in `frontend/src/shared/components/` (already implements `onRetry: () => void` + "Reintentar" button per Story 2.1) — no changes needed, just import and wire it (AC #5).
 
-- [ ] Task 5 — Frontend: wire `/contactos` route to the real list view (AC: #1, #2, #3, #4, #5)
-  - [ ] Replace the current placeholder in `frontend/src/routes/_app/contactos.tsx` (`<div data-testid="contactos-view">Contactos</div>`) with `<ContactoListView />`. Do NOT implement the detail panel or split-panel layout composition in this story (Story 3.2 scope) — render `ContactoListView` standalone at `/contactos` for now, matching Story 2.1's exact precedent for `/clientes`.
-  - [ ] Wire `useContactos()` loading/error/success states in `ContactoListView`:
+- [x] Task 5 — Frontend: wire `/contactos` route to the real list view (AC: #1, #2, #3, #4, #5)
+  - [x] Replace the current placeholder in `frontend/src/routes/_app/contactos.tsx` (`<div data-testid="contactos-view">Contactos</div>`) with `<ContactoListView />`. Do NOT implement the detail panel or split-panel layout composition in this story (Story 3.2 scope) — render `ContactoListView` standalone at `/contactos` for now, matching Story 2.1's exact precedent for `/clientes`.
+  - [x] Wire `useContactos()` loading/error/success states in `ContactoListView`:
     - `isLoading` → skeleton loading state using `react-loading-skeleton` (company standard: skeleton screens, not spinners).
     - `isError` → render `<ErrorPanel onRetry={refetch} />` instead of the list (AC #5).
     - `isSuccess` + `data.length === 0` → render `<EmptyState variant="no-contacts" />` (AC #3).
     - `isSuccess` + `data.length > 0` + filtered result is empty → render `<EmptyState variant="search-empty" />` while keeping the search input visible and populated (AC #4).
     - `isSuccess` + filtered result non-empty → render the list of `ContactListItem`s (AC #1, #2).
-  - [ ] Confirm no additional `useQuery`/refetch call is triggered on every keystroke — the search `Input`'s `onChange` only updates local `searchQuery` state; filtering happens via `useMemo` over already-fetched cache data (same pattern Story 2.1/2.6 established for `clientes`).
+  - [x] Confirm no additional `useQuery`/refetch call is triggered on every keystroke — the search `Input`'s `onChange` only updates local `searchQuery` state; filtering happens via `useMemo` over already-fetched cache data (same pattern Story 2.1/2.6 established for `clientes`). Verified via `ContactoListView.test.tsx`'s `requestCount` spy test (TC-E3-P1-01).
 
-- [ ] Task 6 — Tests (AC: all)
-  - [ ] Backend xUnit: `ContactoRepositoryTests` — verify `GetAllAsync` returns correctly filtered results by `Nombre` OR `Email` substring, case-insensitive, independently for each field (TC-E3-P2-07 backend-path coverage, R6).
-  - [ ] Backend xUnit integration: `ContactoEndpointsTests` — `GET /api/v1/contactos` returns `200` with all contacts; `GET /api/v1/contactos?q=<term>` returns filtered results independent of frontend logic.
-  - [ ] Backend xUnit integration: TC-E3-P0-01 (no pending model changes / no new migration for `contactos`) and TC-E3-P0-02 (client delete still orphans contacts, real Postgres) — see Task 3.
-  - [ ] Frontend Vitest + RTL: `ContactoListView.test.tsx` — covers TC-E3-P1-01 (real-time search filters by Nombre AND Email, tested independently per R6), TC-E3-P1-03 (EmptyState `no-contacts` when zero contacts via MSW returning `[]`), TC-E3-P1-04 (zero search results shows distinct `search-empty` state, search input retains value), TC-E3-P1-05 (ErrorPanel + Reintentar re-triggers fetch on failure→success), TC-E3-P2-05 (each list row shows Nombre + Cargo + Email).
-  - [ ] Frontend Vitest: performance-oriented test seeding 1,000 mock contacts (double Epic 2's 500-record benchmark — NFR10 ceiling for contacts), asserting the filter's render/update completes in <1000ms (TC-E3-P1-02) — use `performance.now()` around the filter operation, mirroring `ClienteListView.performance.test.tsx`'s approach.
-  - [ ] MSW handlers for `GET /api/v1/contactos`: success (list), success (empty array), 500/network failure — added to the existing shared MSW handler file (`frontend/src/test/msw/handlers.ts`).
-  - [ ] Add/extend a `contactoFactory` (faker-based, mirrors `cliente.factory.ts`) in `frontend/src/test/factories/` for generating mock contact records (nombre, cargo, telefono, email, optional clienteId override).
+- [x] Task 6 — Tests (AC: all)
+  - [x] Backend xUnit: `ContactoRepositoryTests` — verify `GetAllAsync` returns correctly filtered results by `Nombre` OR `Email` substring, case-insensitive, independently for each field (TC-E3-P2-07 backend-path coverage, R6). Pre-existing ATDD suite, now green.
+  - [x] Backend xUnit integration: `ContactoEndpointsTests` — `GET /api/v1/contactos` returns `200` with all contacts; `GET /api/v1/contactos?q=<term>` returns filtered results independent of frontend logic. Pre-existing ATDD suite, now green.
+  - [x] Backend xUnit integration: TC-E3-P0-01 (no pending model changes / no new migration for `contactos`) and TC-E3-P0-02 (client delete still orphans contacts, real Postgres) — see Task 3.
+  - [x] Frontend Vitest + RTL: `ContactoListView.test.tsx` — covers TC-E3-P1-01 (real-time search filters by Nombre AND Email, tested independently per R6), TC-E3-P1-03 (EmptyState `no-contacts` when zero contacts via MSW returning `[]`), TC-E3-P1-04 (zero search results shows distinct `search-empty` state, search input retains value), TC-E3-P1-05 (ErrorPanel + Reintentar re-triggers fetch on failure→success), TC-E3-P2-05 (each list row shows Nombre + Cargo + Email). Pre-existing ATDD suite, now green.
+  - [x] Frontend Vitest: performance-oriented test seeding 1,000 mock contacts (double Epic 2's 500-record benchmark — NFR10 ceiling for contacts), asserting the filter's render/update completes in <1000ms (TC-E3-P1-02) — use `performance.now()` around the filter operation, mirroring `ClienteListView.performance.test.tsx`'s approach. Pre-existing ATDD suite, now green.
+  - [x] MSW handlers for `GET /api/v1/contactos`: success (list), success (empty array), 500/network failure — added to the existing shared MSW handler file (`frontend/src/test/msw/handlers.ts`). Already present from ATDD setup.
+  - [x] Add/extend a `contactoFactory` (faker-based, mirrors `cliente.factory.ts`) in `frontend/src/test/factories/` for generating mock contact records (nombre, cargo, telefono, email, optional clienteId override). Already present from ATDD setup.
 
 ## Dev Notes
 
@@ -141,10 +141,56 @@ This story delivers ONLY the contact list + search read path. It does **not** im
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Sonnet 5 (claude-sonnet-5)
 
 ### Debug Log References
 
+- `dotnet build` (backend): succeeded, 0 errors.
+- `dotnet test tests/SiesaAgents.IntegrationTests --filter FullyQualifiedName~Contacto`: 24/24 passed.
+- `dotnet test tests/SiesaAgents.IntegrationTests` (full suite): 131/131 passed.
+- `dotnet test tests/SiesaAgents.UnitTests` (full suite): 54/54 passed.
+- `npx vitest run src/modules/crm/contactos`: 16/16 passed (functional + performance).
+- `npx vitest run` (full frontend suite): 245/245 passed.
+
 ### Completion Notes List
 
+- Confirmed `ContactoEntity`/`ContactoConfiguration`/`Contactos` DbSet/migration `20260701084227_AddContactoEntity` (Story 2.5) untouched — no new migration generated, verified via `ContactoSchemaReuseTests.Database_HasNoPendingModelChanges_AfterAddingContactoRepositoryAndEndpoints` and `AppliedMigrations_DoNotContainANewContactoMigration_BeyondAddContactoEntity` (TC-E3-P0-01 gate).
+- Backend read path (`IContactoRepository`/`ContactoRepository`/`GetContactosQuery(Handler)`/`ContactoDto`/`ContactoEndpoints`) built mirroring the Cliente structural template exactly (CQRS, `EF.Functions.ILike`, Minimal API endpoint-group registration in `Program.cs`). Search filters `Nombre` OR `Email` independently per AC #2/R6.
+- Pre-existing ATDD tests (`ContactoRepositoryTests.cs`, `ContactoEndpointsTests.cs`, `ContactoListView.test.tsx`, `ContactoListView.performance.test.tsx`) all flipped from RED to GREEN with no modifications to the test files themselves.
+- Frontend `domain/entities/Contacto.ts` and `domain/repositories/IContactoRepository.ts` already existed from ATDD scaffolding with the exact expected shape — reused as-is (no changes needed).
+- Built `contactoApiRepository.ts`, `useContactos.ts` (`queryKey: ['contactos']`), `ContactListItem.tsx` (shared), and `ContactoListView.tsx` mirroring the `clientes` module precedent (loading skeleton, ErrorPanel+Reintentar, EmptyState `no-contacts`/`search-empty` variants, client-side `useMemo` filter — zero extra network calls per keystroke).
+- Wired `/contactos` route (`frontend/src/routes/_app/contactos.tsx`) to render `ContactoListView` standalone, replacing the Story 1.x placeholder.
+- Updated a pre-existing, out-of-story test (`frontend/src/routes/-navigation-shell.routing.test.tsx`) that asserted on the now-removed placeholder `data-testid="contactos-view"` — changed the assertion to `contactos-list-panel` (the real view's root testid) to keep the AC3 deep-linking coverage accurate; no behavior/scope change.
+- No new dependencies added; no migrations generated; `ContactoConfiguration.cs`'s FK definition left untouched, per the story's non-negotiable constraints.
+
 ### File List
+
+**Backend (new):**
+- `backend/src/SiesaAgents.Domain/Repositories/IContactoRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ContactoRepository.cs`
+- `backend/src/SiesaAgents.Application/DTOs/ContactoDto.cs`
+- `backend/src/SiesaAgents.Application/Queries/Contactos/GetContactosQuery.cs`
+- `backend/src/SiesaAgents.Application/Queries/Contactos/GetContactosQueryHandler.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ContactoEndpoints.cs`
+- `backend/tests/SiesaAgents.IntegrationTests/Data/ContactoSchemaReuseTests.cs`
+
+**Backend (modified):**
+- `backend/src/SiesaAgents.API/Program.cs` (DI registration + `app.MapContactoEndpoints()`)
+
+**Frontend (new):**
+- `frontend/src/modules/crm/contactos/infrastructure/repositories/contactoApiRepository.ts`
+- `frontend/src/modules/crm/contactos/application/hooks/useContactos.ts`
+- `frontend/src/modules/crm/contactos/presentation/components/ContactoListView.tsx`
+- `frontend/src/shared/components/ContactListItem.tsx`
+
+**Frontend (modified):**
+- `frontend/src/routes/_app/contactos.tsx` (wired to `ContactoListView`)
+- `frontend/src/routes/-navigation-shell.routing.test.tsx` (updated obsolete placeholder testid assertion)
+
+**Pre-existing, unmodified (confirmed reused as-is):**
+- `frontend/src/modules/crm/contactos/domain/entities/Contacto.ts`
+- `frontend/src/modules/crm/contactos/domain/repositories/IContactoRepository.ts`
+- `frontend/src/shared/components/EmptyState.tsx`
+- `frontend/src/shared/components/ErrorPanel.tsx`
+- `frontend/src/test/factories/contacto.factory.ts`
+- `frontend/src/test/msw/handlers.ts`

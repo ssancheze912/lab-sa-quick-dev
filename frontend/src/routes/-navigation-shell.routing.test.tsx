@@ -65,7 +65,9 @@ describe('Navigation shell routing', () => {
       renderAppAt('/contactos')
 
       // THEN: the Contactos view renders directly, without redirecting to a landing screen
-      expect(await screen.findByTestId('contactos-view')).toBeInTheDocument()
+      // (Story 3.1: the placeholder `contactos-view` div was replaced by the
+      // real `ContactoListView`, identified by `contactos-list-panel`)
+      expect(await screen.findByTestId('contactos-list-panel')).toBeInTheDocument()
     })
   })
 

@@ -5,6 +5,7 @@ using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
 using SiesaAgents.Application.Commands.Clientes;
 using SiesaAgents.Application.Queries.Clientes;
+using SiesaAgents.Application.Queries.Contactos;
 using SiesaAgents.Domain.Repositories;
 using SiesaAgents.Infrastructure.Data;
 using SiesaAgents.Infrastructure.Repositories;
@@ -34,6 +35,9 @@ builder.Services.AddScoped<CreateClienteCommandHandler>();
 builder.Services.AddScoped<UpdateClienteCommandHandler>();
 builder.Services.AddScoped<DeleteClienteCommandHandler>();
 
+builder.Services.AddScoped<IContactoRepository, ContactoRepository>();
+builder.Services.AddScoped<GetContactosQueryHandler>();
+
 // Registered before any test-only IStartupFilter (e.g. WebApplicationFactory.ConfigureWebHost)
 // so ExceptionHandlingMiddleware and UseRouting() wrap the composed pipeline from the
 // outermost layer — guaranteeing exceptions thrown by endpoints added via startup filters
@@ -59,6 +63,7 @@ app.MapOpenApi();
 app.MapScalarApiReference();
 
 app.MapClienteEndpoints();
+app.MapContactoEndpoints();
 
 app.Run();
 
