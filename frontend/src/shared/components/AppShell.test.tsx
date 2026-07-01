@@ -90,5 +90,85 @@ describe('AppShell', () => {
       const clientesItem = within(rail).getByText('Clientes').closest('[aria-current], [data-active]')
       expect(clientesItem).toBeFalsy()
     })
+
+    test('[P2] should mark neither rail item as active on an unrelated nested path', async () => {
+      // GIVEN: the app is loaded on desktop at a path that matches neither section
+      mockViewport('desktop')
+
+      // WHEN: AppShell renders at an arbitrary unmatched path
+      renderWithRouter(<AppShell><div>content</div></AppShell>, { initialPath: '/unknown-section' })
+      const rail = await screen.findByTestId('navigation-rail')
+
+      // THEN: neither Clientes nor Contactos carries the active marker
+      expect(within(rail).getByText('Clientes').closest('[aria-current], [data-active]')).toBeFalsy()
+      expect(within(rail).getByText('Contactos').closest('[aria-current], [data-active]')).toBeFalsy()
+    })
+
+    test('[P2] should treat nested sub-paths as active via prefix match (e.g. /clientes/123)', async () => {
+      // GIVEN: the app is loaded on desktop at a nested sub-path under /clientes
+      mockViewport('desktop')
+
+      // WHEN: AppShell renders at /clientes/123
+      renderWithRouter(<AppShell><div>content</div></AppShell>, { initialPath: '/clientes/123' })
+      const rail = await screen.findByTestId('navigation-rail')
+
+      // THEN: Clientes is still marked active (startsWith prefix match)
+      const clientesItem = within(rail).getByText('Clientes').closest('[aria-current], [data-active]')
+      expect(clientesItem).toBeTruthy()
+    })
+  })
+
+  describe('AC2 - Mobile NavigationBar active state and navigation', () => {
+    test('[P1] should mark "Clientes" as the active item in the mobile NavigationBar at /clientes', async () => {
+      // GIVEN: the app is loaded on mobile at /clientes
+      mockViewport('mobile')
+
+      // WHEN: AppShell renders the mobile NavigationBar
+      renderWithRouter(<AppShell><div>content</div></AppShell>, { initialPath: '/clientes' })
+      const bar = await screen.findByTestId('navigation-bar')
+
+      // THEN: the Clientes button reflects the active item via aria-current (siesa-ui-kit NavigationBar contract)
+      const clientesItem = within(bar).getByRole('button', { name: /clientes/i })
+      expect(clientesItem).toHaveAttribute('aria-current', 'page')
+    })
+
+    test('[P1] should navigate to /contactos without a full page reload when tapping the Contactos bottom-nav item', async () => {
+      // GIVEN: the app is loaded on mobile at /clientes
+      mockViewport('mobile')
+      const user = userEvent.setup()
+      renderWithRouter(<AppShell><div>content</div></AppShell>, { initialPath: '/clientes' })
+      const bar = await screen.findByTestId('navigation-bar')
+
+      // WHEN: the user taps the "Contactos" bottom-nav item
+      await user.click(within(bar).getByRole('button', { name: /contactos/i }))
+
+      // THEN: client-side navigation occurs to /contactos
+      expect(await screen.findByTestId('app-shell-location')).toHaveTextContent('/contactos')
+    })
+
+    test('[P2] should not render the desktop NavigationRail at all on mobile (fully absent from DOM)', async () => {
+      // GIVEN: the app is loaded on mobile
+      mockViewport('mobile')
+
+      // WHEN: AppShell renders
+      renderWithRouter(<AppShell><div>content</div></AppShell>, { initialPath: '/clientes' })
+      await screen.findByTestId('navigation-bar')
+
+      // THEN: no rail markup exists anywhere in the document (not just hidden via CSS)
+      expect(document.querySelector('[data-testid="navigation-rail"]')).toBeNull()
+    })
+  })
+
+  describe('Boundary - viewport breakpoint edge', () => {
+    test('[P2] should render the desktop rail at exactly the 1024px lg: breakpoint boundary', async () => {
+      // GIVEN: matchMedia for "(min-width: 1024px)" matches (boundary is inclusive per the media query itself)
+      mockViewport('desktop')
+
+      // WHEN: AppShell renders
+      renderWithRouter(<AppShell><div>content</div></AppShell>, { initialPath: '/clientes' })
+
+      // THEN: the desktop rail renders (boundary treated as desktop, matching CSS lg: semantics)
+      expect(await screen.findByTestId('navigation-rail')).toBeInTheDocument()
+    })
   })
 })

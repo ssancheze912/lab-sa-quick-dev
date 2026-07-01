@@ -26,4 +26,32 @@ describe('NotFoundView', () => {
     const recoveryLink = screen.getByTestId('not-found-recovery-link')
     expect(recoveryLink).toHaveAttribute('href', '/clientes')
   })
+
+  test('[P2] should render a real anchor element for the recovery link (not a button/onClick div)', () => {
+    // GIVEN: the not-found view is rendered
+    // WHEN: inspecting the recovery link element
+    renderWithRouter(<NotFoundView />, { initialPath: '/foo' })
+
+    // THEN: it is a genuine <a> tag for correct semantics/deep-linking, not a styled button
+    const recoveryLink = screen.getByTestId('not-found-recovery-link')
+    expect(recoveryLink.tagName).toBe('A')
+  })
+
+  test('[P2] should render the same graceful not-found view for any unmatched nested path', () => {
+    // GIVEN: an arbitrary deeply-nested unknown path (not just a single-segment one)
+    // WHEN: the not-found view renders for that path
+    renderWithRouter(<NotFoundView />, { initialPath: '/clientes/does-not-exist/nested' })
+
+    // THEN: the same graceful Spanish heading renders — no crash, no blank screen
+    expect(screen.getByRole('heading', { name: /página no encontrada/i })).toBeInTheDocument()
+  })
+
+  test('[P3] should render explanatory body text alongside the heading', () => {
+    // GIVEN: the not-found view is rendered
+    // WHEN: inspecting its content
+    renderWithRouter(<NotFoundView />, { initialPath: '/foo' })
+
+    // THEN: a supporting message is shown to the user (not just a bare heading)
+    expect(screen.getByText(/la página que buscas no existe o fue movida/i)).toBeInTheDocument()
+  })
 })

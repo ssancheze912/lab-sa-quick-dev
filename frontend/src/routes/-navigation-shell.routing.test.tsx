@@ -62,5 +62,58 @@ describe('Navigation shell routing', () => {
       // THEN: the graceful not-found view renders instead of a crash/blank screen
       expect(await screen.findByRole('heading', { name: /página no encontrada/i })).toBeInTheDocument()
     })
+
+    // eslint-disable-next-line vitest/no-disabled-tests -- see FIXME below; test.fixme() unavailable in installed vitest@4.1.9 (no test.fixme export), test.skip() used as closest equivalent
+    test.skip('[P2] should render the not-found view for a deeply nested unknown route', async () => {
+      // FIXME: discovered by testarch-automate edge-case expansion (not covered by original ATDD suite).
+      // Failure: for unknown paths nested under a registered prefix (e.g.
+      // "/clientes/does-not-exist/nested/path"), TanStack Router resolves the
+      // not-found boundary to the closest matched ancestor route with a
+      // registered notFoundComponent. Here that's the `_app` pathless layout
+      // route, which does NOT define its own `notFoundComponent` — only
+      // `__root.tsx` does. TanStack does not walk further up in this case, so
+      // it falls back to its own built-in generic "<p>Not Found</p>" element
+      // instead of propagating to the root's custom `NotFoundView`.
+      // Verified empirically: rendered DOM for this path contains
+      // `<p>Not Found</p>` inside the AppShell/_app layout, NOT the Spanish
+      // "Página no encontrada" heading — confirming this is a real gap, not a
+      // test authoring mistake (root-level unknown routes like "/foo" and
+      // "/configuracion" work correctly; only nested-under-registered-prefix
+      // paths are affected).
+      // Root cause / fix (implementation change, out of scope for test
+      // automation): add `notFoundComponent: NotFoundView` to
+      // `frontend/src/routes/_app.tsx`'s route options as well, so the
+      // boundary resolved inside the `_app` subtree also renders the custom
+      // view. This is a code change, not a test change — flagged for the dev
+      // team / next story rather than silently weakened here.
+      // GIVEN: the user navigates to a nested unknown route (not just a single segment)
+      // WHEN: the page loads
+      renderAppAt('/clientes/does-not-exist/nested/path')
+
+      // THEN: the graceful not-found view still renders (no crash, no blank screen)
+      expect(await screen.findByRole('heading', { name: /página no encontrada/i })).toBeInTheDocument()
+    })
+
+    test('[P2] should render the not-found view for an unknown route under an unrelated prefix', async () => {
+      // GIVEN: the user navigates to an unknown top-level route unrelated to clientes/contactos
+      // WHEN: the page loads
+      renderAppAt('/configuracion')
+
+      // THEN: the graceful not-found view renders with the recovery link back to /clientes
+      await screen.findByRole('heading', { name: /página no encontrada/i })
+      expect(screen.getByTestId('not-found-recovery-link')).toHaveAttribute('href', '/clientes')
+    })
+  })
+
+  describe('AC1/AC2 - Shell renders within routed pages', () => {
+    test('[P1] should render the navigation shell (rail or bottom nav) around the Clientes view when routed', async () => {
+      // GIVEN: the user navigates to /clientes through the real route tree (not the isolated AppShell test harness)
+      // WHEN: the page loads
+      renderAppAt('/clientes')
+
+      // THEN: the routed Clientes view is present alongside the shell's location marker
+      await screen.findByTestId('clientes-view')
+      expect(await screen.findByTestId('app-shell-location')).toHaveTextContent('/clientes')
+    })
   })
 })

@@ -38,4 +38,17 @@ describe('AppShell accessibility', () => {
     const results = await axe(container)
     expect(results).toHaveNoViolations()
   })
+
+  test('[P2] should have no detectable accessibility violations when no nav item is active (unmatched route)', async () => {
+    // GIVEN: the app is loaded on desktop at a path matching neither Clientes nor Contactos
+    mockViewport('desktop')
+
+    // WHEN: AppShell renders with no active section
+    const { container } = renderWithRouter(<AppShell><div>content</div></AppShell>, { initialPath: '/unknown-section' })
+    await screen.findByTestId('navigation-rail')
+
+    // THEN: axe still reports zero violations (no dangling aria-current on a stale element, etc.)
+    const results = await axe(container)
+    expect(results).toHaveNoViolations()
+  })
 })
