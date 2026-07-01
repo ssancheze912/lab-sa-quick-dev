@@ -1,6 +1,6 @@
 # Story 2.6: Sort Client List
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -134,6 +134,10 @@ Claude Sonnet 5 (claude-sonnet-5)
 ### File List
 
 - `frontend/src/shared/components/SortControl.tsx` (new)
+- `frontend/src/shared/components/SortControl.test.tsx` (new — ATDD component tests, AC #1-#4/#6)
+- `frontend/src/shared/components/SortControl.edge-cases.test.tsx` (new — testarch-automate expansion: controlled-value updates, keyboard interaction, click-forwarding)
 - `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.tsx` (modified)
-- `frontend/src/test/setup.ts` (modified — added `ResizeObserver` polyfill)
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.sort.test.tsx` (new — ATDD tests, AC #1-#4/#6)
 - `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.sort-interaction.test.tsx` (new — split from `ClienteListView.sort.test.tsx` during TEA test-review to satisfy the 300-line file-size guideline; contains AC #5 and the cache-integrity test)
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.sort.edge-cases.test.tsx` (new — testarch-automate expansion: locale-aware sort, duplicate keys, rapid switching, boundary sizes)
+- `frontend/src/test/setup.ts` (modified — added `ResizeObserver` polyfill)
