@@ -224,4 +224,40 @@ public class ClienteRepositoryTests : IAsyncLifetime
         // THEN the accented client matches
         Assert.Contains(result, c => c.Id == target.Id);
     }
+
+    // --- Story 2.2: GetByIdAsync (AC #1, #2, #3) --------------------------------
+    //
+    // RED PHASE: IClienteRepository.GetByIdAsync does not exist yet (Story 2.2,
+    // Task 1). These tests define the expected contract: returns the matching
+    // entity for an existing Id, and null (no exception) for a non-existent Id.
+
+    [Fact]
+    public async Task GetByIdAsync_WithExistingId_ReturnsTheMatchingEntity()
+    {
+        // GIVEN a seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Detalle Cliente {suffix}", $"980{suffix}");
+        var repository = new ClienteRepository(_context);
+
+        // WHEN fetching by its Id
+        var result = await repository.GetByIdAsync(seeded.Id, CancellationToken.None);
+
+        // THEN the matching entity is returned with the correct Id
+        Assert.NotNull(result);
+        Assert.Equal(seeded.Id, result!.Id);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WithNonExistentId_ReturnsNull()
+    {
+        // GIVEN a well-formed Id that matches no seeded client
+        var repository = new ClienteRepository(_context);
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN fetching by that Id
+        var result = await repository.GetByIdAsync(nonExistentId, CancellationToken.None);
+
+        // THEN null is returned — no exception thrown at repository level
+        Assert.Null(result);
+    }
 }

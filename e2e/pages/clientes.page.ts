@@ -16,8 +16,11 @@ export class ClientesPage {
   readonly clienteItems: Locator;
   readonly btnNuevoCliente: Locator;
 
-  // Detail panel
+  // Detail panel (Story 2.2)
   readonly detailPanel: Locator;
+  readonly detailEmptyState: Locator;
+  readonly detailNotFound: Locator;
+  readonly detailLoading: Locator;
   readonly emptyState: Locator;
 
   // Form (dialog/drawer)
@@ -42,6 +45,9 @@ export class ClientesPage {
     this.btnNuevoCliente = page.getByRole('button', { name: /nuevo cliente/i });
 
     this.detailPanel = page.getByTestId('cliente-detail-panel');
+    this.detailEmptyState = page.getByTestId('cliente-detail-empty');
+    this.detailNotFound = page.getByTestId('cliente-not-found');
+    this.detailLoading = page.getByTestId('cliente-detail-loading');
     this.emptyState = page.getByTestId('empty-state');
 
     this.form = page.getByRole('dialog');
@@ -58,6 +64,12 @@ export class ClientesPage {
   async goto() {
     await this.page.goto('/clientes');
     await this.page.waitForURL('**/clientes**');
+  }
+
+  /** Navigates directly to /clientes/:clienteId (deep link, Story 2.2 AC #2). */
+  async gotoDetail(clienteId: string) {
+    await this.page.goto(`/clientes/${clienteId}`);
+    await this.page.waitForURL(`**/clientes/${clienteId}`);
   }
 
   async abrirFormularioNuevo() {

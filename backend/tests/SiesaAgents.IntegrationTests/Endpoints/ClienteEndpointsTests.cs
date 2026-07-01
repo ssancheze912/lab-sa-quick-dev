@@ -181,4 +181,78 @@ public class ClienteEndpointsTests : IClassFixture<TestApiFactory>, IAsyncLifeti
         Assert.Contains("\"nit\"", rawJson);
         Assert.Contains("\"createdAt\"", rawJson);
     }
+
+    // --- Story 2.2: GET /api/v1/clientes/{id} (AC #1, #2, #3) -------------------
+    //
+    // RED PHASE: the GET /api/v1/clientes/{id:guid} endpoint does not exist yet
+    // (Story 2.2, Task 1). These tests define the expected contract: 200 + the
+    // correct ClienteDto for an existing client, and 404 + Problem Details (no
+    // stack trace / no technical leakage per NFR6) for a non-existent Id.
+
+    [Fact]
+    public async Task GetClienteById_WithExistingId_ReturnsOk()
+    {
+        // GIVEN a seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Detalle Endpoint Cliente {suffix}", $"708{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling GET /api/v1/clientes/{id} with an existing Id
+        var response = await client.GetAsync($"/api/v1/clientes/{seeded.Id}");
+
+        // THEN the response is 200 OK
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetClienteById_WithExistingId_ReturnsTheCorrectClienteDto()
+    {
+        // GIVEN a seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Correcto Cliente {suffix}", $"709{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling GET /api/v1/clientes/{id}
+        var result = await client.GetFromJsonAsync<ClienteDto>($"/api/v1/clientes/{seeded.Id}");
+
+        // THEN the returned DTO matches the seeded client's fields
+        Assert.NotNull(result);
+        Assert.Equal(seeded.Id, result!.Id);
+        Assert.Equal(seeded.Nombre, result.Nombre);
+        Assert.Equal(seeded.Nit, result.Nit);
+        Assert.Equal(seeded.Telefono, result.Telefono);
+        Assert.Equal(seeded.Ciudad, result.Ciudad);
+    }
+
+    [Fact]
+    public async Task GetClienteById_WithNonExistentId_ReturnsNotFound()
+    {
+        // GIVEN a well-formed UUID with no matching client
+        var client = _factory.CreateClient();
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN calling GET /api/v1/clientes/{id}
+        var response = await client.GetAsync($"/api/v1/clientes/{nonExistentId}");
+
+        // THEN the response is 404 Not Found
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetClienteById_WithNonExistentId_ReturnsProblemDetailsWithoutStackTrace()
+    {
+        // GIVEN a well-formed UUID with no matching client
+        var client = _factory.CreateClient();
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN calling GET /api/v1/clientes/{id}
+        var response = await client.GetAsync($"/api/v1/clientes/{nonExistentId}");
+        var rawJson = await response.Content.ReadAsStringAsync();
+
+        // THEN the body is RFC 7807 Problem Details shaped, with no stack trace or
+        // technical leakage (NFR6)
+        Assert.Contains("\"status\"", rawJson);
+        Assert.DoesNotContain("StackTrace", rawJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("System.Exception", rawJson, StringComparison.OrdinalIgnoreCase);
+    }
 }
