@@ -188,7 +188,7 @@ test.describe('AC5 — Backend solution builds and runs successfully', () => {
 
     // THEN: The build succeeds (exit code 0) with no reported errors or warnings
     expect(exitCode).toBe(0);
-    expect(stdout).not.toMatch(/\d+ Error\(s\)/i);
+    expect(stdout).not.toMatch(/[1-9]\d* Error\(s\)/i);
     expect(stdout).toMatch(/0 Warning\(s\)/i);
     expect(stdout).toMatch(/0 Error\(s\)/i);
   });

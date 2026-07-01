@@ -167,8 +167,12 @@ test.describe('AC4 — TypeScript strict mode active on frontend', () => {
     // WHEN: tsconfig.app.json is read from disk
 
     const raw = await fs.readFile(TSCONFIG_APP_PATH, 'utf-8');
-    // tsconfig files may contain comments; strip them before JSON.parse
-    const withoutComments = raw.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    // tsconfig files may contain comments; strip only whole-line comments before JSON.parse
+    // (matching line-comment/block-comment tokens only when they start a line, so JSON string
+    // values such as path-alias patterns like "@/*" are never mistaken for comment delimiters)
+    const withoutComments = raw
+      .replace(/^\s*\/\/.*$/gm, '')
+      .replace(/^\s*\/\*[\s\S]*?\*\/\s*$/gm, '');
     const config = JSON.parse(withoutComments);
 
     // THEN: strict, noImplicitAny and strictNullChecks are explicitly enabled
