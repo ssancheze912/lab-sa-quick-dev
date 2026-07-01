@@ -1,0 +1,105 @@
+gate:
+  epic_id: "2"
+  epic_title: "Client Management (Gestión de Clientes)"
+  gate_type: epic
+  date: "2026-07-01"
+  evaluator: "SiesaTeam (TEA Agent - testarch-trace, deterministic mode)"
+  decision: PASS
+
+traceability:
+  coverage:
+    overall: 97
+    p0: 100
+    p1: 100
+    p2: 100
+    p3: 67
+  gaps:
+    critical: 0
+    high: 0
+    medium: 1
+    low: 1
+
+decision_criteria:
+  p0:
+    coverage_pct: 100
+    threshold_pct: 100
+    status: PASS
+  p1:
+    coverage_pct: 100
+    threshold_pct: 90
+    status: PASS
+  overall:
+    coverage_pct: 97
+    threshold_pct: 80
+    status: PASS
+  security_issues:
+    count: 0
+    threshold: 0
+    status: PASS
+  critical_nfr_failures:
+    count: 0
+    threshold: 0
+    status: PASS
+  flaky_tests:
+    count: 0
+    threshold: 0
+    status: PASS
+
+known_gaps:
+  - id: "R2-E2E-fixme"
+    description: >
+      2 test.fixme() scenarios in e2e/tests/clientes/delete-client.spec.ts
+      (lines 126, 157) covering the contact-orphaning E2E UI journey, blocked
+      on Epic 3 /api/v1/contactos endpoints not yet existing.
+    severity: MEDIUM (non-blocking)
+    compensating_control: >
+      ClienteRepositoryTests.DeleteAsync_WithClienteThatHasAssociatedContacts_OrphansTheContactsInsteadOfCascadeDeletingThem
+      (real PostgreSQL, backend integration test) deterministically verifies
+      FK ON DELETE SET NULL behavior. ClienteDetailView.test.tsx covers the
+      orphaning-toast copy at component level.
+    remediation: "Un-skip both test.fixme() blocks once Epic 3 ships Contacto CRUD/seeding endpoints."
+    blocks_gate: false
+  - id: "TC-E2-P3-02"
+    description: "Concurrent edit last-write-wins behavior — intentionally manual/exploratory, not automated."
+    severity: LOW
+    blocks_gate: false
+
+rationale: >
+  All P0 acceptance criteria (AC-E2.1 through AC-E2.5) have FULL coverage,
+  including the epic's highest-risk item (R2, contact orphaning on client
+  delete), verified deterministically against real PostgreSQL rather than an
+  in-memory provider. All P1 criteria at 100% coverage. All 6 stories are
+  Status: done with test-review verdicts of Excellent/Approve and zero
+  unresolved BLOCKER issues. The only known gap (2 fixme E2E scenarios) is
+  explicitly documented, non-blocking, and has a stronger compensating
+  control already in place at the API-integration level.
+
+residual_risk: LOW
+
+evidence:
+  test_design: "_bmad-output/implementation-artifacts/test-design-epic-2.md"
+  traceability_matrix: "_bmad-output/traceability-matrix-epic-2.md"
+  story_files:
+    - "_bmad-output/implementation-artifacts/2-1-client-list-search.md"
+    - "_bmad-output/implementation-artifacts/2-2-client-detail-view.md"
+    - "_bmad-output/implementation-artifacts/2-3-create-client.md"
+    - "_bmad-output/implementation-artifacts/2-4-edit-client.md"
+    - "_bmad-output/implementation-artifacts/2-5-delete-client.md"
+    - "_bmad-output/implementation-artifacts/2-6-sort-client-list.md"
+  test_review_reports:
+    - "_bmad-output/implementation-artifacts/test-review-2-1-client-list-search.md"
+    - "_bmad-output/implementation-artifacts/test-review-2-2-client-detail-view.md"
+    - "_bmad-output/implementation-artifacts/test-review-2-3-create-client.md"
+    - "_bmad-output/implementation-artifacts/test-review-2-4-edit-client.md"
+    - "_bmad-output/implementation-artifacts/review-2-2-client-detail-view.md"
+    - "_bmad-output/implementation-artifacts/review-2-6-sort-client-list.md"
+  test_files:
+    e2e: "e2e/tests/clientes/*.spec.ts"
+    backend_integration: "backend/tests/SiesaAgents.IntegrationTests/Endpoints/ClienteEndpointsTests.cs, backend/tests/SiesaAgents.IntegrationTests/Repositories/ClienteRepositoryTests.cs"
+    backend_unit: "backend/tests/SiesaAgents.UnitTests/Validators/*.cs"
+    frontend_component_unit: "frontend/src/modules/crm/clientes/**/*.test.tsx"
+
+next_steps:
+  - "Proceed to Epic 3 (Contact Management) implementation"
+  - "Un-skip test.fixme() E2E scenarios in delete-client.spec.ts once Epic 3 Contacto endpoints exist"
+  - "Optional tech debt: split ClienteEndpointsTests.cs by HTTP verb before Epic 3 adds more tests"
