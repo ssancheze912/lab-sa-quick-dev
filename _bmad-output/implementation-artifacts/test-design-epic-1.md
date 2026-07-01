@@ -4,11 +4,25 @@ title: "Project Foundation & Application Shell"
 mode: epic-level
 phase: 4
 createdAt: "2026-05-20"
+updatedAt: "2026-07-01"
 stories:
   - "1.1 — Project Initialization & Repository Structure"
   - "1.2 — Frontend Navigation Shell"
   - "1.3 — Backend Database Foundation"
 status: complete
+epicImplementationStatus: in-progress
+storyStatuses:
+  1.1: ready-for-dev
+  1.2: pending
+  1.3: pending
+reviewNote: >
+  Reviewed 2026-07-01 against current epic source and sprint-status.yaml.
+  Test scope, risk assessment, and coverage matrix remain valid — no changes
+  to acceptance criteria or story scope since original design. Corrected
+  package-manager references from npm to pnpm (mandatory per company
+  standards) and clarified backend project paths (backend/src/SiesaAgents.*)
+  to match the actual story 1.1 folder structure. No test cases added or
+  removed.
 ---
 
 # Test Design — Epic 1: Project Foundation & Application Shell
@@ -93,15 +107,15 @@ Total                                        19 tests
 **Requirement:** AC-1.1 (TypeScript strict mode enabled)
 **Risk covered:** R2
 
-**Precondition:** Frontend project initialized with `npm create vite@latest -- --template react-ts`, `tsconfig.json` has `"strict": true`.
+**Precondition:** Frontend project initialized with `pnpm create vite@latest frontend -- --template react-ts`, `tsconfig.app.json` has `"strict": true`, `"noImplicitAny": true`, `"strictNullChecks": true`.
 
 **Test Steps:**
-1. Run `npx tsc --noEmit` from the `frontend/` directory.
-2. Run `npm run build` and observe exit code.
+1. Run `pnpm exec tsc --noEmit` from the `frontend/` directory.
+2. Run `pnpm run build` and observe exit code.
 
 **Expected Result:**
 - `tsc --noEmit` exits with code 0 and zero errors.
-- `npm run build` produces a `dist/` folder with no TypeScript compilation errors.
+- `pnpm run build` produces a `dist/` folder with no TypeScript compilation errors.
 
 **Automation:** Vitest/build script — runs as part of CI pre-check.
 
@@ -111,13 +125,13 @@ Total                                        19 tests
 
 **Level:** Unit / Smoke
 **Story:** 1.1
-**Requirement:** AC-1.1 (`npm run dev` starts on port 5173 with no errors)
+**Requirement:** AC-1.1 (`pnpm run dev` starts on port 5173 with no errors)
 **Risk covered:** R2
 
-**Precondition:** All `npm install` dependencies are installed.
+**Precondition:** All `pnpm install` dependencies are installed (mandatory package manager per company standards — NOT npm/yarn).
 
 **Test Steps:**
-1. Run `npm run dev` in `frontend/`.
+1. Run `pnpm run dev` in `frontend/`.
 2. After server is ready, perform GET request to `http://localhost:5173`.
 
 **Expected Result:**
@@ -135,7 +149,7 @@ Total                                        19 tests
 **Requirement:** AC-1.1 (backend starts on port 5000, Scalar loads at `/scalar`)
 **Risk covered:** R8
 
-**Precondition:** `dotnet run` in `SiesaAgents.API/`. PostgreSQL running locally.
+**Precondition:** `dotnet run` in `backend/src/SiesaAgents.API/`. PostgreSQL running locally.
 
 **Test Steps:**
 1. Start backend.
@@ -293,7 +307,7 @@ Total                                        19 tests
 **Precondition:** PostgreSQL running locally at connection string in `appsettings.Development.json`. No `siesa_agents_db` database exists.
 
 **Test Steps:**
-1. Run `dotnet ef database update` in `SiesaAgents.Infrastructure`.
+1. Run `dotnet ef database update` in `backend/src/SiesaAgents.Infrastructure`.
 2. Connect to PostgreSQL and query `information_schema.tables` in `siesa_agents_db`.
 
 **Expected Result:**
@@ -442,7 +456,7 @@ Total                                        19 tests
 | AC-E1.1: App loads with accessible navigation on mobile and desktop | 1.2 | TC-E1-P2-01, TC-E1-P2-02 | Covered |
 | AC-E1.2: Navigate between Clientes/Contactos without full reload | 1.2 | TC-E1-P1-01 | Covered |
 | AC-E1.3: Direct URL to /clientes and /contactos renders correct views | 1.2 | TC-E1-P1-02, TC-E1-P1-03 | Covered |
-| AC-1.1.a: `npm run dev` starts on 5173 with no errors | 1.1 | TC-E1-P0-01, TC-E1-P0-02 | Covered |
+| AC-1.1.a: `pnpm run dev` starts on 5173 with no errors | 1.1 | TC-E1-P0-01, TC-E1-P0-02 | Covered |
 | AC-1.1.b: TypeScript strict mode enabled | 1.1 | TC-E1-P0-01 | Covered |
 | AC-1.1.c: Backend starts on 5000, Scalar loads at /scalar | 1.1 | TC-E1-P0-03 | Covered |
 | AC-1.1.d: Four CA projects referenced correctly | 1.1 | TC-E1-P1-06 | Covered |
@@ -520,11 +534,11 @@ Phase 5 — Unit Test Suites (P3)
 ### Environment Prerequisites
 
 ```
-- Node.js 20+ with npm
+- Node.js 20+ with pnpm
 - .NET 10 SDK
 - PostgreSQL 18+ running locally on default port 5432
 - Database user with CREATE DATABASE privilege
-- All npm dependencies installed (npm install)
+- All pnpm dependencies installed (`pnpm install`) — pnpm is the mandatory package manager, not npm/yarn
 - All NuGet packages restored (dotnet restore)
 ```
 
@@ -556,10 +570,10 @@ Phase 5 — Unit Test Suites (P3)
 - TestContainers (Postgres) — isolated database for migration tests
 
 **Environment:**
-- Node.js 20+, npm — frontend build/test
+- Node.js 20+, pnpm — frontend build/test
 - .NET 10 SDK — backend build/test
 - PostgreSQL 18+ on port 5432 with CREATE DATABASE privilege
-- All dependencies restored (`npm install`, `dotnet restore`)
+- All dependencies restored (`pnpm install`, `dotnet restore`)
 
 ---
 
