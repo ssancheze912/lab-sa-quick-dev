@@ -31,10 +31,10 @@ so that I can move between sections without full page reloads from any device.
 
 - [ ] Task 2 — Create TanStack Router route structure (AC: #1, #3, #4, #5)
   - [ ] Create `frontend/src/routes/index.tsx` — redirects `/` → `/clientes` using `redirect()` in the route's `beforeLoad` (TanStack Router file-based convention)
-  - [ ] Create `frontend/src/routes/_app.tsx` — pathless layout route (`_` prefix = no URL segment) rendering the shared shell (Navbar + NavigationRail/NavigationBar + `<Outlet />`)
+  - [ ] Create `frontend/src/routes/_app.tsx` — pathless layout route (`_` prefix = no URL segment) rendering the shared shell (`AppShell` wrapping `LayoutBase` + mobile `NavigationBar` + `<Outlet />`)
   - [ ] Create `frontend/src/routes/_app/clientes.tsx` — renders a placeholder `ClientesView` component (`<div>Clientes</div>` or equivalent; the real list view is built in Epic 2) mapped to `/clientes`
   - [ ] Create `frontend/src/routes/_app/contactos.tsx` — renders a placeholder `ContactosView` component mapped to `/contactos` (real view built in Epic 3)
-  - [ ] Create `frontend/src/routes/-not-found.tsx` or configure `notFoundComponent` on the root route (`-` prefix / TanStack Router `notFoundComponent` API) — Spanish message: "Página no encontrada" + link to `/clientes`
+  - [ ] Configure `notFoundComponent` on `createRootRoute()` in `__root.tsx` (TanStack Router built-in API, not a routed file) rendering `NotFoundView` — Spanish message: "Página no encontrada" + link to `/clientes`
   - [ ] Verify `frontend/src/routeTree.gen.ts` regenerates automatically via `@tanstack/router-plugin/vite` on `pnpm run dev` (already configured in Story 1.1) — do NOT hand-edit this file
 
 - [ ] Task 3 — Build the navigation shell component (AC: #1, #2, #6)
@@ -55,7 +55,7 @@ so that I can move between sections without full page reloads from any device.
   - [ ] Register via `notFoundComponent` on `createRootRoute` in `__root.tsx` (TanStack Router built-in mechanism — triggers for any unmatched route)
 
 - [ ] Task 6 — Tests (Vitest + RTL)
-  - [ ] `frontend/src/shared/components/AppShell.test.tsx` — renders NavigationRail at desktop viewport width, renders NavigationBar at mobile viewport width (mock `window.matchMedia` or test via Tailwind class assertions), asserts `selectedId`/`activeItemId` matches route, asserts clicking "Contactos" calls `navigate` with `/contactos`
+  - [ ] `frontend/src/shared/components/AppShell.test.tsx` — renders `LayoutBase`'s rail (via `navigationItems`) at desktop viewport width, renders the standalone `NavigationBar` at mobile viewport width (mock `window.matchMedia` or test via Tailwind class assertions), asserts `active`/`activeItemId` matches route, asserts clicking "Contactos" calls `navigate` with `/contactos`
   - [ ] `frontend/src/shared/components/NotFoundView.test.tsx` — renders Spanish not-found copy and a working link to `/clientes`
   - [ ] Accessibility check with `axe` (per company testing standards) on `AppShell` — verify tappable nav items meet touch-target and ARIA-label requirements
 
@@ -121,7 +121,7 @@ Import path: `import { LayoutBase, NavigationBar } from 'siesa-ui-kit'` (types: 
 |---|---|---|
 | `_` | Pathless layout (no URL segment) | `_app.tsx` — wraps all authenticated/shell routes |
 | (none) | Standard route | `_app/clientes.tsx`, `_app/contactos.tsx` |
-| `-` | Ignored by router (colocated) | N/A this story (`NotFoundView` colocated in `shared/components`, not `routes/`) |
+| `-` | Ignored by router (colocated) | N/A this story — `NotFoundView` lives in `shared/components/`, not `routes/`, and is wired via `notFoundComponent`, not a routed file |
 
 - Root-level redirect (`/` → `/clientes`): use `beforeLoad: () => { throw redirect({ to: '/clientes' }) }` in `routes/index.tsx`, the standard TanStack Router pattern — avoids a full navigation/reload.
 - Not-found handling: TanStack Router's built-in `notFoundComponent` option on `createRootRoute()` — do not hand-roll a catch-all route.
@@ -133,7 +133,7 @@ Import path: `import { LayoutBase, NavigationBar } from 'siesa-ui-kit'` (types: 
 - Root layout comment `__root.tsx — LayoutBase + NavigationRail` in the architecture doc's directory tree matches the real package: `LayoutBase` exists under `siesa-ui-kit`'s `views/` export and internally composes `Navbar` + `NavigationRailGroup`. The standalone mobile `NavigationBar` referenced in the UX spec is a separate component not included in `LayoutBase` and must be added alongside it (see siesa-ui-kit API note below). [Source: _bmad-output/planning-artifacts/architecture.md#Complete Project Directory Structure]
 - Desktop layout: `NavigationRail` 72px collapsed, icon-only with labels. Mobile: `NavigationBar` bottom, 56px. Breakpoint `lg:` (1024px) is the critical switch point. [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Responsive Design & Accessibility]
 - NavigationRail items: "Clientes" (`/clientes`) and "Contactos" (`/contactos`) — "Configuración" item mentioned in UX spec is out of scope (no config section exists in this MVP's epics). [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Navigation Patterns]
-- Active nav item visual: `primary-50` background, `primary-700`/`primary-600` text/border — matches `NavigationRailItemProps.selected` built-in styling, no custom override needed. [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Button Hierarchy / Navigation Patterns]
+- Active nav item visual: `primary-50` background, `primary-700`/`primary-600` text/border — matches `NavigationRailGroupMenuItem.active` built-in styling, no custom override needed. [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Button Hierarchy / Navigation Patterns]
 - Not-found/registro no encontrado pattern: Spanish copy, link to recovery destination (`/clientes`), never raw technical error. [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Error & Recovery Patterns]
 - Icons: Heroicons primary per company standards — `@heroicons/react` not yet installed, add in Task 1. [Source: .claude/agent-memory/sa-quick-dev/company-standards.md#Icons]
 - All user-facing text in Spanish; code (component/variable names) in English. [Source: .claude/agent-memory/sa-quick-dev/company-standards.md#Frontend Key Rules]
