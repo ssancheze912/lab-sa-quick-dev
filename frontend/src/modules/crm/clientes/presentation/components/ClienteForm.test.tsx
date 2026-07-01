@@ -286,4 +286,98 @@ describe('ClienteForm', () => {
       expect(toast.error).not.toHaveBeenCalled()
     })
   })
+
+  // --- Edge cases (testarch-automate expansion) -----------------------------
+
+  describe('AC #3 - whitespace-only validation on individual fields', () => {
+    test('should NOT submit when NIT/RUC is whitespace-only, other fields valid', async () => {
+      // GIVEN a request spy on the create endpoint
+      let requestCount = 0
+      server.use(
+        http.post(CLIENTES_ENDPOINT, () => {
+          requestCount += 1
+          return HttpResponse.json(validData, { status: 201 })
+        }),
+      )
+      const user = userEvent.setup()
+      renderClienteForm()
+
+      // WHEN the user fills every field except NIT/RUC (left whitespace-only) and submits
+      await fillForm(user, { ...validData, nit: '   ' })
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+      // THEN validation blocks the submit and no request fires
+      await waitFor(() => {
+        expect(requestCount).toBe(0)
+      })
+    })
+
+    test('should NOT submit when Teléfono is whitespace-only, other fields valid', async () => {
+      // GIVEN a request spy on the create endpoint
+      let requestCount = 0
+      server.use(
+        http.post(CLIENTES_ENDPOINT, () => {
+          requestCount += 1
+          return HttpResponse.json(validData, { status: 201 })
+        }),
+      )
+      const user = userEvent.setup()
+      renderClienteForm()
+
+      // WHEN the user fills every field except Teléfono (left whitespace-only) and submits
+      await fillForm(user, { ...validData, telefono: '   ' })
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+      // THEN validation blocks the submit and no request fires
+      await waitFor(() => {
+        expect(requestCount).toBe(0)
+      })
+    })
+
+    test('should NOT submit when Ciudad is whitespace-only, other fields valid', async () => {
+      // GIVEN a request spy on the create endpoint
+      let requestCount = 0
+      server.use(
+        http.post(CLIENTES_ENDPOINT, () => {
+          requestCount += 1
+          return HttpResponse.json(validData, { status: 201 })
+        }),
+      )
+      const user = userEvent.setup()
+      renderClienteForm()
+
+      // WHEN the user fills every field except Ciudad (left whitespace-only) and submits
+      await fillForm(user, { ...validData, ciudad: '   ' })
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+      // THEN validation blocks the submit and no request fires
+      await waitFor(() => {
+        expect(requestCount).toBe(0)
+      })
+    })
+  })
+
+  describe('AC #2 - submit button state during pending mutation', () => {
+    test('should disable the "Guardar" button while the create mutation is pending', async () => {
+      // GIVEN the backend delays its response so the pending state is observable
+      server.use(
+        http.post(CLIENTES_ENDPOINT, async () => {
+          await new Promise((resolve) => setTimeout(resolve, 50))
+          return HttpResponse.json(validData, { status: 201 })
+        }),
+      )
+      const user = userEvent.setup()
+      renderClienteForm()
+
+      // WHEN the user fills the form and submits
+      await fillForm(user)
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+      // THEN the submit button is disabled while the mutation is in flight,
+      // preventing a duplicate/double submit
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /guardar/i })).toBeDisabled()
+      })
+    })
+  })
 })

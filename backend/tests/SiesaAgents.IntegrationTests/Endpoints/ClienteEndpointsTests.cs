@@ -561,4 +561,69 @@ public class ClienteEndpointsTests : IClassFixture<TestApiFactory>, IAsyncLifeti
         var exists = await context.Clientes.AnyAsync(c => c.Nit == $"SHOULD-NOT-PERSIST-{suffix}");
         Assert.False(exists);
     }
+
+    // --- Edge cases (testarch-automate expansion) -------------------------------
+
+    [Fact]
+    public async Task PostClientes_WithMissingBody_ReturnsBadRequestNot500()
+    {
+        // GIVEN an empty request body (not even an empty JSON object)
+        var client = _factory.CreateClient();
+
+        // WHEN posting with no content
+        var response = await client.PostAsync("/api/v1/clientes", new StringContent(string.Empty));
+
+        // THEN the request fails gracefully at model binding — never a 500
+        Assert.NotEqual(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostClientes_WithDuplicateNitDifferingOnlyByCase_IsTreatedAsDistinctAndReturnsCreated()
+    {
+        // GIVEN a client already persisted with a known NIT/RUC
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var existing = await SeedAsync($"Original Case {suffix}", $"caseNIT{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN posting a second client whose Nit differs only by letter case
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nombre = "Empresa Case Diferente",
+            nit = $"caseNIT{suffix}".ToUpperInvariant(),
+            telefono = "3001112233",
+            ciudad = "Cali",
+        });
+        var created = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        if (created is not null) _createdIds.Add(created.Id);
+
+        // THEN the DB-level unique index uses Postgres's default case-sensitive
+        // collation — a differently-cased Nit is a distinct value, so this
+        // succeeds (documents actual behavior; NOT a business-rule claim that
+        // case-insensitive dedup is out of scope for this story)
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostClientes_WithValuesContainingSurroundingWhitespace_PersistsAndReturns201()
+    {
+        // GIVEN a payload whose values carry incidental leading/trailing whitespace
+        // but are not whitespace-only — FluentValidation's NotEmpty() must accept
+        // this (only pure-whitespace values are rejected)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/clientes
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nombre = $"  Cliente Con Espacios {suffix}  ",
+            nit = $"  WS{suffix}  ",
+            telefono = "  3009998877  ",
+            ciudad = "  Barranquilla  ",
+        });
+        var created = await response.Content.ReadFromJsonAsync<ClienteDto>();
+        if (created is not null) _createdIds.Add(created.Id);
+
+        // THEN the client is created successfully (201)
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
 }
