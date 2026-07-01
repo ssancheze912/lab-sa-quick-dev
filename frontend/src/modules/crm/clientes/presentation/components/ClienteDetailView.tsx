@@ -6,10 +6,39 @@ import { useCliente } from '@/modules/crm/clientes/application/hooks/useCliente'
 
 interface ClienteDetailViewProps {
   clienteId?: string
+  /**
+   * Set by the `/clientes/:clienteId` route once the clientes list loaded
+   * alongside this view (split-panel layout) resolves. `'missing'` means the
+   * list confirmed `clienteId` does not exist — the individual `GET
+   * /api/v1/clientes/{id}` request is skipped entirely in that case.
+   * `'pending'` means the list hasn't resolved yet, so we don't yet know;
+   * the by-id request is briefly held off rather than fired optimistically.
+   * `'present'` (or omitted, for standalone usage) proceeds normally.
+   *
+   * Why: a real 404 response is logged by the browser's own network stack
+   * as a `console.error`-level "Failed to load resource" entry regardless
+   * of how axios/React Query handle it afterwards in JS (verified: fires
+   * identically for fetch/XHR, same/cross-origin, and even with axios
+   * `validateStatus` overridden to treat 404 as success) — this is native
+   * Chromium DevTools Protocol behavior, not something an interceptor or
+   * query error handler can suppress. Skipping the doomed request when the
+   * list already proves the id is missing keeps NFR6 (zero console errors)
+   * satisfied without changing the backend's 404/RFC7807 contract.
+   *
+   * Defaults to `'present'` so this component keeps working standalone (e.g.
+   * `clientes.index.tsx`'s empty state, and its own isolated unit tests).
+   */
+  listMembership?: 'pending' | 'present' | 'missing'
 }
 
-export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
-  const { data, isLoading, isError, error } = useCliente(clienteId)
+export function ClienteDetailView({
+  clienteId,
+  listMembership = 'present',
+}: ClienteDetailViewProps) {
+  const knownMissing = listMembership === 'missing'
+  const { data, isLoading, isError, error } = useCliente(clienteId, {
+    enabled: listMembership !== 'missing' && listMembership !== 'pending',
+  })
 
   if (!clienteId) {
     return (
@@ -23,7 +52,13 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
     )
   }
 
-  if (isLoading) {
+  // `knownMissing` disables the underlying query (see useCliente), which
+  // would otherwise leave `isLoading` stuck at `true` forever — check this
+  // before the loading state so the not-found block renders immediately.
+  // `listMembership === 'pending'` also disables the query (holding off the
+  // by-id request until we know whether it's worth making) and should still
+  // show the loading skeleton, same as a normal in-flight fetch would.
+  if (isLoading && !knownMissing) {
     return (
       <div data-testid="cliente-detail-loading" className="flex-1 p-6">
         <Skeleton height={28} width="40%" className="mb-4" />
@@ -32,7 +67,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
     )
   }
 
-  const isNotFound = isError && isAxiosError(error) && error.response?.status === 404
+  const isNotFound = knownMissing || (isError && isAxiosError(error) && error.response?.status === 404)
 
   if (isNotFound) {
     return (

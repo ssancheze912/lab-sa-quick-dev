@@ -33,13 +33,26 @@ export function ClienteListView() {
 
   return (
     <div data-testid="clientes-list-panel" className="panel-list flex h-full flex-col gap-3 p-4">
-      <Input
-        data-testid="cliente-search-input"
-        placeholder="Buscar cliente por nombre o NIT/RUC"
-        value={searchQuery}
-        onChange={(event) => setSearchQuery(event.target.value)}
-        startIcon={<MagnifyingGlassIcon />}
-      />
+      {/*
+        siesa-ui-kit@1.0.250's `Input` spreads unrecognized props (including
+        `startIcon`) directly onto the underlying DOM `<input>`, which makes
+        React warn ("does not recognize the `startIcon` prop on a DOM
+        element") and violates NFR6 (zero console errors). The icon is
+        positioned manually instead of relying on that prop.
+      */}
+      <div className="relative w-full">
+        <MagnifyingGlassIcon
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          aria-hidden="true"
+        />
+        <Input
+          data-testid="cliente-search-input"
+          placeholder="Buscar cliente por nombre o NIT/RUC"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          className="pl-10"
+        />
+      </div>
 
       {isLoading && (
         <div data-testid="clientes-list-loading">

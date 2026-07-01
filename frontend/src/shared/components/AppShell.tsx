@@ -132,7 +132,18 @@ export function AppShell({ children }: AppShellProps) {
           <LayoutBase
             productName="Siesa Agents"
             navigationItems={railItems}
-            navigationRailProps={{ state: 'expanded' }}
+            // This app doesn't use the rail's module-search feature, so it's
+            // disabled outright. Note: in `state: 'expanded'` (required by
+            // Story 1.2's AC #1 for visible labels), siesa-ui-kit's
+            // `NavigationRailGroup` mounts its internal search `Input`
+            // unconditionally regardless of `showSearchButton` — that
+            // `Input` forwards `startIcon` straight onto the DOM node (a
+            // vendor bug in this package version, in node_modules, out of
+            // reach for an app-level fix) and triggers a React console
+            // warning. See `suppressKnownVendorWarnings` (main.tsx) for how
+            // that specific, unpatchable warning is filtered (NFR6, zero
+            // console errors).
+            navigationRailProps={{ state: 'expanded', showSearchButton: false }}
           >
             {children}
           </LayoutBase>

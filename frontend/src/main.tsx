@@ -3,8 +3,11 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 
 import { QueryProvider } from '@/app/providers/QueryProvider'
+import { suppressKnownVendorWarnings } from '@/shared/lib/suppressKnownVendorWarnings'
 import { routeTree } from './routeTree.gen'
 import './index.css'
+
+suppressKnownVendorWarnings()
 
 const router = createRouter({ routeTree })
 
