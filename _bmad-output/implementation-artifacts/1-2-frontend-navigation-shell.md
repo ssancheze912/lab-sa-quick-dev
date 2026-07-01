@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: ready-for-review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -203,7 +203,24 @@ Claude Sonnet 5 (claude-sonnet-5)
 
 **Modified:**
 - `frontend/src/routes/__root.tsx` (added `notFoundComponent`)
+- `frontend/src/routes/_app.tsx` (code review fix — added `notFoundComponent: NotFoundView` so unmatched routes nested under `_app`, e.g. `/clientes/foo/bar`, render the custom Spanish not-found view instead of TanStack's generic built-in fallback; see Code Review Notes)
 - `frontend/src/test/support/renderWithRouter.tsx` (fixed async-pending-state bug, see Debug Log)
 - `frontend/src/test/setup.ts` (fixed broken `vitest-axe` matcher registration)
-- `frontend/src/routes/-navigation-shell.routing.test.tsx` (removed stale `@ts-expect-error`, no assertions changed)
+- `frontend/src/routes/-navigation-shell.routing.test.tsx` (removed stale `@ts-expect-error`, no assertions changed; code review — un-skipped the nested-unknown-route test after the `_app.tsx` fix, now GREEN)
 - `frontend/package.json` / `frontend/pnpm-lock.yaml` (added `@heroicons/react`)
+
+## Code Review Notes
+
+**Reviewer:** sa-code-review (adversarial, automated — sa-quick-dev pipeline, Epic 1)
+**Date:** 2026-07-01
+
+### Issue found and fixed (in-scope)
+
+- **[Medium] AC #5 gap — nested unknown routes did not render the custom NotFoundView.** `test-automate` had documented (via `test.skip` with a detailed FIXME) that paths like `/clientes/does-not-exist/nested` fell through to TanStack Router's generic built-in "`<p>Not Found</p>`" element instead of the Spanish `NotFoundView`, because `notFoundComponent` was registered only on `createRootRoute()` in `__root.tsx`, not on the `_app` pathless layout route that actually owns the match boundary for paths under `/clientes`/`/contactos`. Both the story's AC #5 ("the user navigates to an unknown route") and the epic's AC-E1.3 phrase this generically, not restricted to root-level paths — so this was assessed as in-scope for Story 1.2, not a follow-up item. Fix applied: added `notFoundComponent: NotFoundView` to `frontend/src/routes/_app.tsx`'s route options (one line + import). Un-skipped the corresponding test in `-navigation-shell.routing.test.tsx`; it now passes.
+- Verified post-fix: `pnpm test` → 27/27 passing (4 test files), `pnpm exec tsc -b` clean, `pnpm run build` succeeds.
+
+### Other observations (no action — pre-existing, out of scope)
+
+- Bundle size exceeds the 500KB gzip budget (`index-9vtT7Yo-*.js` ~300KB gzip, dominated by unrelated siesa-ui-kit chunks — dashboards/charts/documents). Already flagged by dev as a pre-existing condition not introduced by this story; no story-scoped action possible without pulling in siesa-ui-kit itself.
+- `oxlint` reports `react(only-export-components)` warnings on all route files (`_app.tsx`, `__root.tsx`, `_app/clientes.tsx`, `_app/contactos.tsx`) — inherent to TanStack Router's file-based routing convention (route file exports both `Route` and a component), pre-existing pattern from Story 1.1, not a regression.
+- Architecture/standards compliance verified: routes/ contains only router files, `AppShell`/`NotFoundView` correctly placed in `shared/components/` (not modules/, since no business module exists yet), no premature `modules/crm/*` scaffolding, Spanish user-facing text with English code identifiers, Heroicons used per standards, pnpm lockfile respected. No DDD/backend-layer concerns apply to this frontend-only story.
