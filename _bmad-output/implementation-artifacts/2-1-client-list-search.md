@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: ready-for-review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -191,15 +191,27 @@ Claude Sonnet 5 (claude-sonnet-5)
 - `frontend/src/modules/crm/clientes/infrastructure/repositories/clienteApiRepository.ts`
 - `frontend/src/modules/crm/clientes/application/hooks/useClientes.ts`
 - `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.tsx`
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.performance.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.edge-cases.test.tsx`
 - `frontend/src/shared/components/EmptyState.tsx`
 - `frontend/src/shared/components/ErrorPanel.tsx`
 - `frontend/src/shared/components/ClientListItem.tsx`
+- `frontend/src/test/factories/cliente.factory.ts`
+- `frontend/src/test/msw/handlers.ts`
+- `frontend/src/test/msw/server.ts`
+- `frontend/src/test/setup.ts`
+- `frontend/src/test/support/renderWithRouter.tsx`
+- `e2e/tests/clientes/client-list-search.spec.ts`
 
 **Frontend — modified:**
 - `frontend/src/routes/_app/clientes.tsx` (wired real `ClienteListView`)
 - `frontend/src/index.css` (added `.panel-list` per UX spec)
 - `frontend/src/routes/-navigation-shell.routing.test.tsx` (wrapped in `QueryProvider`)
 - `frontend/src/shared/lib/queryClient.ts` (ATDD correction: added `retry: false` to default query options so fetch failures surface as `isError` immediately instead of being masked by automatic retries — fixes AC #5 E2E test)
+- `frontend/package.json` / `pnpm-lock.yaml` (test tooling dependencies, e.g. `@faker-js/faker` for data factories)
 
 **Database:**
 - Applied migration `AddClienteEntity` to `siesa_agents_db` — created `clientes` table with `uk_clientes_nit` unique index.
+
+**Note (code review):** the File List above was found incomplete against actual git history (missing several test/support files introduced across the ATDD/automate commits). Corrected during code review to match the true Actual Changed Files set.
