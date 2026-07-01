@@ -104,6 +104,21 @@ export const contactoNotFoundProblemDetails = {
   detail: 'Contacto no encontrado.',
 }
 
+/**
+ * FluentValidation-shaped 400 Bad Request body (Story 3.3, AC #4/#5,
+ * TC-E3-P0-03/TC-E3-P0-05) for the empty-required-fields case. Mirrors
+ * `clienteValidationErrorProblemDetails`'s shape exactly.
+ */
+export const contactoValidationErrorProblemDetails = {
+  type: 'https://tools.ietf.org/html/rfc7231#section-6.5.1',
+  title: 'One or more validation errors occurred.',
+  status: 400,
+  errors: {
+    nombre: ['Este campo es obligatorio'],
+    cargo: ['Este campo es obligatorio'],
+  },
+}
+
 export const handlers = [
   http.get(CLIENTES_ENDPOINT, () => {
     return HttpResponse.json(defaultClientesList, { status: 200 })
@@ -147,5 +162,15 @@ export const handlers = [
   // for the with-contacts (header present, AC #3) and 404 (AC #6) paths.
   http.delete(CLIENTE_BY_ID_ENDPOINT, () => {
     return new HttpResponse(null, { status: 204 })
+  }),
+  // Story 3.3: POST /api/v1/contactos default success handler (201 Created).
+  // Individual tests override this via `server.use(...)` for the 400 path
+  // (TC-E3-P0-03, TC-E3-P0-05), per network-first.md.
+  http.post(CONTACTOS_ENDPOINT, async ({ request }) => {
+    const body = (await request.json()) as Partial<typeof defaultContacto>
+    return HttpResponse.json(
+      { ...createContacto(), ...body },
+      { status: 201 },
+    )
   }),
 ]

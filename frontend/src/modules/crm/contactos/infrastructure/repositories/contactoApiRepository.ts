@@ -1,6 +1,9 @@
 import { apiClient } from '@/shared/lib/apiClient'
 import type { Contacto } from '@/modules/crm/contactos/domain/entities/Contacto'
-import type { IContactoRepository } from '@/modules/crm/contactos/domain/repositories/IContactoRepository'
+import type {
+  ContactoCreatePayload,
+  IContactoRepository,
+} from '@/modules/crm/contactos/domain/repositories/IContactoRepository'
 
 class ContactoApiRepository implements IContactoRepository {
   async getAll(searchTerm?: string): Promise<Contacto[]> {
@@ -12,6 +15,11 @@ class ContactoApiRepository implements IContactoRepository {
 
   async getById(id: string): Promise<Contacto> {
     const { data } = await apiClient.get<Contacto>(`/api/v1/contactos/${id}`)
+    return data
+  }
+
+  async create(payload: ContactoCreatePayload): Promise<Contacto> {
+    const { data } = await apiClient.post<Contacto>('/api/v1/contactos', payload)
     return data
   }
 }

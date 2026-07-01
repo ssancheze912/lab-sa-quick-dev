@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -339,5 +340,277 @@ public class ContactoEndpointsTests : IClassFixture<TestApiFactory>, IAsyncLifet
 
         // THEN the endpoint returns 404, consistent with the never-existed case
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    // --- Story 3.3: POST /api/v1/contactos (AC #2, #4) --------------------------
+    //
+    // RED PHASE: `POST /api/v1/contactos` does not exist yet (Story 3.3, Task
+    // 3). These tests define the expected contract:
+    //   - Valid payload -> 201 Created + ContactoDto (AC #2, TC-E3-P0-04 backend leg)
+    //   - Empty/whitespace-only required fields -> 400 Bad Request with
+    //     field-level errors (AC #4, TC-E3-P0-03, R2)
+    //
+    // Unlike `ClienteEndpointsTests`' POST coverage, there is NO 409 path here
+    // — `ContactoEntity` has no unique business key (Dev Notes), so only 201
+    // and 400 are tested.
+
+    private static object ValidContactoPayload(string suffix) => new
+    {
+        nombre = $"Contacto POST {suffix}",
+        cargo = "Analista Comercial",
+        telefono = "3009998877",
+        email = $"post.{suffix}@ejemplo.co",
+    };
+
+    [Fact]
+    public async Task PostContactos_WithValidPayload_ReturnsCreated()
+    {
+        // GIVEN a valid contact payload
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/contactos
+        var response = await client.PostAsJsonAsync("/api/v1/contactos", ValidContactoPayload(suffix));
+
+        // THEN the response is 201 Created
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var created = await response.Content.ReadFromJsonAsync<ContactoDto>();
+        if (created is not null) _createdIds.Add(created.Id);
+    }
+
+    [Fact]
+    public async Task PostContactos_WithValidPayload_ReturnsBodyMatchingSubmittedFields()
+    {
+        // GIVEN a valid contact payload
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+        var payload = ValidContactoPayload(suffix);
+
+        // WHEN calling POST /api/v1/contactos
+        var response = await client.PostAsJsonAsync("/api/v1/contactos", payload);
+        var created = await response.Content.ReadFromJsonAsync<ContactoDto>();
+        if (created is not null) _createdIds.Add(created.Id);
+
+        // THEN the returned ContactoDto reflects the submitted values (TC-E3-P0-04 backend leg)
+        Assert.NotNull(created);
+        Assert.NotEqual(Guid.Empty, created!.Id);
+        Assert.Equal($"Contacto POST {suffix}", created.Nombre);
+        Assert.Equal("Analista Comercial", created.Cargo);
+        Assert.Equal("3009998877", created.Telefono);
+        Assert.Equal($"post.{suffix}@ejemplo.co", created.Email);
+    }
+
+    [Fact]
+    public async Task PostContactos_WithValidPayload_ReturnsBodyWithNullClienteId()
+    {
+        // GIVEN a valid contact payload (this story never sets clienteId — Epic
+        // 4 scope adds client association)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/contactos
+        var response = await client.PostAsJsonAsync("/api/v1/contactos", ValidContactoPayload(suffix));
+        var created = await response.Content.ReadFromJsonAsync<ContactoDto>();
+        if (created is not null) _createdIds.Add(created.Id);
+
+        // THEN the created contact has a null ClienteId
+        Assert.NotNull(created);
+        Assert.Null(created!.ClienteId);
+    }
+
+    [Fact]
+    public async Task PostContactos_WithValidPayload_IncludesLocationHeaderPointingToGetById()
+    {
+        // GIVEN a valid contact payload
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/contactos
+        var response = await client.PostAsJsonAsync("/api/v1/contactos", ValidContactoPayload(suffix));
+        var created = await response.Content.ReadFromJsonAsync<ContactoDto>();
+        if (created is not null) _createdIds.Add(created.Id);
+
+        // THEN the Location header points to GET /api/v1/contactos/{id} per REST convention
+        Assert.NotNull(response.Headers.Location);
+        Assert.Contains($"/api/v1/contactos/{created!.Id}", response.Headers.Location!.ToString());
+    }
+
+    [Fact]
+    public async Task PostContactos_WithEmptyNombreAlone_ReturnsBadRequest()
+    {
+        // GIVEN a payload with an empty Nombre, all other fields valid — the
+        // exact TC-E3-P0-03 scenario ("empty nombre alone")
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/contactos
+        var response = await client.PostAsJsonAsync("/api/v1/contactos", new
+        {
+            nombre = "",
+            cargo = "Analista",
+            telefono = "3000000000",
+            email = "valido@ejemplo.co",
+        });
+
+        // THEN the response is 400 Bad Request (AC #4, TC-E3-P0-03)
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostContactos_WithEmptyNombreAlone_ReturnsFieldLevelErrorForNombreOnly()
+    {
+        // GIVEN a payload with only Nombre empty, everything else valid
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/contactos
+        var response = await client.PostAsJsonAsync("/api/v1/contactos", new
+        {
+            nombre = "",
+            cargo = "Analista",
+            telefono = "3000000000",
+            email = "valido@ejemplo.co",
+        });
+        var rawJson = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(rawJson);
+
+        // THEN FluentValidation field-level error details are present for nombre
+        // (errors: { nombre: [...] } shape, case-insensitive key lookup)
+        var errors = doc.RootElement.GetProperty("errors");
+        var keys = errors.EnumerateObject().Select(p => p.Name.ToLowerInvariant()).ToList();
+        Assert.Contains("nombre", keys);
+    }
+
+    [Fact]
+    public async Task PostContactos_WithAllFourFieldsWhitespaceOnly_ReturnsBadRequest()
+    {
+        // GIVEN a payload where every required field is whitespace-only — the
+        // exact TC-E3-P0-03 scenario ("all-four-whitespace-only")
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/contactos
+        var response = await client.PostAsJsonAsync("/api/v1/contactos", new
+        {
+            nombre = "   ",
+            cargo = "   ",
+            telefono = "   ",
+            email = "   ",
+        });
+
+        // THEN the response is 400 Bad Request — NotEmpty()'s trim-aware check
+        // rejects whitespace-only values, not just null/empty (AC #4, TC-E3-P0-03)
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostContactos_WithAllFourFieldsWhitespaceOnly_ReturnsFieldLevelErrorsForAllFour()
+    {
+        // GIVEN a payload where every required field is whitespace-only
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/contactos
+        var response = await client.PostAsJsonAsync("/api/v1/contactos", new
+        {
+            nombre = "   ",
+            cargo = "   ",
+            telefono = "   ",
+            email = "   ",
+        });
+        var rawJson = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(rawJson);
+
+        // THEN FluentValidation reports field-level errors for all four fields
+        var errors = doc.RootElement.GetProperty("errors");
+        var keys = errors.EnumerateObject().Select(p => p.Name.ToLowerInvariant()).ToList();
+        Assert.Contains("nombre", keys);
+        Assert.Contains("cargo", keys);
+        Assert.Contains("telefono", keys);
+        Assert.Contains("email", keys);
+    }
+
+    [Fact]
+    public async Task PostContactos_WithInvalidPayload_DoesNotPersistAnyRecord()
+    {
+        // GIVEN a traceable, unique nombre carried on an invalid (whitespace-only
+        // for the other fields) payload
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+        var traceableNombre = $"SHOULD-NOT-PERSIST-{suffix}";
+
+        // WHEN posting the invalid payload
+        await client.PostAsJsonAsync("/api/v1/contactos", new
+        {
+            nombre = traceableNombre,
+            cargo = "   ",
+            telefono = "   ",
+            email = "   ",
+        });
+
+        // THEN no record with that nombre was persisted (validation failure blocks insert)
+        await using var context = CreateContext();
+        var exists = await context.Set<ContactoEntity>().AnyAsync(c => c.Nombre == traceableNombre);
+        Assert.False(exists);
+    }
+
+    // --- Edge cases --------------------------------------------------------------
+
+    [Fact]
+    public async Task PostContactos_WithMissingBody_ReturnsBadRequestNot500()
+    {
+        // GIVEN an empty request body (not even an empty JSON object)
+        var client = _factory.CreateClient();
+
+        // WHEN posting with no content
+        var response = await client.PostAsync("/api/v1/contactos", new StringContent(string.Empty));
+
+        // THEN the request fails gracefully at model binding — never a 500
+        Assert.NotEqual(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostContactos_WithNoEmailFormatValidation_AcceptsANonStandardButNonEmptyEmailValue()
+    {
+        // GIVEN a payload whose email field is non-empty but not a valid email
+        // shape — TC-E3-P3-01 explicitly documents this as out of scope for
+        // this story (no format/regex rule mandated on Email)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+
+        // WHEN calling POST /api/v1/contactos with a non-email-shaped but
+        // non-empty "email" value
+        var response = await client.PostAsJsonAsync("/api/v1/contactos", new
+        {
+            nombre = $"Contacto Email Raro {suffix}",
+            cargo = "Analista",
+            telefono = "3000000000",
+            email = "no-es-un-correo-valido",
+        });
+        var created = await response.Content.ReadFromJsonAsync<ContactoDto>();
+        if (created is not null) _createdIds.Add(created.Id);
+
+        // THEN the request succeeds — no email-format rule exists on the backend
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostContactos_WithValidPayload_DoesNotGenerateANewMigrationOrBreakExistingGetEndpoint()
+    {
+        // GIVEN a valid contact payload, posted via the new endpoint (Story
+        // 3.3's schema-reuse safety gate, TC-E3-P0-01 — this story must not
+        // alter `ContactoConfiguration`/generate a new migration; the created
+        // record must be readable via the pre-existing GET /{id} endpoint
+        // from Story 3.2, proving no schema drift)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var client = _factory.CreateClient();
+
+        // WHEN posting via POST /api/v1/contactos, then reading it back via
+        // the pre-existing GET /api/v1/contactos/{id} endpoint
+        var postResponse = await client.PostAsJsonAsync("/api/v1/contactos", ValidContactoPayload(suffix));
+        var created = await postResponse.Content.ReadFromJsonAsync<ContactoDto>();
+        if (created is not null) _createdIds.Add(created.Id);
+        var getResponse = await client.GetAsync($"/api/v1/contactos/{created!.Id}");
+
+        // THEN the GET endpoint (established Story 3.2, on the pre-existing
+        // schema) returns the same record without error
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
     }
 }

@@ -342,4 +342,87 @@ public class ContactoRepositoryTests : IAsyncLifetime
         Assert.NotNull(result);
         Assert.Equal(cliente.Id, result!.ClienteId);
     }
+
+    // --- Story 3.3: AddAsync (AC #2, #4) ----------------------------------------
+    //
+    // RED PHASE: IContactoRepository.AddAsync does not exist yet (Story 3.3,
+    // Task 1). These tests define the expected contract: persists a valid
+    // contact and it becomes retrievable afterwards via GetByIdAsync. Unlike
+    // `ClienteRepositoryTests.AddAsync_WithDuplicateNit_...`, `ContactoEntity`
+    // has NO unique business key (Dev Notes) — so there is no
+    // unique-constraint-violation path to test here, only the happy-path
+    // insert (EF Core InMemory is sufficient per the story's Testing
+    // Standards Summary; this class already uses real PostgreSQL for the
+    // other tests, so this reuses the same real-DB context for consistency).
+
+    [Fact]
+    public async Task AddAsync_WithValidContacto_PersistsItAndIsRetrievableAfterwards()
+    {
+        // GIVEN a new, valid ContactoEntity built via the domain factory
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var contacto = ContactoEntity.Create(
+            $"Nuevo Contacto {suffix}", "Analista", "3000000001", $"nuevo.{suffix}@ejemplo.co", null);
+        var repository = new ContactoRepository(_context);
+
+        // WHEN persisting it via AddAsync
+        await repository.AddAsync(contacto, CancellationToken.None);
+        _createdContactoIds.Add(contacto.Id);
+
+        // THEN it can be retrieved back from the database by Id
+        var persisted = await repository.GetByIdAsync(contacto.Id, CancellationToken.None);
+        Assert.NotNull(persisted);
+        Assert.Equal(contacto.Nombre, persisted!.Nombre);
+        Assert.Equal(contacto.Cargo, persisted.Cargo);
+        Assert.Equal(contacto.Telefono, persisted.Telefono);
+        Assert.Equal(contacto.Email, persisted.Email);
+    }
+
+    [Fact]
+    public async Task AddAsync_WithValidContacto_PersistsWithNullClienteId()
+    {
+        // GIVEN a new ContactoEntity created with no client association
+        // (this story always passes clienteId: null — Epic 4 scope adds
+        // client association)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var contacto = ContactoEntity.Create(
+            $"Sin Cliente {suffix}", "Gerente", "3000000002", $"sincliente.{suffix}@ejemplo.co", null);
+        var repository = new ContactoRepository(_context);
+
+        // WHEN persisting it via AddAsync
+        await repository.AddAsync(contacto, CancellationToken.None);
+        _createdContactoIds.Add(contacto.Id);
+
+        // THEN the persisted record's ClienteId is null
+        var persisted = await repository.GetByIdAsync(contacto.Id, CancellationToken.None);
+        Assert.NotNull(persisted);
+        Assert.Null(persisted!.ClienteId);
+    }
+
+    [Fact]
+    public async Task AddAsync_PersistsMultipleContactosWithoutUniqueConstraintConflict()
+    {
+        // GIVEN two distinct ContactoEntity instances with otherwise identical
+        // field values EXCEPT email — proves there is no hidden unique
+        // constraint on any field (ContactoEntity has no business key, unlike
+        // ClienteEntity's `nit`)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var contactoA = ContactoEntity.Create(
+            $"Contacto Duplicable {suffix}", "Analista", "3000000003", $"a.{suffix}@ejemplo.co", null);
+        var contactoB = ContactoEntity.Create(
+            $"Contacto Duplicable {suffix}", "Analista", "3000000003", $"b.{suffix}@ejemplo.co", null);
+        var repository = new ContactoRepository(_context);
+
+        // WHEN persisting both via AddAsync
+        await repository.AddAsync(contactoA, CancellationToken.None);
+        _createdContactoIds.Add(contactoA.Id);
+        await repository.AddAsync(contactoB, CancellationToken.None);
+        _createdContactoIds.Add(contactoB.Id);
+
+        // THEN both persist successfully with distinct Ids — no exception thrown
+        var persistedA = await repository.GetByIdAsync(contactoA.Id, CancellationToken.None);
+        var persistedB = await repository.GetByIdAsync(contactoB.Id, CancellationToken.None);
+        Assert.NotNull(persistedA);
+        Assert.NotNull(persistedB);
+        Assert.NotEqual(persistedA!.Id, persistedB!.Id);
+    }
 }
