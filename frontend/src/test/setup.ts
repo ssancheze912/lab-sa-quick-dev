@@ -40,3 +40,16 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: () => false,
   }),
 })
+
+// jsdom does not implement ResizeObserver; siesa-ui-kit's `Select` (Headless
+// UI Listbox under the hood) uses it to track trigger/menu positioning. A
+// no-op stub is sufficient since layout measurement is irrelevant in jsdom.
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  value: ResizeObserverStub,
+})

@@ -8,11 +8,20 @@ import { useClientes } from '@/modules/crm/clientes/application/hooks/useCliente
 import { ClientListItem } from '@/shared/components/ClientListItem'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
+import { SortControl, type SortOption } from '@/shared/components/SortControl'
 import { ClienteForm } from '@/modules/crm/clientes/presentation/components/ClienteForm'
 import type { Cliente } from '@/modules/crm/clientes/domain/entities/Cliente'
 
+const SORT_COMPARATORS: Record<SortOption, (a: Cliente, b: Cliente) => number> = {
+  'nombre-asc': (a, b) => a.nombre.localeCompare(b.nombre),
+  'nombre-desc': (a, b) => b.nombre.localeCompare(a.nombre),
+  'fecha-desc': (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  'fecha-asc': (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+}
+
 export function ClienteListView() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortOption, setSortOption] = useState<SortOption>('fecha-desc')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const { data, isLoading, isError, refetch } = useClientes()
   const navigate = useNavigate()
@@ -24,14 +33,16 @@ export function ClienteListView() {
   }
 
   const filteredClientes = useMemo(() => {
-    if (!data) return []
+    if (!data || !Array.isArray(data)) return []
     const term = searchQuery.trim().toLowerCase()
-    if (!term) return data
-    return data.filter(
-      (cliente) =>
-        cliente.nombre.toLowerCase().includes(term) || cliente.nit.toLowerCase().includes(term),
-    )
-  }, [data, searchQuery])
+    const matched = term
+      ? data.filter(
+          (cliente) =>
+            cliente.nombre.toLowerCase().includes(term) || cliente.nit.toLowerCase().includes(term),
+        )
+      : data
+    return [...matched].sort(SORT_COMPARATORS[sortOption])
+  }, [data, searchQuery, sortOption])
 
   return (
     <div data-testid="clientes-list-panel" className="panel-list flex h-full flex-col gap-3 p-4">
@@ -56,6 +67,7 @@ export function ClienteListView() {
             className="pl-10"
           />
         </div>
+        <SortControl value={sortOption} onChange={setSortOption} />
         <Button
           leftIcon={<PlusIcon className="h-4 w-4" aria-hidden="true" />}
           onClick={() => setIsCreateDialogOpen(true)}
