@@ -300,5 +300,70 @@ describe('ClienteDetailView', () => {
       expect(await screen.findByLabelText(/^nombre$/i)).toHaveValue('Comercial Rio Grande SAS')
       expect(getByIdCallCount).toBe(callsBeforeEdit)
     })
+
+    // --- Edge cases (testarch-automate expansion) ---------------------------
+
+    test('should close the edit dialog after a successful save (AC #2)', async () => {
+      // GIVEN: a loaded client detail view with the edit dialog open
+      const cliente = createCliente()
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })),
+        http.put(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })),
+      )
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /editar/i }))
+      await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+
+      // WHEN: the user submits the form and the update succeeds
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+      // THEN: the dialog closes (onSuccess collapses isEditDialogOpen)
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      })
+    })
+
+    test('should discard unsaved edits and show fresh data when reopening "Editar" after Cancelar (AC #6)', async () => {
+      // GIVEN: a loaded client detail view; the user opens Editar, types a
+      // change, then cancels without saving
+      const cliente = createCliente({ nombre: 'Nombre Original' })
+      server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })))
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /editar/i }))
+      const nombreInput = await screen.findByLabelText(/^nombre$/i)
+      await user.clear(nombreInput)
+      await user.type(nombreInput, 'Borrador Sin Guardar')
+      await user.click(screen.getByRole('button', { name: /cancelar/i }))
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+      // WHEN: the user reopens "Editar"
+      await user.click(screen.getByRole('button', { name: /editar/i }))
+
+      // THEN: the form is re-mounted with the original (unmodified) data —
+      // the discarded draft does not leak into the reopened form
+      expect(await screen.findByLabelText(/^nombre$/i)).toHaveValue('Nombre Original')
+    })
+
+    test('should keep the detail panel showing the ORIGINAL values while the edit dialog is still open and unsaved', async () => {
+      // GIVEN: a loaded client detail view with the edit dialog open and a
+      // field changed but not yet submitted
+      const cliente = createCliente({ ciudad: 'Bogotá' })
+      server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })))
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      await user.click(screen.getByRole('button', { name: /editar/i }))
+      const ciudadInput = await screen.findByLabelText(/^ciudad$/i)
+      await user.clear(ciudadInput)
+      await user.type(ciudadInput, 'Cali')
+
+      // WHEN/THEN: the detail panel behind the dialog still shows the
+      // original persisted value — no premature/local mutation (AC #6, R8)
+      expect(screen.getByText('Bogotá')).toBeInTheDocument()
+    })
   })
 })

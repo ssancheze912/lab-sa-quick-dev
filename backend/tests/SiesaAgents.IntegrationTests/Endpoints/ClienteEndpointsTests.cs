@@ -920,4 +920,87 @@ public class ClienteEndpointsTests : IClassFixture<TestApiFactory>, IAsyncLifeti
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(seeded.Id, updated!.Id);
     }
+
+    // --- Edge cases (testarch-automate expansion) --------------------------------
+
+    [Fact]
+    public async Task PutClientes_WithGuidEmptyRouteSegment_ReturnsNotFoundNot500()
+    {
+        // GIVEN the well-formed but all-zeros GUID as the route id — a
+        // well-formed GUID that (barring pathological seed data) never
+        // matches a real client, so it must hit the 404 branch, not 500
+        var client = _factory.CreateClient();
+
+        // WHEN calling PUT /api/v1/clientes/00000000-0000-0000-0000-000000000000
+        var response = await client.PutAsJsonAsync(
+            $"/api/v1/clientes/{Guid.Empty}", ValidUpdatePayload("empty-guid"));
+
+        // THEN the response is 404 Not Found, never a 500
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutClientes_CalledTwiceInSuccessionWithSameValidPayload_BothCallsSucceedIdempotently()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Idempotente {suffix}", $"IDEM{suffix}");
+        var client = _factory.CreateClient();
+        var payload = ValidUpdatePayload(suffix);
+
+        // WHEN calling PUT twice in succession with the identical payload
+        // (self-update keeps the same NIT both times — must not 409 on the
+        // second call, AC #7's self-exclusion applies on repeated submits too)
+        var first = await client.PutAsJsonAsync($"/api/v1/clientes/{seeded.Id}", payload);
+        var second = await client.PutAsJsonAsync($"/api/v1/clientes/{seeded.Id}", payload);
+
+        // THEN both calls succeed with 200 OK
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithOnlyOneFieldChangedAndRestEchoedBack_UpdatesOnlyThatField()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Campo Unico {suffix}", $"CU{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN submitting a payload that echoes back Nombre/Nit/Telefono
+        // unchanged and only changes Ciudad
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seeded.Id}", new
+        {
+            nombre = seeded.Nombre,
+            nit = seeded.Nit,
+            telefono = seeded.Telefono,
+            ciudad = "Villavicencio",
+        });
+        var updated = await response.Content.ReadFromJsonAsync<ClienteDto>();
+
+        // THEN the response reflects the single changed field, all other
+        // fields remain exactly as they were
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(seeded.Nombre, updated!.Nombre);
+        Assert.Equal(seeded.Nit, updated.Nit);
+        Assert.Equal(seeded.Telefono, updated.Telefono);
+        Assert.Equal("Villavicencio", updated.Ciudad);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithMissingContentTypeJsonBody_ReturnsBadRequestNot500()
+    {
+        // GIVEN an existing seeded client and a request with an empty/invalid
+        // JSON body (malformed request, not a validation-rule violation)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Body Malformado {suffix}", $"BM{suffix}");
+        var client = _factory.CreateClient();
+        var content = new StringContent("not-json", System.Text.Encoding.UTF8, "application/json");
+
+        // WHEN calling PUT with an unparseable JSON body
+        var response = await client.PutAsync($"/api/v1/clientes/{seeded.Id}", content);
+
+        // THEN the request fails gracefully (400 Bad Request), never a 500
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }

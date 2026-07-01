@@ -136,4 +136,73 @@ public class UpdateClienteRequestValidatorTests
         // THEN validation succeeds — Id is not part of this validator's rules
         Assert.True(result.IsValid);
     }
+
+    // --- Edge cases (testarch-automate expansion) -------------------------------
+
+    [Fact]
+    public void Validate_WithSingleCharacterFields_IsValid()
+    {
+        // GIVEN a command whose required fields are each exactly one non-whitespace
+        // character — NotEmpty() has no minimum-length rule beyond "not blank"
+        var validator = new UpdateClienteRequestValidator();
+        var command = ValidCommand() with { Nombre = "A", Nit = "1", Telefono = "1", Ciudad = "A" };
+
+        // WHEN validating it
+        var result = validator.Validate(command);
+
+        // THEN validation succeeds — no implicit minimum-length constraint
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public void Validate_WithVeryLongFieldValues_IsValid()
+    {
+        // GIVEN a command with unusually long (but non-empty) field values —
+        // NotEmpty() imposes no maximum-length constraint; guards against an
+        // accidental regression that adds an undocumented length cap
+        var validator = new UpdateClienteRequestValidator();
+        var longValue = new string('X', 500);
+        var command = ValidCommand() with { Nombre = longValue, Nit = longValue };
+
+        // WHEN validating it
+        var result = validator.Validate(command);
+
+        // THEN validation succeeds
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public void Validate_WithLeadingAndTrailingWhitespaceAroundValidContent_IsValid()
+    {
+        // GIVEN a command whose fields have non-blank content padded with
+        // surrounding whitespace — NotEmpty() only rejects fully blank strings,
+        // it does not trim; padded-but-non-blank content must pass
+        var validator = new UpdateClienteRequestValidator();
+        var command = ValidCommand() with { Nombre = "  Cliente Con Espacios  " };
+
+        // WHEN validating it
+        var result = validator.Validate(command);
+
+        // THEN validation succeeds
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public void Validate_WithMultipleFieldsInvalidSimultaneously_ReturnsAllCorrespondingErrors()
+    {
+        // GIVEN a command where Nombre and Ciudad are blank but Nit/Telefono are valid
+        var validator = new UpdateClienteRequestValidator();
+        var command = ValidCommand() with { Nombre = "", Ciudad = "   " };
+
+        // WHEN validating it
+        var result = validator.Validate(command);
+
+        // THEN errors are reported for exactly Nombre and Ciudad, not Nit/Telefono
+        Assert.False(result.IsValid);
+        var invalidProperties = result.Errors.Select(e => e.PropertyName).Distinct().ToList();
+        Assert.Contains(nameof(UpdateClienteCommand.Nombre), invalidProperties);
+        Assert.Contains(nameof(UpdateClienteCommand.Ciudad), invalidProperties);
+        Assert.DoesNotContain(nameof(UpdateClienteCommand.Nit), invalidProperties);
+        Assert.DoesNotContain(nameof(UpdateClienteCommand.Telefono), invalidProperties);
+    }
 }

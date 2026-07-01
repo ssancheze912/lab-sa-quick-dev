@@ -174,4 +174,44 @@ test.describe('Editar Cliente (Story 2.4)', () => {
     await expect(page.getByText('Cliente actualizado correctamente')).toBeVisible();
     await expect(clientesPage.detailPanel).toContainText('Ibagué');
   });
+
+  // --- Edge cases (testarch-automate expansion) -------------------------------
+
+  test('[P2] reopening "Editar" after Cancelar shows the original data, not the discarded draft', async () => {
+    // GIVEN: an existing client selected, edit form opened and a draft typed
+    // but discarded via Cancelar (AC #6 gap-fill: verifies no stale draft
+    // leaks into a subsequent open of the same dialog)
+    const data = buildCliente();
+    const seeded = await apiHelper.createCliente(data);
+    createdIds.push(seeded.id);
+    await clientesPage.gotoDetail(seeded.id);
+    await clientesPage.abrirFormularioEditar();
+    await clientesPage.inputNombre.fill('Borrador Descartado');
+    await clientesPage.cancelar();
+
+    // WHEN: the user reopens "Editar"
+    await clientesPage.abrirFormularioEditar();
+
+    // THEN: the form shows the original persisted Nombre, not the discarded draft
+    await expect(clientesPage.inputNombre).toHaveValue(data.nombre);
+  });
+
+  test('[P2] saving an edit reflects across a full page reload (persisted, not just cached)', async ({ page }) => {
+    // GIVEN: an existing client is edited and saved successfully
+    const data = buildCliente();
+    const seeded = await apiHelper.createCliente(data);
+    createdIds.push(seeded.id);
+    await clientesPage.gotoDetail(seeded.id);
+    await clientesPage.abrirFormularioEditar();
+    await clientesPage.inputTelefono.fill('3019998877');
+    await clientesPage.guardar();
+    await expect(clientesPage.detailPanel).toContainText('3019998877');
+
+    // WHEN: the page is fully reloaded (bypassing TanStack Query's in-memory cache)
+    await page.reload();
+
+    // THEN: the change was actually persisted server-side, not just reflected
+    // via optimistic/cached client state
+    await expect(clientesPage.detailPanel).toContainText('3019998877');
+  });
 });

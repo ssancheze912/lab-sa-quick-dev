@@ -210,4 +210,104 @@ describe('useUpdateCliente', () => {
       expect(toast.error).toHaveBeenCalledWith('No se pudo guardar. Intenta de nuevo.')
     })
   })
+
+  // --- Edge cases (testarch-automate expansion) -------------------------------
+
+  test('should invalidate both query caches exactly once each on successful update (no duplicate invalidation)', async () => {
+    // GIVEN the backend accepts the update request
+    const cliente = createCliente()
+    const { result, invalidateSpy } = renderUseUpdateCliente(cliente.id)
+
+    // WHEN the mutation is executed
+    await result.current.mutateAsync({
+      nombre: cliente.nombre,
+      nit: cliente.nit,
+      telefono: cliente.telefono,
+      ciudad: cliente.ciudad,
+    })
+
+    // THEN each query key is invalidated exactly once — guards against a
+    // regression that fires redundant invalidations (extra re-renders/fetches)
+    await waitFor(() => {
+      const listCalls = invalidateSpy.mock.calls.filter(
+        ([arg]) => JSON.stringify(arg) === JSON.stringify({ queryKey: ['clientes'] }),
+      )
+      const detailCalls = invalidateSpy.mock.calls.filter(
+        ([arg]) => JSON.stringify(arg) === JSON.stringify({ queryKey: ['clientes', cliente.id] }),
+      )
+      expect(listCalls).toHaveLength(1)
+      expect(detailCalls).toHaveLength(1)
+    })
+  })
+
+  test('should reject with a network error (no response) without throwing an unhandled exception', async () => {
+    // GIVEN the backend is unreachable (simulated network failure, no HTTP response)
+    const cliente = createCliente()
+    server.use(http.put(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.error()))
+    const { result } = renderUseUpdateCliente(cliente.id)
+
+    // WHEN the mutation is executed against an unreachable backend
+    // THEN the promise rejects cleanly (caller can catch it) instead of
+    // crashing the hook or leaving the mutation stuck in a pending state
+    await expect(
+      result.current.mutateAsync({
+        nombre: cliente.nombre,
+        nit: cliente.nit,
+        telefono: cliente.telefono,
+        ciudad: cliente.ciudad,
+      }),
+    ).rejects.toBeDefined()
+  })
+
+  test('should call toast.error with the generic message for a network error (no response object)', async () => {
+    // GIVEN a network-level failure with no HTTP status/response at all —
+    // distinct from the 409 case, this must NOT be silently treated as a
+    // conflict (isAxiosError(error) is true but error.response is undefined)
+    const cliente = createCliente()
+    server.use(http.put(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.error()))
+    const { toast } = await import('siesa-ui-kit')
+    const { result } = renderUseUpdateCliente(cliente.id)
+
+    // WHEN the mutation fails at the network level
+    await result.current
+      .mutateAsync({
+        nombre: cliente.nombre,
+        nit: cliente.nit,
+        telefono: cliente.telefono,
+        ciudad: cliente.ciudad,
+      })
+      .catch(() => null)
+
+    // THEN the generic error toast fires (status !== 409, since there is no status at all)
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('No se pudo guardar. Intenta de nuevo.')
+    })
+  })
+
+  test('should target the URL matching the id passed to the hook (not a stale/different id)', async () => {
+    // GIVEN two distinct client ids, each with its own PUT handler assertion
+    const clienteA = createCliente()
+    const clienteB = createCliente()
+    let calledWithIdInUrl: string | null = null
+    server.use(
+      http.put('*/api/v1/clientes/:id', ({ params }) => {
+        calledWithIdInUrl = params.id as string
+        return HttpResponse.json(clienteB, { status: 200 })
+      }),
+    )
+    const { result } = renderUseUpdateCliente(clienteB.id)
+
+    // WHEN the mutation is executed for clienteB's hook instance
+    await result.current.mutateAsync({
+      nombre: clienteB.nombre,
+      nit: clienteB.nit,
+      telefono: clienteB.telefono,
+      ciudad: clienteB.ciudad,
+    })
+
+    // THEN the request targets clienteB's id, never clienteA's (guards
+    // against a stale-closure bug if `id` were captured incorrectly)
+    expect(calledWithIdInUrl).toBe(clienteB.id)
+    expect(calledWithIdInUrl).not.toBe(clienteA.id)
+  })
 })
