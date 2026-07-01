@@ -77,4 +77,14 @@ export const handlers = [
       { status: 201 },
     )
   }),
+  // Story 2.4: PUT /api/v1/clientes/:id default success handler (200 OK).
+  // Individual tests override this via `server.use(...)` for the 409/400/404
+  // paths (TC-E2-P1-09, TC-E2-P1-10), per network-first.md.
+  http.put(CLIENTE_BY_ID_ENDPOINT, async ({ request, params }) => {
+    const body = (await request.json()) as Partial<typeof defaultCliente>
+    return HttpResponse.json(
+      { ...defaultCliente, ...body, id: params.id as string },
+      { status: 200 },
+    )
+  }),
 ]

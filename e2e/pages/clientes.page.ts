@@ -77,6 +77,17 @@ export class ClientesPage {
     await expect(this.form).toBeVisible();
   }
 
+  /** Opens the edit form from the detail panel's "Editar" trigger (Story 2.4). */
+  async abrirFormularioEditar() {
+    await this.page.getByRole('button', { name: /^editar$/i }).click();
+    await expect(this.form).toBeVisible();
+  }
+
+  async cancelar() {
+    await this.btnCancelar.click();
+    await expect(this.form).toBeHidden();
+  }
+
   async llenarFormulario(data: {
     nombre?: string;
     nit?: string;

@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest'
-import { screen } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { renderWithRouter } from '@/test/support/renderWithRouter'
 import { server } from '@/test/msw/server'
@@ -203,6 +204,101 @@ describe('ClienteDetailView', () => {
 
       // THEN: no request was made for client-by-id data
       expect(requestCount).toBe(0)
+    })
+  })
+
+  // --- Story 2.4: "Editar" trigger (AC #1, TC-E2-P1-08) -----------------------
+  //
+  // RED PHASE: `ClienteDetailView.tsx` has no "Editar" button yet (Story 2.4,
+  // Task 5). These tests define the expected contract: an "Editar" button is
+  // rendered only in the success (loaded) branch, and clicking it opens the
+  // edit form pre-filled with the already-loaded client data (no extra fetch).
+
+  describe('AC #1 - "Editar" trigger opens the edit form pre-filled', () => {
+    test('should render an "Editar" button when a client is successfully loaded', async () => {
+      // GIVEN: the backend returns a known client
+      const cliente = createCliente()
+      server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })))
+
+      // WHEN: the detail view renders and the client loads
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+
+      // THEN: an "Editar" button is present
+      expect(screen.getByRole('button', { name: /editar/i })).toBeInTheDocument()
+    })
+
+    test('should NOT render an "Editar" button while the client is still loading', () => {
+      // GIVEN: the backend request has not resolved yet
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, async () => {
+          await new Promise((resolve) => setTimeout(resolve, 50))
+          return HttpResponse.json(createCliente(), { status: 200 })
+        }),
+      )
+
+      // WHEN: the detail view first renders
+      renderDetail(createCliente().id)
+
+      // THEN: no "Editar" button is rendered yet (only in the loaded success branch)
+      expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument()
+    })
+
+    test('should NOT render an "Editar" button in the not-found state', async () => {
+      // GIVEN: the backend returns a 404
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, () =>
+          HttpResponse.json(clienteNotFoundProblemDetails, { status: 404 }),
+        ),
+      )
+
+      // WHEN: the detail view renders for a non-existent id
+      renderDetail('00000000-0000-0000-0000-000000000000')
+      await screen.findByTestId('cliente-not-found')
+
+      // THEN: no "Editar" button is present
+      expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument()
+    })
+
+    test('should open the edit form when "Editar" is clicked', async () => {
+      // GIVEN: a loaded client detail view
+      const cliente = createCliente()
+      server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente, { status: 200 })))
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+
+      // WHEN: the user clicks "Editar"
+      await user.click(screen.getByRole('button', { name: /editar/i }))
+
+      // THEN: the edit form dialog opens
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+      })
+    })
+
+    test('should pre-fill the edit form\'s Nombre field with the already-loaded value (no extra fetch)', async () => {
+      // GIVEN: a loaded client detail view
+      const cliente = createCliente({ nombre: 'Comercial Rio Grande SAS' })
+      let getByIdCallCount = 0
+      server.use(
+        http.get(CLIENTE_BY_ID_ENDPOINT, () => {
+          getByIdCallCount += 1
+          return HttpResponse.json(cliente, { status: 200 })
+        }),
+      )
+      const user = userEvent.setup()
+      renderDetail(cliente.id)
+      await screen.findByTestId('cliente-detail-panel')
+      const callsBeforeEdit = getByIdCallCount
+
+      // WHEN: the user clicks "Editar"
+      await user.click(screen.getByRole('button', { name: /editar/i }))
+
+      // THEN: the form is pre-filled from the already-loaded data — no
+      // additional GET /api/v1/clientes/{id} request is fired
+      expect(await screen.findByLabelText(/^nombre$/i)).toHaveValue('Comercial Rio Grande SAS')
+      expect(getByIdCallCount).toBe(callsBeforeEdit)
     })
   })
 })

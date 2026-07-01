@@ -7,8 +7,10 @@ import { render } from '@testing-library/react'
 import { server } from '@/test/msw/server'
 import {
   CLIENTES_ENDPOINT,
+  CLIENTE_BY_ID_ENDPOINT,
   clienteNitConflictProblemDetails,
 } from '@/test/msw/handlers'
+import { createCliente } from '@/test/factories/cliente.factory'
 import { ClienteForm } from './ClienteForm'
 
 /**
@@ -377,6 +379,279 @@ describe('ClienteForm', () => {
       // preventing a duplicate/double submit
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /guardar/i })).toBeDisabled()
+      })
+    })
+  })
+
+  // --- Story 2.4: Edit mode ---------------------------------------------------
+  //
+  // RED PHASE: `ClienteForm.tsx`'s `mode` param is currently unused (prefixed
+  // `_mode`) and it ALWAYS calls `useCreateCliente` regardless of mode (Story
+  // 2.4, Task 5). These tests define the expected edit-mode behavior:
+  //   - AC #1 (TC-E2-P1-08): form pre-fills with `initialValues` on mount
+  //   - AC #2 (TC-E2-P2-06): successful edit submit shows the exact edit
+  //     success toast copy, distinct from the create copy
+  //   - AC #4 (TC-E2-P1-10): clearing a required field blocks submit, same
+  //     Zod validation as create mode
+  //   - AC #5: a 409 on edit shows the same inline conflict message, form
+  //     stays open with data intact
+  //   - AC #6 (TC-E2-P1-15): "Cancelar" closes the form with zero API calls
+  //     and does not mutate the original values
+  //   - AC #7: editing with the client's OWN unchanged NIT succeeds (no
+  //     false-positive 409 surfaced to the user)
+
+  const existingCliente = createCliente({
+    nombre: 'Distribuidora Andina SAS',
+    nit: '900555777-2',
+    telefono: '3011234567',
+    ciudad: 'Medellín',
+  })
+
+  function renderEditClienteForm(props: Partial<React.ComponentProps<typeof ClienteForm>> = {}) {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    const onSuccess = props.onSuccess ?? vi.fn()
+    const onCancel = props.onCancel ?? vi.fn()
+
+    return {
+      onSuccess,
+      onCancel,
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <ClienteForm
+            mode="edit"
+            id={existingCliente.id}
+            initialValues={{
+              nombre: existingCliente.nombre,
+              nit: existingCliente.nit,
+              telefono: existingCliente.telefono,
+              ciudad: existingCliente.ciudad,
+            }}
+            onSuccess={onSuccess}
+            onCancel={onCancel}
+            {...props}
+          />
+        </QueryClientProvider>,
+      ),
+    }
+  }
+
+  describe('AC #1 - edit mode pre-fills with current values (TC-E2-P1-08)', () => {
+    test('should pre-fill the Nombre field with the current value on mount', () => {
+      // GIVEN an existing client's data
+      renderEditClienteForm()
+
+      // WHEN the edit form is rendered
+      // THEN the Nombre field shows the current value, not empty
+      expect(screen.getByLabelText(/^nombre$/i)).toHaveValue(existingCliente.nombre)
+    })
+
+    test('should pre-fill the NIT/RUC field with the current value on mount', () => {
+      // GIVEN an existing client's data
+      renderEditClienteForm()
+
+      // WHEN the edit form is rendered
+      // THEN the NIT/RUC field shows the current value
+      expect(screen.getByLabelText(/nit\/ruc/i)).toHaveValue(existingCliente.nit)
+    })
+
+    test('should pre-fill the Teléfono field with the current value on mount', () => {
+      // GIVEN an existing client's data
+      renderEditClienteForm()
+
+      // WHEN the edit form is rendered
+      // THEN the Teléfono field shows the current value
+      expect(screen.getByLabelText(/tel[ée]fono/i)).toHaveValue(existingCliente.telefono)
+    })
+
+    test('should pre-fill the Ciudad field with the current value on mount', () => {
+      // GIVEN an existing client's data
+      renderEditClienteForm()
+
+      // WHEN the edit form is rendered
+      // THEN the Ciudad field shows the current value
+      expect(screen.getByLabelText(/^ciudad$/i)).toHaveValue(existingCliente.ciudad)
+    })
+  })
+
+  describe('AC #2 - successful edit submit', () => {
+    test('should call toast.success with the exact copy "Cliente actualizado correctamente" (TC-E2-P2-06)', async () => {
+      // GIVEN the backend accepts the update request (default MSW 200 handler)
+      const { toast } = await import('siesa-ui-kit')
+      const user = userEvent.setup()
+      renderEditClienteForm()
+
+      // WHEN the user changes Ciudad and submits
+      await user.clear(screen.getByLabelText(/^ciudad$/i))
+      await user.type(screen.getByLabelText(/^ciudad$/i), 'Cali')
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+      // THEN the exact Spanish edit-success toast copy is shown (no
+      // paraphrasing, R11) — distinct from the create-mode copy
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith('Cliente actualizado correctamente')
+      })
+    })
+
+    test('should invoke onSuccess after a successful edit (so the host can close the dialog)', async () => {
+      // GIVEN the backend accepts the update request
+      const user = userEvent.setup()
+      const { onSuccess } = renderEditClienteForm()
+
+      // WHEN the user changes Ciudad and submits
+      await user.clear(screen.getByLabelText(/^ciudad$/i))
+      await user.type(screen.getByLabelText(/^ciudad$/i), 'Cali')
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+      // THEN onSuccess is called, letting the host container close the form
+      await waitFor(() => {
+        expect(onSuccess).toHaveBeenCalled()
+      })
+    })
+  })
+
+  describe('AC #4 - edit mode required-field validation blocks submission (TC-E2-P1-10)', () => {
+    test('should display an inline error when Nombre is cleared and submitted', async () => {
+      // GIVEN the edit form is rendered pre-filled
+      const user = userEvent.setup()
+      renderEditClienteForm()
+
+      // WHEN the user clears the required Nombre field and submits
+      await user.clear(screen.getByLabelText(/^nombre$/i))
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+      // THEN an inline Zod validation error appears (FR8)
+      expect(await screen.findByText(/obligatorio|requerido/i)).toBeInTheDocument()
+    })
+
+    test('should NOT call the update mutation when a required field is cleared', async () => {
+      // GIVEN a request spy on the update endpoint
+      let requestCount = 0
+      server.use(
+        http.put(CLIENTE_BY_ID_ENDPOINT, () => {
+          requestCount += 1
+          return HttpResponse.json(existingCliente, { status: 200 })
+        }),
+      )
+      const user = userEvent.setup()
+      renderEditClienteForm()
+
+      // WHEN the user clears Nombre and submits
+      await user.clear(screen.getByLabelText(/^nombre$/i))
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+      await screen.findByText(/obligatorio|requerido/i)
+
+      // THEN the backend was never called — frontend Zod blocked the submit
+      expect(requestCount).toBe(0)
+    })
+  })
+
+  describe('AC #5 - 409 duplicate NIT/RUC conflict on edit', () => {
+    test('should display "El NIT/RUC ya está registrado" when the backend returns 409 on edit', async () => {
+      // GIVEN the backend returns a 409 Problem Details conflict (colliding
+      // with a DIFFERENT client's NIT)
+      server.use(
+        http.put(CLIENTE_BY_ID_ENDPOINT, () =>
+          HttpResponse.json(clienteNitConflictProblemDetails, { status: 409 }),
+        ),
+      )
+      const user = userEvent.setup()
+      renderEditClienteForm()
+
+      // WHEN the user changes the NIT/RUC to a colliding value and submits
+      await user.clear(screen.getByLabelText(/nit\/ruc/i))
+      await user.type(screen.getByLabelText(/nit\/ruc/i), '900999888-1')
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+      // THEN the friendly Spanish conflict message is displayed inline
+      expect(await screen.findByText('El NIT/RUC ya está registrado')).toBeInTheDocument()
+    })
+
+    test('should keep the edit form open (not call onSuccess) when the backend returns 409', async () => {
+      // GIVEN the backend returns a 409 Problem Details conflict
+      server.use(
+        http.put(CLIENTE_BY_ID_ENDPOINT, () =>
+          HttpResponse.json(clienteNitConflictProblemDetails, { status: 409 }),
+        ),
+      )
+      const user = userEvent.setup()
+      const { onSuccess } = renderEditClienteForm()
+
+      // WHEN the user changes the NIT/RUC and submits, hitting the 409
+      await user.clear(screen.getByLabelText(/nit\/ruc/i))
+      await user.type(screen.getByLabelText(/nit\/ruc/i), '900999888-1')
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+      await screen.findByText('El NIT/RUC ya está registrado')
+
+      // THEN onSuccess is never called — the form stays open (AC #5)
+      expect(onSuccess).not.toHaveBeenCalled()
+    })
+
+    test('should keep the entered field values intact after a 409 on edit (no data loss)', async () => {
+      // GIVEN the backend returns a 409 Problem Details conflict
+      server.use(
+        http.put(CLIENTE_BY_ID_ENDPOINT, () =>
+          HttpResponse.json(clienteNitConflictProblemDetails, { status: 409 }),
+        ),
+      )
+      const user = userEvent.setup()
+      renderEditClienteForm()
+
+      // WHEN the user changes Nombre and NIT/RUC and submits, hitting the 409
+      await user.clear(screen.getByLabelText(/^nombre$/i))
+      await user.type(screen.getByLabelText(/^nombre$/i), 'Nombre Editado SAS')
+      await user.clear(screen.getByLabelText(/nit\/ruc/i))
+      await user.type(screen.getByLabelText(/nit\/ruc/i), '900999888-1')
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+      await screen.findByText('El NIT/RUC ya está registrado')
+
+      // THEN the entered values remain in the fields — no data loss (AC #5)
+      expect(screen.getByLabelText(/^nombre$/i)).toHaveValue('Nombre Editado SAS')
+      expect(screen.getByLabelText(/nit\/ruc/i)).toHaveValue('900999888-1')
+    })
+  })
+
+  describe('AC #6 - Cancelar makes zero API calls and preserves original data (TC-E2-P1-15)', () => {
+    test('should call onCancel without invoking any mutation when "Cancelar" is clicked', async () => {
+      // GIVEN a request spy on the update endpoint
+      let requestCount = 0
+      server.use(
+        http.put(CLIENTE_BY_ID_ENDPOINT, () => {
+          requestCount += 1
+          return HttpResponse.json(existingCliente, { status: 200 })
+        }),
+      )
+      const user = userEvent.setup()
+      const { onCancel } = renderEditClienteForm()
+
+      // WHEN the user modifies a field but clicks "Cancelar" instead of "Guardar"
+      await user.clear(screen.getByLabelText(/^ciudad$/i))
+      await user.type(screen.getByLabelText(/^ciudad$/i), 'Barranquilla')
+      await user.click(screen.getByRole('button', { name: /cancelar/i }))
+
+      // THEN onCancel is invoked and zero network requests were made (R8)
+      expect(onCancel).toHaveBeenCalled()
+      expect(requestCount).toBe(0)
+    })
+  })
+
+  describe('AC #7 - self-update with unchanged NIT/RUC succeeds', () => {
+    test('should call toast.success when saving with the client\'s own unchanged NIT/RUC', async () => {
+      // GIVEN the backend accepts a self-update where the NIT/RUC is unchanged
+      // (self-exclusion — no false 409)
+      const { toast } = await import('siesa-ui-kit')
+      const user = userEvent.setup()
+      renderEditClienteForm()
+
+      // WHEN the user changes only Ciudad, leaving NIT/RUC untouched, and submits
+      await user.clear(screen.getByLabelText(/^ciudad$/i))
+      await user.type(screen.getByLabelText(/^ciudad$/i), 'Pereira')
+      await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+      // THEN the update succeeds (no incorrect 409 for the unchanged NIT/RUC)
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith('Cliente actualizado correctamente')
       })
     })
   })

@@ -626,4 +626,298 @@ public class ClienteEndpointsTests : IClassFixture<TestApiFactory>, IAsyncLifeti
         // THEN the client is created successfully (201)
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
+
+    // --- Story 2.4: PUT /api/v1/clientes/{id} (AC #2, #3, #5, #7) ---------------
+    //
+    // RED PHASE: `PUT /api/v1/clientes/{id}` does not exist yet (Story 2.4, Task
+    // 3). These tests define the expected contract:
+    //   - Valid payload -> 200 OK + updated ClienteDto (AC #2)
+    //   - Non-existent Id -> 404 Not Found
+    //   - Empty/whitespace-only required fields -> 400 Bad Request with
+    //     field-level errors, independent of the frontend (AC #3, R3)
+    //   - Duplicate NIT/RUC from a DIFFERENT client -> 409 Conflict, Spanish
+    //     detail, no tech leakage (AC #5, mirrors Story 2.3's R1)
+    //   - Self-update with unchanged NIT -> 200 OK, no false 409 (AC #7)
+
+    private static object ValidUpdatePayload(string suffix) => new
+    {
+        nombre = $"Cliente PUT {suffix}",
+        nit = $"PUT{suffix}",
+        telefono = "3005554433",
+        ciudad = "Manizales",
+    };
+
+    [Fact]
+    public async Task PutClientes_WithValidPayload_ReturnsOk()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Original PUT {suffix}", $"OPUT{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling PUT /api/v1/clientes/{id} with valid changes
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seeded.Id}", ValidUpdatePayload(suffix));
+
+        // THEN the response is 200 OK
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithValidPayload_ReturnsBodyReflectingTheSubmittedChanges()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Original Reflejo {suffix}", $"OREF{suffix}");
+        var client = _factory.CreateClient();
+        var payload = ValidUpdatePayload(suffix);
+
+        // WHEN calling PUT /api/v1/clientes/{id}
+        var updated = await client.PutAsJsonAsync($"/api/v1/clientes/{seeded.Id}", payload)
+            .ContinueWith(t => t.Result.Content.ReadFromJsonAsync<ClienteDto>()).Unwrap();
+
+        // THEN the returned ClienteDto reflects the submitted values, same Id
+        Assert.NotNull(updated);
+        Assert.Equal(seeded.Id, updated!.Id);
+        Assert.Equal($"Cliente PUT {suffix}", updated.Nombre);
+        Assert.Equal($"PUT{suffix}", updated.Nit);
+        Assert.Equal("3005554433", updated.Telefono);
+        Assert.Equal("Manizales", updated.Ciudad);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithValidPayload_ChangeIsPersistedAndVisibleOnSubsequentGet()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Original Persistencia {suffix}", $"OPST{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN updating it via PUT and then re-fetching via GET
+        await client.PutAsJsonAsync($"/api/v1/clientes/{seeded.Id}", ValidUpdatePayload(suffix));
+        var refetched = await client.GetFromJsonAsync<ClienteDto>($"/api/v1/clientes/{seeded.Id}");
+
+        // THEN the GET reflects the update immediately, no caching staleness (FR27/NFR2)
+        Assert.NotNull(refetched);
+        Assert.Equal($"Cliente PUT {suffix}", refetched!.Nombre);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithNonExistentId_ReturnsNotFound()
+    {
+        // GIVEN a well-formed UUID with no matching client
+        var client = _factory.CreateClient();
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN calling PUT /api/v1/clientes/{id}
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{nonExistentId}", ValidUpdatePayload("nf"));
+
+        // THEN the response is 404 Not Found
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithEmptyRequiredFields_ReturnsBadRequest()
+    {
+        // GIVEN an existing seeded client and a payload bypassing the frontend
+        // entirely with empty/whitespace-only required fields (AC #3, R3)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Original Validacion {suffix}", $"OVAL{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling PUT /api/v1/clientes/{id}
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seeded.Id}", new
+        {
+            nombre = "",
+            nit = "   ",
+            telefono = "3000000000",
+            ciudad = "Bogotá",
+        });
+
+        // THEN the response is 400 Bad Request
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithEmptyRequiredFields_ReturnsFieldLevelErrorsAndDoesNotPersist()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Original Sin Cambios {suffix}", $"OSC{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling PUT /api/v1/clientes/{id} with an empty Nombre
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seeded.Id}", new
+        {
+            nombre = "",
+            nit = seeded.Nit,
+            telefono = seeded.Telefono,
+            ciudad = seeded.Ciudad,
+        });
+        var rawJson = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(rawJson);
+
+        // THEN FluentValidation field-level errors are present for Nombre, and
+        // the original record remains unchanged (no partial persistence)
+        var errors = doc.RootElement.GetProperty("errors");
+        var keys = errors.EnumerateObject().Select(p => p.Name.ToLowerInvariant()).ToList();
+        Assert.Contains("nombre", keys);
+
+        var unchanged = await client.GetFromJsonAsync<ClienteDto>($"/api/v1/clientes/{seeded.Id}");
+        Assert.Equal($"Original Sin Cambios {suffix}", unchanged!.Nombre);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithNitCollidingWithADifferentClient_ReturnsConflict()
+    {
+        // GIVEN two existing clients with distinct NITs
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var clientA = await SeedAsync($"Conflicto A {suffix}", $"CFA{suffix}");
+        var clientB = await SeedAsync($"Conflicto B {suffix}", $"CFB{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN updating client B to use client A's NIT/RUC
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{clientB.Id}", new
+        {
+            nombre = clientB.Nombre,
+            nit = clientA.Nit,
+            telefono = clientB.Telefono,
+            ciudad = clientB.Ciudad,
+        });
+
+        // THEN the response is 409 Conflict (AC #5)
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithNitCollidingWithADifferentClient_ReturnsSpanishMessageWithoutTechnicalLeakage()
+    {
+        // GIVEN two existing clients with distinct NITs
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var clientA = await SeedAsync($"Conflicto Detalle A {suffix}", $"CFDA{suffix}");
+        var clientB = await SeedAsync($"Conflicto Detalle B {suffix}", $"CFDB{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN updating client B to use client A's NIT/RUC
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{clientB.Id}", new
+        {
+            nombre = clientB.Nombre,
+            nit = clientA.Nit,
+            telefono = clientB.Telefono,
+            ciudad = clientB.Ciudad,
+        });
+        var rawJson = await response.Content.ReadAsStringAsync();
+
+        // THEN the Problem Details `detail` is the exact Spanish message (NFR6),
+        // with no DB/stack-trace leakage
+        Assert.Contains("El NIT/RUC ya está registrado", rawJson);
+        Assert.DoesNotContain("Npgsql", rawJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("DbUpdateException", rawJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("uk_clientes_nit", rawJson, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithNitCollidingWithADifferentClient_DoesNotPersistTheChange()
+    {
+        // GIVEN two existing clients with distinct NITs
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var clientA = await SeedAsync($"Conflicto Persistencia A {suffix}", $"CFPA{suffix}");
+        var clientB = await SeedAsync($"Conflicto Persistencia B {suffix}", $"CFPB{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN attempting to update client B to use client A's NIT/RUC (rejected)
+        await client.PutAsJsonAsync($"/api/v1/clientes/{clientB.Id}", new
+        {
+            nombre = "Nombre Que No Debe Persistir",
+            nit = clientA.Nit,
+            telefono = clientB.Telefono,
+            ciudad = clientB.Ciudad,
+        });
+
+        // THEN client B's original Nombre/Nit remain unchanged
+        var unchanged = await client.GetFromJsonAsync<ClienteDto>($"/api/v1/clientes/{clientB.Id}");
+        Assert.Equal($"Conflicto Persistencia B {suffix}", unchanged!.Nombre);
+        Assert.Equal($"CFPB{suffix}", unchanged.Nit);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithSelfUnchangedNit_ReturnsOkNotConflict()
+    {
+        // GIVEN an existing client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Self Unchanged {suffix}", $"SELFU{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN updating it with its OWN unchanged NIT (only Ciudad changes)
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seeded.Id}", new
+        {
+            nombre = seeded.Nombre,
+            nit = seeded.Nit,
+            telefono = seeded.Telefono,
+            ciudad = "Cúcuta",
+        });
+
+        // THEN the update succeeds — self-exclusion, no false 409 (AC #7)
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutClientes_ResponseUsesCamelCaseJsonPropertyNames()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"CamelCase PUT {suffix}", $"CCPUT{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling PUT /api/v1/clientes/{id}
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seeded.Id}", ValidUpdatePayload(suffix));
+        var rawJson = await response.Content.ReadAsStringAsync();
+
+        // THEN the JSON payload exposes camelCase keys matching the frontend's Cliente interface
+        Assert.Contains("\"nombre\"", rawJson);
+        Assert.Contains("\"nit\"", rawJson);
+        Assert.Contains("\"telefono\"", rawJson);
+        Assert.Contains("\"ciudad\"", rawJson);
+    }
+
+    // --- Edge cases (Story 2.4) --------------------------------------------------
+
+    [Fact]
+    public async Task PutClientes_WithMalformedGuidRouteSegment_ReturnsNotFoundNot500()
+    {
+        // GIVEN a route segment that is not a parseable GUID (route constraint is
+        // `{id:guid}`)
+        var client = _factory.CreateClient();
+
+        // WHEN calling PUT /api/v1/clientes/not-a-guid
+        var response = await client.PutAsJsonAsync("/api/v1/clientes/not-a-guid", ValidUpdatePayload("mg"));
+
+        // THEN the request fails gracefully at routing/binding, never a 500
+        Assert.NotEqual(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutClientes_WithBodyIdDifferentFromRouteId_UsesRouteIdNotBodyId()
+    {
+        // GIVEN an existing seeded client, and a body whose (irrelevant) id field
+        // would point elsewhere if it were trusted over the route
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Route Wins {suffix}", $"RW{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling PUT /api/v1/clientes/{route-id} with a mismatched body id
+        var response = await client.PutAsync($"/api/v1/clientes/{seeded.Id}",
+            JsonContent.Create(new
+            {
+                id = Guid.NewGuid(),
+                nombre = $"Cliente Route Wins {suffix}",
+                nit = seeded.Nit,
+                telefono = seeded.Telefono,
+                ciudad = seeded.Ciudad,
+            }));
+        var updated = await response.Content.ReadFromJsonAsync<ClienteDto>();
+
+        // THEN the route id wins — the client actually targeted by the route is updated
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(seeded.Id, updated!.Id);
+    }
 }

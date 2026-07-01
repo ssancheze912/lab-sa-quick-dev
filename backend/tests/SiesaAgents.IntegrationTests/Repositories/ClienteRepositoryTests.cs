@@ -341,4 +341,131 @@ public class ClienteRepositoryTests : IAsyncLifetime
         await Assert.ThrowsAsync<DbUpdateException>(
             async () => await repository.AddAsync(duplicate, CancellationToken.None));
     }
+
+    // --- Story 2.4: UpdateAsync (AC #2, #3, #7) ---------------------------------
+    //
+    // RED PHASE: IClienteRepository.UpdateAsync does not exist yet (Story 2.4,
+    // Task 1). These tests define the expected contract: happy-path update
+    // persists the mutated fields and bumps UpdatedAt; a non-existent Id
+    // returns null (404 case, no exception); a duplicate-NIT-from-a-different-
+    // client update propagates as DbUpdateException (same race-condition-safe
+    // pattern as AddAsync); and a self-update with an unchanged NIT does NOT
+    // throw (self-exclusion, AC #7).
+
+    [Fact]
+    public async Task UpdateAsync_WithValidChanges_PersistsAndReturnsTheUpdatedEntity()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Original Update {suffix}", $"UPD{suffix}");
+        var repository = new ClienteRepository(_context);
+        var tracked = await repository.GetByIdAsync(seeded.Id, CancellationToken.None);
+        tracked!.Update($"Actualizado {suffix}", seeded.Nit, "3009999999", "Pereira");
+
+        // WHEN updating it via UpdateAsync
+        var result = await repository.UpdateAsync(tracked, CancellationToken.None);
+
+        // THEN the returned entity reflects the new values
+        Assert.NotNull(result);
+        Assert.Equal($"Actualizado {suffix}", result!.Nombre);
+        Assert.Equal("3009999999", result.Telefono);
+        Assert.Equal("Pereira", result.Ciudad);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithValidChanges_PersistsChangesRetrievableAfterwards()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Persistido Update {suffix}", $"PERS{suffix}");
+        var repository = new ClienteRepository(_context);
+        var tracked = await repository.GetByIdAsync(seeded.Id, CancellationToken.None);
+        tracked!.Update($"Persistido Cambiado {suffix}", seeded.Nit, "3001112222", "Manizales");
+
+        // WHEN updating it and then fetching it again in a fresh query
+        await repository.UpdateAsync(tracked, CancellationToken.None);
+        var refetched = await repository.GetByIdAsync(seeded.Id, CancellationToken.None);
+
+        // THEN the persisted row reflects the update, not the original values
+        Assert.NotNull(refetched);
+        Assert.Equal($"Persistido Cambiado {suffix}", refetched!.Nombre);
+        Assert.Equal("Manizales", refetched.Ciudad);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_BumpsUpdatedAtButDoesNotChangeCreatedAtOrId()
+    {
+        // GIVEN an existing seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Timestamps {suffix}", $"TS{suffix}");
+        var originalCreatedAt = seeded.CreatedAt;
+        var originalUpdatedAt = seeded.UpdatedAt;
+        var repository = new ClienteRepository(_context);
+        await Task.Delay(10);
+        var tracked = await repository.GetByIdAsync(seeded.Id, CancellationToken.None);
+        tracked!.Update("Nombre Cambiado", seeded.Nit, seeded.Telefono, "Cartagena");
+
+        // WHEN updating it
+        var result = await repository.UpdateAsync(tracked, CancellationToken.None);
+
+        // THEN Id and CreatedAt are untouched, UpdatedAt has advanced
+        Assert.NotNull(result);
+        Assert.Equal(seeded.Id, result!.Id);
+        Assert.Equal(originalCreatedAt, result.CreatedAt);
+        Assert.True(result.UpdatedAt > originalUpdatedAt);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithNonExistentEntity_ReturnsNull()
+    {
+        // GIVEN an entity built in-memory that was never persisted (simulates the
+        // 404 case a handler would hit after GetByIdAsync returns null upstream —
+        // this test exercises UpdateAsync's own defensive contract directly)
+        var repository = new ClienteRepository(_context);
+        var neverPersisted = ClienteEntity.Create("Fantasma", "FANTASMA-NIT", "3000000000", "Cali");
+
+        // WHEN attempting to update it
+        var result = await repository.UpdateAsync(neverPersisted, CancellationToken.None);
+
+        // THEN null is returned — no exception, no accidental insert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithNitCollidingWithADifferentClient_ThrowsDbUpdateException()
+    {
+        // GIVEN two existing clients with distinct NITs
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var clientA = await SeedAsync($"Cliente A {suffix}", $"NITA{suffix}");
+        var clientB = await SeedAsync($"Cliente B {suffix}", $"NITB{suffix}");
+        var repository = new ClienteRepository(_context);
+        var trackedB = await repository.GetByIdAsync(clientB.Id, CancellationToken.None);
+        trackedB!.Update(trackedB.Nombre, clientA.Nit, trackedB.Telefono, trackedB.Ciudad);
+
+        // WHEN updating client B to use client A's NIT/RUC
+        // THEN the uk_clientes_nit unique constraint rejects it as a
+        // DbUpdateException (AC #5/#7 — collision with a DIFFERENT client)
+        await Assert.ThrowsAsync<DbUpdateException>(
+            async () => await repository.UpdateAsync(trackedB, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithSelfUnchangedNit_DoesNotThrow()
+    {
+        // GIVEN an existing client whose NIT is left unchanged in the update
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Self Update {suffix}", $"SELF{suffix}");
+        var repository = new ClienteRepository(_context);
+        var tracked = await repository.GetByIdAsync(seeded.Id, CancellationToken.None);
+        tracked!.Update("Self Update Renombrado", seeded.Nit, seeded.Telefono, "Ibagué");
+
+        // WHEN updating it with its OWN unchanged NIT (no actual collision)
+        var result = await repository.UpdateAsync(tracked, CancellationToken.None);
+
+        // THEN the update succeeds — self-exclusion behavior (AC #7), the DB
+        // constraint is per-value and the row already holds that NIT
+        Assert.NotNull(result);
+        Assert.Equal("Self Update Renombrado", result!.Nombre);
+        Assert.Equal(seeded.Nit, result.Nit);
+    }
 }
