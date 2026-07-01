@@ -113,7 +113,19 @@ test.describe('Eliminar Cliente (Story 2.5)', () => {
     createdClienteIds.splice(createdClienteIds.indexOf(seeded.id), 1);
   });
 
-  test('TC-E2-P0-03/TC-E2-P0-04 — AC #3: deleting a client WITH associated contacts preserves the contacts and shows the orphaning toast', async ({ page }) => {
+  // TODO (TEA Review): `apiHelper.createContacto`/`getContactos` target
+  // POST/GET /api/v1/contactos, which does not exist yet — full Contacto
+  // CRUD is explicitly Epic 3 scope (see story 2-5-delete-client.md Dev
+  // Notes). Marked fixme so CI reports these as known-pending rather than
+  // false-red failures. AC #3's actual behavior (FK-level orphaning +
+  // exact toast copy) is already covered deterministically by
+  // ClienteRepositoryTests.DeleteAsync_WithClienteThatHasAssociatedContacts_OrphansTheContactsInsteadOfCascadeDeletingThem
+  // (backend, real Postgres) and ClienteDetailView.test.tsx's orphaning-toast
+  // assertions (frontend component level). Un-skip once Epic 3 ships a
+  // Contacto seeding surface (API or test-only DB insert helper).
+  test.fixme(
+    'TC-E2-P0-03/TC-E2-P0-04 — AC #3: deleting a client WITH associated contacts preserves the contacts and shows the orphaning toast',
+    async ({ page }) => {
     // GIVEN: an existing client seeded with an associated contact
     const data = buildCliente();
     const seeded = await apiHelper.createCliente(data);
@@ -133,9 +145,18 @@ test.describe('Eliminar Cliente (Story 2.5)', () => {
     ).toBeVisible();
     await expect(page.getByText('Cliente eliminado correctamente', { exact: true })).not.toBeVisible();
     createdClienteIds.splice(createdClienteIds.indexOf(seeded.id), 1);
-  });
+    },
+  );
 
-  test('TC-E2-P0-03 (R2) — AC #3: the associated contact still exists with clienteId null after the parent client is deleted', async () => {
+  // TODO (TEA Review): same root cause as the fixme above — depends on
+  // POST/GET /api/v1/contactos, which is Epic 3 scope and does not exist
+  // yet. R2 (the single most important risk in the epic) is nonetheless
+  // deterministically closed today by the backend integration test suite
+  // (ClienteRepositoryTests + AppDbContextMigrationTests, real Postgres,
+  // asserting ON DELETE SET NULL at the FK level) — see test-review-2.5.md.
+  test.fixme(
+    'TC-E2-P0-03 (R2) — AC #3: the associated contact still exists with clienteId null after the parent client is deleted',
+    async () => {
     // GIVEN: an existing client seeded with an associated contact
     const data = buildCliente();
     const seeded = await apiHelper.createCliente(data);
@@ -157,7 +178,8 @@ test.describe('Eliminar Cliente (Story 2.5)', () => {
     const survivingContacto = contactos.find((c: { id: string }) => c.id === seededContacto.id);
     expect(survivingContacto).toBeDefined();
     expect(survivingContacto.clienteId).toBeNull();
-  });
+    },
+  );
 
   test('TC-E2-P1-11 — AC #4: "Cancelar" makes zero DELETE calls and the client remains unchanged', async () => {
     // GIVEN: an existing client selected, delete confirmation dialog open
