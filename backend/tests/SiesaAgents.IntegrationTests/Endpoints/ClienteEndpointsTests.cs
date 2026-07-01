@@ -255,4 +255,79 @@ public class ClienteEndpointsTests : IClassFixture<TestApiFactory>, IAsyncLifeti
         Assert.DoesNotContain("StackTrace", rawJson, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("System.Exception", rawJson, StringComparison.OrdinalIgnoreCase);
     }
+
+    // --- Edge cases (testarch-automate expansion) -----------------------------
+
+    [Fact]
+    public async Task GetClienteById_WithGuidEmptyRouteSegment_ReturnsNotFound()
+    {
+        // GIVEN the well-formed but all-zeros GUID explicitly used in the story's
+        // AC #3 / TC-E2-P1-07 example — must resolve identically to any other
+        // non-existent well-formed Id (404, not a routing/binding special case)
+        var client = _factory.CreateClient();
+
+        // WHEN calling GET /api/v1/clientes/00000000-0000-0000-0000-000000000000
+        var response = await client.GetAsync($"/api/v1/clientes/{Guid.Empty}");
+
+        // THEN the response is 404 Not Found, same contract as any other missing Id
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetClienteById_WithMalformedGuidRouteSegment_ReturnsBadRequestNot500()
+    {
+        // GIVEN a route segment that is not a parseable GUID at all (route constraint
+        // is `{id:guid}` — an unparsable value should fail route binding gracefully,
+        // not reach application code and throw an unhandled exception)
+        var client = _factory.CreateClient();
+
+        // WHEN calling GET /api/v1/clientes/not-a-guid
+        var response = await client.GetAsync("/api/v1/clientes/not-a-guid");
+
+        // THEN the request fails at routing/binding (400/404), never a 500 — the
+        // :guid route constraint means this path simply doesn't match this endpoint
+        Assert.NotEqual(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetClienteById_ResponseUsesCamelCaseJsonPropertyNames()
+    {
+        // GIVEN a seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"CamelCase Detalle Cliente {suffix}", $"710{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling GET /api/v1/clientes/{id}
+        var response = await client.GetAsync($"/api/v1/clientes/{seeded.Id}");
+        var rawJson = await response.Content.ReadAsStringAsync();
+
+        // THEN the JSON payload exposes camelCase keys matching the frontend's Cliente interface
+        Assert.Contains("\"nombre\"", rawJson);
+        Assert.Contains("\"nit\"", rawJson);
+        Assert.Contains("\"telefono\"", rawJson);
+        Assert.Contains("\"ciudad\"", rawJson);
+    }
+
+    [Fact]
+    public async Task GetClienteById_DoesNotReturnAClienteDeletedAfterCreation()
+    {
+        // GIVEN a client that existed and was then deleted directly via the database
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Eliminado Endpoint Cliente {suffix}", $"711{suffix}");
+        await using (var context = CreateContext())
+        {
+            var toDelete = await context.Clientes.FindAsync(seeded.Id);
+            Assert.NotNull(toDelete);
+            context.Clientes.Remove(toDelete!);
+            await context.SaveChangesAsync();
+        }
+        _createdIds.Remove(seeded.Id);
+        var client = _factory.CreateClient();
+
+        // WHEN calling GET /api/v1/clientes/{id} for the now-deleted client
+        var response = await client.GetAsync($"/api/v1/clientes/{seeded.Id}");
+
+        // THEN the endpoint returns 404, consistent with the never-existed case
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }

@@ -36,6 +36,7 @@ export function ClienteDetailView({
   listMembership = 'present',
 }: ClienteDetailViewProps) {
   const knownMissing = listMembership === 'missing'
+  const listPending = listMembership === 'pending'
   const { data, isLoading, isError, error } = useCliente(clienteId, {
     enabled: listMembership !== 'missing' && listMembership !== 'pending',
   })
@@ -55,10 +56,15 @@ export function ClienteDetailView({
   // `knownMissing` disables the underlying query (see useCliente), which
   // would otherwise leave `isLoading` stuck at `true` forever — check this
   // before the loading state so the not-found block renders immediately.
-  // `listMembership === 'pending'` also disables the query (holding off the
-  // by-id request until we know whether it's worth making) and should still
-  // show the loading skeleton, same as a normal in-flight fetch would.
-  if (isLoading && !knownMissing) {
+  // `listMembership === 'pending'` ALSO disables the query (holding off the
+  // by-id request until we know whether it's worth making), which means
+  // TanStack Query v5 reports `isLoading: false` for it (a disabled query
+  // that has never fetched is `status: 'pending'` but NOT `isFetching`, so
+  // `isLoading` — defined as `isPending && isFetching` — never becomes true).
+  // `listPending` is checked explicitly here so the skeleton still renders
+  // (same as a normal in-flight fetch would), instead of falling through to
+  // the generic error block below.
+  if ((isLoading || listPending) && !knownMissing) {
     return (
       <div data-testid="cliente-detail-loading" className="flex-1 p-6">
         <Skeleton height={28} width="40%" className="mb-4" />

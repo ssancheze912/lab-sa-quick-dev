@@ -260,4 +260,40 @@ public class ClienteRepositoryTests : IAsyncLifetime
         // THEN null is returned — no exception thrown at repository level
         Assert.Null(result);
     }
+
+    // --- Edge cases (testarch-automate expansion) -----------------------------
+
+    [Fact]
+    public async Task GetByIdAsync_WithGuidEmpty_ReturnsNullNotAnException()
+    {
+        // GIVEN the well-formed but all-zeros GUID explicitly called out in the
+        // story's AC #3 example ("a well-formed UUID with no matching record") —
+        // guards against any accidental special-casing of Guid.Empty (e.g. a
+        // default-value check that short-circuits differently from a random Id)
+        var repository = new ClienteRepository(_context);
+
+        // WHEN fetching by Guid.Empty
+        var result = await repository.GetByIdAsync(Guid.Empty, CancellationToken.None);
+
+        // THEN it is treated identically to any other non-existent Id — null, no exception
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_DoesNotReturnAClienteDeletedAfterBeingSeeded()
+    {
+        // GIVEN a client that was seeded and then removed from the database
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Eliminado Cliente {suffix}", $"981{suffix}");
+        _context.Clientes.Remove(seeded);
+        await _context.SaveChangesAsync();
+        _createdIds.Remove(seeded.Id);
+        var repository = new ClienteRepository(_context);
+
+        // WHEN fetching by the now-deleted client's Id
+        var result = await repository.GetByIdAsync(seeded.Id, CancellationToken.None);
+
+        // THEN null is returned, consistent with the non-existent-Id contract
+        Assert.Null(result);
+    }
 }
