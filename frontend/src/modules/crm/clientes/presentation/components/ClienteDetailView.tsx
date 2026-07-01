@@ -5,6 +5,7 @@ import 'react-loading-skeleton/dist/skeleton.css'
 import { UserCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { AlertDialog, Button } from 'siesa-ui-kit'
 import { useCliente } from '@/modules/crm/clientes/application/hooks/useCliente'
+import { useDeleteCliente } from '@/modules/crm/clientes/application/hooks/useDeleteCliente'
 import { ClienteForm } from '@/modules/crm/clientes/presentation/components/ClienteForm'
 
 interface ClienteDetailViewProps {
@@ -41,11 +42,19 @@ export function ClienteDetailView({
   const knownMissing = listMembership === 'missing'
   const listPending = listMembership === 'pending'
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  // Story 2.5, AC #2/#3: after a successful delete, the right panel must
+  // return to the empty/default state — tracked locally so this component
+  // works standalone (its own tests render it directly with a fixed
+  // `clienteId`, without a parent route re-rendering it with `clienteId`
+  // cleared), mirroring the existing `cliente-detail-empty` block below.
+  const [isDeleted, setIsDeleted] = useState(false)
   const { data, isLoading, isError, error } = useCliente(clienteId, {
-    enabled: listMembership !== 'missing' && listMembership !== 'pending',
+    enabled: listMembership !== 'missing' && listMembership !== 'pending' && !isDeleted,
   })
+  const deleteCliente = useDeleteCliente()
 
-  if (!clienteId) {
+  if (!clienteId || isDeleted) {
     return (
       <div
         data-testid="cliente-detail-empty"
@@ -107,7 +116,10 @@ export function ClienteDetailView({
 
   return (
     <div data-testid="cliente-detail-panel" className="flex-1 p-6">
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex justify-end gap-2">
+        <Button type="outline" onClick={() => setIsDeleteDialogOpen(true)}>
+          Eliminar
+        </Button>
         <Button onClick={() => setIsEditDialogOpen(true)}>Editar</Button>
       </div>
       <dl className="flex flex-col gap-3">
@@ -149,6 +161,33 @@ export function ClienteDetailView({
             onCancel={() => setIsEditDialogOpen(false)}
           />
         }
+      />
+
+      {/*
+        Story 2.5: a SECOND, independent AlertDialog for delete confirmation
+        (AC #1) — does not reuse/nest the edit dialog above. `onCancel` is the
+        AlertDialog's single dismissal callback for both an explicit
+        "Cancelar" click AND Esc/backdrop dismissal (AC #4, #5, R9): it only
+        closes the dialog, it never triggers the mutation, so all three
+        dismissal paths are zero-DELETE-call by construction.
+      */}
+      <AlertDialog
+        isOpen={isDeleteDialogOpen}
+        title="¿Eliminar este cliente?"
+        type="danger"
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        isProcess={deleteCliente.isPending}
+        onCancel={() => setIsDeleteDialogOpen(false)}
+        onConfirm={() => {
+          deleteCliente.mutate(data.id, {
+            onSuccess: () => {
+              setIsDeleteDialogOpen(false)
+              setIsDeleted(true)
+            },
+            onError: () => setIsDeleteDialogOpen(false),
+          })
+        }}
       />
     </div>
   )

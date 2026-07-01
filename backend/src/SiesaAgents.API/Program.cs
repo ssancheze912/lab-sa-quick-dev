@@ -32,6 +32,7 @@ builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 builder.Services.AddScoped<CreateClienteCommandHandler>();
 builder.Services.AddScoped<UpdateClienteCommandHandler>();
+builder.Services.AddScoped<DeleteClienteCommandHandler>();
 
 // Registered before any test-only IStartupFilter (e.g. WebApplicationFactory.ConfigureWebHost)
 // so ExceptionHandlingMiddleware and UseRouting() wrap the composed pipeline from the

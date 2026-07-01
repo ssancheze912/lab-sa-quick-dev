@@ -11,6 +11,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
 
+    public DbSet<ContactoEntity> Contactos => Set<ContactoEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

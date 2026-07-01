@@ -57,4 +57,27 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
         await dbContext.SaveChangesAsync(ct);
         return cliente;
     }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+    {
+        // ExecuteDeleteAsync issues a direct SQL DELETE without loading the
+        // entity into the change tracker — deliberately avoiding
+        // Remove()+SaveChangesAsync(), which would otherwise trigger EF
+        // Core's automatic relationship "fixup" for any ContactoEntity
+        // already tracked by this same DbContext instance (e.g. seeded
+        // earlier in the same unit of work), generating a spurious `UPDATE
+        // contactos SET cliente_id = NULL` in application code. That
+        // orphaning must happen exactly once, at the database level, via the
+        // `ON DELETE SET NULL` FK (ContactoConfiguration) — never via
+        // application-tracked state (Story 2.5, R2).
+        var affected = await dbContext.Clientes
+            .Where(c => c.Id == id)
+            .ExecuteDeleteAsync(ct);
+        return affected > 0;
+    }
+
+    public async Task<int> CountContactosByClienteIdAsync(Guid clienteId, CancellationToken ct)
+    {
+        return await dbContext.Set<ContactoEntity>().CountAsync(c => c.ClienteId == clienteId, ct);
+    }
 }

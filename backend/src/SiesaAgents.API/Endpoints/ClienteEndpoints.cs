@@ -95,6 +95,33 @@ public static class ClienteEndpoints
             .WithName("UpdateCliente")
             .WithTags("Clientes");
 
+        app.MapDelete("/api/v1/clientes/{id:guid}", async (
+                Guid id,
+                [FromServices] DeleteClienteCommandHandler handler,
+                HttpResponse response,
+                CancellationToken ct) =>
+            {
+                var result = await handler.HandleAsync(new DeleteClienteCommand(id), ct);
+                if (!result.Deleted)
+                {
+                    return Results.NotFound();
+                }
+
+                // Story 2.5, Task 3: narrow, story-scoped contract — signals
+                // whether the deleted client had associated contacts so the
+                // frontend can pick the correct toast copy without a Contacto
+                // read API (which does not exist until Epic 3). Epic 3/4 may
+                // supersede this with a richer contract once one exists.
+                if (result.HadAssociatedContacts)
+                {
+                    response.Headers.Append("X-Had-Associated-Contacts", "true");
+                }
+
+                return Results.NoContent();
+            })
+            .WithName("DeleteCliente")
+            .WithTags("Clientes");
+
         return app;
     }
 

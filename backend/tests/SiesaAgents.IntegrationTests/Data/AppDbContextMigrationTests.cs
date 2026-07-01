@@ -91,8 +91,15 @@ public class AppDbContextMigrationTests
         await connection.OpenAsync();
 
         // WHEN querying pg_constraint for the FK's delete rule
+        //
+        // Cast to text explicitly: Postgres's `confdeltype` column is `"char"`
+        // (a single-byte internal type), which Npgsql maps to .NET
+        // `System.Char`, not `System.String` — `ExecuteScalarAsync() as
+        // string` on the raw value silently yields null (invalid cast) rather
+        // than throwing, so the query casts server-side to `text` to get a
+        // string value that round-trips through Npgsql correctly.
         await using var command = new NpgsqlCommand(
-            @"SELECT confdeltype FROM pg_constraint
+            @"SELECT confdeltype::text FROM pg_constraint
               WHERE conname = 'fk_contactos_clientes' AND contype = 'f';",
             connection);
         var deleteRule = await command.ExecuteScalarAsync() as string;

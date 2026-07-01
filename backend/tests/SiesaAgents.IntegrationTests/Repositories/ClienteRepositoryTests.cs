@@ -36,9 +36,16 @@ public class ClienteRepositoryTests : IAsyncLifetime
     {
         if (_createdIds.Count > 0)
         {
-            var toRemove = await _context.Clientes.Where(c => _createdIds.Contains(c.Id)).ToListAsync();
-            _context.Clientes.RemoveRange(toRemove);
-            await _context.SaveChangesAsync();
+            // ExecuteDeleteAsync issues a direct SQL DELETE without loading
+            // rows into the change tracker — Remove()+SaveChangesAsync() here
+            // would otherwise trigger EF Core's automatic relationship
+            // "fixup" for any ContactoEntity this same `_context` still
+            // tracks as Unchanged from an earlier SeedContactoAsync call
+            // (Story 2.5 tests), generating a spurious `UPDATE contactos SET
+            // cliente_id = NULL` for rows that individual tests already
+            // removed via their own `freshContext` — a stale-tracking
+            // cleanup artifact unrelated to the behavior under test.
+            await _context.Clientes.Where(c => _createdIds.Contains(c.Id)).ExecuteDeleteAsync();
         }
 
         await _context.DisposeAsync();
