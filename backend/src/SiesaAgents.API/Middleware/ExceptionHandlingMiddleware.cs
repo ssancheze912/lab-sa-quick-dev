@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
-
 namespace SiesaAgents.API.Middleware;
 
-public class ExceptionHandlingMiddleware(RequestDelegate next)
+public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -10,16 +8,18 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         {
             await next(context);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            context.Response.ContentType = "application/problem+json";
+            logger.LogError(ex, "Unhandled exception");
+
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Status = StatusCodes.Status500InternalServerError,
-                Title = "An unexpected error occurred.",
-                Detail = null,
-            });
+            // Microsoft.AspNetCore.Mvc.ProblemDetails hard-codes [JsonIgnore(Condition = WhenWritingNull)]
+            // on Detail, which drops the "detail" key entirely when null — AC #2 requires status/title/detail
+            // always present (detail explicitly null). A plain anonymous object avoids that attribute.
+            await context.Response.WriteAsJsonAsync(
+                new { status = StatusCodes.Status500InternalServerError, title = "An unexpected error occurred.", detail = (string?)null },
+                options: null,
+                contentType: "application/problem+json");
         }
     }
 }
