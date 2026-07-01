@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { isAxiosError } from 'axios'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { UserCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { AlertDialog, Button } from 'siesa-ui-kit'
 import { useCliente } from '@/modules/crm/clientes/application/hooks/useCliente'
+import { ClienteForm } from '@/modules/crm/clientes/presentation/components/ClienteForm'
 
 interface ClienteDetailViewProps {
   clienteId?: string
@@ -37,6 +40,7 @@ export function ClienteDetailView({
 }: ClienteDetailViewProps) {
   const knownMissing = listMembership === 'missing'
   const listPending = listMembership === 'pending'
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const { data, isLoading, isError, error } = useCliente(clienteId, {
     enabled: listMembership !== 'missing' && listMembership !== 'pending',
   })
@@ -103,6 +107,9 @@ export function ClienteDetailView({
 
   return (
     <div data-testid="cliente-detail-panel" className="flex-1 p-6">
+      <div className="mb-4 flex justify-end">
+        <Button onClick={() => setIsEditDialogOpen(true)}>Editar</Button>
+      </div>
       <dl className="flex flex-col gap-3">
         <div>
           <dt className="text-xs font-medium uppercase text-slate-500">Nombre</dt>
@@ -121,6 +128,28 @@ export function ClienteDetailView({
           <dd className="text-sm text-slate-900">{data.ciudad}</dd>
         </div>
       </dl>
+
+      <AlertDialog
+        isOpen={isEditDialogOpen}
+        title="Editar cliente"
+        onCancel={() => setIsEditDialogOpen(false)}
+        hideCancel
+        actions={null}
+        description={
+          <ClienteForm
+            mode="edit"
+            id={data.id}
+            initialValues={{
+              nombre: data.nombre,
+              nit: data.nit,
+              telefono: data.telefono,
+              ciudad: data.ciudad,
+            }}
+            onSuccess={() => setIsEditDialogOpen(false)}
+            onCancel={() => setIsEditDialogOpen(false)}
+          />
+        }
+      />
     </div>
   )
 }

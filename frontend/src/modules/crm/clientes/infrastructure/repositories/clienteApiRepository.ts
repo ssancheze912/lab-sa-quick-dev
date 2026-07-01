@@ -19,6 +19,14 @@ class ClienteApiRepository implements IClienteRepository {
     const { data } = await apiClient.post<Cliente>('/api/v1/clientes', payload)
     return data
   }
+
+  async update(
+    id: string,
+    payload: { nombre: string; nit: string; telefono: string; ciudad: string },
+  ): Promise<Cliente> {
+    const { data } = await apiClient.put<Cliente>(`/api/v1/clientes/${id}`, payload)
+    return data
+  }
 }
 
 export const clienteApiRepository = new ClienteApiRepository()

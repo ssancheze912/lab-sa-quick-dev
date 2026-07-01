@@ -33,4 +33,16 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
         dbContext.Clientes.Add(cliente);
         await dbContext.SaveChangesAsync(ct);
     }
+
+    public async Task<ClienteEntity?> UpdateAsync(ClienteEntity cliente, CancellationToken ct)
+    {
+        var tracked = await dbContext.Clientes.FirstOrDefaultAsync(c => c.Id == cliente.Id, ct);
+        if (tracked is null)
+        {
+            return null;
+        }
+
+        await dbContext.SaveChangesAsync(ct);
+        return tracked;
+    }
 }

@@ -4,19 +4,24 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Input, Button } from 'siesa-ui-kit'
 import { clienteSchema, type ClienteFormValues } from '@/modules/crm/clientes/application/clienteSchema'
 import { useCreateCliente } from '@/modules/crm/clientes/application/hooks/useCreateCliente'
+import { useUpdateCliente } from '@/modules/crm/clientes/application/hooks/useUpdateCliente'
 
 const CONFLICT_MESSAGE = 'El NIT/RUC ya está registrado'
 
 interface ClienteFormProps {
   mode: 'create' | 'edit'
+  id?: string
   initialValues?: ClienteFormValues
   onSuccess?: () => void
+  onCancel?: () => void
 }
 
 const FIELD_ORDER = ['nombre', 'nit', 'telefono', 'ciudad'] as const
 
-export function ClienteForm({ mode: _mode, initialValues, onSuccess }: ClienteFormProps) {
+export function ClienteForm({ mode, id, initialValues, onSuccess, onCancel }: ClienteFormProps) {
   const createCliente = useCreateCliente()
+  const updateCliente = useUpdateCliente(id ?? '')
+  const mutation = mode === 'edit' ? updateCliente : createCliente
   const {
     register,
     handleSubmit,
@@ -34,14 +39,14 @@ export function ClienteForm({ mode: _mode, initialValues, onSuccess }: ClienteFo
 
   const onSubmit = async (data: ClienteFormValues) => {
     try {
-      await createCliente.mutateAsync(data)
+      await mutation.mutateAsync(data)
       onSuccess?.()
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 409) {
         setError('nit', { type: 'manual', message: CONFLICT_MESSAGE })
         return
       }
-      // Non-409 failures are surfaced via toast.error inside useCreateCliente.
+      // Non-409 failures are surfaced via toast.error inside the mutation hook.
     }
   }
 
@@ -76,7 +81,12 @@ export function ClienteForm({ mode: _mode, initialValues, onSuccess }: ClienteFo
         {...register('ciudad')}
       />
       <div className="flex justify-end gap-2">
-        <Button htmlType="submit" disabled={createCliente.isPending}>
+        {onCancel && (
+          <Button type="outline" htmlType="button" onClick={onCancel}>
+            Cancelar
+          </Button>
+        )}
+        <Button htmlType="submit" disabled={mutation.isPending}>
           Guardar
         </Button>
       </div>

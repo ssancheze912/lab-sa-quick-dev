@@ -64,6 +64,37 @@ public static class ClienteEndpoints
             .WithName("CreateCliente")
             .WithTags("Clientes");
 
+        app.MapPut("/api/v1/clientes/{id:guid}", async (
+                Guid id,
+                UpdateClienteCommand command,
+                UpdateClienteCommandHandler handler,
+                CancellationToken ct) =>
+            {
+                var effectiveCommand = command with { Id = id };
+
+                var validator = new UpdateClienteRequestValidator();
+                var validationResult = validator.Validate(effectiveCommand);
+                if (!validationResult.IsValid)
+                {
+                    return Results.ValidationProblem(validationResult.ToDictionary());
+                }
+
+                try
+                {
+                    var updated = await handler.HandleAsync(effectiveCommand, ct);
+                    return updated is null ? Results.NotFound() : Results.Ok(updated);
+                }
+                catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+                {
+                    return Results.Problem(
+                        statusCode: StatusCodes.Status409Conflict,
+                        title: "Conflict",
+                        detail: "El NIT/RUC ya está registrado");
+                }
+            })
+            .WithName("UpdateCliente")
+            .WithTags("Clientes");
+
         return app;
     }
 

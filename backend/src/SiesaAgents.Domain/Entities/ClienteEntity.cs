@@ -55,4 +55,33 @@ public class ClienteEntity
             Ciudad = ciudad,
         };
     }
+
+    public void Update(string nombre, string nit, string telefono, string ciudad)
+    {
+        if (string.IsNullOrWhiteSpace(nombre))
+        {
+            throw new ArgumentException("Nombre es requerido.", nameof(nombre));
+        }
+
+        if (string.IsNullOrWhiteSpace(nit))
+        {
+            throw new ArgumentException("NIT/RUC es requerido.", nameof(nit));
+        }
+
+        if (string.IsNullOrWhiteSpace(telefono))
+        {
+            throw new ArgumentException("Teléfono es requerido.", nameof(telefono));
+        }
+
+        if (string.IsNullOrWhiteSpace(ciudad))
+        {
+            throw new ArgumentException("Ciudad es requerida.", nameof(ciudad));
+        }
+
+        Nombre = nombre;
+        Nit = nit;
+        Telefono = telefono;
+        Ciudad = ciudad;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }

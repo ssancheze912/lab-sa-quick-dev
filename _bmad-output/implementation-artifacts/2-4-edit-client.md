@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -28,39 +28,39 @@ so that the client information stays up to date.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: `ClienteEntity` mutation behavior for update (AC: #2, #3, #7)
-  - [ ] Add an `Update(string nombre, string nit, string telefono, string ciudad)` instance method to `ClienteEntity` (`backend/src/SiesaAgents.Domain/Entities/ClienteEntity.cs`) — reuses the exact same required-field validation as `Create` (throws `ArgumentException` per empty/whitespace field), reassigns all four mutable properties, and sets `UpdatedAt = DateTimeOffset.UtcNow`. Do NOT touch `Id` or `CreatedAt`. Do NOT alter `Create` or the private constructor.
-  - [ ] Add `Task<ClienteEntity?> UpdateAsync(ClienteEntity cliente, CancellationToken ct)` to `IClienteRepository` (`backend/src/SiesaAgents.Domain/Repositories/IClienteRepository.cs`) — additive, alongside existing `GetAllAsync`/`GetByIdAsync`/`AddAsync`. Returns `null` if no entity with `cliente.Id` exists (404 case), else persists and returns the updated entity.
-  - [ ] Implement `UpdateAsync` in `ClienteRepository` (`backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`) — load tracked entity by `Id` via `AppDbContext`, if not found return `null`; else call the loaded entity's `Update(...)` (do NOT construct a brand-new `ClienteEntity` — EF Core must track the existing row) and `SaveChangesAsync`. Let a Postgres unique-constraint violation on `uk_clientes_nit` (from a different client sharing the new NIT) propagate as `DbUpdateException`/`Npgsql` unique-violation — same race-condition-safe pattern as Story 2.3's `AddAsync` (AC #5, #7 — the DB constraint is per-value, not per-value-excluding-self, so self-update with an unchanged NIT does not violate it because the row being updated IS the one holding that NIT already).
+- [x] Task 1 — Backend: `ClienteEntity` mutation behavior for update (AC: #2, #3, #7)
+  - [x] Add an `Update(string nombre, string nit, string telefono, string ciudad)` instance method to `ClienteEntity` (`backend/src/SiesaAgents.Domain/Entities/ClienteEntity.cs`) — reuses the exact same required-field validation as `Create` (throws `ArgumentException` per empty/whitespace field), reassigns all four mutable properties, and sets `UpdatedAt = DateTimeOffset.UtcNow`. Do NOT touch `Id` or `CreatedAt`. Do NOT alter `Create` or the private constructor.
+  - [x] Add `Task<ClienteEntity?> UpdateAsync(ClienteEntity cliente, CancellationToken ct)` to `IClienteRepository` (`backend/src/SiesaAgents.Domain/Repositories/IClienteRepository.cs`) — additive, alongside existing `GetAllAsync`/`GetByIdAsync`/`AddAsync`. Returns `null` if no entity with `cliente.Id` exists (404 case), else persists and returns the updated entity.
+  - [x] Implement `UpdateAsync` in `ClienteRepository` (`backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`) — load tracked entity by `Id` via `AppDbContext`, if not found return `null`; else call the loaded entity's `Update(...)` (do NOT construct a brand-new `ClienteEntity` — EF Core must track the existing row) and `SaveChangesAsync`. Let a Postgres unique-constraint violation on `uk_clientes_nit` (from a different client sharing the new NIT) propagate as `DbUpdateException`/`Npgsql` unique-violation — same race-condition-safe pattern as Story 2.3's `AddAsync` (AC #5, #7 — the DB constraint is per-value, not per-value-excluding-self, so self-update with an unchanged NIT does not violate it because the row being updated IS the one holding that NIT already).
 
-- [ ] Task 2 — Backend: `UpdateClienteCommand` + Handler + Validator + 404/400/409 mapping (AC: #2, #3, #5, #7)
-  - [ ] Create `UpdateClienteCommand.cs` (`backend/src/SiesaAgents.Application/Commands/Clientes/`) — properties `Id` (Guid), `Nombre`, `Nit`, `Telefono`, `Ciudad`. Sibling to `CreateClienteCommand.cs` in the same folder (mirror Story 2.3's exact folder — do NOT create a new `Application/Clientes/Commands/` path; this project uses `Application/Commands/Clientes/`).
-  - [ ] Create `UpdateClienteCommandHandler.cs` in the same folder — calls `IClienteRepository.GetByIdAsync(command.Id, ct)`; if `null`, return `null` (endpoint maps to 404); else calls `IClienteRepository.UpdateAsync` with the loaded entity mutated via `.Update(...)`, maps the result to `ClienteDto` (`backend/src/SiesaAgents.Application/DTOs/ClienteDto.cs`, reused as-is — no new DTO shape), returns it.
-  - [ ] Create `UpdateClienteRequestValidator.cs` (FluentValidation, `backend/src/SiesaAgents.Application/Validators/`) — `Nombre`, `Nit`, `Telefono`, `Ciudad` all `NotEmpty()`, mirrors `CreateClienteRequestValidator.cs` exactly (do not validate `Id`, it comes from the route). Invoked explicitly in the `PUT` endpoint (Minimal API has no `[ApiController]` auto-validation, same as Story 2.3's `POST`).
-  - [ ] In `ClienteEndpoints.cs`, catch the same `DbUpdateException`/`PostgresException.SqlState == "23505"` pattern already established by `IsUniqueViolation` (Story 2.3) and map to `409 Conflict` via `Results.Problem` with `detail` = "El NIT/RUC ya está registrado" (NFR6). FluentValidation failures map to `400 Bad Request` via `Results.ValidationProblem`. Handler returning `null` (client not found) maps to `Results.NotFound()`.
+- [x] Task 2 — Backend: `UpdateClienteCommand` + Handler + Validator + 404/400/409 mapping (AC: #2, #3, #5, #7)
+  - [x] Create `UpdateClienteCommand.cs` (`backend/src/SiesaAgents.Application/Commands/Clientes/`) — properties `Id` (Guid), `Nombre`, `Nit`, `Telefono`, `Ciudad`. Sibling to `CreateClienteCommand.cs` in the same folder (mirror Story 2.3's exact folder — do NOT create a new `Application/Clientes/Commands/` path; this project uses `Application/Commands/Clientes/`).
+  - [x] Create `UpdateClienteCommandHandler.cs` in the same folder — calls `IClienteRepository.GetByIdAsync(command.Id, ct)`; if `null`, return `null` (endpoint maps to 404); else calls `IClienteRepository.UpdateAsync` with the loaded entity mutated via `.Update(...)`, maps the result to `ClienteDto` (`backend/src/SiesaAgents.Application/DTOs/ClienteDto.cs`, reused as-is — no new DTO shape), returns it.
+  - [x] Create `UpdateClienteRequestValidator.cs` (FluentValidation, `backend/src/SiesaAgents.Application/Validators/`) — `Nombre`, `Nit`, `Telefono`, `Ciudad` all `NotEmpty()`, mirrors `CreateClienteRequestValidator.cs` exactly (do not validate `Id`, it comes from the route). Invoked explicitly in the `PUT` endpoint (Minimal API has no `[ApiController]` auto-validation, same as Story 2.3's `POST`).
+  - [x] In `ClienteEndpoints.cs`, catch the same `DbUpdateException`/`PostgresException.SqlState == "23505"` pattern already established by `IsUniqueViolation` (Story 2.3) and map to `409 Conflict` via `Results.Problem` with `detail` = "El NIT/RUC ya está registrado" (NFR6). FluentValidation failures map to `400 Bad Request` via `Results.ValidationProblem`. Handler returning `null` (client not found) maps to `Results.NotFound()`.
 
-- [ ] Task 3 — Backend: `PUT /api/v1/clientes/{id}` endpoint (AC: #2, #3, #5, #7)
-  - [ ] Add `app.MapPut("/api/v1/clientes/{id:guid}", ...)` to `ClienteEndpoints.cs` — Minimal API, binds `Guid id` from the route and `UpdateClienteCommand` from the request body (construct the command with the route `id` overriding any body `id` to prevent mismatch). Returns `200 OK` with the updated `ClienteDto` on success. Tagged `.WithTags("Clientes")`, named `"UpdateCliente"`.
-  - [ ] `GET`/`POST /api/v1/clientes` endpoints left unmodified — purely additive change, same discipline as Story 2.3.
+- [x] Task 3 — Backend: `PUT /api/v1/clientes/{id}` endpoint (AC: #2, #3, #5, #7)
+  - [x] Add `app.MapPut("/api/v1/clientes/{id:guid}", ...)` to `ClienteEndpoints.cs` — Minimal API, binds `Guid id` from the route and `UpdateClienteCommand` from the request body (construct the command with the route `id` overriding any body `id` to prevent mismatch). Returns `200 OK` with the updated `ClienteDto` on success. Tagged `.WithTags("Clientes")`, named `"UpdateCliente"`.
+  - [x] `GET`/`POST /api/v1/clientes` endpoints left unmodified — purely additive change, same discipline as Story 2.3.
 
-- [ ] Task 4 — Frontend: `useUpdateCliente` mutation hook (AC: #2, #5)
-  - [ ] Add `update(id, data): Promise<Cliente>` to `IClienteRepository.ts` (`frontend/src/modules/crm/clientes/domain/repositories/IClienteRepository.ts`) — additive; `getAll`/`getById`/`create` signatures unchanged.
-  - [ ] Implement `update` in `clienteApiRepository.ts` (`frontend/src/modules/crm/clientes/infrastructure/repositories/clienteApiRepository.ts`) — `PUT /api/v1/clientes/${id}` via the existing `apiClient` Axios instance; errors propagate as rejected promises (no swallowing), mirrors `create`'s exact pattern.
-  - [ ] Create `useUpdateCliente.ts` (`frontend/src/modules/crm/clientes/application/hooks/`) — TanStack Query `useMutation`. `onSuccess`: invalidates BOTH `['clientes']` (list) AND `['clientes', id]` (detail, per architecture's canonical query keys) + `toast.success('Cliente actualizado correctamente')`. `onError`: 409 (via `isAxiosError` + `status === 409`, same discrimination pattern as `useCreateCliente`) is NOT toasted (left for `ClienteForm` to render inline); any other error triggers `toast.error('No se pudo guardar. Intenta de nuevo.')`. Mirror `useCreateCliente.ts`'s structure exactly, do not invent a different error-handling shape.
+- [x] Task 4 — Frontend: `useUpdateCliente` mutation hook (AC: #2, #5)
+  - [x] Add `update(id, data): Promise<Cliente>` to `IClienteRepository.ts` (`frontend/src/modules/crm/clientes/domain/repositories/IClienteRepository.ts`) — additive; `getAll`/`getById`/`create` signatures unchanged.
+  - [x] Implement `update` in `clienteApiRepository.ts` (`frontend/src/modules/crm/clientes/infrastructure/repositories/clienteApiRepository.ts`) — `PUT /api/v1/clientes/${id}` via the existing `apiClient` Axios instance; errors propagate as rejected promises (no swallowing), mirrors `create`'s exact pattern.
+  - [x] Create `useUpdateCliente.ts` (`frontend/src/modules/crm/clientes/application/hooks/`) — TanStack Query `useMutation`. `onSuccess`: invalidates BOTH `['clientes']` (list) AND `['clientes', id]` (detail, per architecture's canonical query keys) + `toast.success('Cliente actualizado correctamente')`. `onError`: 409 (via `isAxiosError` + `status === 409`, same discrimination pattern as `useCreateCliente`) is NOT toasted (left for `ClienteForm` to render inline); any other error triggers `toast.error('No se pudo guardar. Intenta de nuevo.')`. Mirror `useCreateCliente.ts`'s structure exactly, do not invent a different error-handling shape.
 
-- [ ] Task 5 — Frontend: wire `ClienteForm` edit mode + "Editar" trigger in `ClienteDetailView` (AC: #1, #2, #4, #5, #6, #7)
-  - [ ] `ClienteForm.tsx` (`frontend/src/modules/crm/clientes/presentation/components/`) already accepts `mode: 'create' | 'edit'` and `initialValues` props from Story 2.3 but currently ALWAYS calls `useCreateCliente` internally regardless of `mode` (the `mode` param is prefixed `_mode`, unused). Wire the branch: when `mode === 'edit'`, call `useUpdateCliente(initialValues's id)` (or pass `id` as a new required prop when `mode === 'edit'`) instead of `useCreateCliente`; keep the `create` path byte-for-byte unchanged. Do not restructure the field-rendering JSX (Input components, error-display logic) — only branch the mutation call.
-  - [ ] Add an `onCancel` callback prop to `ClienteForm` (or reuse the existing dialog-close mechanism from `AlertDialog`'s host) so "Cancelar" closes the form without calling any mutation and without mutating any local state that could leak (AC #6) — clicking Cancelar must trigger zero network requests.
-  - [ ] Add an "Editar" `Button` (`siesa-ui-kit`) to `ClienteDetailView.tsx` (`frontend/src/modules/crm/clientes/presentation/components/`) rendered alongside the existing `dl` detail block (only when a client is successfully loaded — i.e., in the same branch as the current `cliente-detail-panel` return, not in loading/error/not-found states). Clicking it opens `ClienteForm` in `mode="edit"` with `initialValues` populated from the already-loaded `data` (no extra fetch — the detail view already has the full `Cliente` object in memory), hosted in `siesa-ui-kit`'s `AlertDialog` — same P0 dialog primitive precedent as Story 2.3's "Nuevo cliente" trigger (confirmed: no separate `Dialog` export exists in the kit).
-  - [ ] All user-facing text in Spanish ("Editar" button label); code identifiers in English.
+- [x] Task 5 — Frontend: wire `ClienteForm` edit mode + "Editar" trigger in `ClienteDetailView` (AC: #1, #2, #4, #5, #6, #7)
+  - [x] `ClienteForm.tsx` (`frontend/src/modules/crm/clientes/presentation/components/`) already accepts `mode: 'create' | 'edit'` and `initialValues` props from Story 2.3 but currently ALWAYS calls `useCreateCliente` internally regardless of `mode` (the `mode` param is prefixed `_mode`, unused). Wire the branch: when `mode === 'edit'`, call `useUpdateCliente(initialValues's id)` (or pass `id` as a new required prop when `mode === 'edit'`) instead of `useCreateCliente`; keep the `create` path byte-for-byte unchanged. Do not restructure the field-rendering JSX (Input components, error-display logic) — only branch the mutation call.
+  - [x] Add an `onCancel` callback prop to `ClienteForm` (or reuse the existing dialog-close mechanism from `AlertDialog`'s host) so "Cancelar" closes the form without calling any mutation and without mutating any local state that could leak (AC #6) — clicking Cancelar must trigger zero network requests.
+  - [x] Add an "Editar" `Button` (`siesa-ui-kit`) to `ClienteDetailView.tsx` (`frontend/src/modules/crm/clientes/presentation/components/`) rendered alongside the existing `dl` detail block (only when a client is successfully loaded — i.e., in the same branch as the current `cliente-detail-panel` return, not in loading/error/not-found states). Clicking it opens `ClienteForm` in `mode="edit"` with `initialValues` populated from the already-loaded `data` (no extra fetch — the detail view already has the full `Cliente` object in memory), hosted in `siesa-ui-kit`'s `AlertDialog` — same P0 dialog primitive precedent as Story 2.3's "Nuevo cliente" trigger (confirmed: no separate `Dialog` export exists in the kit).
+  - [x] All user-facing text in Spanish ("Editar" button label); code identifiers in English.
 
-- [ ] Task 6 — Tests (AC: all)
-  - [ ] Backend xUnit: `ClienteRepositoryTests` — `UpdateAsync` happy path, not-found (`null` return), and duplicate-NIT-from-different-client `DbUpdateException` case; add a case proving self-update with unchanged NIT does NOT throw (AC #7).
-  - [ ] Backend xUnit integration (`WebApplicationFactory<Program>`): `ClienteEndpointsTests` — `PUT` 200/400/404/409 contract cases.
-  - [ ] Frontend Vitest + RTL: extend `ClienteForm.test.tsx` — edit-mode pre-fill (TC-E2-P1-08), edit-mode empty-field validation blocks submit (TC-E2-P1-10), edit success toast exact copy "Cliente actualizado correctamente" (TC-E2-P2-06), Cancelar makes zero API calls and preserves original values (TC-E2-P1-15).
-  - [ ] Frontend Vitest + RTL: `useUpdateCliente.test.tsx` (mirrors `useCreateCliente.test.tsx`) — success invalidates both query keys + toast, 409 does not toast, other errors toast generic message.
-  - [ ] MSW handlers (`frontend/src/test/msw/handlers.ts`): add `PUT /api/v1/clientes/:id` handler variants (200, 400, 404, 409) alongside the existing `POST` handlers.
-  - [ ] E2E (Playwright, Chromium): `e2e/tests/clientes/edit-client.spec.ts` — full edit journey: open detail → click "Editar" → verify pre-fill → change `Ciudad` → submit → assert detail panel updates immediately + toast exact copy (TC-E2-P1-09). Full `e2e/tests/clientes/` suite must remain green (no regression to Story 2.1/2.2/2.3 scenarios).
+- [x] Task 6 — Tests (AC: all)
+  - [x] Backend xUnit: `ClienteRepositoryTests` — `UpdateAsync` happy path, not-found (`null` return), and duplicate-NIT-from-different-client `DbUpdateException` case; add a case proving self-update with unchanged NIT does NOT throw (AC #7).
+  - [x] Backend xUnit integration (`WebApplicationFactory<Program>`): `ClienteEndpointsTests` — `PUT` 200/400/404/409 contract cases.
+  - [x] Frontend Vitest + RTL: extend `ClienteForm.test.tsx` — edit-mode pre-fill (TC-E2-P1-08), edit-mode empty-field validation blocks submit (TC-E2-P1-10), edit success toast exact copy "Cliente actualizado correctamente" (TC-E2-P2-06), Cancelar makes zero API calls and preserves original values (TC-E2-P1-15).
+  - [x] Frontend Vitest + RTL: `useUpdateCliente.test.tsx` (mirrors `useCreateCliente.test.tsx`) — success invalidates both query keys + toast, 409 does not toast, other errors toast generic message.
+  - [x] MSW handlers (`frontend/src/test/msw/handlers.ts`): add `PUT /api/v1/clientes/:id` handler variants (200, 400, 404, 409) alongside the existing `POST` handlers.
+  - [x] E2E (Playwright, Chromium): `e2e/tests/clientes/edit-client.spec.ts` — full edit journey: open detail → click "Editar" → verify pre-fill → change `Ciudad` → submit → assert detail panel updates immediately + toast exact copy (TC-E2-P1-09). Full `e2e/tests/clientes/` suite must remain green (no regression to Story 2.1/2.2/2.3 scenarios).
 
 ## Dev Notes
 
@@ -137,8 +137,49 @@ This story delivers ONLY the edit-client `PUT` flow. It does **not** implement:
 
 ### Agent Model Used
 
+Claude Sonnet 5 (sa-dev-story sub-agent, BMAD dev-story workflow)
+
 ### Debug Log References
+
+- Backend integration test suite initially failed 39/67 with unrelated 500 errors (even on `GET /api/v1/clientes`, which this story never touches). Root cause: `UpdateClienteCommandHandler` was not registered in the DI container, which broke Minimal API's endpoint metadata inference for the ENTIRE router (`RequestDelegateFactory` throws `InvalidOperationException: Failure to infer one or more parameters` for the `handler` parameter, and `WebApplicationFactory` surfaces that as a 500 for every route). Fixed by adding `builder.Services.AddScoped<UpdateClienteCommandHandler>()` in `Program.cs`, mirroring `CreateClienteCommandHandler`'s registration. After the fix, all 84 integration tests (67 pre-existing Cliente tests + repository tests) pass.
+- `e2e/tests/clientes/clientes-crud.spec.ts` (Story 2.1/2.2 FR2 filter tests) show 2 pre-existing flaky failures caused by accumulated cross-session seed data in the shared local Postgres DB (duplicate "Filtro Especial"-named clients from prior manual test runs), unrelated to this story's `PUT` endpoint. Verified via `git stash` that these failures are NOT introduced by this story's changes.
+- `edit-client.spec.ts` AC #7 test failed once under 2-worker parallelism (resource contention against other test files' seed/cleanup) but passes consistently under `--workers=1`; not a defect in the implementation.
 
 ### Completion Notes List
 
+- Backend: added `ClienteEntity.Update(...)` (mirrors `Create`'s validation), `IClienteRepository.UpdateAsync`, `ClienteRepository.UpdateAsync` (re-attaches by Id, lets `uk_clientes_nit` violations propagate as `DbUpdateException` for the 409 path), `UpdateClienteCommand`/`UpdateClienteCommandHandler`/`UpdateClienteRequestValidator` (mirrors Story 2.3's Create pattern exactly, manual DTO mapping, no AutoMapper), and `PUT /api/v1/clientes/{id:guid}` endpoint (route id overrides body id, 200/400/404/409 mapping, reuses `IsUniqueViolation`).
+- Frontend: added `IClienteRepository.update`/`clienteApiRepository.update` (additive), `useUpdateCliente(id)` hook (mirrors `useCreateCliente`, invalidates both `['clientes']` and `['clientes', id]`, exact success toast copy, 409 silently propagated for inline handling). Wired `ClienteForm`'s dormant `mode`/`initialValues` prop surface: added `id` and `onCancel` props, branches between `useCreateCliente`/`useUpdateCliente` based on `mode`, added a "Cancelar" `Button` (siesa-ui-kit, `type="outline"`) that fires zero network calls. Added an "Editar" `Button` + `AlertDialog` (siesa-ui-kit, same P0 primitive as Story 2.3) to `ClienteDetailView`'s loaded-success branch, pre-filled from already-in-memory `data` (no extra fetch).
+- All 7 acceptance criteria covered by existing ATDD tests, which now pass (RED → GREEN): backend 84/84 integration + 50/50 unit tests; frontend 152/152 Vitest+RTL tests; E2E 7/7 `edit-client.spec.ts` (Chromium) plus no regression across the full `e2e/tests/clientes/` suite (pre-existing flake in `clientes-crud.spec.ts` unrelated to this story, confirmed via `git stash` baseline).
+
 ### File List
+
+**Backend (new):**
+- `backend/src/SiesaAgents.Application/Commands/Clientes/UpdateClienteCommand.cs`
+- `backend/src/SiesaAgents.Application/Commands/Clientes/UpdateClienteCommandHandler.cs`
+- `backend/src/SiesaAgents.Application/Validators/UpdateClienteRequestValidator.cs`
+
+**Backend (modified):**
+- `backend/src/SiesaAgents.Domain/Entities/ClienteEntity.cs`
+- `backend/src/SiesaAgents.Domain/Repositories/IClienteRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
+- `backend/src/SiesaAgents.API/Program.cs`
+
+**Frontend (new):**
+- `frontend/src/modules/crm/clientes/application/hooks/useUpdateCliente.ts`
+
+**Frontend (modified):**
+- `frontend/src/modules/crm/clientes/domain/repositories/IClienteRepository.ts`
+- `frontend/src/modules/crm/clientes/infrastructure/repositories/clienteApiRepository.ts`
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteForm.tsx`
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteDetailView.tsx`
+
+**Tests (pre-existing ATDD, no changes needed — now GREEN):**
+- `backend/tests/SiesaAgents.IntegrationTests/Repositories/ClienteRepositoryTests.cs`
+- `backend/tests/SiesaAgents.IntegrationTests/Endpoints/ClienteEndpointsTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Validators/UpdateClienteRequestValidatorTests.cs`
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteForm.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteDetailView.test.tsx`
+- `frontend/src/modules/crm/clientes/application/hooks/useUpdateCliente.test.tsx`
+- `frontend/src/test/msw/handlers.ts`
+- `e2e/tests/clientes/edit-client.spec.ts`

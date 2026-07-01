@@ -14,4 +14,6 @@ public interface IClienteRepository
     Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct);
 
     Task AddAsync(ClienteEntity cliente, CancellationToken ct);
+
+    Task<ClienteEntity?> UpdateAsync(ClienteEntity cliente, CancellationToken ct);
 }
