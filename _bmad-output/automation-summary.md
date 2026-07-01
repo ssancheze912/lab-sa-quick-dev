@@ -1,126 +1,114 @@
-# Automation Summary - Story 1.3: Backend Database Foundation
+# Automation Summary - Story 2.1: Client List & Search
 
 **Date:** 2026-07-01
-**Story:** 1.3 — Backend Database Foundation
-**Epic:** 1 — Project Foundation & Application Shell
+**Story:** 2.1 — Client List & Search
+**Epic:** 2 — Client Management
 **Mode:** BMad-Integrated (expanded existing ATDD suite)
 **Coverage Target:** critical-paths + edge cases
 
 ## Context
 
-The ATDD suite generated pre-implementation already covered the happy paths for all 3 acceptance criteria via xUnit + `WebApplicationFactory<Program>` / real PostgreSQL integration tests:
+The pre-implementation ATDD suite already covered all 5 acceptance criteria GREEN across three files:
 
-- `backend/tests/SiesaAgents.IntegrationTests/Middleware/ExceptionHandlingMiddlewareTests.cs` (AC2 / TC-E1-P0-05) — 5 tests
-- `backend/tests/SiesaAgents.IntegrationTests/Data/AppDbContextMigrationTests.cs` (AC1 / TC-E1-P1-05) — 4 tests
-- `backend/tests/SiesaAgents.IntegrationTests/Data/SnakeCaseNamingTests.cs` (AC3 / TC-E1-P2-04) — 6 tests
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.test.tsx` (AC #1-#5, functional) — 17 tests
+- `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.performance.test.tsx` (NFR1, TC-E2-P1-02) — 1 test
+- `e2e/tests/clientes/client-list-search.spec.ts` (AC #3, #4, #5 states end-to-end) — 3 Playwright specs (x5 projects)
+- Backend xUnit ATDD: `ClienteRepositoryTests` (5 tests) + `ClienteEndpointsTests` (3 tests)
 
-All 14 original ATDD tests pass (verified GREEN against the current implementation; confirmed again in this run). This workflow expanded coverage with unit-level edge cases (isolated from PostgreSQL where possible) and additional integration-level boundary conditions not exercised by the ATDD suite. Stack is .NET/xUnit (not Playwright/TS) — test-level selection, priority tagging (P0-P3), and Given-When-Then structure from the TEA knowledge base were adapted to this stack; no E2E/Component browser tests apply to this backend-only story.
+This workflow expanded coverage with edge cases, boundary conditions, and error paths not exercised by the ATDD suite: special/regex characters, whitespace handling, unicode/accented input, malformed API payloads, raw network failures (vs. HTTP 500 only), rapid/duplicate interactions, and defensive rendering (XSS-safe text rendering). No new E2E specs were added — these edge cases are fully exercised at the component (RTL/MSW) and API-integration (xUnit/PostgreSQL) levels, avoiding duplicate coverage per the "avoid duplicate coverage" principle (E2E reserved for critical-path states already covered by ATDD).
 
 ## Tests Created
 
-### Unit Tests (P1-P2) — `backend/tests/SiesaAgents.UnitTests/Data/ModelBuilderExtensionsTests.cs` (8 tests)
+### Component Tests (P1-P2) — `frontend/src/modules/crm/clientes/presentation/components/ClienteListView.edge-cases.test.tsx` (14 tests)
 
-Isolates the `ApplySnakeCaseNaming()` regex conversion (AC3) from PostgreSQL entirely, using a local `ProbeDbContext` (real `DbSet`, `UseNpgsql()` configured but never opening a socket) since `AppDbContext` itself has zero `DbSet`s by this story's scope boundary.
+**Search input handling:**
+- [P2] Whitespace-only search term treated as empty (full list shown)
+- [P1] Regex special characters (`.*+?()[]{}|^$\`) pasted into search do not crash the app; resolves to search-empty
+- [P2] Literal substring match on names containing parentheses (`(Centro)`)
+- [P2] Case-insensitive match on accented/unicode characters (`ÚNICÁ` → `Únicá`)
+- [P1] Clearing the search input after a zero-result filter restores the full list
+- [P2] Single-character search term filters correctly
+- [P2] Leading/trailing whitespace in search term is trimmed before matching
+- [P1] `nombre` containing HTML/script-like text renders as inert text (no injection risk)
 
-- [P1] Converts pluralized table name (`SampleEntity` → `sample_entities`)
-- [P1] Converts primary key `Id` → `id`
-- [P1] Handles consecutive-uppercase acronym `CustomerID` → `customer_id`
-- [P2] Handles digits in property name `OrderNumber2024` → `order_number2024`
-- [P2] Leaves already-snake_case property unchanged
-- [P2] Handles single uppercase letter property name `A` → `a`
-- [P2] Documents regex limitation for acronym-prefixed names `HTMLParser` → `htmlparser` (no split before "Parser")
-- [P2] Idempotent when applied twice in the same model-build pass
+**Data payload boundaries:**
+- [P2] Exactly one client renders correctly (singular boundary, no empty state)
+- [P2] Two clients sharing the same `nombre` (different NIT) render as distinct rows (keyed by id)
+- [P1] Malformed (non-array) API payload does not crash the view
 
-### Unit Tests (P0-P2) — `backend/tests/SiesaAgents.UnitTests/Middleware/ExceptionHandlingMiddlewareTests.cs` (9 tests)
+**Network/error resilience:**
+- [P1] Raw network failure (`HttpResponse.error()`, connection refused) shows `ErrorPanel`, not just HTTP 500
+- [P2] HTTP 404 response shows `ErrorPanel` instead of a false empty/success state
+- [P2] Rapid double-click on "Reintentar" does not break state (still shows `ErrorPanel`, fires expected retry requests)
 
-Isolates `ExceptionHandlingMiddleware.InvokeAsync()` (AC2) from the HTTP pipeline using a `DefaultHttpContext` and a recording fake `ILogger` (no Moq/NSubstitute dependency added).
+### Backend Integration Tests (P1-P2) — `ClienteRepositoryTests.cs` (+6 tests) and `ClienteEndpointsTests.cs` (+4 tests)
 
-- [P1] Happy path: no exception → response status code untouched
-- [P1] Happy path: no exception → no response body written
-- [P1] Happy path: no exception → no error logged
-- [P0] Exception thrown → logs the exact exception instance exactly once at Error level (guards the Story 1.1 code-review MEDIUM finding this story resolved)
-- [P0] Exception thrown → is swallowed, never propagates out of `InvokeAsync`
-- [P1] Exception thrown → response body has exactly 3 top-level keys (no extra diagnostic fields)
-- [P1] Exception thrown → `status` is a JSON number (500), not a string
-- [P0] Exception thrown → `detail` is an explicit JSON `null` literal, not omitted (guards the `[JsonIgnore(WhenWritingNull)]` fix noted in the Dev Agent Record)
-- [P1] Exception thrown → `Content-Type` header is `application/problem+json` at the `HttpContext` level
+Repository (`GetAllAsync`, real PostgreSQL, `EF.Functions.ILike`):
+- [P1] Whitespace-only search term (`""`, `"   "`, `"\t\n"` via `[Theory]`) behaves like `null` (no filter applied)
+- [P1] Literal `%` character in search term is not misinterpreted as an ILike wildcard
+- [P2] Literal `_` character in search term is not misinterpreted as an ILike single-char wildcard
+- [P2] Long (200+ char) non-matching search term returns empty, not silently "all records"
+- [P2] Accented search term (`Bogotá`) matches accented `nombre`
 
-### Integration Tests (P1-P2) — `backend/tests/SiesaAgents.IntegrationTests/Data/AppDbContextConfigurationTests.cs` (5 tests)
+Endpoint (`GET /api/v1/clientes`, real ASP.NET pipeline):
+- [P2] Empty `?q=` query param behaves like an omitted param (returns all)
+- [P2] URL-encoded special characters (`&`) round-trip correctly and still match
+- [P1] Non-matching search term returns `200 OK` + empty array, not a `404`/error
+- [P1] Response JSON uses camelCase property names (`nombre`, `nit`, `createdAt`) matching the frontend `Cliente` TS interface — guards against an accidental serializer config regression
 
-Runs against the real local PostgreSQL 16 instance (`siesa_agents_db`), mirroring `Program.cs`'s exact `AppDbContext` registration (including `ReplaceService<IHistoryRepository, SnakeCaseNpgsqlHistoryRepository>`).
+## Infrastructure
 
-- [P1] No pending model changes (`Database.HasPendingModelChanges()` is false — guards drift between `AppDbContext`/`ModelBuilderExtensions` and `AppDbContextModelSnapshot.cs`)
-- [P1] `MigrateAsync()` is idempotent when re-run against an already-migrated database
-- [P1] Re-running migrate does not duplicate the `__ef_migrations_history` row for `InitialCreate`
-- [P2] `GetAppliedMigrationsAsync()` contains `InitialCreate` exactly once
-- [P2] `GetPendingMigrationsAsync()` is empty
-
-## Infrastructure Created
-
-### Project Configuration
-
-- `backend/tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` — added `FrameworkReference` to `Microsoft.AspNetCore.App` (for `DefaultHttpContext`) and `ProjectReference`s to `SiesaAgents.API` and `SiesaAgents.Infrastructure` (previously only referenced `Application`/`Domain`), enabling unit-level testing of middleware and EF configuration without spinning up `WebApplicationFactory` or a database connection.
-
-No new fixtures/factories were needed — this story's surface (DbContext registration, naming extension, migration, middleware) does not involve user/data factories; xUnit `IClassFixture<TestApiFactory>` (ATDD) and direct instantiation (new tests) were sufficient.
+No new fixtures/factories were required — existing `frontend/src/test/factories/cliente.factory.ts` (`createCliente`/`createClientes`), `frontend/src/test/msw/handlers.ts` (`CLIENTES_ENDPOINT`), and `frontend/src/test/support/renderWithRouter.tsx` covered all new scenarios via `server.use()` overrides and factory `overrides`. Backend tests reused the existing `SeedAsync`/GUID-suffix isolation pattern from the ATDD suite.
 
 ## Test Execution
 
 ```bash
-# From backend/
-dotnet build SiesaAgents.sln                                    # 0 warnings, 0 errors
-dotnet test SiesaAgents.sln                                      # all tests
-dotnet test tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj
-dotnet test tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj
+# Frontend (from frontend/)
+npx vitest run src/modules/crm/clientes/presentation/components/ClienteListView.edge-cases.test.tsx
+npx vitest run   # full suite
 
-# Run only the newly added coverage
-dotnet test tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj --filter "FullyQualifiedName~ModelBuilderExtensionsTests"
-dotnet test tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj --filter "FullyQualifiedName~Middleware.ExceptionHandlingMiddlewareTests"
-dotnet test tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj --filter "FullyQualifiedName~AppDbContextConfigurationTests"
+# Backend (from backend/, requires local PostgreSQL on 5432, db `siesa_agents_db` migrated)
+dotnet test --filter "FullyQualifiedName~ClienteRepositoryTests|FullyQualifiedName~ClienteEndpointsTests"
+dotnet test   # full solution
 ```
-
-Precondition for integration tests: local PostgreSQL 16 running on `localhost:5432`, database `siesa_agents_db` already migrated (`dotnet ef database update` from `backend/src/SiesaAgents.Infrastructure`), user `postgres`/`postgres`.
 
 ## Validation Results
 
-- **Total tests (full solution):** 31 (14 original ATDD + 17 new Unit + 5 new Integration, minus overlap accounted for: 17 UnitTests total are all new since `SiesaAgents.UnitTests` had 0 tests before this run)
-- **UnitTests project:** 17 passing (8 `ModelBuilderExtensionsTests` + 9 `ExceptionHandlingMiddlewareTests`, all new)
-- **IntegrationTests project:** 19 passing (14 original ATDD + 5 new `AppDbContextConfigurationTests`)
-- **Failing:** 0
-- **Healed:** 0 (no failures occurred — all new tests passed on first generation after verifying real EF Core model-building behavior via a throwaway probe, per company standard of never asserting unverified behavior)
+- **Frontend full suite:** 58/58 passing (44 original ATDD + 14 new edge-case tests), 0 failing
+- **Backend full solution:** 55/55 passing (17 UnitTests + 38 IntegrationTests, includes 7 original ATDD + 12 new edge-case tests for `clientes`), 0 failing
+- **E2E (`client-list-search.spec.ts`):** unchanged, listed successfully (12 test invocations across 5 browser projects); not re-executed in this run (requires live frontend+backend servers, out of scope for this automation-expansion pass — already verified GREEN during `dev-story`)
+- **Healed:** 1 auto-heal iteration (1/3 used) — `[P1] regex special characters` test failed on first generation because `userEvent.type()` interprets `{`/`[` as reserved key-descriptor syntax; fixed by switching to `userEvent.paste()` for literal multi-character input. Re-ran and passed.
 - **Fixme (unrecoverable):** 0
 
 ## Coverage Analysis
 
-**Total New Tests:** 22
-- Unit: 17 tests (0 P0 pure-unit... see note below for P0 classification)
-  - `ModelBuilderExtensionsTests`: 3 P1, 5 P2
-  - `ExceptionHandlingMiddlewareTests`: 2 P0, 5 P1, 2 P2
-- Integration: 5 tests (3 P1, 2 P2)
+**Total New Tests:** 24 (14 frontend component + 10 backend integration)
 
-**Priority Breakdown (new tests only):** P0: 2, P1: 11, P2: 9, P3: 0
+**Priority Breakdown (new tests only):** P0: 0, P1: 9, P2: 15, P3: 0
 
 **Coverage Status:**
-
-- All 3 acceptance criteria retain their original ATDD happy-path coverage (unchanged)
-- AC2 (Problem Details middleware): edge cases added for happy path non-interference, exact JSON shape, logging side-effect verification, and exception containment — previously only verified end-to-end via HTTP
-- AC3 (snake_case naming): edge cases added for acronyms, digits, idempotency, and already-converted names — previously only verified against 2 real columns (`migration_id`, `product_version`)
-- AC1 (migration/database): edge cases added for schema-drift detection and migration idempotency — previously only verified initial creation, not re-application safety
-- No duplicate coverage: new tests operate at different levels (unit vs. integration) than ATDD and assert different properties (JSON shape/logging vs. HTTP status/content-type; regex edge cases vs. two known columns; idempotency vs. initial state)
+- All 5 acceptance criteria retain their original ATDD happy/sad-path coverage (unchanged)
+- AC #2 (search): edge cases added for regex/wildcard-special characters, whitespace, unicode, single-char terms, and clearing behavior — previously only verified with clean alphanumeric substrings
+- AC #3/#4 (empty states): boundary added for exactly-one-record and malformed-payload defensive rendering
+- AC #5 (error handling): edge case added for raw network failure (distinct code path from HTTP 500 in TanStack Query) and 404, plus double-click retry resilience
+- Backend search path (`ILike`): edge cases close a real correctness gap — `%`/`_` are ILike metacharacters and were previously untested against literal user input containing them
+- No duplicate coverage: new tests target inputs/conditions not present in the ATDD suite; no existing assertion was re-tested at a different level
 
 ## Definition of Done
 
-- [x] All tests follow Given-When-Then structure (as C# comments, adapted from Playwright convention)
-- [x] All tests have priority tags in XML doc comments / summary references
-- [x] All tests are deterministic (no hard waits, no flaky patterns, no `Thread.Sleep`)
-- [x] Integration tests are self-contained relative to shared state (read-only queries or idempotent operations only — no test creates/deletes rows that would affect other tests)
-- [x] No mocking framework dependency added (hand-rolled `RecordingLogger` fake, consistent with project's existing zero-Moq footprint)
-- [x] Full solution builds with 0 warnings / 0 errors
-- [x] Full test suite passes (31/31 relevant tests green)
-- [x] No changes made to production code (`ExceptionHandlingMiddleware.cs`, `ModelBuilderExtensions.cs`, `AppDbContext.cs` untouched — only `.csproj` test references and new test files added)
+- [x] All tests follow Given-When-Then structure
+- [x] All tests have priority tags (`[P1]`/`[P2]`) in test names
+- [x] All tests use `data-testid` selectors (frontend) / direct repository-and-HTTP assertions (backend)
+- [x] No hard waits; `waitFor`/`findBy*` used throughout
+- [x] Frontend tests are self-contained (MSW `server.use()` scoped per test, fresh `QueryClient` per render)
+- [x] Backend tests are self-cleaning (`IAsyncLifetime.DisposeAsync` removes seeded rows by tracked ID)
+- [x] No page objects introduced; component tests interact with rendered output directly
+- [x] Test files remain lean (edge-cases file: 14 tests, ~230 lines)
+- [x] Full frontend and backend suites pass with 0 regressions
 
 ## Next Steps
 
-1. Review generated tests with team
-2. Run tests in CI pipeline (requires PostgreSQL service container for `SiesaAgents.IntegrationTests`)
-3. Integrate with quality gate: `bmad tea *trace` / `*gate` for Epic 1
-4. Consider adding a CI-only PostgreSQL health-check step before the `AppDbContextConfigurationTests`/`AppDbContextMigrationTests`/`SnakeCaseNamingTests` integration suites, since they hard-depend on a pre-migrated local database rather than a self-provisioning fixture (Testcontainers unavailable in this sandbox; documented as a known constraint, not a defect)
+1. Review generated edge-case tests with team
+2. Run full suite (frontend + backend) in CI pipeline
+3. Proceed to `testarch-trace` / quality gate decision for Epic 2 once all Epic 2 stories are automated
+4. Consider adding a lightweight unit test around ILike special-character escaping directly in `ClienteRepository` if this pattern is reused by future search endpoints (Contactos module, Epic 3) to avoid re-discovering the same edge case

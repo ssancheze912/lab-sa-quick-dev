@@ -110,4 +110,75 @@ public class ClienteEndpointsTests : IClassFixture<TestApiFactory>, IAsyncLifeti
         Assert.Contains(result!, c => c.Id == target.Id);
         Assert.DoesNotContain(result!, c => c.Nombre.StartsWith("Otro Diferente"));
     }
+
+    // --- Edge cases (testarch-automate expansion) -----------------------------
+
+    [Fact]
+    public async Task GetClientes_WithEmptyQueryParam_ReturnsAllClientesLikeNoParam()
+    {
+        // GIVEN a seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var seeded = await SeedAsync($"Empty Query Cliente {suffix}", $"704{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling GET /api/v1/clientes?q= (empty string, not omitted)
+        var result = await client.GetFromJsonAsync<List<ClienteDto>>("/api/v1/clientes?q=");
+
+        // THEN the empty query param behaves like no filter — client is returned
+        Assert.NotNull(result);
+        Assert.Contains(result!, c => c.Id == seeded.Id);
+    }
+
+    [Fact]
+    public async Task GetClientes_WithUrlEncodedSpecialCharacters_ReturnsExpectedMatch()
+    {
+        // GIVEN a client whose name contains an ampersand (must survive URL encoding round-trip)
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var target = await SeedAsync($"Cliente & Asociados {suffix}", $"705{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling with a URL-encoded search term
+        var encoded = Uri.EscapeDataString($"& Asociados {suffix}");
+        var result = await client.GetFromJsonAsync<List<ClienteDto>>($"/api/v1/clientes?q={encoded}");
+
+        // THEN the client matches despite the special character
+        Assert.NotNull(result);
+        Assert.Contains(result!, c => c.Id == target.Id);
+    }
+
+    [Fact]
+    public async Task GetClientes_WithNonMatchingSearchTerm_ReturnsEmptyArrayNot404()
+    {
+        // GIVEN a seeded client that won't match
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        await SeedAsync($"Cliente Existente {suffix}", $"706{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN searching for a term that matches nothing
+        var response = await client.GetAsync($"/api/v1/clientes?q=zzz-inexistente-{suffix}");
+        var result = await response.Content.ReadFromJsonAsync<List<ClienteDto>>();
+
+        // THEN the endpoint still returns 200 OK with an empty array (not 404/error)
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(result);
+        Assert.Empty(result!);
+    }
+
+    [Fact]
+    public async Task GetClientes_ResponseUsesCamelCaseJsonPropertyNames()
+    {
+        // GIVEN a seeded client
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        await SeedAsync($"CamelCase Cliente {suffix}", $"707{suffix}");
+        var client = _factory.CreateClient();
+
+        // WHEN calling GET /api/v1/clientes
+        var response = await client.GetAsync("/api/v1/clientes");
+        var rawJson = await response.Content.ReadAsStringAsync();
+
+        // THEN the JSON payload exposes camelCase keys matching the frontend's Cliente interface
+        Assert.Contains("\"nombre\"", rawJson);
+        Assert.Contains("\"nit\"", rawJson);
+        Assert.Contains("\"createdAt\"", rawJson);
+    }
 }

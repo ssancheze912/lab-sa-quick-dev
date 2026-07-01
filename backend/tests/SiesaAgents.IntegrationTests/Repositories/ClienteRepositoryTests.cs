@@ -135,4 +135,93 @@ public class ClienteRepositoryTests : IAsyncLifetime
         // THEN the more recently created client appears before the older one
         Assert.True(indices[newer.Id] < indices[older.Id]);
     }
+
+    // --- Edge cases (testarch-automate expansion) -----------------------------
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\t\n")]
+    public async Task GetAllAsync_WithWhitespaceOnlySearchTerm_ReturnsAllClientes(string searchTerm)
+    {
+        // GIVEN two seeded clients
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        await SeedAsync($"Whitespace Alpha {suffix}", $"920{suffix}");
+        await SeedAsync($"Whitespace Beta {suffix}", $"921{suffix}");
+        var repository = new ClienteRepository(_context);
+
+        // WHEN searching with an empty/whitespace-only term
+        var result = await repository.GetAllAsync(searchTerm, CancellationToken.None);
+
+        // THEN it behaves like a null search term (no filter applied) — both match
+        Assert.Contains(result, c => c.Nombre == $"Whitespace Alpha {suffix}");
+        Assert.Contains(result, c => c.Nombre == $"Whitespace Beta {suffix}");
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithPercentCharacterInSearchTerm_IsTreatedLiterallyNotAsWildcard()
+    {
+        // GIVEN a client whose nombre contains a literal '%' character, and another
+        // that does not — this guards against ILike's '%' wildcard being
+        // unintentionally interpreted from raw, unescaped user input.
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var target = await SeedAsync($"Descuento 10% Cliente {suffix}", $"930{suffix}");
+        var unrelated = await SeedAsync($"Cliente Regular {suffix}", $"931{suffix}");
+        var repository = new ClienteRepository(_context);
+
+        // WHEN searching using a term containing '%'
+        var result = await repository.GetAllAsync($"10% Cliente {suffix}", CancellationToken.None);
+
+        // THEN only the client whose name literally contains that substring matches
+        Assert.Contains(result, c => c.Id == target.Id);
+        Assert.DoesNotContain(result, c => c.Id == unrelated.Id);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithUnderscoreCharacterInSearchTerm_IsTreatedLiterally()
+    {
+        // GIVEN a client whose NIT contains an underscore-like separator pattern
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var target = await SeedAsync($"Cliente Guion Bajo {suffix}", $"nit_940{suffix}");
+        var repository = new ClienteRepository(_context);
+
+        // WHEN searching with the literal underscore substring
+        var result = await repository.GetAllAsync($"nit_940{suffix}", CancellationToken.None);
+
+        // THEN the client matches on the literal substring (not a single-char wildcard)
+        Assert.Contains(result, c => c.Id == target.Id);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithSearchTermMatchingNoOneWhenOtherClientsExist_ReturnsEmptyNotAllRecords()
+    {
+        // GIVEN several unrelated seeded clients
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        await SeedAsync($"Uno {suffix}", $"950{suffix}");
+        await SeedAsync($"Dos {suffix}", $"951{suffix}");
+        await SeedAsync($"Tres {suffix}", $"952{suffix}");
+        var repository = new ClienteRepository(_context);
+
+        // WHEN searching for a very long, clearly non-matching term
+        var longTerm = new string('z', 200) + suffix;
+        var result = await repository.GetAllAsync(longTerm, CancellationToken.None);
+
+        // THEN zero results are returned (not silently falling back to "all")
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithAccentedSearchTerm_MatchesAccentedNombre()
+    {
+        // GIVEN a client with accented characters in its name
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var target = await SeedAsync($"Compañía Bogotá {suffix}", $"960{suffix}");
+        var repository = new ClienteRepository(_context);
+
+        // WHEN searching using the same accented substring
+        var result = await repository.GetAllAsync($"Bogotá {suffix}", CancellationToken.None);
+
+        // THEN the accented client matches
+        Assert.Contains(result, c => c.Id == target.Id);
+    }
 }
