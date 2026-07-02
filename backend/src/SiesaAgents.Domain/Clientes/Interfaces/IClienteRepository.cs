@@ -9,4 +9,11 @@ namespace SiesaAgents.Domain.Clientes.Interfaces;
 public interface IClienteRepository
 {
     Task<IReadOnlyList<ClienteEntity>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the cliente identified by <paramref name="id"/> or <c>null</c>
+    /// when no such record exists. Not-found is a known outcome (mapped to
+    /// 404 Problem Details by the handler/endpoint), never an exception.
+    /// </summary>
+    Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 }
