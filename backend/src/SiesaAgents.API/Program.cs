@@ -28,7 +28,12 @@ builder.Services.AddCors(options =>
     options.AddPolicy(DevCorsPolicy, policy =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              // Expose Location so cross-origin JS clients can read the header
+              // set by Results.Created(...) on 201 responses (AC#4, AC#7 —
+              // Story 2.3). Without this, browsers strip non-simple response
+              // headers from cross-origin XHR/fetch reads.
+              .WithExposedHeaders("Location"));
 });
 
 // Enforce Problem Details on 404/405/415/etc. from the framework.

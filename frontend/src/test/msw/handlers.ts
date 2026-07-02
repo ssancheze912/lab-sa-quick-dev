@@ -66,6 +66,10 @@ export const handlers = [
     }
 
     // Duplicate NIT fast-path: matches uk_clientes_nit semantics.
+    // Body shape mirrors ASP.NET's `Results.Problem(extensions: ...)`, which
+    // FLATTENS the extensions dictionary into the response root (no nested
+    // `extensions` key). Keeping the mock aligned prevents contract drift
+    // between test doubles and the real backend.
     if (body.nit && currentClientes.some((c) => c.nit === body.nit)) {
       return HttpResponse.json(
         {
@@ -75,7 +79,6 @@ export const handlers = [
           detail: 'Ya existe un cliente con el NIT/RUC indicado.',
           instance: '/api/v1/clientes',
           field: 'nit',
-          extensions: { field: 'nit' },
         },
         { status: 409 },
       )

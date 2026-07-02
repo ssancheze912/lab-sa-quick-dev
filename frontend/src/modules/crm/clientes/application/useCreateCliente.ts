@@ -7,16 +7,15 @@ import { clienteApiRepository } from '../infrastructure/clienteApiRepository'
 
 /**
  * Shape of the Problem Details body the backend emits for 409 conflicts.
- * Only the fields the frontend actually reads are typed — the server may
- * add more keys (`type`, `instance`, ...) that we ignore.
+ * ASP.NET's `Results.Problem(extensions: ...)` flattens the extensions bag
+ * into the response root, so `field` sits at the top level (NOT under a
+ * nested `extensions` key). Only the fields the frontend actually reads
+ * are typed — the server may add `type`, `instance`, `detail`, etc. which
+ * we intentionally ignore per NFR6.
  */
 interface DuplicateNitProblem {
   readonly title?: string
   readonly field?: string
-  // 'extensions' is the RFC 7807 open-ended bag; ASP.NET flattens it into
-  // the root object when using Results.Problem(extensions: ...), so callers
-  // read both shapes defensively.
-  readonly extensions?: { readonly field?: string }
 }
 
 export type CreateClienteError = AxiosError<DuplicateNitProblem>
