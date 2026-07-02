@@ -130,4 +130,104 @@ describe('ClienteDetailView', () => {
     // Just wait for the tree to settle without an error boundary firing.
     await screen.findByTestId('cliente-detail-panel')
   })
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Edge cases / expansions (Story 2.2 automate pass)
+  // ───────────────────────────────────────────────────────────────────────
+
+  it('[P1] renders the mobile "Volver" button in the panel header on success', async () => {
+    // GIVEN: A cliente resolves successfully
+    render(
+      <Providers>
+        <ClienteDetailView clienteId={seedClientes[0].id} />
+      </Providers>,
+    )
+    await screen.findByTestId('cliente-detail-panel')
+
+    // THEN: The mobile back button carries its accessibility label and text
+    const backBtn = screen.getByRole('button', {
+      name: /volver a la lista de clientes/i,
+    })
+    expect(backBtn).toBeInTheDocument()
+    expect(backBtn).toHaveTextContent(/volver/i)
+  })
+
+  it('[P1] clicking the mobile "Volver" button invokes navigate({ to: "/clientes" })', async () => {
+    // GIVEN: The detail panel is rendered on success
+    navigateMock.mockClear()
+    const user = userEvent.setup()
+    render(
+      <Providers>
+        <ClienteDetailView clienteId={seedClientes[0].id} />
+      </Providers>,
+    )
+    await screen.findByTestId('cliente-detail-panel')
+
+    // WHEN: The user clicks the mobile "Volver" button
+    await user.click(
+      screen.getByRole('button', { name: /volver a la lista de clientes/i }),
+    )
+
+    // THEN: navigate is invoked exactly once with the expected route target
+    expect(navigateMock).toHaveBeenCalledTimes(1)
+    expect(navigateMock).toHaveBeenCalledWith({ to: '/clientes' })
+  })
+
+  it('[P1] does NOT render the mobile "Volver" button in the skeleton branch', async () => {
+    // GIVEN: The detail response is deliberately delayed so we stay on the skeleton
+    server.use(
+      http.get('*/api/v1/clientes/:id', async () => {
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+        return HttpResponse.json(seedClientes[0])
+      }),
+    )
+
+    render(
+      <Providers>
+        <ClienteDetailView clienteId={seedClientes[0].id} />
+      </Providers>,
+    )
+
+    // WHEN: The skeleton is visible
+    await screen.findByTestId('cliente-detail-skeleton')
+
+    // THEN: The mobile back button lives inside the success branch only
+    expect(
+      screen.queryByRole('button', { name: /volver a la lista de clientes/i }),
+    ).toBeNull()
+  })
+
+  it('[P2] wires aria-labelledby="cliente-detail-title" to the h2 with matching id', async () => {
+    // GIVEN: The success branch renders with the four cliente fields
+    render(
+      <Providers>
+        <ClienteDetailView clienteId={seedClientes[0].id} />
+      </Providers>,
+    )
+    const panel = await screen.findByTestId('cliente-detail-panel')
+
+    // THEN: The <section> aria-labelledby references the same id the <h2> exposes.
+    // This is what screen readers consume as the region label (WCAG 2.1 AA).
+    expect(panel).toHaveAttribute('aria-labelledby', 'cliente-detail-title')
+    const heading = screen.getByRole('heading', {
+      level: 2,
+      name: seedClientes[0].nombre,
+    })
+    expect(heading).toHaveAttribute('id', 'cliente-detail-title')
+  })
+
+  it('[P2] renders the four field labels ("NIT/RUC", "Teléfono", "Ciudad") in Spanish', async () => {
+    // GIVEN: A cliente resolves successfully
+    render(
+      <Providers>
+        <ClienteDetailView clienteId={seedClientes[0].id} />
+      </Providers>,
+    )
+    await screen.findByTestId('cliente-detail-panel')
+
+    // THEN: The three field labels are visible with es-CO copy (UI locale contract)
+    expect(screen.getByText(/nit\/ruc/i)).toBeInTheDocument()
+    expect(screen.getByText(/teléfono/i)).toBeInTheDocument()
+    expect(screen.getByText(/ciudad/i)).toBeInTheDocument()
+  })
 })

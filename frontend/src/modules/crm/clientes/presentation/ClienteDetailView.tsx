@@ -24,6 +24,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
       <section
         data-testid="cliente-detail-skeleton"
         aria-busy="true"
+        aria-label="Cargando detalle del cliente"
         className="flex flex-1 flex-col gap-3 p-6"
       >
         <Skeleton height={28} width="60%" />

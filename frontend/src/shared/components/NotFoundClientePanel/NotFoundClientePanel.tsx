@@ -40,9 +40,16 @@ export function NotFoundClientePanel({
           aria-hidden="true"
         />
       </div>
-      <h3 className="text-base font-semibold text-slate-900">
+      {/*
+        Heading level is `h2` (not `h3`): the NotFound panel REPLACES the
+        detail panel — the `<h2>{cliente.nombre}</h2>` is not rendered
+        alongside it — so only the list panel's `<h1>Clientes</h1>`
+        precedes this heading. Using `h3` would skip a level and violate
+        heading hierarchy (WCAG 2.4.6 / company standards WCAG 2.1 AA).
+      */}
+      <h2 className="text-base font-semibold text-slate-900">
         Cliente no encontrado
-      </h3>
+      </h2>
       <p className="text-sm text-slate-500">
         El cliente que buscas no existe o fue eliminado.
       </p>
