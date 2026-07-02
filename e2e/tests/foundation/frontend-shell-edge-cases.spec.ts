@@ -55,15 +55,16 @@ test.describe('Frontend HTML shell — metadata and localization', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Homepage route — TanStack Router + React rendering', () => {
-  test('[P1] should render an <h1> heading with the product name on the home route', async ({ page }) => {
-    // GIVEN: TanStack Router file-based routing includes `src/routes/index.tsx`
+  test('[P1] should render an <h1> heading on the home route after redirect to /clientes', async ({ page }) => {
+    // GIVEN: Story 1.2 converts `/` into a beforeLoad redirect to `/clientes`
     // WHEN: The user visits the root URL
     await page.goto('/');
+    await page.waitForURL('**/clientes');
 
-    // THEN: The homepage heading is visible and identifies the product
+    // THEN: The Clientes view heading is visible after the redirect
     const heading = page.getByRole('heading', { level: 1 });
     await expect(heading).toBeVisible();
-    await expect(heading).toHaveText(/Siesa Agents CRM/i);
+    await expect(heading).toHaveText(/Clientes/i);
   });
 
   test('[P2] should keep the React mount point stable across a page reload', async ({ page }) => {

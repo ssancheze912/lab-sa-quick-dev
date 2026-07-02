@@ -10,6 +10,7 @@ export default defineConfig({
     tanstackRouter({
       target: 'react',
       autoCodeSplitting: true,
+      routeFileIgnorePattern: '\\.(test|spec)\\.(ts|tsx)$',
     }),
     react(),
     tailwindcss(),
@@ -22,5 +23,8 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+  },
+  build: {
+    cssMinify: false,
   },
 })
