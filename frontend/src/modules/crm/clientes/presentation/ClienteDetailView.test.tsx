@@ -230,4 +230,82 @@ describe('ClienteDetailView', () => {
     expect(screen.getByText(/teléfono/i)).toBeInTheDocument()
     expect(screen.getByText(/ciudad/i)).toBeInTheDocument()
   })
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Story 2.4 — Edit Button + Edit Modal integration
+  // ───────────────────────────────────────────────────────────────────────
+
+  it('[TC-Story-2.4-Editar-Button-Visible] renders the "Editar" button with aria-label when cliente is loaded', async () => {
+    render(
+      <Providers>
+        <ClienteDetailView clienteId={seedClientes[0].id} />
+      </Providers>,
+    )
+    await screen.findByTestId('cliente-detail-panel')
+
+    const editar = screen.getByTestId('cliente-editar-button')
+    expect(editar).toBeInTheDocument()
+    expect(editar).toHaveAttribute('aria-label', 'Editar cliente')
+    expect(editar).toHaveTextContent(/editar/i)
+  })
+
+  it('[TC-Story-2.4-Editar-Button-Hidden-While-Loading] does NOT render the "Editar" button in the skeleton branch', async () => {
+    server.use(
+      http.get('*/api/v1/clientes/:id', async () => {
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+        return HttpResponse.json(seedClientes[0])
+      }),
+    )
+
+    render(
+      <Providers>
+        <ClienteDetailView clienteId={seedClientes[0].id} />
+      </Providers>,
+    )
+    await screen.findByTestId('cliente-detail-skeleton')
+
+    expect(screen.queryByTestId('cliente-editar-button')).toBeNull()
+  })
+
+  it('[TC-Story-2.4-Editar-Button-Hidden-On-404] does NOT render the "Editar" button on 404', async () => {
+    server.use(
+      http.get('*/api/v1/clientes/:id', () =>
+        HttpResponse.json(
+          { title: 'Cliente no encontrado', status: 404 },
+          { status: 404 },
+        ),
+      ),
+    )
+
+    render(
+      <Providers>
+        <ClienteDetailView clienteId="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" />
+      </Providers>,
+    )
+    await screen.findByTestId('cliente-not-found')
+
+    expect(screen.queryByTestId('cliente-editar-button')).toBeNull()
+  })
+
+  it('[TC-Story-2.4-Opens-Modal-With-Prefilled-Fields] clicking the "Editar" button opens the modal in edit mode with pre-filled values', async () => {
+    const user = userEvent.setup()
+    const target = seedClientes[0]
+    render(
+      <Providers>
+        <ClienteDetailView clienteId={target.id} />
+      </Providers>,
+    )
+    await screen.findByTestId('cliente-detail-panel')
+
+    await user.click(screen.getByTestId('cliente-editar-button'))
+    const modal = await screen.findByTestId('cliente-form-modal')
+    expect(modal).toBeInTheDocument()
+    // Title "Editar cliente" not "Nuevo cliente"
+    expect(screen.getByText('Editar cliente')).toBeInTheDocument()
+    // Pre-filled inputs
+    expect(screen.getByTestId('cliente-form-nombre')).toHaveValue(target.nombre)
+    expect(screen.getByTestId('cliente-form-nit')).toHaveValue(target.nit)
+    expect(screen.getByTestId('cliente-form-telefono')).toHaveValue(target.telefono)
+    expect(screen.getByTestId('cliente-form-ciudad')).toHaveValue(target.ciudad)
+  })
 })

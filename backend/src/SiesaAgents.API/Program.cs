@@ -60,6 +60,9 @@ builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 // Story 2.3 — create-cliente wiring.
 builder.Services.AddScoped<CreateClienteCommandHandler>();
 builder.Services.AddScoped<IValidator<CreateClienteRequest>, CreateClienteRequestValidator>();
+// Story 2.4 — edit-client wiring.
+builder.Services.AddScoped<UpdateClienteCommandHandler>();
+builder.Services.AddScoped<IValidator<UpdateClienteRequest>, UpdateClienteRequestValidator>();
 
 var app = builder.Build();
 

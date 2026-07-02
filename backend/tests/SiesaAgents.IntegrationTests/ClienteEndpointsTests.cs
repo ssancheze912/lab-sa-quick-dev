@@ -513,4 +513,246 @@ public class ClienteEndpointsTests : IClassFixture<InMemoryDbWebApplicationFacto
         Assert.DoesNotContain("\"Nombre\"", body);
         Assert.DoesNotContain("\"CreatedAt\"", body);
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Story 2.4 — PUT /api/v1/clientes/{id:guid} (update)
+    //
+    // NOTE (sandbox constraint): EF Core InMemory 10 does NOT enforce unique
+    // indexes on SaveChangesAsync. The "true" 409 code path against DIFFERENT
+    // rows is covered by unit tests (UpdateClienteCommandHandlerTests) with a
+    // synthetic PostgresException, and by the API contract E2E suite
+    // (story-2.4-edit-client.api.spec.ts) against a real PostgreSQL instance.
+    // The `UpdateCliente_SameNit_NoConflict` test is kept here because it does
+    // NOT trigger a unique-violation (same row keeps the same NIT).
+    // ─────────────────────────────────────────────────────────────────────
+
+    private sealed record UpdateClientePayload(
+        string Nombre,
+        string Nit,
+        string Telefono,
+        string Ciudad);
+
+    [Fact]
+    public async Task UpdateCliente_ExistingId_ValidPayload_Returns200WithUpdatedDto()
+    {
+        var seed = ClienteEntity.Create("Old Name", "900-100", "+57 000 000 0000", "Cali");
+        await ResetAndSeedAsync(seed);
+        var client = _factory.CreateClient();
+        var originalCreatedAt = seed.CreatedAt;
+
+        // Small delay so UpdatedAt strictly moves forward on the server clock.
+        await Task.Delay(20);
+        var payload = new UpdateClientePayload("New Name", "900-100", "+57 111 111 1111", "Bogotá");
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seed.Id}", payload);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var dto = await response.Content.ReadFromJsonAsync<ClienteDto>(JsonOptions);
+        Assert.NotNull(dto);
+        Assert.Equal(seed.Id, dto!.Id);
+        Assert.Equal("New Name", dto.Nombre);
+        Assert.Equal("900-100", dto.Nit);
+        Assert.Equal("+57 111 111 1111", dto.Telefono);
+        Assert.Equal("Bogotá", dto.Ciudad);
+        // createdAt is IMMUTABLE (audit)
+        Assert.Equal(originalCreatedAt, dto.CreatedAt);
+        // updatedAt is refreshed
+        Assert.True(dto.UpdatedAt > originalCreatedAt,
+            $"UpdatedAt {dto.UpdatedAt:o} must be > original CreatedAt {originalCreatedAt:o}.");
+
+        // Round-trip GET verifies persistence
+        var followUp = await client.GetAsync($"/api/v1/clientes/{seed.Id}");
+        Assert.Equal(HttpStatusCode.OK, followUp.StatusCode);
+        var again = await followUp.Content.ReadFromJsonAsync<ClienteDto>(JsonOptions);
+        Assert.NotNull(again);
+        Assert.Equal("New Name", again!.Nombre);
+    }
+
+    [Fact]
+    public async Task UpdateCliente_UnknownId_Returns404ProblemDetails()
+    {
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+        var unknownId = Guid.NewGuid();
+
+        var payload = new UpdateClientePayload("Nombre", "900-200", "+57 000", "Cali");
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{unknownId}", payload);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(
+            "application/problem+json",
+            response.Content.Headers.ContentType?.MediaType);
+
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        Assert.Equal("Cliente no encontrado", doc.RootElement.GetProperty("title").GetString());
+        Assert.Equal(404, doc.RootElement.GetProperty("status").GetInt32());
+
+        // NFR6 — no low-level signals in the 404 body.
+        Assert.DoesNotContain("System.", body);
+        Assert.DoesNotContain("Microsoft.EntityFrameworkCore", body);
+        Assert.DoesNotContain(".cs:line", body);
+    }
+
+    [Fact]
+    public async Task UpdateCliente_InvalidGuid_Returns400WithoutStackTrace()
+    {
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+
+        var payload = new UpdateClientePayload("Nombre", "900-1", "+57 000", "Cali");
+        var response = await client.PutAsJsonAsync("/api/v1/clientes/not-a-guid", payload);
+
+        Assert.True((int)response.StatusCode >= 400 && (int)response.StatusCode < 500,
+            $"Expected 4xx; got {(int)response.StatusCode}.");
+
+        var body = await response.Content.ReadAsStringAsync();
+        // NFR6
+        Assert.DoesNotContain("System.InvalidOperationException", body);
+        Assert.DoesNotContain("Microsoft.EntityFrameworkCore", body);
+        Assert.DoesNotContain(".cs:line", body);
+    }
+
+    [Fact]
+    public async Task UpdateCliente_EmptyNombre_Returns400ProblemDetails()
+    {
+        var seed = ClienteEntity.Create("A", "900-300", "+57 000", "Cali");
+        await ResetAndSeedAsync(seed);
+        var client = _factory.CreateClient();
+
+        var payload = new UpdateClientePayload(string.Empty, "900-300", "+57 000", "Cali");
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seed.Id}", payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        Assert.True(doc.RootElement.TryGetProperty("errors", out var errors));
+        Assert.True(errors.TryGetProperty("nombre", out _));
+        Assert.Equal(400, doc.RootElement.GetProperty("status").GetInt32());
+
+        Assert.DoesNotContain("System.", body);
+        Assert.DoesNotContain(".cs:line", body);
+    }
+
+    [Fact]
+    public async Task UpdateCliente_WhitespaceOnlyFields_Returns400WithAllFieldErrors()
+    {
+        var seed = ClienteEntity.Create("A", "900-400", "+57 000", "Cali");
+        await ResetAndSeedAsync(seed);
+        var client = _factory.CreateClient();
+
+        var payload = new UpdateClientePayload("   ", "\t  ", "  ", " \n ");
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seed.Id}", payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        var errors = doc.RootElement.GetProperty("errors");
+
+        Assert.True(errors.TryGetProperty("nombre", out _));
+        Assert.True(errors.TryGetProperty("nit", out _));
+        Assert.True(errors.TryGetProperty("telefono", out _));
+        Assert.True(errors.TryGetProperty("ciudad", out _));
+    }
+
+    [Fact]
+    public async Task UpdateCliente_NitExceedsMaxLength_Returns400()
+    {
+        var seed = ClienteEntity.Create("A", "900-500", "+57 000", "Cali");
+        await ResetAndSeedAsync(seed);
+        var client = _factory.CreateClient();
+
+        var payload = new UpdateClientePayload("Nombre", new string('A', 51), "+57 000", "Cali");
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seed.Id}", payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        Assert.True(doc.RootElement.GetProperty("errors").TryGetProperty("nit", out _));
+    }
+
+    [Fact]
+    public async Task UpdateCliente_SameNit_NoConflict_Returns200()
+    {
+        // AC5 corollary — same NIT on the same row does NOT violate uk_clientes_nit.
+        var seed = ClienteEntity.Create("A", "900-600", "+57 000", "Cali");
+        await ResetAndSeedAsync(seed);
+        var client = _factory.CreateClient();
+
+        var payload = new UpdateClientePayload("Renamed", "900-600", "+57 999", "Cartagena");
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seed.Id}", payload);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var dto = await response.Content.ReadFromJsonAsync<ClienteDto>(JsonOptions);
+        Assert.NotNull(dto);
+        Assert.Equal("900-600", dto!.Nit);
+        Assert.Equal("Renamed", dto.Nombre);
+        Assert.Equal("Cartagena", dto.Ciudad);
+    }
+
+    [Fact]
+    public async Task UpdateCliente_TrimsFieldsBeforePersist()
+    {
+        var seed = ClienteEntity.Create("A", "900-700", "+57 000", "Cali");
+        await ResetAndSeedAsync(seed);
+        var client = _factory.CreateClient();
+
+        var payload = new UpdateClientePayload(
+            "  Acme Updated  ",
+            "  900-700  ",
+            "  +57 111  ",
+            "  Bogotá  ");
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seed.Id}", payload);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var dto = await response.Content.ReadFromJsonAsync<ClienteDto>(JsonOptions);
+        Assert.NotNull(dto);
+        Assert.Equal("Acme Updated", dto!.Nombre);
+        Assert.Equal("900-700", dto.Nit);
+        Assert.Equal("+57 111", dto.Telefono);
+        Assert.Equal("Bogotá", dto.Ciudad);
+    }
+
+    [Fact]
+    public async Task UpdateCliente_PreservesCreatedAt()
+    {
+        var seed = ClienteEntity.Create("A", "900-800", "+57 000", "Cali");
+        var originalCreatedAt = seed.CreatedAt;
+        await ResetAndSeedAsync(seed);
+        var client = _factory.CreateClient();
+
+        await Task.Delay(20);
+        var payload = new UpdateClientePayload("Renamed", "900-800", "+57 999", "Bogotá");
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seed.Id}", payload);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var followUp = await client.GetAsync($"/api/v1/clientes/{seed.Id}");
+        Assert.Equal(HttpStatusCode.OK, followUp.StatusCode);
+        var dto = await followUp.Content.ReadFromJsonAsync<ClienteDto>(JsonOptions);
+        Assert.NotNull(dto);
+        Assert.Equal(originalCreatedAt, dto!.CreatedAt);
+    }
+
+    [Fact]
+    public async Task UpdateCliente_ResponseUsesCamelCaseKeys()
+    {
+        var seed = ClienteEntity.Create("Alpha", "900-900", "+57 000", "Cali");
+        await ResetAndSeedAsync(seed);
+        var client = _factory.CreateClient();
+
+        // Use values that would never overlap PascalCase key names.
+        var payload = new UpdateClientePayload("valor-nombre", "900-900", "valor-tel", "valor-ciudad");
+        var response = await client.PutAsJsonAsync($"/api/v1/clientes/{seed.Id}", payload);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("\"id\"", body);
+        Assert.Contains("\"nombre\"", body);
+        Assert.Contains("\"createdAt\"", body);
+        Assert.DoesNotContain("\"Id\"", body);
+        Assert.DoesNotContain("\"Nombre\"", body);
+        Assert.DoesNotContain("\"CreatedAt\"", body);
+    }
 }

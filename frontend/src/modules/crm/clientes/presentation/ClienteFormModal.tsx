@@ -8,24 +8,51 @@ import {
   type ClienteFormValues,
 } from '../application/clienteSchema'
 import { useCreateCliente } from '../application/useCreateCliente'
+import { useUpdateCliente } from '../application/useUpdateCliente'
 
-export interface ClienteFormModalProps {
-  /** Whether the modal is visible. */
-  isOpen: boolean
-  /** Called when the user cancels, presses Esc, or the mutation completes ok. */
-  onClose: () => void
+/**
+ * Discriminated union: `mode` decides which mutation runs, which
+ * `defaultValues` are pre-loaded, and which title/toast copy fires.
+ * `clienteId` + `initialValues` are only required in edit mode.
+ */
+export type ClienteFormModalProps =
+  | {
+      mode?: 'create'
+      isOpen: boolean
+      onClose: () => void
+    }
+  | {
+      mode: 'edit'
+      isOpen: boolean
+      onClose: () => void
+      clienteId: string
+      initialValues: ClienteFormValues
+    }
+
+const EMPTY_VALUES: ClienteFormValues = {
+  nombre: '',
+  nit: '',
+  telefono: '',
+  ciudad: '',
 }
 
 /**
- * Modal wrapper around the create-cliente form. All copy is in Spanish; all
- * identifiers are in English. Uses siesa-ui-kit AlertDialog as the a11y-safe
+ * Modal wrapper around the create/edit-cliente form. All copy is in Spanish;
+ * all identifiers are in English. Uses siesa-ui-kit AlertDialog as the a11y-safe
  * dialog container (Radix/Headless-UI backed: focus-trap, Esc-to-close).
  *
  * The form is controlled by React Hook Form with a Zod resolver so validation
  * runs `onBlur` (per UX spec Feedback Patterns) and on submit; whitespace-only
  * values fail the `.trim().min(1)` rules and render an inline error.
  */
-export function ClienteFormModal({ isOpen, onClose }: ClienteFormModalProps) {
+export function ClienteFormModal(props: ClienteFormModalProps) {
+  const { isOpen, onClose } = props
+  // Narrow via props.mode directly so TS refines initialValues + clienteId.
+  const isEdit = props.mode === 'edit'
+  const initialValues: ClienteFormValues =
+    props.mode === 'edit' ? props.initialValues : EMPTY_VALUES
+  const clienteId = props.mode === 'edit' ? props.clienteId : ''
+
   const {
     register,
     handleSubmit,
@@ -36,34 +63,40 @@ export function ClienteFormModal({ isOpen, onClose }: ClienteFormModalProps) {
   } = useForm<ClienteFormValues>({
     resolver: zodResolver(clienteFormSchema),
     mode: 'onBlur',
-    defaultValues: { nombre: '', nit: '', telefono: '', ciudad: '' },
+    // In edit mode, defaultValues change when the user selects a different
+    // cliente. RHF only reads defaultValues on initial mount, so we ALSO
+    // call reset(initialValues) inside the useEffect below whenever the
+    // modal opens — that keeps the form in sync with props.
+    defaultValues: initialValues,
   })
 
   const createMutation = useCreateCliente()
+  const updateMutation = useUpdateCliente(clienteId)
+  const activeMutation = isEdit ? updateMutation : createMutation
 
-  // Auto-focus Nombre when the modal opens and clear form/mutation state when
-  // it closes so the next open starts clean. We deliberately depend ONLY on
-  // `isOpen` — `createMutation` is a fresh object every render and would loop
-  // us into OOM if listed, and `reset`/`setFocus` from RHF are stable across
-  // renders per @tanstack docs.
+  // Auto-focus Nombre when the modal opens and reset form/mutation state when
+  // it closes so the next open starts clean. Depends only on `isOpen` +
+  // `clienteId` — a fresh mutation object every render would loop us into OOM.
   useEffect(() => {
     if (isOpen) {
+      reset(initialValues)
       const t = window.setTimeout(() => setFocus('nombre'), 0)
       return () => window.clearTimeout(t)
     }
-    reset()
-    createMutation.reset()
+    reset(initialValues)
+    activeMutation.reset()
     return undefined
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen])
+  }, [isOpen, isEdit ? clienteId : null])
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      await createMutation.mutateAsync(values)
+      await activeMutation.mutateAsync(values)
       onClose()
     } catch (error) {
-      // 409 → inline NIT error. Any other error was already handled by the
-      // mutation hook (toast). We do not close the modal so the user can retry.
+      // 409 → inline NIT error (both create + edit share the same copy).
+      // Any other error was already toasted by the mutation hook. We do
+      // NOT close the modal so the user can retry.
       if (
         typeof error === 'object' &&
         error !== null &&
@@ -83,12 +116,10 @@ export function ClienteFormModal({ isOpen, onClose }: ClienteFormModalProps) {
     return null
   }
 
+  const title = isEdit ? 'Editar cliente' : 'Nuevo cliente'
+
   // NOTE: siesa-ui-kit's AlertDialog does NOT render `children` — it renders
   // `title`, an optional `description` (ReactNode), and `actions` (ReactNode).
-  // So we put the form inside the `description` slot and pass the buttons via
-  // `actions`. The `<form id="cliente-form">` + `htmlType="submit" form="…"`
-  // link the submit button to the form even though they live in different
-  // subtrees of the dialog.
   const formNode = (
     <form
       id="cliente-form"
@@ -136,7 +167,7 @@ export function ClienteFormModal({ isOpen, onClose }: ClienteFormModalProps) {
   return (
     <AlertDialog
       isOpen={isOpen}
-      title="Nuevo cliente"
+      title={title}
       showCloseButton
       hideCancel
       size="max-w-md"

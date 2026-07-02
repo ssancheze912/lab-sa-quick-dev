@@ -100,6 +100,69 @@ public static class ClienteEndpoints
         })
         .WithName("CreateCliente");
 
+        // Story 2.4 — Update cliente. 200 on success, 400 on validation, 404 when
+        // the id does not exist, 409 on uk_clientes_nit conflict against a DIFFERENT
+        // cliente row.
+        group.MapPut("/{id:guid}", async (
+            Guid id,
+            UpdateClienteRequest request,
+            IValidator<UpdateClienteRequest> validator,
+            UpdateClienteCommandHandler handler,
+            HttpContext http,
+            CancellationToken ct) =>
+        {
+            var validation = await validator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+            {
+                var errors = validation.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(
+                        g => System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(g.Key),
+                        g => g.Select(e => e.ErrorMessage).ToArray());
+
+                return Results.ValidationProblem(
+                    errors,
+                    title: "Uno o más campos son inválidos.",
+                    statusCode: StatusCodes.Status400BadRequest,
+                    type: "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                    instance: http.Request.Path);
+            }
+
+            try
+            {
+                var command = new UpdateClienteCommand(
+                    id,
+                    request.Nombre,
+                    request.Nit,
+                    request.Telefono,
+                    request.Ciudad);
+
+                var dto = await handler.HandleAsync(command, ct);
+
+                return Results.Ok(dto);
+            }
+            catch (ClienteNotFoundException)
+            {
+                return Results.Problem(
+                    title: "Cliente no encontrado",
+                    detail: $"No existe ningún cliente con id {id}.",
+                    statusCode: StatusCodes.Status404NotFound,
+                    type: "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+                    instance: http.Request.Path);
+            }
+            catch (DuplicateNitException)
+            {
+                return Results.Problem(
+                    title: "NIT/RUC duplicado",
+                    detail: "Ya existe un cliente con el NIT/RUC indicado.",
+                    statusCode: StatusCodes.Status409Conflict,
+                    type: "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+                    instance: http.Request.Path,
+                    extensions: new Dictionary<string, object?> { ["field"] = "nit" });
+            }
+        })
+        .WithName("UpdateCliente");
+
         return app;
     }
 }

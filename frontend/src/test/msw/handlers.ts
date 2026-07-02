@@ -100,4 +100,62 @@ export const handlers = [
       headers: { Location: `/api/v1/clientes/${created.id}` },
     })
   }),
+  http.put('*/api/v1/clientes/:id', async ({ params, request }) => {
+    const id = String(params.id)
+    const body = (await request.json()) as {
+      nombre?: string
+      nit?: string
+      telefono?: string
+      ciudad?: string
+    }
+
+    const existing = currentClientes.find((c) => c.id === id)
+    if (!existing) {
+      return HttpResponse.json(
+        {
+          type: 'https://tools.ietf.org/html/rfc9110#section-15.5.5',
+          title: 'Cliente no encontrado',
+          status: 404,
+          detail: `No existe ningún cliente con id ${id}.`,
+          instance: `/api/v1/clientes/${id}`,
+        },
+        { status: 404 },
+      )
+    }
+
+    // Duplicate NIT: only conflicts against a DIFFERENT cliente row.
+    // Same NIT on the same row is allowed (matches uk_clientes_nit + Postgres
+    // ON CONFLICT semantics — the row that "owns" the value is the one being
+    // updated, so no violation).
+    if (
+      body.nit &&
+      currentClientes.some((c) => c.id !== id && c.nit === body.nit)
+    ) {
+      return HttpResponse.json(
+        {
+          type: 'https://tools.ietf.org/html/rfc9110#section-15.5.10',
+          title: 'NIT/RUC duplicado',
+          status: 409,
+          detail: 'Ya existe un cliente con el NIT/RUC indicado.',
+          instance: `/api/v1/clientes/${id}`,
+          field: 'nit',
+        },
+        { status: 409 },
+      )
+    }
+
+    const now = new Date().toISOString()
+    const updated: Cliente = {
+      ...existing,
+      nombre: (body.nombre ?? existing.nombre).trim(),
+      nit: (body.nit ?? existing.nit).trim(),
+      telefono: (body.telefono ?? existing.telefono).trim(),
+      ciudad: (body.ciudad ?? existing.ciudad).trim(),
+      // createdAt is IMMUTABLE audit — never overwritten (matches backend).
+      createdAt: existing.createdAt,
+      updatedAt: now,
+    }
+    currentClientes = currentClientes.map((c) => (c.id === id ? updated : c))
+    return HttpResponse.json(updated, { status: 200 })
+  }),
 ]

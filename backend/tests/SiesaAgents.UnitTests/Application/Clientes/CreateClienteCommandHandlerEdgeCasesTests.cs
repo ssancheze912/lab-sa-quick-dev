@@ -49,6 +49,11 @@ public class CreateClienteCommandHandlerEdgeCasesTests
             }
             return Task.CompletedTask;
         }
+
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException("Story 2.4 stub — not used by CreateClienteCommandHandler edge-case tests.");
+        }
     }
 
     private static PostgresException BuildPostgresException(string sqlState, string? constraintName = null) =>

@@ -31,4 +31,15 @@ export const clienteApiRepository: IClienteRepository = {
     })
     return data
   },
+  async update(id, payload, signal) {
+    // Non-2xx surfaces as AxiosError so useUpdateCliente can branch on
+    // error.response?.status. `encodeURIComponent(id)` is defence-in-depth
+    // for path injection (backend also has route constraint `{id:guid}`).
+    const { data } = await apiClient.put<Cliente>(
+      `/api/v1/clientes/${encodeURIComponent(id)}`,
+      payload,
+      { signal },
+    )
+    return data
+  },
 }

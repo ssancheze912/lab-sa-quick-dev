@@ -40,6 +40,12 @@ public class GetClienteByIdQueryHandlerTests
             // Not exercised by this suite (write flow lives in Story 2.3 tests).
             throw new NotImplementedException();
         }
+
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
+        {
+            // Not exercised by this suite (Story 2.4 write flow lives in UpdateClienteCommandHandler tests).
+            throw new NotImplementedException();
+        }
     }
 
     [Fact]

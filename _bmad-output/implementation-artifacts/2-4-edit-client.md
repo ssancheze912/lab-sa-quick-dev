@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: ready-for-dev
+Status: implemented
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -1075,10 +1075,56 @@ Frontend:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.7 (sa-dev-story sub-agent, dev-story workflow)
 
 ### Debug Log References
 
+- Backend: `dotnet build` 0 errors + `dotnet test tests/SiesaAgents.UnitTests` 137 passed + `dotnet test tests/SiesaAgents.IntegrationTests --filter FullyQualifiedName~ClienteEndpointsTests` 28 passed.
+- Frontend: `pnpm --filter frontend build` 0 TS errors + `pnpm --filter frontend test` 227/227 passed + `pnpm --filter frontend lint` clean (only pre-existing warnings inherited from prior stories).
+- Sandbox limits (non-blocking, per Story 2.3 handoff):
+  * `MigrationsAndSnakeCaseTests` requires Docker → fails locally with "Docker is either not running or misconfigured". Runs only in CI/staging.
+  * Playwright ATDD suites (`e2e/tests/clientes/story-2.4-edit-client.spec.ts` — 26 E2E; `e2e/tests/api/story-2.4-edit-client.api.spec.ts` — 13 API contract) require Playwright browsers + a running backend/frontend on 5000/5173. Not runnable in the sandbox; equivalent assertions live in Vitest (useUpdateCliente.test.tsx, ClienteFormModal.edit.test.tsx, clientes.edit.integration.test.tsx) and xUnit (UpdateClienteCommandHandlerTests, UpdateClienteRequestValidatorTests, ClienteEndpointsTests.UpdateCliente_*).
+  * Backend `409 Conflict` on `UpdateCliente` cannot be reproduced via EF Core InMemory (unique index not enforced) — coverage lives in `UpdateClienteCommandHandlerTests.HandleAsync_RepositoryThrowsUniqueViolation_ThrowsDuplicateNit` (synthetic PostgresException) and in the E2E API contract suite.
+
 ### Completion Notes List
 
+- **Backend** — Domain, Application, Infrastructure, API and Tests wired end-to-end. `ClienteEntity.Update(...)` mutates the 4 fields, trims, refreshes `UpdatedAt`, preserves `Id`/`CreatedAt` (invariants tested). `UpdateClienteCommandHandler` fetches → domain-mutates → persists → maps null→404 (`ClienteNotFoundException`) and 23505→409 (`DuplicateNitException`); other DbUpdateException propagates. Endpoint `PUT /api/v1/clientes/{id:guid}` returns 200/400/404/409 with Problem Details RFC 7807 (`field: "nit"` at top-level via `extensions:` — matches ASP.NET flattening).
+- **Frontend** — `ClienteFormModal` now supports discriminated union `mode: 'create' | 'edit'` (default `'create'` keeps Story 2.3 signature intact). Title switches to "Editar cliente"; `defaultValues + reset(initialValues)` pre-fills the four inputs; on 409 shows inline NIT error and keeps modal open; on 404/5xx fires red toast and keeps modal open; on cancel/Esc/✕ modal closes without submit and reopening restores original values. `useUpdateCliente` invalidates BOTH `['clientes']` and `['clientes', id]`, replaces list cache in-place (order preserved — no head reinsert), sets byId cache to updated DTO. `ClienteDetailView` renders an `Editar` button (`type="outline"`, `aria-label="Editar cliente"`) only in the happy branch; it opens the shared `ClienteFormModal` in edit mode.
+- **MSW** — Added `http.put('*/api/v1/clientes/:id', ...)` returning 200 with trimmed persisted DTO, 404 for unknown id, and 409 only when the new NIT collides against a DIFFERENT existing row (same-row-same-NIT stays 200 — matches uk_clientes_nit semantics).
+- **Backward compat** — `<ClienteFormModal isOpen onClose />` (Story 2.3 create call site) still works because `mode` defaults to `'create'` and the discriminated union permits omitting `mode`.
+
 ### File List
+
+Created:
+- `backend/src/SiesaAgents.Domain/Clientes/Exceptions/ClienteNotFoundException.cs`
+- `backend/src/SiesaAgents.Application/Clientes/DTOs/UpdateClienteRequest.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Validators/UpdateClienteRequestValidator.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommand.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Commands/UpdateClienteCommandHandler.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/UpdateClienteRequestValidatorTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/UpdateClienteCommandHandlerTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Domain/ClienteEntityUpdateTests.cs`
+- `frontend/src/modules/crm/clientes/application/useUpdateCliente.ts`
+- `frontend/src/modules/crm/clientes/application/useUpdateCliente.test.tsx`
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.update.test.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteFormModal.edit.test.tsx`
+- `frontend/src/routes/clientes.edit.integration.test.tsx`
+
+Modified:
+- `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs` — added `Update(...)` instance method with trim + invariants + UpdatedAt refresh.
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` — added `UpdateAsync(...)`.
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implemented `UpdateAsync` using `_db.Clientes.Update(entity)` + `SaveChangesAsync`.
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — added `MapPut("/{id:guid}", ...)`.
+- `backend/src/SiesaAgents.API/Program.cs` — DI registration for `UpdateClienteCommandHandler` + `IValidator<UpdateClienteRequest>`.
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs` — stubbed `UpdateAsync` in fake.
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerEdgeCasesTests.cs` — stubbed `UpdateAsync` in fake.
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs` — stubbed `UpdateAsync` in fake.
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs` — stubbed `UpdateAsync` in fake.
+- `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs` — added 10 UpdateCliente_* HTTP integration tests.
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — added `UpdateClientePayload` type + `update(...)` method.
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implemented `update` via `apiClient.put`.
+- `frontend/src/modules/crm/clientes/presentation/ClienteFormModal.tsx` — discriminated union `mode: 'create' | 'edit'`; pre-fills defaultValues + reset on isOpen change; dynamic title; active mutation switch.
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx` — added `Editar` button + `useState(isEditOpen)` + `<ClienteFormModal mode="edit" ...>` render, wrapped in `<>` fragment for modal-outside-section rendering.
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx` — added 4 Story 2.4 tests.
+- `frontend/src/modules/crm/clientes/index.ts` — exported `useUpdateCliente` + `UpdateClientePayload`.
+- `frontend/src/test/msw/handlers.ts` — added PUT handler with 200/404/409 semantics.

@@ -47,6 +47,11 @@ public class CreateClienteCommandHandlerTests
             }
             return Task.CompletedTask;
         }
+
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException("Story 2.4 stub — not used by CreateClienteCommandHandler tests.");
+        }
     }
 
     /// <summary>
