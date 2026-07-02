@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +32,13 @@ builder.Services.Configure<JsonOptions>(options =>
     options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
 });
 
+// EF Core: register AppDbContext against Npgsql using the DefaultConnection.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
 var app = builder.Build();
 
 // Global exception handler MUST run first so it catches everything downstream.
@@ -45,4 +54,16 @@ app.UseCors(DevCorsPolicy);
 app.MapOpenApi();
 app.MapScalarApiReference();
 
+// Testing-environment-only diagnostic endpoint used by integration tests to
+// exercise ExceptionHandlingMiddleware. NOT exposed in Development/Production.
+if (app.Environment.EnvironmentName == "Testing")
+{
+    app.MapGet("/api/v1/test-error", () =>
+        throw new InvalidOperationException("integration-test-error"));
+}
+
 app.Run();
+
+// Sentinel required so WebApplicationFactory<Program> in the integration test
+// project can bind to the entry point of this minimal-API host.
+public partial class Program;
