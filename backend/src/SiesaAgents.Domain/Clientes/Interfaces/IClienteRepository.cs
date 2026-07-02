@@ -16,4 +16,11 @@ public interface IClienteRepository
     /// 404 Problem Details by the handler/endpoint), never an exception.
     /// </summary>
     Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Persists a new cliente. Callers must catch DbUpdateException whose
+    /// inner PostgresException.SqlState == "23505" to map duplicate-NIT
+    /// violations to a domain-level DuplicateNitException.
+    /// </summary>
+    Task AddAsync(ClienteEntity cliente, CancellationToken cancellationToken = default);
 }

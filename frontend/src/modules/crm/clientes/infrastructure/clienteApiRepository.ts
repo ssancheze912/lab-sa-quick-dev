@@ -23,4 +23,12 @@ export const clienteApiRepository: IClienteRepository = {
     )
     return data
   },
+  async create(payload, signal) {
+    // 201 returns the persisted DTO. 400/409/5xx surface as AxiosError so the
+    // caller (useCreateCliente) can branch on error.response?.status.
+    const { data } = await apiClient.post<Cliente>('/api/v1/clientes', payload, {
+      signal,
+    })
+    return data
+  },
 }

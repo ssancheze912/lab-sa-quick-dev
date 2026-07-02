@@ -346,4 +346,171 @@ public class ClienteEndpointsTests : IClassFixture<InMemoryDbWebApplicationFacto
             "application/problem+json",
             response.Content.Headers.ContentType?.MediaType);
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Story 2.3 — POST /api/v1/clientes (create)
+    //
+    // NOTE (sandbox constraint): EF Core InMemory 10 does NOT enforce unique
+    // indexes on SaveChangesAsync — it silently persists duplicates. The
+    // "true" 409 code path (DbUpdateException with PostgresException 23505 →
+    // DuplicateNitException) is exercised by unit tests
+    // (CreateClienteCommandHandlerTests) using synthetic PostgresException
+    // instances. The E2E API contract test (story-2.3-create-client.api.spec.ts)
+    // covers it against a real PostgreSQL instance when one is available.
+    // ─────────────────────────────────────────────────────────────────────
+
+    private sealed record CreateClientePayload(
+        string Nombre,
+        string Nit,
+        string Telefono,
+        string Ciudad);
+
+    [Fact]
+    public async Task CreateCliente_ValidPayload_Returns201WithDtoAndLocation()
+    {
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+
+        var payload = new CreateClientePayload(
+            "Nuevo Cliente",
+            $"999888777-{Guid.NewGuid().ToString().AsSpan(0, 4).ToString()}",
+            "+57 300 555 0000",
+            "Cali");
+
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var location = response.Headers.Location?.ToString();
+        Assert.NotNull(location);
+        Assert.Contains("/api/v1/clientes/", location);
+
+        var dto = await response.Content.ReadFromJsonAsync<ClienteDto>(JsonOptions);
+        Assert.NotNull(dto);
+        Assert.NotEqual(Guid.Empty, dto!.Id);
+        Assert.Equal(payload.Nombre, dto.Nombre);
+        Assert.Equal(payload.Nit, dto.Nit);
+        Assert.Equal(payload.Telefono, dto.Telefono);
+        Assert.Equal(payload.Ciudad, dto.Ciudad);
+
+        // Round-trip: fetch via GET on the Location and confirm identity.
+        var followUp = await client.GetAsync(location);
+        Assert.Equal(HttpStatusCode.OK, followUp.StatusCode);
+        var again = await followUp.Content.ReadFromJsonAsync<ClienteDto>(JsonOptions);
+        Assert.NotNull(again);
+        Assert.Equal(dto.Id, again!.Id);
+    }
+
+    [Fact]
+    public async Task CreateCliente_EmptyNombre_Returns400ProblemDetails()
+    {
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+
+        var payload = new CreateClientePayload(string.Empty, "900-1", "+57 300", "Cali");
+
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        Assert.True(doc.RootElement.TryGetProperty("errors", out var errors));
+        Assert.True(errors.TryGetProperty("nombre", out _));
+        Assert.Equal(400, doc.RootElement.GetProperty("status").GetInt32());
+
+        // NFR6 — no stack trace signals.
+        Assert.DoesNotContain("System.", body);
+        Assert.DoesNotContain("Microsoft.EntityFrameworkCore", body);
+        Assert.DoesNotContain(".cs:line", body);
+    }
+
+    [Fact]
+    public async Task CreateCliente_WhitespaceOnlyFields_Returns400WithAllFieldErrors()
+    {
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+
+        var payload = new CreateClientePayload("   ", "\t  ", "  ", " \n ");
+
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        var errors = doc.RootElement.GetProperty("errors");
+
+        Assert.True(errors.TryGetProperty("nombre", out _));
+        Assert.True(errors.TryGetProperty("nit", out _));
+        Assert.True(errors.TryGetProperty("telefono", out _));
+        Assert.True(errors.TryGetProperty("ciudad", out _));
+    }
+
+    [Fact]
+    public async Task CreateCliente_NitExceedsMaxLength_Returns400()
+    {
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+
+        var payload = new CreateClientePayload(
+            "Nuevo Cliente",
+            new string('A', 51),
+            "+57 300",
+            "Cali");
+
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        Assert.True(doc.RootElement.GetProperty("errors").TryGetProperty("nit", out _));
+    }
+
+    [Fact]
+    public async Task CreateCliente_TrimsFieldsBeforePersist()
+    {
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+
+        var payload = new CreateClientePayload(
+            "  Trimmed Cliente  ",
+            $"  900-{Guid.NewGuid().ToString().AsSpan(0, 4).ToString()}  ",
+            "  +57 300 000 0000  ",
+            "  Cali  ");
+
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var dto = await response.Content.ReadFromJsonAsync<ClienteDto>(JsonOptions);
+        Assert.NotNull(dto);
+        Assert.Equal("Trimmed Cliente", dto!.Nombre);
+        Assert.Equal(payload.Nit.Trim(), dto.Nit);
+        Assert.Equal("+57 300 000 0000", dto.Telefono);
+        Assert.Equal("Cali", dto.Ciudad);
+    }
+
+    [Fact]
+    public async Task CreateCliente_ResponseUsesCamelCaseKeys()
+    {
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+
+        var payload = new CreateClientePayload(
+            "Cliente Camel",
+            $"900-{Guid.NewGuid().ToString().AsSpan(0, 4).ToString()}",
+            "+57 300",
+            "Cali");
+
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", payload);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("\"id\"", body);
+        Assert.Contains("\"nombre\"", body);
+        Assert.Contains("\"createdAt\"", body);
+        Assert.DoesNotContain("\"Id\"", body);
+        Assert.DoesNotContain("\"Nombre\"", body);
+        Assert.DoesNotContain("\"CreatedAt\"", body);
+    }
 }

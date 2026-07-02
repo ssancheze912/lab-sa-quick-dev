@@ -31,10 +31,18 @@ export const seedClientes: Cliente[] = [
   },
 ]
 
+// Mutable seed so tests exercising create can observe list changes.
+// `resetClienteState()` runs in setup.ts `afterEach` to isolate tests.
+let currentClientes: Cliente[] = [...seedClientes]
+
+export function resetClienteState() {
+  currentClientes = [...seedClientes]
+}
+
 export const handlers = [
-  http.get('*/api/v1/clientes', () => HttpResponse.json(seedClientes)),
+  http.get('*/api/v1/clientes', () => HttpResponse.json(currentClientes)),
   http.get('*/api/v1/clientes/:id', ({ params }) => {
-    const cliente = seedClientes.find((c) => c.id === params.id)
+    const cliente = currentClientes.find((c) => c.id === params.id)
     if (!cliente) {
       return HttpResponse.json(
         {
@@ -48,5 +56,45 @@ export const handlers = [
       )
     }
     return HttpResponse.json(cliente)
+  }),
+  http.post('*/api/v1/clientes', async ({ request }) => {
+    const body = (await request.json()) as {
+      nombre?: string
+      nit?: string
+      telefono?: string
+      ciudad?: string
+    }
+
+    // Duplicate NIT fast-path: matches uk_clientes_nit semantics.
+    if (body.nit && currentClientes.some((c) => c.nit === body.nit)) {
+      return HttpResponse.json(
+        {
+          type: 'https://tools.ietf.org/html/rfc9110#section-15.5.10',
+          title: 'NIT/RUC duplicado',
+          status: 409,
+          detail: 'Ya existe un cliente con el NIT/RUC indicado.',
+          instance: '/api/v1/clientes',
+          field: 'nit',
+          extensions: { field: 'nit' },
+        },
+        { status: 409 },
+      )
+    }
+
+    const now = new Date().toISOString()
+    const created: Cliente = {
+      id: crypto.randomUUID(),
+      nombre: (body.nombre ?? '').trim(),
+      nit: (body.nit ?? '').trim(),
+      telefono: (body.telefono ?? '').trim(),
+      ciudad: (body.ciudad ?? '').trim(),
+      createdAt: now,
+      updatedAt: now,
+    }
+    currentClientes = [created, ...currentClientes]
+    return HttpResponse.json(created, {
+      status: 201,
+      headers: { Location: `/api/v1/clientes/${created.id}` },
+    })
   }),
 ]

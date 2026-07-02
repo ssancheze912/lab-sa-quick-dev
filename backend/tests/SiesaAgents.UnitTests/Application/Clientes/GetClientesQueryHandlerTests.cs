@@ -27,6 +27,12 @@ public class GetClientesQueryHandlerTests
         {
             return Task.FromResult<ClienteEntity?>(Seed.FirstOrDefault(c => c.Id == id));
         }
+
+        public Task AddAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
+        {
+            // Not exercised by this suite (write flow lives in Story 2.3 tests).
+            throw new NotImplementedException();
+        }
     }
 
     [Fact]

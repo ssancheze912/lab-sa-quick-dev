@@ -1,4 +1,8 @@
+using FluentValidation;
+using SiesaAgents.Application.Clientes.Commands;
+using SiesaAgents.Application.Clientes.DTOs;
 using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Domain.Clientes.Exceptions;
 
 namespace SiesaAgents.API.Endpoints;
 
@@ -42,6 +46,59 @@ public static class ClienteEndpoints
             return Results.Ok(dto);
         })
         .WithName("GetClienteById");
+
+        // Story 2.3 — Create cliente. 201 on success, 400 on validation failure
+        // (FluentValidation runs BEFORE EF Core), 409 on uk_clientes_nit conflict.
+        group.MapPost("/", async (
+            CreateClienteRequest request,
+            IValidator<CreateClienteRequest> validator,
+            CreateClienteCommandHandler handler,
+            HttpContext http,
+            CancellationToken ct) =>
+        {
+            var validation = await validator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+            {
+                var errors = validation.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(
+                        g => System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(g.Key),
+                        g => g.Select(e => e.ErrorMessage).ToArray());
+
+                return Results.ValidationProblem(
+                    errors,
+                    title: "Uno o más campos son inválidos.",
+                    statusCode: StatusCodes.Status400BadRequest,
+                    type: "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                    instance: http.Request.Path);
+            }
+
+            try
+            {
+                var command = new CreateClienteCommand(
+                    request.Nombre,
+                    request.Nit,
+                    request.Telefono,
+                    request.Ciudad);
+
+                var dto = await handler.HandleAsync(command, ct);
+
+                // 201 Created + Location header — aligns with architecture doc:
+                // "POST -> 201 Created + created object".
+                return Results.Created($"/api/v1/clientes/{dto.Id}", dto);
+            }
+            catch (DuplicateNitException)
+            {
+                return Results.Problem(
+                    title: "NIT/RUC duplicado",
+                    detail: "Ya existe un cliente con el NIT/RUC indicado.",
+                    statusCode: StatusCodes.Status409Conflict,
+                    type: "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+                    instance: http.Request.Path,
+                    extensions: new Dictionary<string, object?> { ["field"] = "nit" });
+            }
+        })
+        .WithName("CreateCliente");
 
         return app;
     }

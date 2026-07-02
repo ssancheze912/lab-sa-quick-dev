@@ -126,9 +126,9 @@ describe('ClienteListView', () => {
     expect(emptyState).toHaveAttribute('aria-live', 'polite')
     expect(emptyState).toHaveTextContent(/No hay clientes registrados/i)
     expect(emptyState).toHaveTextContent(/Crea el primer cliente del sistema/i)
-    expect(
-      screen.getByRole('button', { name: /nuevo cliente/i }),
-    ).toBeInTheDocument()
+    // Story 2.3: both the header CTA (cliente-nuevo-button) and the EmptyState
+    // CTA render — assert there are at least two "Nuevo cliente" buttons.
+    expect(screen.getAllByRole('button', { name: /nuevo cliente/i }).length).toBeGreaterThanOrEqual(2)
 
     expect(screen.getByTestId('clientes-search-input')).toBeDisabled()
   })
@@ -447,5 +447,52 @@ describe('ClienteListView', () => {
     expect(input).toHaveValue('zzz-no-match-zzz')
     // AND: The input is NOT disabled — user must still be able to type/backspace
     expect(input).not.toBeDisabled()
+  })
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Story 2.3 — Nuevo cliente button + modal wiring
+  // ───────────────────────────────────────────────────────────────────────
+
+  it('[TC-Story-2.3-Header-Nuevo-Cliente-Button] header always renders the primary Nuevo cliente button', async () => {
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    const btn = await screen.findByTestId('cliente-nuevo-button')
+    expect(btn).toBeInTheDocument()
+    expect(btn).toHaveAttribute('aria-label', 'Nuevo cliente')
+  })
+
+  it('[TC-Story-2.3-Header-Opens-Modal] clicking the header button opens ClienteFormModal', async () => {
+    const user = userEvent.setup()
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    await user.click(await screen.findByTestId('cliente-nuevo-button'))
+    expect(await screen.findByTestId('cliente-form-modal')).toBeInTheDocument()
+  })
+
+  it('[TC-Story-2.3-Empty-CTA-Opens-Modal] EmptyState CTA opens the same modal', async () => {
+    server.use(http.get('*/api/v1/clientes', () => HttpResponse.json([])))
+    const user = userEvent.setup()
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    await screen.findByTestId('empty-state-no-clients')
+    // Click the CTA inside the EmptyState (first matching button after the header).
+    const buttons = screen.getAllByRole('button', { name: /nuevo cliente/i })
+    // The header button (cliente-nuevo-button) comes first; the EmptyState CTA
+    // is one of the subsequent ones. Click the EmptyState CTA specifically.
+    const emptyStateBtn = buttons.find(
+      (b) => b.getAttribute('data-testid') !== 'cliente-nuevo-button',
+    )
+    expect(emptyStateBtn).toBeDefined()
+    await user.click(emptyStateBtn!)
+    expect(await screen.findByTestId('cliente-form-modal')).toBeInTheDocument()
   })
 })

@@ -37,4 +37,13 @@ public class ClienteRepository : IClienteRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
+
+    public async Task AddAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
+    {
+        // The repo is intentionally naive: it delegates to EF Core and lets
+        // DbUpdateException bubble up. Mapping (23505 -> DuplicateNitException) is
+        // an application-layer decision made by the handler.
+        _db.Clientes.Add(cliente);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
 }
