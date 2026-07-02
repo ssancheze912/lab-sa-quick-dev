@@ -1,6 +1,6 @@
 import { NavigationBar, NavigationRail } from 'siesa-ui-kit'
 import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
-import { NAV_ITEMS } from './navItems'
+import { NAV_ITEMS, type NavItemPath } from './navItems'
 
 /**
  * AppShell — responsive layout wrapper for the Siesa Agents CRM.
@@ -15,44 +15,47 @@ export function AppShell() {
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
 
-  const activeItem = NAV_ITEMS.find((item) => pathname.startsWith(item.to))
+  // Match either an exact path or a nested sub-route (`/clientes/$id`).
+  // Using `startsWith(item.to)` alone would incorrectly match `/clientes-foo`.
+  const activeItem = NAV_ITEMS.find(
+    (item) => pathname === item.to || pathname.startsWith(`${item.to}/`),
+  )
   const activeId = activeItem?.id
 
-  const goTo = (to: string) => {
+  const goTo = (to: NavItemPath) => {
     navigate({ to })
   }
 
-  const railItems = NAV_ITEMS.map(({ id, label, icon: Icon }) => ({
+  // Single source of truth for both the rail (desktop) and the bar (mobile).
+  const navItems = NAV_ITEMS.map(({ id, label, icon: Icon }) => ({
     id,
     label,
     icon: <Icon className="size-6" aria-hidden="true" />,
     ariaLabel: label,
   }))
 
-  const barItems = NAV_ITEMS.map(({ id, label, icon: Icon }) => ({
-    id,
-    label,
-    icon: <Icon className="size-6" aria-hidden="true" />,
-    ariaLabel: label,
-  }))
+  const handleSelect = (id: string) => {
+    const item = NAV_ITEMS.find((n) => n.id === id)
+    if (item) goTo(item.to)
+  }
 
   return (
     <div className="flex min-h-screen">
       {/* Desktop rail */}
       <aside data-testid="nav-rail" className="hidden lg:flex">
         <NavigationRail
-          items={railItems}
+          items={navItems}
           alignment="top"
           selectedId={activeId}
-          onItemSelect={(id) => {
-            const item = NAV_ITEMS.find((n) => n.id === id)
-            if (item) goTo(item.to)
-          }}
+          onItemSelect={handleSelect}
         />
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 pb-[56px] lg:pb-0">
+      <main
+        className="flex-1 pb-[56px] lg:pb-0"
+        aria-label="Contenido principal"
+      >
         <Outlet />
       </main>
 
@@ -62,12 +65,9 @@ export function AppShell() {
         className="fixed inset-x-0 bottom-0 z-50 lg:hidden"
       >
         <NavigationBar
-          items={barItems}
+          items={navItems}
           activeItemId={activeId}
-          onItemClick={(id) => {
-            const item = NAV_ITEMS.find((n) => n.id === id)
-            if (item) goTo(item.to)
-          }}
+          onItemClick={handleSelect}
           ariaLabel="Navegación principal"
         />
       </div>
