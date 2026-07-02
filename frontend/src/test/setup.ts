@@ -1,4 +1,13 @@
 import '@testing-library/jest-dom'
+import { afterAll, afterEach, beforeAll } from 'vitest'
+import { server } from './msw/server'
+
+// MSW lifecycle — wired here so every Vitest suite gets a mocked network by
+// default. Individual tests can call `server.use(...)` to override handlers;
+// `resetHandlers()` after each test restores the default set.
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
 /**
  * jsdom's `window.location` is a real `Location` instance whose properties

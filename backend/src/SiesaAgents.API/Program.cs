@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +43,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+// Cliente aggregate — Story 2.1
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<GetClientesQueryHandler>();
+
 var app = builder.Build();
 
 // Global exception handler MUST run first so it catches everything downstream.
@@ -53,6 +61,9 @@ app.UseCors(DevCorsPolicy);
 // Scalar API reference — Swagger/Swashbuckle is forbidden by architecture.
 app.MapOpenApi();
 app.MapScalarApiReference();
+
+// Domain endpoints
+app.MapClienteEndpoints();
 
 // Testing-environment-only diagnostic endpoint used by integration tests to
 // exercise ExceptionHandlingMiddleware. NOT exposed in Development/Production.

@@ -1,20 +1,10 @@
 // -----------------------------------------------------------------------------
-//  Story 1.3 — Backend Database Foundation
-//  RED-phase ATDD integration test for AC #1, #2, #4, #5.
-//  Covers TC-E1-P1-05 (migration applies cleanly), TC-E1-P2-04 (snake_case),
-//  and the scope-note enforcement that NO domain tables exist yet.
-//
-//  Expected RED-phase failure reasons (before DEV team implements Story 1.3):
-//    1. Task 3 not done: `SiesaAgents.Infrastructure.Data.AppDbContext` type
-//       does not exist → CS0246 compile error.
-//    2. Task 7 not done: no InitialCreate migration exists →
-//       context.Database.MigrateAsync() throws "No migrations were found".
-//    3. Task 2 not done: ApplySnakeCaseNaming extension missing → the migration
-//       history table columns remain PascalCase (MigrationId, ProductVersion),
-//       so the Assert.Contains("migration_id", ...) assertion fails.
-//    4. Task 8 not done: SiesaAgents.IntegrationTests project doesn't exist,
-//       so Testcontainers.PostgreSql / Npgsql / EFCore references cannot bind.
-//  All failure modes trace back to a missing acceptance-criterion behavior.
+//  Story 2.1 — Client List & Search
+//  Updated in Epic 2: with ClienteEntity landed, the previous "no domain tables"
+//  scope-note guards from Story 1.3 no longer apply. This test now asserts that
+//  applying migrations end-to-end yields the expected snake_case public schema
+//  (history table + clientes table), and that ApplySnakeCaseNaming still runs
+//  as the final statement of OnModelCreating.
 //
 //  Docker prerequisite: this test uses Testcontainers to spin up an isolated
 //  PostgreSQL 18 container. On machines without Docker the test halts in
@@ -40,25 +30,21 @@ public class MigrationsAndSnakeCaseTests : IAsyncLifetime
     public Task DisposeAsync() => _postgres.DisposeAsync().AsTask();
 
     [Fact]
-    public async Task GivenEmptyDatabase_WhenApplyingInitialCreateMigration_ThenOnlyHistoryTableExistsWithSnakeCaseColumns()
+    public async Task GivenEmptyDatabase_WhenApplyingMigrations_ThenClientesTableExistsWithSnakeCaseColumns()
     {
-        // GIVEN: a fresh, empty PostgreSQL 18 database (via Testcontainers) and
-        //        an AppDbContext configured with the story's Npgsql connection.
+        // GIVEN: a fresh PostgreSQL 18 database.
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(_postgres.GetConnectionString())
             .Options;
         await using var context = new AppDbContext(options);
 
-        // WHEN: the InitialCreate migration is applied end-to-end.
-        await context.Database.MigrateAsync();  // AC #1 — `dotnet ef database update` behavior
+        // WHEN: all migrations are applied end-to-end.
+        await context.Database.MigrateAsync();
 
         await using var conn = new NpgsqlConnection(_postgres.GetConnectionString());
         await conn.OpenAsync();
 
-        // THEN (AC #2 / AC #5): only the migrations history table exists — no
-        //                        clientes or contactos tables. The scope note
-        //                        "do NOT define ClienteEntity/ContactoEntity"
-        //                        is enforced empirically here.
+        // THEN: the clientes table (Story 2.1) is present alongside the EF history table.
         await using (var cmd = new NpgsqlCommand(
             @"SELECT table_name FROM information_schema.tables
               WHERE table_schema = 'public' ORDER BY table_name;", conn))
@@ -71,13 +57,12 @@ public class MigrationsAndSnakeCaseTests : IAsyncLifetime
             }
 
             Assert.Contains("__ef_migrations_history", tables);
-            Assert.DoesNotContain("clientes", tables);    // AC #5 — scope-note guard
-            Assert.DoesNotContain("contactos", tables);   // AC #5 — scope-note guard
+            Assert.Contains("clientes", tables);
+            // Contactos lands in Epic 3.
+            Assert.DoesNotContain("contactos", tables);
         }
 
-        // THEN (AC #4 / TC-E1-P2-04): the history-table columns MUST be
-        //                              snake_case, proving ApplySnakeCaseNaming()
-        //                              is the last call in OnModelCreating.
+        // THEN: history-table columns remain snake_case (ApplySnakeCaseNaming still last).
         await using (var cmd = new NpgsqlCommand(
             @"SELECT column_name FROM information_schema.columns
               WHERE table_schema = 'public' AND table_name = '__ef_migrations_history'
@@ -92,8 +77,47 @@ public class MigrationsAndSnakeCaseTests : IAsyncLifetime
 
             Assert.Contains("migration_id", cols);
             Assert.Contains("product_version", cols);
-            Assert.DoesNotContain("MigrationId", cols);      // PascalCase — forbidden
-            Assert.DoesNotContain("ProductVersion", cols);   // PascalCase — forbidden
+            Assert.DoesNotContain("MigrationId", cols);
+            Assert.DoesNotContain("ProductVersion", cols);
+        }
+
+        // THEN: clientes columns are snake_case (id, nombre, nit, telefono, ciudad, created_at, updated_at).
+        await using (var cmd = new NpgsqlCommand(
+            @"SELECT column_name FROM information_schema.columns
+              WHERE table_schema = 'public' AND table_name = 'clientes'
+              ORDER BY column_name;", conn))
+        await using (var reader = await cmd.ExecuteReaderAsync())
+        {
+            var cols = new List<string>();
+            while (await reader.ReadAsync())
+            {
+                cols.Add(reader.GetString(0));
+            }
+
+            Assert.Contains("id", cols);
+            Assert.Contains("nombre", cols);
+            Assert.Contains("nit", cols);
+            Assert.Contains("telefono", cols);
+            Assert.Contains("ciudad", cols);
+            Assert.Contains("created_at", cols);
+            Assert.Contains("updated_at", cols);
+            Assert.DoesNotContain("CreatedAt", cols);
+            Assert.DoesNotContain("UpdatedAt", cols);
+        }
+
+        // THEN: uk_clientes_nit unique index is present.
+        await using (var cmd = new NpgsqlCommand(
+            @"SELECT indexname FROM pg_indexes
+              WHERE schemaname = 'public' AND tablename = 'clientes';", conn))
+        await using (var reader = await cmd.ExecuteReaderAsync())
+        {
+            var indexes = new List<string>();
+            while (await reader.ReadAsync())
+            {
+                indexes.Add(reader.GetString(0));
+            }
+
+            Assert.Contains("uk_clientes_nit", indexes);
         }
     }
 }

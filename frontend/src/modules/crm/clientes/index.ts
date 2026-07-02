@@ -1,0 +1,5 @@
+export { ClienteListView } from './presentation/ClienteListView'
+export { ClientListItem } from './presentation/ClientListItem'
+export { useClientes } from './application/useClientes'
+export type { Cliente } from './domain/Cliente'
+export type { IClienteRepository } from './domain/IClienteRepository'

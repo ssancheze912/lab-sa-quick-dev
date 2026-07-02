@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: ready-for-dev
+Status: implemented
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -601,4 +601,134 @@ claude-opus-4-7
 
 ### Completion Notes List
 
+- Backend Clean Architecture + DDD scaffolding created for the Cliente aggregate:
+  Domain (entity + repo interface) → Application (DTO + CQRS query + handler) →
+  Infrastructure (EF Core configuration, `Clientes` DbSet, `ClienteRepository`,
+  new EF Core migration `20260702091701_AddClientesTable`) → API
+  (`ClienteEndpoints.MapGet("/")` registered via `MapClienteEndpoints`, plus DI
+  wiring in `Program.cs`).
+- PKs are `Guid`, timestamps are `DateTimeOffset`, schema is snake_case via the
+  existing `ApplySnakeCaseNaming()` last-line hook. Unique index `uk_clientes_nit`
+  is declared here (owner of the field) even though its dedup enforcement lands
+  fully in Story 2.3 (R-002 mitigation).
+- Story 1.3 scope-note guards in `AppDbContextModelTests` and
+  `MigrationsAndSnakeCaseTests` were flipped from "no domain DbSets" to positive
+  ClienteEntity assertions — the Story 1.3 authors explicitly annotated those
+  tests for this exact update ("When Epic 2 lands, this test becomes …").
+- Frontend module lives at `modules/crm/clientes/{domain,application,
+  infrastructure,presentation}` with a top-level barrel. `ClienteListView`
+  renders a 280px left panel (`lg:w-[280px] lg:shrink-0`, `w-full` on mobile)
+  with siesa-ui-kit `Input` for search and a custom `ClientListItem` (WCAG
+  min-h-[44px] touch target, role="button", Enter/Space keyboard activation).
+  Filtering is `useMemo`-based over the TanStack Query cache so typing never
+  triggers a refetch (Story 2.1 client-side search rationale).
+- Shared components `EmptyState` (variants `search-empty`, `no-clients`,
+  `no-contacts` with `aria-live="polite"` and CTA support) and `ErrorPanel`
+  (role="alert", siesa-ui-kit `Button` for "Reintentar") added to
+  `src/shared/components/` with their own tests.
+- MSW server wired into `src/test/setup.ts` (beforeAll listen, resetHandlers,
+  afterAll close). Default handlers seed 3 clientes matching the ATDD E2E
+  spec fixtures. Individual tests override handlers via `server.use(...)`.
+- `main.tsx` now imports `react-loading-skeleton/dist/skeleton.css` right after
+  `siesa-ui-kit/styles.css` (Story 1.2 rule: siesa styles first, then app
+  styles).
+- Route `/clientes` now renders a split-panel `<section>` — `ClienteListView`
+  on the left, a placeholder detail area on the right (Story 2.2 will populate
+  it). The `<h1>Clientes</h1>` lives inside the panel header, satisfying the
+  Story 1.2 E2E assertion `page.getByRole('heading', { level: 1 })`.
+- Nueva CTA `"Nuevo cliente"` en el `EmptyState` de lista vacía sólo hace
+  `console.info('TODO: Story 2.3 — Create Client')`; se cablea de verdad en
+  Story 2.3. `onSelect` en la lista es un stub que loguea el id — Story 2.2
+  reemplaza esto con navegación de router.
+- Tests:
+  - Backend: `dotnet test` (unit + non-Docker integration + Cliente endpoints)
+    → 45 tests, 0 failures. The two Docker-dependent tests
+    (`ProblemDetailsMiddlewareEdgeCaseTests`, `MigrationsAndSnakeCaseTests`)
+    were updated for the Epic 2 schema but are documented as non-blocking in
+    this sandbox (no Docker available).
+  - Frontend: `pnpm test` → 60 tests passing across 11 files (previous 39 +
+    21 new unit/component tests for Story 2.1). Build & lint clean (only
+    pre-existing `only-export-components` warnings on TanStack Router files
+    remain — those come from `createFileRoute` co-locating the component).
+  - E2E (Playwright): the 18 spec tests in
+    `e2e/tests/clientes/story-2.1-client-list-search.spec.ts` mock the
+    network with `page.route()`, so they can run against the frontend
+    without a live backend. The 4 API contract tests in
+    `e2e/tests/api/story-2.1-clientes-list.api.spec.ts` require a live
+    PostgreSQL — not available in this sandbox, non-blocking per task
+    instructions. `ClienteEndpointsTests` covers the same shape end-to-end
+    against the EF Core InMemory provider (200 OK, camelCase, UUID+ISO
+    fields, no stack-trace leak).
+- Non-blocking sandbox constraints:
+  - Playwright browsers are not launched here (env-limited); the ATDD assertions
+    are mirrored in Vitest + jsdom (`ClienteListView.test.tsx` covers every AC
+    the E2E spec covers: filter by Nombre/NIT, panel width class, EmptyState
+    variants, ErrorPanel + Reintentar refetch, skeleton + aria-busy, disabled
+    input during loading/empty, 500-record NFR1 perf).
+  - The two Docker-only integration tests keep their `[Trait("Category",
+    "Integration")]` tag so CI can filter them; they are ready to run once a
+    Docker daemon is available.
+
 ### File List
+
+**Backend — new**
+
+- `backend/src/SiesaAgents.Domain/Clientes/Entities/ClienteEntity.cs`
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
+- `backend/src/SiesaAgents.Application/Clientes/DTOs/ClienteDto.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQuery.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClientesQueryHandler.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Configurations/ClienteConfiguration.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Migrations/20260702091701_AddClientesTable.cs`
+- `backend/src/SiesaAgents.Infrastructure/Migrations/20260702091701_AddClientesTable.Designer.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
+- `backend/tests/SiesaAgents.UnitTests/Domain/ClienteEntityTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`
+- `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs`
+
+**Backend — modified**
+
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs` — added
+  `DbSet<ClienteEntity> Clientes` and refreshed the scope-note comment.
+- `backend/src/SiesaAgents.Infrastructure/Migrations/AppDbContextModelSnapshot.cs`
+  — regenerated by `dotnet ef migrations add` to include the clientes model.
+- `backend/src/SiesaAgents.API/Program.cs` — added imports, DI registrations
+  (`IClienteRepository`, `GetClientesQueryHandler`), and `MapClienteEndpoints()`.
+- `backend/tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj`
+  — added `Microsoft.EntityFrameworkCore.InMemory` for the Docker-less
+  `ClienteEndpointsTests` factory.
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/AppDbContextModelTests.cs`
+  — flipped Story 1.3 scope-note asserts to positive `ClienteEntity` assertions.
+- `backend/tests/SiesaAgents.IntegrationTests/MigrationsAndSnakeCaseTests.cs`
+  — extended to verify the `clientes` table + snake_case columns +
+  `uk_clientes_nit` index.
+
+**Frontend — new**
+
+- `frontend/src/modules/crm/clientes/domain/Cliente.ts`
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
+- `frontend/src/modules/crm/clientes/application/useClientes.ts`
+- `frontend/src/modules/crm/clientes/application/useClientes.test.tsx`
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClientListItem.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClientListItem.test.tsx`
+- `frontend/src/modules/crm/clientes/index.ts` (barrel)
+- `frontend/src/shared/components/EmptyState/EmptyState.tsx`
+- `frontend/src/shared/components/EmptyState/EmptyState.test.tsx`
+- `frontend/src/shared/components/EmptyState/index.ts`
+- `frontend/src/shared/components/ErrorPanel/ErrorPanel.tsx`
+- `frontend/src/shared/components/ErrorPanel/ErrorPanel.test.tsx`
+- `frontend/src/shared/components/ErrorPanel/index.ts`
+- `frontend/src/test/msw/handlers.ts`
+- `frontend/src/test/msw/server.ts`
+- `frontend/src/test/factories/clienteFactory.ts`
+
+**Frontend — modified**
+
+- `frontend/src/routes/clientes.tsx` — replaced placeholder with the split
+  layout hosting `ClienteListView`.
+- `frontend/src/test/setup.ts` — wired MSW `server.listen/resetHandlers/close`.
+- `frontend/src/main.tsx` — added the `react-loading-skeleton` CSS import.

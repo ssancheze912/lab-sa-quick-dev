@@ -1,14 +1,9 @@
 // -----------------------------------------------------------------------------
-//  Story 1.3 — Backend Database Foundation
-//  BMad-Integrated testarch-automate — scope-note enforcement at the MODEL
-//  level (AC #5). The ATDD baseline enforces this via the migration SQL, which
-//  requires Docker. This unit test provides an equivalent guard that runs in
-//  the Docker-less sandbox: if a future PR accidentally adds a DbSet<T> to
-//  AppDbContext, these tests break BEFORE the migration is even generated.
-//
-//  Also validates that the AppDbContext.OnModelCreating pipeline (which now
-//  includes ApplySnakeCaseNaming as its last statement per AC #4) can be
-//  invoked end-to-end without throwing when zero domain entities are defined.
+//  Story 2.1 — Client List & Search
+//  Updated in Epic 2: the Story 1.3 "no domain DbSets" scope-note guards were
+//  intentionally invalidated when ClienteEntity landed. This suite now asserts
+//  the positive shape: ClienteEntity is registered, snake_case is applied,
+//  and the DbContext still boots on the InMemory provider (Docker-less CI).
 // -----------------------------------------------------------------------------
 using Microsoft.EntityFrameworkCore;
 using SiesaAgents.Infrastructure.Data;
@@ -23,50 +18,43 @@ public class AppDbContextModelTests
             .Options;
 
     [Fact]
-    public void GivenAppDbContextInStory13State_WhenOnModelCreatingRuns_ThenNoDomainEntitiesAreRegistered()
+    public void GivenAppDbContext_WhenOnModelCreatingRuns_ThenClienteEntityIsRegistered()
     {
-        // GIVEN: the AppDbContext as it exists at the end of Story 1.3.
-        //        The epic explicitly forbids ClienteEntity / ContactoEntity in
-        //        this story (AC #5). Any PR that adds a DbSet must be rejected.
-        using var ctx = new AppDbContext(InMemoryOptions(nameof(GivenAppDbContextInStory13State_WhenOnModelCreatingRuns_ThenNoDomainEntitiesAreRegistered)));
+        using var ctx = new AppDbContext(InMemoryOptions(nameof(GivenAppDbContext_WhenOnModelCreatingRuns_ThenClienteEntityIsRegistered)));
 
-        // WHEN: the model is materialized (triggers OnModelCreating).
-        var entityTypes = ctx.Model.GetEntityTypes().ToList();
+        var typeNames = ctx.Model.GetEntityTypes().Select(e => e.ClrType.Name).ToList();
 
-        // THEN: zero domain entities are mapped. This IS the compile-time /
-        //       runtime guard for the "no domain DbSets in Story 1.3" rule.
-        //       When Epic 2 lands, this test becomes:
-        //         Assert.Contains(entityTypes, e => e.ClrType.Name == "ClienteEntity");
-        //       and this specific assertion (Empty) is updated then.
-        Assert.Empty(entityTypes);
+        Assert.Contains("ClienteEntity", typeNames);
     }
 
     [Fact]
-    public void GivenAppDbContextInStory13State_WhenOnModelCreatingRuns_ThenClienteEntityMustNotBeRegistered()
+    public void GivenAppDbContext_WhenClienteEntityMapped_ThenTableAndColumnsAreSnakeCase()
     {
-        // GIVEN: the current story's AppDbContext.
-        using var ctx = new AppDbContext(InMemoryOptions(nameof(GivenAppDbContextInStory13State_WhenOnModelCreatingRuns_ThenClienteEntityMustNotBeRegistered)));
+        using var ctx = new AppDbContext(InMemoryOptions(nameof(GivenAppDbContext_WhenClienteEntityMapped_ThenTableAndColumnsAreSnakeCase)));
 
-        // WHEN: we scan the model by CLR-type name.
-        var typeNames = ctx.Model.GetEntityTypes().Select(e => e.ClrType.Name).ToList();
+        var clientes = ctx.Model.GetEntityTypes()
+            .SingleOrDefault(e => e.ClrType.Name == "ClienteEntity");
+        Assert.NotNull(clientes);
 
-        // THEN: neither of the two forbidden entities is present. AC #5 tells
-        //       code review to reject any PR that reintroduces these.
-        Assert.DoesNotContain("ClienteEntity", typeNames);
-        Assert.DoesNotContain("ContactoEntity", typeNames);
+        Assert.Equal("clientes", clientes!.GetTableName());
+
+        var columns = clientes.GetProperties().Select(p => p.GetColumnName()).ToList();
+        Assert.Contains("id", columns);
+        Assert.Contains("nombre", columns);
+        Assert.Contains("nit", columns);
+        Assert.Contains("telefono", columns);
+        Assert.Contains("ciudad", columns);
+        Assert.Contains("created_at", columns);
+        Assert.Contains("updated_at", columns);
+
+        // PascalCase leaks would break the snake_case convention (NFR6 / R-002).
+        Assert.DoesNotContain("Id", columns);
+        Assert.DoesNotContain("CreatedAt", columns);
     }
 
     [Fact]
     public void GivenAppDbContext_WhenConstructedWithInMemoryProvider_ThenOnModelCreatingCompletesWithoutThrowing()
     {
-        // GIVEN: the InMemory provider (works without Npgsql / PostgreSQL —
-        //        important for the Docker-less sandbox and for CI shards that
-        //        do not need real infrastructure).
-
-        // WHEN: constructing the context and forcing model materialization.
-        // THEN: no exception — the ApplySnakeCaseNaming call over an empty
-        //       entity graph is safe (regression guard for the "empty model"
-        //       path of the extension).
         var exception = Record.Exception(() =>
         {
             using var ctx = new AppDbContext(InMemoryOptions(nameof(GivenAppDbContext_WhenConstructedWithInMemoryProvider_ThenOnModelCreatingCompletesWithoutThrowing)));
@@ -79,28 +67,18 @@ public class AppDbContextModelTests
     [Fact]
     public void GivenAppDbContext_WhenInspected_ThenItInheritsFromDbContext()
     {
-        // GIVEN / WHEN / THEN: AppDbContext MUST be a DbContext subclass so
-        //        that Program.cs can register it via AddDbContext<AppDbContext>.
-        //        This is the primary type-shape invariant of Story 1.3.
         Assert.True(typeof(DbContext).IsAssignableFrom(typeof(AppDbContext)));
     }
 
     [Fact]
-    public void GivenAppDbContextType_WhenReflected_ThenItExposesNoDbSetProperties()
+    public void GivenAppDbContextType_WhenReflected_ThenClientesDbSetIsExposed()
     {
-        // GIVEN: AppDbContext.
         var dbSetProperties = typeof(AppDbContext)
             .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Where(p => p.PropertyType.IsGenericType
                         && p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
             .ToList();
 
-        // WHEN / THEN: no DbSet<T> properties should be visible on the type
-        //              itself. AC #5 scope-note guard — the strongest static
-        //              check we can run without Docker. Any devsub-agent that
-        //              adds a `public DbSet<XEntity> Xs { get; set; }` in
-        //              Story 1.3 will break THIS test before it even reaches
-        //              the migration.
-        Assert.Empty(dbSetProperties);
+        Assert.Contains(dbSetProperties, p => p.Name == "Clientes");
     }
 }
