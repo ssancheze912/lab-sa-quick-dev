@@ -62,9 +62,13 @@ public sealed class UpdateClienteCommandHandler
 
     private static bool IsUniqueNitViolation(DbUpdateException ex)
     {
+        // AC#5 mandates a strict pair: SqlState 23505 AND ConstraintName == "uk_clientes_nit".
+        // Accepting a null ConstraintName would over-broadly catch any future
+        // unique index (e.g. uk_clientes_email) and mis-label those violations as
+        // duplicate-NIT — surfacing the wrong inline error to the user (NFR6).
         return ex.InnerException is PostgresException pg
                && pg.SqlState == "23505"
-               && (pg.ConstraintName is null
-                   || pg.ConstraintName.Equals("uk_clientes_nit", StringComparison.OrdinalIgnoreCase));
+               && pg.ConstraintName is not null
+               && pg.ConstraintName.Equals("uk_clientes_nit", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -2,6 +2,7 @@ import { forwardRef, useEffect } from 'react'
 import type { InputHTMLAttributes } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import axios from 'axios'
 import { AlertDialog, Button, Input } from 'siesa-ui-kit'
 import {
   clienteFormSchema,
@@ -96,13 +97,11 @@ export function ClienteFormModal(props: ClienteFormModalProps) {
     } catch (error) {
       // 409 → inline NIT error (both create + edit share the same copy).
       // Any other error was already toasted by the mutation hook. We do
-      // NOT close the modal so the user can retry.
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        (error as { response?: { status?: number } }).response?.status === 409
-      ) {
+      // NOT close the modal so the user can retry. Using axios.isAxiosError
+      // is safer than an ad-hoc structural check: it guarantees `error.response`
+      // is properly typed and avoids false positives on non-Axios errors that
+      // happen to expose a `response` property.
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
         setError('nit', {
           type: 'server',
           message: 'El NIT/RUC ya está registrado',
