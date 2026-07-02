@@ -27,4 +27,14 @@ public class ClienteRepository : IClienteRepository
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        // AsNoTracking: detail read is idempotent — no change tracker allocation
+        // is required. Returns null when the id does not match (mapped to 404
+        // upstream by the handler / endpoint).
+        return await _db.Clientes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
 }

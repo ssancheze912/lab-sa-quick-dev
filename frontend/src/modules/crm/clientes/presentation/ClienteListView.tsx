@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import Skeleton from 'react-loading-skeleton'
 import { Input } from 'siesa-ui-kit'
+import { useNavigate, useMatchRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
 import { useClientes } from '../application/useClientes'
@@ -14,9 +15,20 @@ import { ClientListItem } from './ClientListItem'
  *   3. Zero data  → EmptyState variant "no-clients" + disabled input + CTA
  *   4. Zero match → EmptyState variant "search-empty" (input keeps its value)
  *   5. Otherwise  → scrollable list with one ClientListItem per cliente
+ *
+ * Selection state is driven by the current route params — clicking an item
+ * navigates to /clientes/$clienteId; the matching id becomes `isSelected`.
+ * On mobile (< lg) the list hides when a cliente is active so the detail
+ * panel gets the full viewport (master-detail responsive pattern).
  */
 export function ClienteListView() {
   const [searchQuery, setSearchQuery] = useState('')
+  const navigate = useNavigate()
+  const matchRoute = useMatchRoute()
+  const detailMatch = matchRoute({ to: '/clientes/$clienteId' }) as
+    | { clienteId?: string }
+    | false
+  const activeClienteId = detailMatch ? detailMatch.clienteId : undefined
 
   const {
     data: clientes = [],
@@ -42,10 +54,14 @@ export function ClienteListView() {
 
   const inputDisabled = isLoading || isError || noClients
 
+  const asideClasses = `${
+    activeClienteId ? 'hidden lg:flex' : 'flex'
+  } h-full w-full flex-col border-r border-slate-200 lg:w-[280px] lg:shrink-0`
+
   return (
     <aside
       data-testid="clientes-list-panel"
-      className="flex h-full w-full flex-col border-r border-slate-200 lg:w-[280px] lg:shrink-0"
+      className={asideClasses}
     >
       <div className="border-b border-slate-200 p-4">
         <h1
@@ -118,10 +134,13 @@ export function ClienteListView() {
             <li key={cliente.id}>
               <ClientListItem
                 cliente={cliente}
-                onSelect={(id) => {
-                  // Story 2.2 will replace this with router navigation.
-                  console.info('TODO: Story 2.2 — client detail selection', id)
-                }}
+                isSelected={activeClienteId === cliente.id}
+                onSelect={(id) =>
+                  void navigate({
+                    to: '/clientes/$clienteId',
+                    params: { clienteId: id },
+                  })
+                }
               />
             </li>
           ))}

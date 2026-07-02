@@ -1,5 +1,7 @@
 export { ClienteListView } from './presentation/ClienteListView'
+export { ClienteDetailView } from './presentation/ClienteDetailView'
 export { ClientListItem } from './presentation/ClientListItem'
 export { useClientes } from './application/useClientes'
+export { useCliente } from './application/useCliente'
 export type { Cliente } from './domain/Cliente'
 export type { IClienteRepository } from './domain/IClienteRepository'

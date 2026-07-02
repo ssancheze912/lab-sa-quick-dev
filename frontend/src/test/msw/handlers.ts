@@ -33,4 +33,20 @@ export const seedClientes: Cliente[] = [
 
 export const handlers = [
   http.get('*/api/v1/clientes', () => HttpResponse.json(seedClientes)),
+  http.get('*/api/v1/clientes/:id', ({ params }) => {
+    const cliente = seedClientes.find((c) => c.id === params.id)
+    if (!cliente) {
+      return HttpResponse.json(
+        {
+          type: 'https://tools.ietf.org/html/rfc9110#section-15.5.5',
+          title: 'Cliente no encontrado',
+          status: 404,
+          detail: `No existe ningún cliente con id ${String(params.id)}.`,
+          instance: `/api/v1/clientes/${String(params.id)}`,
+        },
+        { status: 404 },
+      )
+    }
+    return HttpResponse.json(cliente)
+  }),
 ]

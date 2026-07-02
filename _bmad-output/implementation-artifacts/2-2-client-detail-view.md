@@ -1,6 +1,6 @@
 # Story 2.2: Client Detail View
 
-Status: ready-for-dev
+Status: implemented
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -43,7 +43,7 @@ so that I can review all their information without navigating away from the clie
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Backend Domain: `IClienteRepository.GetByIdAsync`** (AC: #8)
+- [x] **Task 1 — Backend Domain: `IClienteRepository.GetByIdAsync`** (AC: #8)
   - [ ] Editar `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` para agregar:
     ```csharp
     Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
@@ -51,7 +51,7 @@ so that I can review all their information without navigating away from the clie
     (Nullable return — el handler decide si `null` → 404. No lanzar excepciones desde el repo por not-found; eso es un caso de uso conocido, no una condición excepcional.)
   - [ ] `dotnet build` sobre `SiesaAgents.Domain` — cero errores
 
-- [ ] **Task 2 — Backend Infrastructure: `ClienteRepository.GetByIdAsync`** (AC: #8)
+- [x] **Task 2 — Backend Infrastructure: `ClienteRepository.GetByIdAsync`** (AC: #8)
   - [ ] Editar `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` para implementar el método nuevo:
     ```csharp
     public async Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -64,7 +64,7 @@ so that I can review all their information without navigating away from the clie
     ```
   - [ ] `dotnet build` sobre `SiesaAgents.Infrastructure` — cero errores
 
-- [ ] **Task 3 — Backend Application: Query + Handler CQRS** (AC: #8)
+- [x] **Task 3 — Backend Application: Query + Handler CQRS** (AC: #8)
   - [ ] Crear `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs`:
     ```csharp
     namespace SiesaAgents.Application.Clientes.Queries;
@@ -110,7 +110,7 @@ so that I can review all their information without navigating away from the clie
     ```
   - [ ] `dotnet build` sobre `SiesaAgents.Application` — cero errores
 
-- [ ] **Task 4 — Backend API: Endpoint `GET /api/v1/clientes/{id:guid}` + 404 Problem Details** (AC: #5, #8)
+- [x] **Task 4 — Backend API: Endpoint `GET /api/v1/clientes/{id:guid}` + 404 Problem Details** (AC: #5, #8)
   - [ ] Editar `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` para agregar el endpoint dentro del `group.MapGroup("/api/v1/clientes")` (después del `group.MapGet("/", ...)` existente):
     ```csharp
     group.MapGet("/{id:guid}", async (
@@ -142,7 +142,7 @@ so that I can review all their information without navigating away from the clie
   - [ ] La route constraint `{id:guid}` produce automáticamente un 400 Problem Details cuando el segmento no parsea como GUID (comportamiento estándar de Minimal API — cumple NFR6).
   - [ ] El endpoint **NO expone** stack traces — `ExceptionHandlingMiddleware` (Epic 1 Story 1.3) y `AddProblemDetails()` en `Program.cs` ya cubren esto.
 
-- [ ] **Task 5 — Backend Tests: Unit + Integration** (AC: #5, #8, #9)
+- [x] **Task 5 — Backend Tests: Unit + Integration** (AC: #5, #8, #9)
   - [ ] `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`:
     - `HandleAsync_ExistingId_ReturnsDto()` — mock `IClienteRepository.GetByIdAsync` para retornar una `ClienteEntity`; assert DTO shape (id, nombre, nit, telefono, ciudad, createdAt, updatedAt)
     - `HandleAsync_NotFound_ReturnsNull()` — mock `GetByIdAsync` returning `null`; assert `result is null`
@@ -154,7 +154,7 @@ so that I can review all their information without navigating away from the clie
     - `GetClienteById_UnknownId_DoesNotLeakStackTrace()` — asserta que la respuesta 404 no contiene `at System.`, `Microsoft.EntityFrameworkCore`, ni `.cs:line` (NFR6, reforzando el test existente `GetClientes_UnknownSubroute_DoesNotLeakStackTrace`).
   - [ ] `dotnet test` — todos los tests verdes (mínimo 4 nuevos + 45 heredados de Story 2.1)
 
-- [ ] **Task 6 — Frontend Domain + Infrastructure: repository `getById`** (AC: #8)
+- [x] **Task 6 — Frontend Domain + Infrastructure: repository `getById`** (AC: #8)
   - [ ] Editar `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` para agregar:
     ```ts
     import type { Cliente } from './Cliente'
@@ -176,7 +176,7 @@ so that I can review all their information without navigating away from the clie
     ```
     (Los interceptors de Axios ya están wired desde Epic 1. **No** capturar el error aquí — dejar que Axios lance el `AxiosError` que React Query manejará.)
 
-- [ ] **Task 7 — Frontend Application: `useCliente(clienteId)` hook (TanStack Query)** (AC: #3, #4, #5, #6)
+- [x] **Task 7 — Frontend Application: `useCliente(clienteId)` hook (TanStack Query)** (AC: #3, #4, #5, #6)
   - [ ] Crear `frontend/src/modules/crm/clientes/application/useCliente.ts`:
     ```ts
     import { useQuery } from '@tanstack/react-query'
@@ -214,7 +214,7 @@ so that I can review all their information without navigating away from the clie
     - Disabled query (`clienteId === undefined`) → `isPending === true`, sin fetch disparado
   - [ ] Exportar `useCliente` desde `frontend/src/modules/crm/clientes/index.ts` (barrel)
 
-- [ ] **Task 8 — Frontend Shared: `NotFoundClientePanel`** (AC: #5)
+- [x] **Task 8 — Frontend Shared: `NotFoundClientePanel`** (AC: #5)
   - [ ] Crear `frontend/src/shared/components/NotFoundClientePanel/NotFoundClientePanel.tsx`:
     ```tsx
     import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
@@ -272,7 +272,7 @@ so that I can review all their information without navigating away from the clie
   - [ ] Crear `index.ts` (barrel) — `export { NotFoundClientePanel } from './NotFoundClientePanel'`
   - [ ] **Justificación de componente separado (no reusar `NotFoundView`):** `NotFoundView` es la 404 a nivel de app (montada en `__root.notFoundComponent`) y renderiza un heading `h1` con el CTA "Ir a Clientes" — se muestra cuando la ruta no matchea. `NotFoundClientePanel` es una 404 **local** que se renderiza **dentro** del panel derecho del split-panel de `/clientes/:clienteId` cuando la ruta sí existe pero el recurso no; usa `h3` para no chocar con el `<h1>Clientes</h1>` del panel izquierdo (jerarquía semántica correcta) y el CTA dice "Volver a Clientes" (contexto local).
 
-- [ ] **Task 9 — Frontend Presentation: `ClienteDetailView`** (AC: #1, #3, #4, #5, #6, #7)
+- [x] **Task 9 — Frontend Presentation: `ClienteDetailView`** (AC: #1, #3, #4, #5, #6, #7)
   - [ ] Crear `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`:
     ```tsx
     import { useNavigate } from '@tanstack/react-router'
@@ -405,7 +405,7 @@ so that I can review all their information without navigating away from the clie
     - `no crash sin credenciales/data extra` — smoke: renderiza para un `clienteId` válido, no arroja excepción en jsdom
   - [ ] Exportar `ClienteDetailView` desde el barrel `index.ts` del módulo
 
-- [ ] **Task 10 — Wire selection: `ClientListItem` + `ClienteListView` (isSelected via route params)** (AC: #1, #2)
+- [x] **Task 10 — Wire selection: `ClientListItem` + `ClienteListView` (isSelected via route params)** (AC: #1, #2)
   - [ ] Editar `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx`:
     - Importar `useNavigate` y `useMatchRoute` de `@tanstack/react-router`
     - Dentro del componente:
@@ -430,7 +430,7 @@ so that I can review all their information without navigating away from the clie
     - `[TC-Story-2.2-Selection]` — mock `useNavigate` con `vi.fn()`; click en un item invoca navigate con `{ to: '/clientes/$clienteId', params: { clienteId: '11111111-...' } }`
     - `[TC-Story-2.2-Selected-Style]` — mock `useMatchRoute` para retornar `{ clienteId: '11111111-...' }`; asserta que el `ClientListItem` correspondiente tiene `aria-pressed="true"` y clase `border-l-[#0e79fd]`
 
-- [ ] **Task 11 — Routing: layout `clientes` + `clientes.index` + `clientes.$clienteId`** (AC: #1, #3, #7)
+- [x] **Task 11 — Routing: layout `clientes` + `clientes.index` + `clientes.$clienteId`** (AC: #1, #3, #7)
   - [ ] Renombrar el **rol** de `frontend/src/routes/clientes.tsx` a layout route con `<Outlet />`:
     ```tsx
     import { createFileRoute, Outlet } from '@tanstack/react-router'
@@ -486,7 +486,7 @@ so that I can review all their information without navigating away from the clie
   - [ ] Regenerar `routeTree.gen.ts` — TanStack Router Vite plugin lo hace automático en `pnpm --filter frontend dev` y en `pnpm --filter frontend build`. Verificar que la ruta `/clientes/$clienteId` aparece en el árbol generado.
   - [ ] **Nota sobre el pattern:** `_app/clientes.tsx` + `_app/clientes.$clienteId.tsx` del architecture.md usa un pathless layout `_app/`. Este proyecto usa un enfoque más simple: `__root.tsx` monta el `AppShell` que envuelve todos los routes vía `<Outlet />`. Por tanto NO se agrega `_app/`; los archivos van en `routes/` con nombres planos.
 
-- [ ] **Task 12 — MSW handlers extendidos para `/api/v1/clientes/:id`** (AC: #5, #6, #9)
+- [x] **Task 12 — MSW handlers extendidos para `/api/v1/clientes/:id`** (AC: #5, #6, #9)
   - [ ] Editar `frontend/src/test/msw/handlers.ts` para agregar el handler de detalle usando el mismo `seedClientes`:
     ```ts
     import { http, HttpResponse } from 'msw'
@@ -515,7 +515,7 @@ so that I can review all their information without navigating away from the clie
     ```
   - [ ] Los tests individuales que quieran forzar 404/500 usan `server.use(http.get('*/api/v1/clientes/:id', ...))` en un `beforeEach` (patrón heredado de Story 2.1).
 
-- [ ] **Task 13 — Frontend tests: cobertura Story 2.2** (AC: #1, #2, #3, #4, #5, #6, #7, #9)
+- [x] **Task 13 — Frontend tests: cobertura Story 2.2** (AC: #1, #2, #3, #4, #5, #6, #7, #9)
   - [ ] `useCliente.test.tsx` (Task 7)
   - [ ] `NotFoundClientePanel.test.tsx` (Task 8)
   - [ ] `ClienteDetailView.test.tsx` (Task 9)
@@ -527,7 +527,7 @@ so that I can review all their information without navigating away from the clie
     - Tercer test: initial URL `/clientes` (index) → asserta `data-testid="cliente-detail-empty"` visible y `data-testid="cliente-detail-panel"` **no** visible
   - [ ] Ejecutar `pnpm --filter frontend test` — TODOS los specs verdes (60 heredados + al menos ~18 nuevos)
 
-- [ ] **Task 14 — Verificación end-to-end** (AC: #9)
+- [x] **Task 14 — Verificación end-to-end** (AC: #9)
   - [ ] `pnpm --filter frontend build` → 0 errores TypeScript, `routeTree.gen.ts` incluye `/clientes/$clienteId`
   - [ ] `pnpm --filter frontend lint` → 0 errores
   - [ ] `pnpm --filter frontend test` → todos los tests verdes
@@ -718,6 +718,49 @@ claude-opus-4-7
 
 ### Debug Log References
 
+- Backend build clean (0 warnings, 0 errors).
+- Backend tests: 49 unit / 21 integration passed. `MigrationsAndSnakeCaseTests` skipped (Docker/Testcontainers not available in sandbox — same behaviour as Story 2.1 baseline; not a regression).
+- Frontend build clean (TypeScript strict). Route tree regenerated by TanStack Router Vite plugin.
+- Frontend lint: only pre-existing `react/only-export-components` warnings from routes (colocated `Route` export + component — inherited pattern from Story 1.2).
+- Frontend tests: 106 passing (up from 60 at Story 2.1 hand-off).
+
 ### Completion Notes List
 
+- E2E specs (`e2e/tests/clientes/story-2.2-client-detail-view.spec.ts`, 15 tests) and API contract specs (`e2e/tests/api/story-2.2-cliente-detail.api.spec.ts`, 4 tests) require Playwright browsers + live backend on `http://localhost:5000`. Backend requires PostgreSQL, and this sandbox has no Docker — **documented as non-blocking**. All test coverage is mirrored inside Vitest suites (`clientes.detail.integration.test.tsx`, `ClienteDetailView.test.tsx`, `useCliente.test.tsx`, `NotFoundClientePanel.test.tsx`) that exercise the same acceptance criteria against MSW mocks.
+- `useCliente` retries non-404 responses up to 2 times (per Task 7 spec). Vitest wrappers therefore set `retryDelay: 0` so retry cycles don't blow the 1s `findBy…` timeout.
+- Existing Story 2.1 `ClienteListView.test.tsx` suite kept green by mocking `useNavigate` / `useMatchRoute` in the test file — no `RouterProvider` needed for tests that render the component in isolation.
+- Route file naming: `clientes.tsx` becomes a layout with `<Outlet />`; `clientes.index.tsx` renders the empty placeholder; `clientes.$clienteId.tsx` renders `ClienteDetailView`. `routeTree.gen.ts` regenerated automatically by the TanStack Router Vite plugin.
+- Backend 404 emitted via `Results.Problem(...)` (Problem Details RFC 7807, `application/problem+json`) — NFR6 verified by dedicated integration tests: response body contains no `System.*` / `Microsoft.EntityFrameworkCore` / `.cs:line` signals.
+
 ### File List
+
+Created:
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
+- `frontend/src/modules/crm/clientes/application/useCliente.ts`
+- `frontend/src/modules/crm/clientes/application/useCliente.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx`
+- `frontend/src/shared/components/NotFoundClientePanel/NotFoundClientePanel.tsx`
+- `frontend/src/shared/components/NotFoundClientePanel/NotFoundClientePanel.test.tsx`
+- `frontend/src/shared/components/NotFoundClientePanel/index.ts`
+- `frontend/src/routes/clientes.index.tsx`
+- `frontend/src/routes/clientes.$clienteId.tsx`
+- `frontend/src/routes/clientes.detail.integration.test.tsx`
+
+Modified:
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` — added `GetByIdAsync(Guid, CancellationToken)`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implemented `GetByIdAsync` with `AsNoTracking`
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — added `MapGet("/{id:guid}", ...)` with 404 Problem Details
+- `backend/src/SiesaAgents.API/Program.cs` — registered `GetClienteByIdQueryHandler` in DI
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs` — implemented the new interface member on the fake repo
+- `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs` — 4 new tests (200 dto, 404 Problem Details, 400 route constraint, no stack-trace leak)
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — added `getById`
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — implemented `getById`
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` — wired `useNavigate` + `useMatchRoute`; mobile hide via `hidden lg:flex` when `activeClienteId` is set
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.test.tsx` — added Story 2.2 selection tests + module-level mocks for TanStack Router hooks (keeps Story 2.1 tests green)
+- `frontend/src/modules/crm/clientes/index.ts` — exported `useCliente` and `ClienteDetailView`
+- `frontend/src/routes/clientes.tsx` — transformed to layout route with `<Outlet />`; empty-detail placeholder moved to `clientes.index.tsx`
+- `frontend/src/test/msw/handlers.ts` — added `http.get('*/api/v1/clientes/:id', ...)` handler returning seed or 404 Problem Details
+- `frontend/src/routeTree.gen.ts` — regenerated by the TanStack Router Vite plugin (includes `/clientes/$clienteId` and `/clientes/`)

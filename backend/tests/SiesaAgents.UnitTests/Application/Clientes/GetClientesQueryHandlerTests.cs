@@ -22,6 +22,11 @@ public class GetClientesQueryHandlerTests
             GetAllCallCount++;
             return Task.FromResult(Seed);
         }
+
+        public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<ClienteEntity?>(Seed.FirstOrDefault(c => c.Id == id));
+        }
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -8,6 +8,24 @@ import { server } from '@/test/msw/server'
 import { seedClientes } from '@/test/msw/handlers'
 import { makeClientesBulk } from '@/test/factories/clienteFactory'
 import { ClienteListView } from './ClienteListView'
+
+// Story 2.2 — ClienteListView now uses TanStack Router hooks. Story 2.1
+// tests render the component in isolation (no RouterProvider), so we mock
+// useNavigate/useMatchRoute here. Story 2.2 selection tests below override
+// these mocks locally per test.
+const navigateMock = vi.fn()
+let matchRouteReturn: { clienteId?: string } | false = false
+
+vi.mock('@tanstack/react-router', async () => {
+  const actual = await vi.importActual<typeof import('@tanstack/react-router')>(
+    '@tanstack/react-router',
+  )
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+    useMatchRoute: () => () => matchRouteReturn,
+  }
+})
 
 function Providers({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -350,6 +368,63 @@ describe('ClienteListView', () => {
     const bars = screen.getAllByTestId(/clientes-list-skeleton-item-/)
     expect(bars.length).toBeGreaterThanOrEqual(5)
     expect(skeleton).toBeInTheDocument()
+  })
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Story 2.2 — selection wiring (navigate + isSelected via route params)
+  // ───────────────────────────────────────────────────────────────────────
+
+  it('[TC-Story-2.2-Selection] clicking an item invokes navigate with the correct params', async () => {
+    matchRouteReturn = false
+    navigateMock.mockClear()
+    const user = userEvent.setup()
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    const items = await screen.findAllByTestId('cliente-list-item')
+
+    await user.click(items[0])
+
+    expect(navigateMock).toHaveBeenCalledTimes(1)
+    expect(navigateMock).toHaveBeenCalledWith({
+      to: '/clientes/$clienteId',
+      params: { clienteId: seedClientes[0].id },
+    })
+  })
+
+  it('[TC-Story-2.2-Selected-Style] marks the matching item with aria-pressed="true" from the route', async () => {
+    matchRouteReturn = { clienteId: seedClientes[0].id }
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    await screen.findAllByTestId('cliente-list-item')
+
+    const items = screen.getAllByTestId('cliente-list-item')
+    // The Acme item is the seed[0] one — should be aria-pressed=true.
+    expect(items[0]).toHaveAttribute('aria-pressed', 'true')
+    expect(items[0].className).toMatch(/border-l-\[#0e79fd\]/)
+    // Others must be aria-pressed=false.
+    for (let i = 1; i < items.length; i++) {
+      expect(items[i]).toHaveAttribute('aria-pressed', 'false')
+    }
+    // Restore default for the next test.
+    matchRouteReturn = false
+  })
+
+  it('[TC-Story-2.2-Mobile-Hide] applies the "hidden lg:flex" class when a cliente is active (mobile hide)', async () => {
+    matchRouteReturn = { clienteId: seedClientes[0].id }
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    const panel = await screen.findByTestId('clientes-list-panel')
+    expect(panel.className).toMatch(/hidden lg:flex/)
+    matchRouteReturn = false
   })
 
   it('[P2] preserves the typed query even when the empty-state search-empty variant renders', async () => {

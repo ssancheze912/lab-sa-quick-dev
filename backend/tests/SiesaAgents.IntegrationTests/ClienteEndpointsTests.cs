@@ -158,4 +158,101 @@ public class ClienteEndpointsTests : IClassFixture<InMemoryDbWebApplicationFacto
         Assert.DoesNotContain("Microsoft.EntityFrameworkCore", body);
         Assert.DoesNotContain(".cs:line", body);
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Story 2.2 — GET /api/v1/clientes/{id:guid}
+    // ─────────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetClienteById_ExistingId_Returns200WithDto()
+    {
+        var acme = ClienteEntity.Create("Acme Corp", "900123456-7", "+57 300 111 1111", "Cali");
+        await ResetAndSeedAsync(acme);
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync($"/api/v1/clientes/{acme.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
+
+        var dto = await response.Content.ReadFromJsonAsync<ClienteDto>(JsonOptions);
+        Assert.NotNull(dto);
+        Assert.Equal(acme.Id, dto!.Id);
+        Assert.Equal("Acme Corp", dto.Nombre);
+        Assert.Equal("900123456-7", dto.Nit);
+        Assert.Equal("+57 300 111 1111", dto.Telefono);
+        Assert.Equal("Cali", dto.Ciudad);
+
+        var followUp = await client.GetAsync($"/api/v1/clientes/{acme.Id}");
+        var body = await followUp.Content.ReadAsStringAsync();
+        // camelCase keys — no PascalCase leak from .NET serialization.
+        Assert.Contains("\"id\"", body);
+        Assert.Contains("\"nombre\"", body);
+        Assert.Contains("\"createdAt\"", body);
+        Assert.DoesNotContain("\"Id\"", body);
+        Assert.DoesNotContain("\"Nombre\"", body);
+        Assert.DoesNotContain("\"CreatedAt\"", body);
+    }
+
+    [Fact]
+    public async Task GetClienteById_UnknownId_Returns404ProblemDetails()
+    {
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+        var unknownId = Guid.NewGuid();
+
+        var response = await client.GetAsync($"/api/v1/clientes/{unknownId}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(
+            "application/problem+json",
+            response.Content.Headers.ContentType?.MediaType);
+
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        Assert.Equal("Cliente no encontrado", doc.RootElement.GetProperty("title").GetString());
+        Assert.Equal(404, doc.RootElement.GetProperty("status").GetInt32());
+        Assert.Contains($"/api/v1/clientes/{unknownId}", doc.RootElement.GetProperty("instance").GetString());
+
+        // NFR6 — no internal signal leaks in the 404 body.
+        Assert.DoesNotContain("System.", body);
+        Assert.DoesNotContain("Microsoft.EntityFrameworkCore", body);
+        Assert.DoesNotContain(".cs:line", body);
+    }
+
+    [Fact]
+    public async Task GetClienteById_InvalidGuid_ReturnsClientErrorWithoutStackTrace()
+    {
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+
+        // Route constraint {id:guid} refuses to bind — framework produces a 4xx.
+        var response = await client.GetAsync("/api/v1/clientes/not-a-guid");
+        var body = await response.Content.ReadAsStringAsync();
+
+        // Must be a 4xx, not a 5xx (no unhandled exception path).
+        Assert.True((int)response.StatusCode >= 400 && (int)response.StatusCode < 500,
+            $"Expected 4xx status; got {(int)response.StatusCode}.");
+
+        // NFR6 — no C# / EF Core / stack trace signals in the response body.
+        Assert.DoesNotContain("System.InvalidOperationException", body);
+        Assert.DoesNotContain("Microsoft.EntityFrameworkCore", body);
+        Assert.DoesNotContain(".cs:line", body);
+    }
+
+    [Fact]
+    public async Task GetClienteById_UnknownId_DoesNotLeakStackTrace()
+    {
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync($"/api/v1/clientes/{Guid.NewGuid()}");
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.DoesNotMatch(new System.Text.RegularExpressions.Regex(@"at [A-Za-z_.]+\+?<[A-Za-z_>]+>[a-z0-9_]+"), body);
+        Assert.DoesNotContain("System.InvalidOperationException", body);
+        Assert.DoesNotContain("Microsoft.EntityFrameworkCore", body);
+        Assert.DoesNotContain(".cs:line", body);
+    }
 }

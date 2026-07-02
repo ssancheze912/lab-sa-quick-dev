@@ -46,6 +46,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Cliente aggregate — Story 2.1
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<GetClientesQueryHandler>();
+// Story 2.2 — detail-view query handler.
+builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 
 var app = builder.Build();
 
