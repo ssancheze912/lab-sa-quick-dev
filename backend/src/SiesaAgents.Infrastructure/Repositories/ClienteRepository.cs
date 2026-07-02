@@ -46,4 +46,18 @@ public class ClienteRepository : IClienteRepository
         _db.Clientes.Add(cliente);
         await _db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
+    {
+        // GetByIdAsync uses AsNoTracking (Story 2.2), so the entity returned to
+        // the handler is detached. We reattach it as Modified so EF Core writes
+        // the mutated columns. `.Update(entity)` marks ALL properties dirty; that
+        // is intentional — the DTO always ships the four mutable fields and the
+        // domain method refreshes UpdatedAt, so the diff is deterministic. It
+        // also lets DbUpdateException bubble up (23505 mapping happens in the
+        // application handler — Clean Architecture: infra reports, application
+        // decides).
+        _db.Clientes.Update(cliente);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
 }

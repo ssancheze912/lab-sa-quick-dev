@@ -64,4 +64,40 @@ public class ClienteEntity
             UpdatedAt = now,
         };
     }
+
+    /// <summary>
+    /// Mutates the 4 editable fields and refreshes UpdatedAt. Id and CreatedAt
+    /// are preserved (Id is the immutable PK; CreatedAt is a historical audit
+    /// timestamp). All inputs are trimmed and validated with the same
+    /// invariants as <see cref="Create"/> — a validator gap must not silently
+    /// persist whitespace.
+    /// </summary>
+    public void Update(string nombre, string nit, string telefono, string ciudad)
+    {
+        if (string.IsNullOrWhiteSpace(nombre))
+        {
+            throw new ArgumentException("Nombre requerido", nameof(nombre));
+        }
+
+        if (string.IsNullOrWhiteSpace(nit))
+        {
+            throw new ArgumentException("NIT requerido", nameof(nit));
+        }
+
+        if (string.IsNullOrWhiteSpace(telefono))
+        {
+            throw new ArgumentException("Telefono requerido", nameof(telefono));
+        }
+
+        if (string.IsNullOrWhiteSpace(ciudad))
+        {
+            throw new ArgumentException("Ciudad requerido", nameof(ciudad));
+        }
+
+        Nombre = nombre.Trim();
+        Nit = nit.Trim();
+        Telefono = telefono.Trim();
+        Ciudad = ciudad.Trim();
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }

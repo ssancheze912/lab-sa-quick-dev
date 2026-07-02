@@ -23,4 +23,12 @@ public interface IClienteRepository
     /// violations to a domain-level DuplicateNitException.
     /// </summary>
     Task AddAsync(ClienteEntity cliente, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Persists mutations on a ClienteEntity. Callers must catch
+    /// DbUpdateException whose inner PostgresException.SqlState == "23505"
+    /// and ConstraintName == "uk_clientes_nit" to map duplicate-NIT violations
+    /// to a domain-level DuplicateNitException.
+    /// </summary>
+    Task UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken = default);
 }
