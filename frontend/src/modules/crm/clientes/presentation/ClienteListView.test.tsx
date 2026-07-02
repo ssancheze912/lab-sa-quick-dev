@@ -196,8 +196,10 @@ describe('ClienteListView', () => {
     })
     const elapsed = performance.now() - t0
 
-    // Conservative jsdom threshold — real browser will be far faster.
-    expect(elapsed).toBeLessThan(2000)
+    // NFR1: < 1s in real browser. Story Task 14 target is < 900ms conservative
+    // jsdom threshold (real browser will be far faster). If this flakes in CI
+    // consider dropping to a Vitest bench with median over N runs.
+    expect(elapsed).toBeLessThan(900)
   })
 
   // ───────────────────────────────────────────────────────────────────────
