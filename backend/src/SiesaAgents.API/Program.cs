@@ -56,7 +56,9 @@ app.MapScalarApiReference();
 
 // Testing-environment-only diagnostic endpoint used by integration tests to
 // exercise ExceptionHandlingMiddleware. NOT exposed in Development/Production.
-if (app.Environment.EnvironmentName == "Testing")
+// IsEnvironment(...) does an OrdinalIgnoreCase comparison — robust to
+// ASPNETCORE_ENVIRONMENT casing variants ("Testing"/"testing"/"TESTING").
+if (app.Environment.IsEnvironment("Testing"))
 {
     app.MapGet("/api/v1/test-error", (Func<IResult>)(() =>
         throw new InvalidOperationException("integration-test-error")));

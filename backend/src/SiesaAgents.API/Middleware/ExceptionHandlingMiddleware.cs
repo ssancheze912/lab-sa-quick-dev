@@ -34,7 +34,8 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             {
                 Status = StatusCodes.Status500InternalServerError,
                 Title = "Ocurrió un error inesperado.",
-                Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1",
+                // RFC 9110 obsoleted RFC 7231 (June 2022); point clients at the current spec.
+                Type = "https://www.rfc-editor.org/rfc/rfc9110#section-15.6.1",
                 Detail = "Contacta al administrador si el problema persiste.",
                 Instance = context.Request.Path,
             };
