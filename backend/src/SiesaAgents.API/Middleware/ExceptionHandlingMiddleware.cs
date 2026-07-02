@@ -29,7 +29,6 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
             context.Response.Clear();
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "application/problem+json";
 
             var problem = new ProblemDetails
             {
@@ -40,7 +39,11 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 Instance = context.Request.Path,
             };
 
-            await context.Response.WriteAsJsonAsync(problem);
+            // WriteAsJsonAsync overrides Content-Type — pass the RFC 7807 media type explicitly.
+            await context.Response.WriteAsJsonAsync(
+                problem,
+                options: null,
+                contentType: "application/problem+json");
         }
     }
 }

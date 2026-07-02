@@ -58,8 +58,8 @@ app.MapScalarApiReference();
 // exercise ExceptionHandlingMiddleware. NOT exposed in Development/Production.
 if (app.Environment.EnvironmentName == "Testing")
 {
-    app.MapGet("/api/v1/test-error", () =>
-        throw new InvalidOperationException("integration-test-error"));
+    app.MapGet("/api/v1/test-error", (Func<IResult>)(() =>
+        throw new InvalidOperationException("integration-test-error")));
 }
 
 app.Run();
