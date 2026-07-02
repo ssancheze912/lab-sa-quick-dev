@@ -255,4 +255,95 @@ public class ClienteEndpointsTests : IClassFixture<InMemoryDbWebApplicationFacto
         Assert.DoesNotContain("Microsoft.EntityFrameworkCore", body);
         Assert.DoesNotContain(".cs:line", body);
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Story 2.2 — Edge cases / expansions (automate pass)
+    // ─────────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetClienteById_MultipleSeeded_ReturnsOnlyTheRequestedOne()
+    {
+        // GIVEN: Three clientes are seeded and we request just the second one.
+        var acme = ClienteEntity.Create("Acme Corp", "900123456-7", "+57 300 111 1111", "Cali");
+        var beta = ClienteEntity.Create("Beta Ltda", "800987654-3", "+57 301 222 2222", "Bogotá");
+        var gamma = ClienteEntity.Create("Gamma Industrial", "901234567-8", "+57 302 333 3333", "Medellín");
+        await ResetAndSeedAsync(acme, beta, gamma);
+        var client = _factory.CreateClient();
+
+        // WHEN: GET /api/v1/clientes/{betaId}
+        var response = await client.GetAsync($"/api/v1/clientes/{beta.Id}");
+
+        // THEN: Only Beta comes back — not an array, not Acme, not Gamma.
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var dto = await response.Content.ReadFromJsonAsync<ClienteDto>(JsonOptions);
+        Assert.NotNull(dto);
+        Assert.Equal(beta.Id, dto!.Id);
+        Assert.Equal("Beta Ltda", dto.Nombre);
+        Assert.NotEqual(acme.Id, dto.Id);
+        Assert.NotEqual(gamma.Id, dto.Id);
+    }
+
+    [Fact]
+    public async Task GetClienteById_UnknownId_ProblemDetails_ContainsRfc7807TypeField()
+    {
+        // GIVEN: An empty DB and a random unknown id
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+        var unknownId = Guid.NewGuid();
+
+        // WHEN: GET /api/v1/clientes/{unknownId}
+        var response = await client.GetAsync($"/api/v1/clientes/{unknownId}");
+        var body = await response.Content.ReadAsStringAsync();
+
+        // THEN: The Problem Details JSON exposes the RFC 7807 shape (title,
+        // status, instance) AND the `type` field wired in the endpoint —
+        // NFR6 forbids swapping this contract for a raw error string.
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var doc = JsonDocument.Parse(body);
+        Assert.True(doc.RootElement.TryGetProperty("type", out var typeElem),
+            $"Problem Details response is missing the 'type' member. Body: {body}");
+        Assert.False(string.IsNullOrWhiteSpace(typeElem.GetString()));
+        Assert.Equal("Cliente no encontrado", doc.RootElement.GetProperty("title").GetString());
+        Assert.Equal(404, doc.RootElement.GetProperty("status").GetInt32());
+    }
+
+    [Fact]
+    public async Task GetClienteById_UppercaseGuidInPath_Returns200SameAsLowercase()
+    {
+        // GIVEN: A seeded cliente
+        var acme = ClienteEntity.Create("Acme Corp", "900123456-7", "+57 300 111 1111", "Cali");
+        await ResetAndSeedAsync(acme);
+        var client = _factory.CreateClient();
+
+        // WHEN: The path uses the UPPERCASE guid representation
+        var upperId = acme.Id.ToString().ToUpperInvariant();
+        var response = await client.GetAsync($"/api/v1/clientes/{upperId}");
+
+        // THEN: The framework's `{id:guid}` constraint parses case-insensitively
+        // and the handler returns the same DTO as with lowercase.
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var dto = await response.Content.ReadFromJsonAsync<ClienteDto>(JsonOptions);
+        Assert.NotNull(dto);
+        Assert.Equal(acme.Id, dto!.Id);
+        Assert.Equal("Acme Corp", dto.Nombre);
+    }
+
+    [Fact]
+    public async Task GetClienteById_UnknownId_ProblemDetails_HasApplicationProblemJsonContentType()
+    {
+        // GIVEN: An empty DB and a random unknown id
+        await ResetAndSeedAsync();
+        var client = _factory.CreateClient();
+
+        // WHEN: GET /api/v1/clientes/{unknownId}
+        var response = await client.GetAsync($"/api/v1/clientes/{Guid.NewGuid()}");
+
+        // THEN: The response advertises `application/problem+json` per RFC 7807 —
+        // frontend uses this Content-Type to route responses through the
+        // Problem-Details decoder (never rendered raw to the user, NFR6).
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(
+            "application/problem+json",
+            response.Content.Headers.ContentType?.MediaType);
+    }
 }

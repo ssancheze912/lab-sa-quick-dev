@@ -97,4 +97,90 @@ public class GetClienteByIdQueryHandlerTests
         Assert.IsType<DateTimeOffset>(result!.CreatedAt);
         Assert.IsType<DateTimeOffset>(result.UpdatedAt);
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Edge cases / expansions (Story 2.2 automate pass)
+    // ─────────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task HandleAsync_GuidEmpty_QueriesRepositoryAndReturnsNull()
+    {
+        // GIVEN: An empty repo (no seed) and Guid.Empty as the requested id.
+        var repo = new FakeClienteRepository();
+        var handler = new GetClienteByIdQueryHandler(repo);
+
+        // WHEN: Handler is invoked with Guid.Empty
+        var result = await handler.HandleAsync(new GetClienteByIdQuery(Guid.Empty));
+
+        // THEN: The handler still consults the repo (no short-circuit) and
+        // returns null so the endpoint maps that to 404 uniformly (endpoint
+        // never crashes on a caller passing all-zero guids).
+        Assert.Null(result);
+        Assert.Equal(1, repo.GetByIdCallCount);
+        Assert.Equal(Guid.Empty, repo.LastRequestedId);
+    }
+
+    [Fact]
+    public async Task HandleAsync_TwoDifferentIds_MakesTwoRepositoryCalls()
+    {
+        // GIVEN: A repo with one seed cliente and a handler that shouldn't cache.
+        var entity = ClienteEntity.Create("Acme Corp", "900123456-7", "+57 300", "Cali");
+        var repo = new FakeClienteRepository { SeedOne = entity };
+        var handler = new GetClienteByIdQueryHandler(repo);
+
+        // WHEN: The same handler is invoked twice with two distinct ids
+        var first = await handler.HandleAsync(new GetClienteByIdQuery(entity.Id));
+        var second = await handler.HandleAsync(new GetClienteByIdQuery(Guid.NewGuid()));
+
+        // THEN: Both queries reached the repository — application layer is
+        // stateless (the caching contract lives in TanStack Query, not here).
+        Assert.NotNull(first);
+        Assert.Null(second);
+        Assert.Equal(2, repo.GetByIdCallCount);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ExistingId_ProducesRecordEqualityForRepeatCalls()
+    {
+        // GIVEN: A repo seeded with one entity
+        var entity = ClienteEntity.Create("Gamma Industrial", "901234567-8", "+57 302", "Medellín");
+        var repo = new FakeClienteRepository { SeedOne = entity };
+        var handler = new GetClienteByIdQueryHandler(repo);
+
+        // WHEN: The handler is invoked twice with the same id
+        var first = await handler.HandleAsync(new GetClienteByIdQuery(entity.Id));
+        var second = await handler.HandleAsync(new GetClienteByIdQuery(entity.Id));
+
+        // THEN: Both DTOs are structurally equal — ClienteDto is a record with
+        // value semantics; the handler must not mutate anything between calls.
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+        Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ExistingId_ReturnsDtoWithExactSevenFieldStructure()
+    {
+        // GIVEN: A repo with one seed entity and the ClienteDto record definition.
+        var entity = ClienteEntity.Create("Delta", "900000000-1", "+57 000", "Cali");
+        var repo = new FakeClienteRepository { SeedOne = entity };
+        var handler = new GetClienteByIdQueryHandler(repo);
+
+        // WHEN: The handler produces the DTO
+        var result = await handler.HandleAsync(new GetClienteByIdQuery(entity.Id));
+
+        // THEN: ClienteDto records expose exactly 7 public read-model members
+        // (Id, Nombre, Nit, Telefono, Ciudad, CreatedAt, UpdatedAt).
+        // If Story 2.4 (edit) adds a field this test will fail on purpose —
+        // the wire contract must be re-validated.
+        Assert.NotNull(result);
+        var properties = typeof(SiesaAgents.Application.Clientes.DTOs.ClienteDto)
+            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        Assert.Equal(7, properties.Length);
+        // AND: the property NAMES match the DTO contract (case-sensitive)
+        var names = properties.Select(p => p.Name).OrderBy(n => n).ToArray();
+        Assert.Equal(
+            new[] { "Ciudad", "CreatedAt", "Id", "Nit", "Nombre", "Telefono", "UpdatedAt" },
+            names);
+    }
 }
