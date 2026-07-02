@@ -1,0 +1,16 @@
+{
+  "name": "siesa-agents",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Siesa Agents CRM — monorepo root (frontend + backend + e2e)",
+  "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "test:e2e": "playwright test",
+    "test:e2e:foundation": "playwright test e2e/tests/foundation e2e/tests/api",
+    "backend:build": "cd backend && dotnet build SiesaAgents.sln",
+    "backend:run": "cd backend/src/SiesaAgents.API && dotnet run --no-launch-profile --urls http://localhost:5000"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  }
+}
