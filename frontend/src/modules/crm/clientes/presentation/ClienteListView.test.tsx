@@ -199,4 +199,176 @@ describe('ClienteListView', () => {
     // Conservative jsdom threshold — real browser will be far faster.
     expect(elapsed).toBeLessThan(2000)
   })
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Edge cases / expansions (Story 2.1 automate pass)
+  // ───────────────────────────────────────────────────────────────────────
+
+  it('[P1] treats a whitespace-only query as empty and shows the full list (trim behavior)', async () => {
+    // GIVEN: Full seed loaded
+    const user = userEvent.setup()
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    await screen.findAllByTestId('cliente-list-item')
+
+    // WHEN: The user types only whitespace (spaces + tab)
+    await user.type(screen.getByTestId('clientes-search-input'), '   \t  ')
+
+    // THEN: The filter behaves as empty — all seed clientes remain visible
+    await waitFor(() =>
+      expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(
+        seedClientes.length,
+      ),
+    )
+    // AND: The search-empty state is NOT rendered (this branch requires q ≠ '' post-trim)
+    expect(screen.queryByTestId('empty-state-search-empty')).toBeNull()
+  })
+
+  it('[P1] filters case-insensitively when the user types in UPPERCASE', async () => {
+    // GIVEN: Full seed loaded
+    const user = userEvent.setup()
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    await screen.findAllByTestId('cliente-list-item')
+
+    // WHEN: The user types the entire query in uppercase (data has "Acme Corp")
+    await user.clear(screen.getByTestId('clientes-search-input'))
+    await user.type(screen.getByTestId('clientes-search-input'), 'ACME')
+
+    // THEN: Only Acme Corp remains — case-insensitive .toLowerCase()/.includes()
+    await waitFor(() =>
+      expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(1),
+    )
+    expect(screen.getByText('Acme Corp')).toBeInTheDocument()
+  })
+
+  it('[P1] restores the full list when the search query is cleared after filtering', async () => {
+    // GIVEN: Full seed loaded and filtered down to one match
+    const user = userEvent.setup()
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    await screen.findAllByTestId('cliente-list-item')
+
+    const input = screen.getByTestId('clientes-search-input')
+    await user.type(input, 'acme')
+    await waitFor(() =>
+      expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(1),
+    )
+
+    // WHEN: The user clears the input
+    await user.clear(input)
+
+    // THEN: The full seed list is restored (regression guard for the query-cleared branch)
+    await waitFor(() =>
+      expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(
+        seedClientes.length,
+      ),
+    )
+    expect(screen.queryByTestId('empty-state-search-empty')).toBeNull()
+  })
+
+  it('[P2] handles special characters in the search query without crashing (dash, dot, paren)', async () => {
+    // GIVEN: Full seed loaded
+    const user = userEvent.setup()
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    await screen.findAllByTestId('cliente-list-item')
+
+    // WHEN: The user types characters that would break a naive regex-based filter.
+    // The Story uses `.includes()` (not RegExp) — special chars must be literal.
+    await user.type(screen.getByTestId('clientes-search-input'), '456-7')
+
+    // THEN: The dash is treated literally and matches Acme's NIT "900123456-7"
+    await waitFor(() =>
+      expect(screen.getAllByTestId('cliente-list-item')).toHaveLength(1),
+    )
+    expect(screen.getByText('Acme Corp')).toBeInTheDocument()
+  })
+
+  it('[P2] renders the search input enabled once data is available (not disabled)', async () => {
+    // GIVEN / WHEN: Full seed loads successfully
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    await screen.findAllByTestId('cliente-list-item')
+
+    // THEN: The search input is interactive (no loading / error / empty branches active)
+    const input = screen.getByTestId('clientes-search-input')
+    expect(input).not.toBeDisabled()
+  })
+
+  it('[P2] does not leak the loading skeleton into the DOM once data resolves', async () => {
+    // GIVEN / WHEN: The default handler resolves quickly
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+
+    await screen.findAllByTestId('cliente-list-item')
+
+    // THEN: The skeleton container is gone (Story 2.1 renders it only while isLoading)
+    expect(screen.queryByTestId('clientes-list-skeleton')).toBeNull()
+  })
+
+  it('[P2] renders at least 5 skeleton placeholders during initial loading (AC #6)', async () => {
+    // GIVEN: Deliberately slow backend so the loading branch stays live
+    server.use(
+      http.get('*/api/v1/clientes', async () => {
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        return HttpResponse.json(seedClientes)
+      }),
+    )
+
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+
+    // WHEN: The skeleton container appears
+    const skeleton = await screen.findByTestId('clientes-list-skeleton')
+
+    // THEN: It exposes at least 5 individual skeleton bars (Story spec: "al menos 5")
+    // react-loading-skeleton uses `containerTestId` when provided; count them.
+    const bars = screen.getAllByTestId(/clientes-list-skeleton-item-/)
+    expect(bars.length).toBeGreaterThanOrEqual(5)
+    expect(skeleton).toBeInTheDocument()
+  })
+
+  it('[P2] preserves the typed query even when the empty-state search-empty variant renders', async () => {
+    // GIVEN: A non-matching query produces the search-empty branch
+    const user = userEvent.setup()
+    render(
+      <Providers>
+        <ClienteListView />
+      </Providers>,
+    )
+    await screen.findAllByTestId('cliente-list-item')
+
+    const input = screen.getByTestId('clientes-search-input')
+    await user.type(input, 'zzz-no-match-zzz')
+
+    // WHEN: The empty state is visible
+    await screen.findByTestId('empty-state-search-empty')
+
+    // THEN: The input value is preserved (users must be able to correct their query)
+    expect(input).toHaveValue('zzz-no-match-zzz')
+    // AND: The input is NOT disabled — user must still be able to type/backspace
+    expect(input).not.toBeDisabled()
+  })
 })
