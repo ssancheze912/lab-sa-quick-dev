@@ -51,7 +51,7 @@ app.UseStatusCodePages(async statusContext =>
             StatusCodes.Status405MethodNotAllowed => "Method Not Allowed",
             _ => "Error"
         },
-        Type = $"https://tools.ietf.org/html/rfc7231",
+        Type = "https://tools.ietf.org/html/rfc7231",
         Instance = statusContext.HttpContext.Request.Path
     };
 
