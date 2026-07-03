@@ -81,17 +81,22 @@ public class AppDbContextDependencyInjectionTests : IClassFixture<WebApplication
     }
 
     [Fact]
-    public void AppDbContext_has_no_registered_entity_types_in_current_scope_P1()
+    public void AppDbContext_registers_only_expected_entity_types_in_current_scope_P1()
     {
-        // Story 1.3 scope enforcement — the runtime model built from AppDbContext
-        // must have zero entity types until Epic 2 lands ClienteEntity. This
-        // catches the case where a future refactor accidentally registers
-        // entities via ApplyConfigurationsFromAssembly before the scope note lifts.
+        // Story 2.1 landed ClienteEntity. This guard now enforces the current
+        // Epic 2 baseline: exactly the ClienteEntity is registered — no
+        // premature ContactoEntity (Epic 3) leakage via
+        // ApplyConfigurationsFromAssembly. Update this assertion as later epics
+        // legitimately land new aggregates.
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var entityTypes = dbContext.Model.GetEntityTypes().ToList();
+        var entityTypeNames = dbContext.Model
+            .GetEntityTypes()
+            .Select(e => e.ClrType.Name)
+            .OrderBy(n => n)
+            .ToList();
 
-        Assert.Empty(entityTypes);
+        Assert.Equal(new[] { "ClienteEntity" }, entityTypeNames);
     }
 }

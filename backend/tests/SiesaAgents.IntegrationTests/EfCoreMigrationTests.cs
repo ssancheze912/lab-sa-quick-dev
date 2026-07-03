@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using SiesaAgents.Infrastructure.Data;
 using Testcontainers.PostgreSql;
@@ -104,17 +107,20 @@ public class EfCoreMigrationTests : IAsyncLifetime
             _dockerAvailable,
             "Docker daemon unavailable — scope guard also enforced statically by inspecting the generated `*_InitialCreate.cs` (no CreateTable calls).");
 
-        // GIVEN: a throwaway Postgres container with the AppDbContext applied.
-        //        Story 1.3 explicitly bans `clientes` and `contactos` — those
-        //        tables belong to Story 2.1 and Story 3.1 respectively.
+        // GIVEN: a throwaway Postgres container with the AppDbContext applied
+        //        ONLY up to the InitialCreate migration (Story 1.3 baseline).
+        //        Later migrations (AddClientes from Story 2.1) legitimately add
+        //        domain tables, so this test scopes the assertion to the initial
+        //        migration alone via IMigrator.MigrateAsync(targetMigration).
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(_postgres!.GetConnectionString())
             .Options;
 
         await using var dbContext = new AppDbContext(options);
 
-        // WHEN: the initial migration is applied.
-        await dbContext.Database.MigrateAsync();
+        // WHEN: only the initial migration is applied.
+        var migrator = dbContext.GetInfrastructure().GetRequiredService<IMigrator>();
+        await migrator.MigrateAsync("InitialCreate");
 
         // THEN: no domain tables exist yet — only the EF metadata table.
         await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());

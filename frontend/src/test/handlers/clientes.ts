@@ -1,12 +1,10 @@
-/**
- * MSW handlers factory for the Clientes module.
- * Referenced by `ClienteListView.test.tsx` (Story 2.1) and future component
- * tests in Stories 2.2–2.6.
- *
- * The wildcard host (`*/api/v1/clientes`) matches regardless of the Axios
- * `baseURL` (which is read from `import.meta.env.VITE_API_URL`), so tests do
- * not need to know or override the environment variable.
- */
+// MSW handlers factory for the Clientes module.
+// Referenced by `ClienteListView.test.tsx` (Story 2.1) and future component
+// tests in Stories 2.2–2.6.
+//
+// The wildcard host pattern (star + /api/v1/clientes) matches regardless of
+// the Axios `baseURL` (which is read from `import.meta.env.VITE_API_URL`), so
+// tests do not need to know or override the environment variable.
 
 import { http, HttpResponse } from 'msw'
 import type { Cliente } from '@/modules/crm/clientes/domain/Cliente'

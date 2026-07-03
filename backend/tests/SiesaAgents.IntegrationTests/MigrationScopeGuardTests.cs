@@ -86,13 +86,14 @@ public class MigrationScopeGuardTests
     }
 
     [Fact]
-    public void ModelSnapshot_declares_no_entity_types_P1()
+    public void InitialCreate_designer_snapshot_declares_no_entity_types_P1()
     {
-        // AppDbContextModelSnapshot.cs must not contain any modelBuilder.Entity<>
-        // registrations — same scope guard, at the snapshot level. This catches
-        // leaks that would only show up when `dotnet ef migrations add` runs next.
-        var snapshotPath = Path.Combine(MigrationsFolder, "AppDbContextModelSnapshot.cs");
-        var source = File.ReadAllText(snapshotPath);
+        // The InitialCreate migration Designer.cs captures the model state AT
+        // Story 1.3 landing time — it must contain no entity declarations. This
+        // preserves the Epic 1 scope guard even after Epic 2 legitimately adds
+        // ClienteEntity to the live AppDbContextModelSnapshot.
+        var designer = Directory.EnumerateFiles(MigrationsFolder, "*_InitialCreate.Designer.cs").Single();
+        var source = File.ReadAllText(designer);
 
         Assert.DoesNotContain("modelBuilder.Entity(", source, StringComparison.Ordinal);
         Assert.DoesNotContain("modelBuilder.HasSequence", source, StringComparison.Ordinal);

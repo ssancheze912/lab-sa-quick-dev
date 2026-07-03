@@ -85,22 +85,25 @@ public class AppDbContextConventionTests
     public void AppDbContext_OnModelCreating_yields_snake_case_metadata_when_probed_via_reflection()
     {
         // GIVEN: the production AppDbContext registered with EF Core's in-memory
-        //        provider (safe because AppDbContext has no DbSet<T> yet).
+        //        provider. Story 2.1 landed ClienteEntity, so we can now assert
+        //        directly on the real entity that `ApplySnakeCaseNaming` runs
+        //        LAST (per test-design-epic-1.md §10 rule #2).
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
         using var ctx = new AppDbContext(options);
 
-        // WHEN: the model is inspected. No entities are registered in Story 1.3,
-        //       so we cannot check a real table name — instead we assert the
-        //       context builds without throwing and the model can be enumerated,
-        //       which requires OnModelCreating to have completed cleanly. The
-        //       ApplySnakeCaseNaming LAST rule is separately covered by the
-        //       ProbeDbContext + column-name assertions above.
-        var entityTypes = ctx.Model.GetEntityTypes().ToList();
+        // WHEN: the ClienteEntity model metadata is inspected.
+        var entity = ctx.Model.FindEntityType(
+            "SiesaAgents.Domain.Clientes.Entities.ClienteEntity");
 
-        // THEN: no leaked entities (scope note) and the model materialised.
-        Assert.Empty(entityTypes);
+        // THEN: the table + column names are snake_case — proves the convention
+        //       ran after ApplyConfigurationsFromAssembly.
+        Assert.NotNull(entity);
+        Assert.Equal("clientes", entity!.GetTableName());
+        Assert.Equal("nit_ruc", entity.FindProperty("NitRuc")!.GetColumnName());
+        Assert.Equal("created_at", entity.FindProperty("CreatedAt")!.GetColumnName());
+        Assert.Equal("updated_at", entity.FindProperty("UpdatedAt")!.GetColumnName());
     }
 }
