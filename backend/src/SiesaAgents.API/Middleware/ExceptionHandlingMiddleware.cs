@@ -27,7 +27,6 @@ public sealed class ExceptionHandlingMiddleware(
 
             context.Response.Clear();
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "application/problem+json";
 
             var problem = new ProblemDetails
             {
@@ -38,7 +37,12 @@ public sealed class ExceptionHandlingMiddleware(
                 Instance = context.Request.Path
             };
 
-            await context.Response.WriteAsJsonAsync(problem);
+            // Pass contentType explicitly — WriteAsJsonAsync would otherwise overwrite
+            // Response.ContentType with "application/json", breaking RFC 7807 contract.
+            await context.Response.WriteAsJsonAsync(
+                problem,
+                options: null,
+                contentType: "application/problem+json");
         }
     }
 }

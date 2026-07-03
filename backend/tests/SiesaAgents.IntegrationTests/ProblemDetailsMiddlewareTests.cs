@@ -1,9 +1,7 @@
 using System.Net;
 using System.Text.Json;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SiesaAgents.IntegrationTests;
 
@@ -12,15 +10,17 @@ namespace SiesaAgents.IntegrationTests;
 /// with no leakage of stack traces / raw exception messages.
 ///
 /// This test EXTENDS the Story 1.1 pipeline (does NOT replace it): a test-only
-/// endpoint `/api/v1/test-error` is appended by `WithWebHostBuilder` so the
-/// existing `ExceptionHandlingMiddleware` (Story 1.1) is exercised as-is.
+/// endpoint <c>/api/v1/test-error</c> is appended via an
+/// <see cref="IStartupFilter"/> so the existing
+/// <c>ExceptionHandlingMiddleware</c> (Story 1.1) is exercised as-is.
 ///
-/// RED-phase expectation for Story 1.3:
-///   Fails to compile until `public partial class Program {}` is appended to
-///   `SiesaAgents.API/Program.cs` (Task 6 of Story 1.3). Once compilable, the
-///   assertions themselves already pass against the Story 1.1 middleware — the
-///   test's job here is to LOCK the RFC 7807 contract so future DI changes
-///   cannot regress it.
+/// Rationale for <c>IStartupFilter</c> instead of
+/// <c>WithWebHostBuilder(b =&gt; b.Configure(...))</c>: the WebHost
+/// <c>Configure</c> overload REPLACES the entire pipeline, which dodges the
+/// very middleware we're asserting. <c>IStartupFilter</c> injects our probe
+/// AFTER the production pipeline has been assembled, preserving Story 1.1's
+/// middleware order (ExceptionHandling → StatusCodePages → CORS → OpenApi →
+/// Scalar). See Story 1.3 Task 6 implementation note.
 /// </summary>
 public class ProblemDetailsMiddlewareTests : IClassFixture<WebApplicationFactory<Program>>
 {
@@ -28,23 +28,11 @@ public class ProblemDetailsMiddlewareTests : IClassFixture<WebApplicationFactory
 
     public ProblemDetailsMiddlewareTests(WebApplicationFactory<Program> factory)
     {
-        // Extend the existing pipeline — do NOT replace it. Registering the
-        // test endpoint via `Configure` on the SAME builder keeps Story 1.1's
-        // middleware order intact (ExceptionHandling → StatusCodePages →
-        // CORS → OpenApi → Scalar), which is what TC-E1-P0-05 asserts.
         _factory = factory.WithWebHostBuilder(builder =>
         {
-            builder.Configure(app =>
+            builder.ConfigureServices(services =>
             {
-                app.Use(async (ctx, next) =>
-                {
-                    if (ctx.Request.Path == "/api/v1/test-error")
-                    {
-                        throw new InvalidOperationException("boom");
-                    }
-
-                    await next();
-                });
+                services.AddTransient<IStartupFilter, TestErrorEndpointStartupFilter>();
             });
         });
     }
@@ -88,5 +76,35 @@ public class ProblemDetailsMiddlewareTests : IClassFixture<WebApplicationFactory
             json.RootElement.TryGetProperty("innerException", out _),
             "Problem Details body must NOT contain an 'innerException' property.");
         Assert.DoesNotContain("boom", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Appends a test-only middleware to the END of the production pipeline
+    /// (which means it sits INSIDE the try/catch of ExceptionHandlingMiddleware
+    /// registered at the TOP of Program.cs). Requests for <c>/api/v1/test-error</c>
+    /// throw here; every other request falls through to the real endpoints.
+    /// </summary>
+    private sealed class TestErrorEndpointStartupFilter : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+        {
+            return app =>
+            {
+                // Run production Configure FIRST — assembles ExceptionHandling → ... → Scalar.
+                next(app);
+
+                // Then append the throwing probe AT THE END. It runs inside
+                // ExceptionHandlingMiddleware's try/catch scope.
+                app.Use(async (ctx, del_next) =>
+                {
+                    if (ctx.Request.Path == "/api/v1/test-error")
+                    {
+                        throw new InvalidOperationException("boom");
+                    }
+
+                    await del_next();
+                });
+            };
+        }
     }
 }
