@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: ready-for-review
+Status: done
 
 ## Story
 
@@ -214,6 +214,8 @@ claude-opus-4-7 (sa-dev-story sub-agent, dev-story workflow)
 **Frontend (`frontend/`)**
 - `package.json`
 - `pnpm-lock.yaml`
+- `README.md` (Vite scaffolder default)
+- `.oxlintrc.json` (Vite scaffolder default lint config)
 - `tsconfig.app.json` (strict flags enabled, `@/*` alias)
 - `tsconfig.json`
 - `tsconfig.node.json`
@@ -223,21 +225,24 @@ claude-opus-4-7 (sa-dev-story sub-agent, dev-story workflow)
 - `.env.development` (`VITE_API_URL=http://localhost:5000`)
 - `.env.example`
 - `.gitignore` (added `src/routeTree.gen.ts`)
+- `public/favicon.svg`
+- `public/icons.svg`
 - `src/main.tsx` (RouterProvider inside QueryProvider inside StrictMode)
 - `src/index.css` (Tailwind v4 `@import "tailwindcss"` + brand tokens)
 - `src/app/providers/QueryProvider.tsx`
 - `src/shared/lib/queryClient.ts`
-- `src/shared/lib/apiClient.ts`
+- `src/shared/lib/apiClient.ts` (fail-fast if `VITE_API_URL` missing — code-review fix)
 - `src/shared/lib/utils.ts` (`cn()` helper)
 - `src/routes/__root.tsx` (`data-testid="app-root"` layout shell)
 - `src/routes/index.tsx` (landing placeholder)
+- `src/assets/hero.png`, `src/assets/react.svg`, `src/assets/vite.svg` (Vite scaffolder default assets)
 - Empty scaffolded folders: `src/modules/`, `src/shared/components/ui/`, `src/shared/hooks/`, `src/shared/types/`, `src/shared/constants/`, `src/app/config/`, `src/app/store/`, `src/infrastructure/api/`, `src/infrastructure/storage/`
 
 **Backend (`backend/`)**
 - `SiesaAgents.sln`
 - `src/SiesaAgents.API/SiesaAgents.API.csproj` (references Application + Infrastructure; packages: Microsoft.AspNetCore.OpenApi 10.0.9, Scalar.AspNetCore 2.16.9)
 - `src/SiesaAgents.API/Program.cs` (OpenAPI + ProblemDetails + CORS "DevCors" + ExceptionHandlingMiddleware + UseStatusCodePages + MapOpenApi + MapScalarApiReference)
-- `src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` (Problem Details RFC 7807; no exception details leaked)
+- `src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` (Problem Details RFC 7807; no exception details leaked; primary constructor pattern per Dev Notes — refactored during code-review)
 - `src/SiesaAgents.API/Properties/launchSettings.json` (single `http` profile on `http://localhost:5000`)
 - `src/SiesaAgents.API/appsettings.json`
 - `src/SiesaAgents.API/appsettings.Development.json` (`AllowedOrigins`, `ConnectionStrings:DefaultConnection`)
@@ -245,6 +250,7 @@ claude-opus-4-7 (sa-dev-story sub-agent, dev-story workflow)
 - `src/SiesaAgents.Domain/SiesaAgents.Domain.csproj`
 - `src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` (references Domain; package: Npgsql.EntityFrameworkCore.PostgreSQL)
 - `tests/SiesaAgents.UnitTests/SiesaAgents.UnitTests.csproj` (references Application + Domain)
+- `tests/SiesaAgents.UnitTests/SolutionSmokeTests.cs` (real smoke test — replaced empty `UnitTest1.Test1()` during code-review to eliminate false-positive coverage)
 
 **Untouched by this story (pre-existing)**
 - `e2e/tests/foundation/project-initialization.spec.ts`
