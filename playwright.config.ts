@@ -44,12 +44,30 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'pnpm --filter frontend dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  /**
+   * Two webServers so `playwright test` can bring up the full stack it needs:
+   *   - Vite dev server for the React app (http://localhost:5173)
+   *   - .NET 10 Minimal API for the deep-link / CRUD data setup (http://localhost:5000)
+   *
+   * `reuseExistingServer` lets a developer keep long-running processes attached
+   * across runs; CI always starts fresh. The backend must be up before the tests
+   * call `apiHelper.createCliente()` from `e2e/helpers/api.helper.ts` — otherwise
+   * Playwright fails with `ECONNREFUSED 127.0.0.1:5000`.
+   */
+  webServer: [
+    {
+      command: 'pnpm --filter frontend dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+    {
+      command: 'dotnet run --project backend/src/SiesaAgents.API --urls http://localhost:5000',
+      url: 'http://localhost:5000/api/v1/clientes',
+      reuseExistingServer: !process.env.CI,
+      timeout: 180 * 1000,
+    },
+  ],
 
   outputDir: 'playwright-results/',
 });

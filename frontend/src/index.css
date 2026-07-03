@@ -1,5 +1,14 @@
-@import "tailwindcss";
+/*
+ * CSS import order note:
+ *   siesa-ui-kit/styles.css is a bundled Tailwind output that ships its own
+ *   utility layer (including .hidden). If it loads AFTER our Tailwind, its
+ *   `.hidden { display: none }` overrides responsive utilities such as
+ *   `.lg:flex` — regressing `hidden lg:flex` panels (e.g. the clientes list
+ *   panel per Story 2.2 AC #2). Loading siesa-ui-kit FIRST lets our Tailwind
+ *   utility layer take precedence in the cascade.
+ */
 @import "siesa-ui-kit/styles.css";
+@import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
