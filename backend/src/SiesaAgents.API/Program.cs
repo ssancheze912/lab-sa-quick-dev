@@ -40,7 +40,6 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseStatusCodePages(async statusContext =>
 {
     var response = statusContext.HttpContext.Response;
-    response.ContentType = "application/problem+json";
 
     var problem = new ProblemDetails
     {
@@ -56,7 +55,13 @@ app.UseStatusCodePages(async statusContext =>
         Instance = statusContext.HttpContext.Request.Path
     };
 
-    await response.WriteAsJsonAsync(problem);
+    // Pass contentType explicitly — WriteAsJsonAsync would otherwise overwrite
+    // Response.ContentType with "application/json", breaking RFC 7807 contract.
+    // Mirrors the fix applied to ExceptionHandlingMiddleware in Story 1.3.
+    await response.WriteAsJsonAsync(
+        problem,
+        options: null,
+        contentType: "application/problem+json");
 });
 
 app.UseCors("DevCors");
