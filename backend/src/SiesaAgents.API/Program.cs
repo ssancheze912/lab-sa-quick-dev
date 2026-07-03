@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +12,11 @@ builder.Services.AddOpenApi();
 
 // Problem Details for framework-generated error responses.
 builder.Services.AddProblemDetails();
+
+// EF Core DbContext (Story 1.3) — registered before CORS/middleware per the DI
+// registration sequence in architecture-both.md §2.4.
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // CORS — allow the frontend origin(s) configured in appsettings.
 var allowedOrigins = builder.Configuration
@@ -61,3 +68,6 @@ app.MapOpenApi();
 app.MapScalarApiReference();
 
 app.Run();
+
+// Expose the implicit Program type to WebApplicationFactory<Program> in tests.
+public partial class Program { }
