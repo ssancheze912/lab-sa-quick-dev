@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: review
+Status: done
 
 ## Story
 
@@ -663,3 +663,11 @@ Claude Opus 4.7 (claude-opus-4-7) — sa-dev-story sub-agent
 - `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs`
 - `backend/tests/SiesaAgents.IntegrationTests/ClientesMigrationTests.cs`
 - `frontend/src/modules/crm/clientes/presentation/ClienteListView.test.tsx`
+
+**Created — Tests (Automate expansion, discovered during code-review):**
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs` — [P1/P2] 6 handler unit tests (entity→DTO mapping, empty, 500 batch, CancellationToken forwarding)
+- `frontend/src/modules/crm/clientes/application/useClientes.test.tsx` — [P2] 4 hook contract tests (canonical `['clientes']` key, isError path, empty→`[]`)
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.edge.test.tsx` — [P1/P2] 12 edge cases (accent-insensitive, NIT substring, whitespace, field guard for `telefono`/`ciudad`)
+- `frontend/src/shared/components/ClientListItem.test.tsx` — [P2] 8 presentational contract tests (nombre + NIT prefix, selection callback, 44 px tap target, `isSelected` styling)
+- `frontend/src/shared/components/EmptyState.test.tsx` — [P2] 4 props contract tests
+- `frontend/src/shared/components/ErrorPanel.test.tsx` — [P1/P2] 8 tests (default Spanish copy, onRetry, `type="button"` semantics)
