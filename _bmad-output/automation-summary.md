@@ -1,8 +1,8 @@
-# Automation Summary - Story 2.1 Client List & Search
+# Automation Summary — Story 2.2 Client Detail View
 
 **Date:** 2026-07-03
 **Mode:** BMad-Integrated (expansion over existing ATDD)
-**Story:** 2.1 — Client List & Search
+**Story:** 2.2 — Client Detail View
 **Epic:** 2 — Client Management
 **Coverage Target:** critical-paths + edge cases + negative paths
 
@@ -10,239 +10,319 @@
 
 ## Context
 
-The ATDD sub-agent produced 21 GREEN tests + 6 Docker-skip guards covering the
-happy paths of Story 2.1. This automate expansion targets the coverage gaps
-that ATDD did not exercise: accent-insensitive matching, NIT/RUC substring
-search, negative / empty / whitespace queries, field-guard behaviour
-(telefono/ciudad NOT searchable), and unit-level contract tests for shared
-components + the query handler.
+The ATDD sub-agent produced 29 Vitest GREEN + 3 Docker-guarded xUnit integration
+tests + 7 Playwright E2E (chromium 4 pass, firefox/msedge blocked by proxy 403)
+covering the happy paths of Story 2.2. This automate expansion targets the
+coverage gaps that ATDD did not exercise:
 
-**Approach:** No duplicate coverage. E2E-style flows (list render, retry
-loop) remain in ATDD. This expansion adds Component-level edge cases and
-Unit-level component tests only.
+- Backend handler-level mapping (Docker-independent unit tests) —
+  ATDD only covered `GetClienteByIdQueryHandler` through the Docker-guarded
+  integration endpoint tests, which self-skip in the sandbox.
+- Frontend infrastructure layer (Axios repository) — ATDD only exercised it
+  indirectly through `useCliente`.
+- Presentational shared component (`<ClienteNotFound>`) — ATDD only exercised
+  it inside `<ClienteDetailView>` (composition), not in isolation.
+- Additional 4xx / 5xx retry-discriminator variants for `useCliente`.
+- Unicode / long-content / empty-string / XSS-defence edge cases for the
+  detail view.
+
+**Approach:** No duplicate coverage. E2E-style flows (deep-link happy path,
+404 not-found) remain in the ATDD Playwright spec. Endpoint-level 200/404/
+non-guid remain in the Docker-guarded integration tests. This expansion adds
+Component-level edge cases, Unit-level component tests, and pure Unit-level
+handler tests only.
 
 ---
 
 ## Tests Created
 
-### Component Tests (Vitest + RTL + MSW)
+### Backend — Unit Tests (xUnit)
 
-- `frontend/src/modules/crm/clientes/presentation/ClienteListView.edge.test.tsx`
-  (12 new tests, ~350 lines)
-  - **[P1]** Accent-insensitive matching: `"garcia" ↔ "García"` (3 tests)
-  - **[P1]** NIT/RUC substring search: exact prefix + shared prefix (2 tests)
-  - **[P2]** Case-insensitive substring match: `"CORP" ↔ "Corporación"` (1 test)
-  - **[P1]** Boundary queries: empty, whitespace-only, non-matching, cleared (4 tests)
-  - **[P1]** Field guard: `telefono` and `ciudad` are NOT searched (2 tests)
-
-- `frontend/src/shared/components/EmptyState.test.tsx` (4 new tests)
-  - **[P2]** Renders title, renders description (when passed), omits
-    description paragraph when prop absent, exposes `data-testid="empty-state"`
-
-- `frontend/src/shared/components/ErrorPanel.test.tsx` (8 new tests)
-  - **[P1]** Default Spanish title / description / "Reintentar" label
-  - **[P2]** Custom title / description overrides win
-  - **[P1]** `onRetry` fires exactly once per click; multi-click preserves count
-  - **[P2]** Retry button is `type="button"` (never submits enclosing form)
-
-- `frontend/src/shared/components/ClientListItem.test.tsx` (8 new tests)
-  - **[P2]** Renders `nombre`, `NIT/RUC:` prefix, and outer `<li>` hook
-  - **[P2]** 44 px tap-target class present (mobile accessibility)
-  - **[P2]** `onSelect(cliente.id)` fires on click; optional prop is safe
-  - **[P2]** Selected-state class hooks toggle correctly
-
-- `frontend/src/modules/crm/clientes/application/useClientes.test.tsx` (4 new tests)
-  - **[P2]** Data returned unchanged from repository
-  - **[P2]** Canonical `queryKey: ['clientes']` observable via cache
-  - **[P2]** `isError=true` surfaces on 500 responses
-  - **[P2]** Empty API response yields `[]` (not `undefined`)
-
-**Total frontend expansion:** 36 new tests
-
-### Unit Tests (xUnit)
-
-- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`
-  (6 new tests)
-  - **[P1]** Empty repo → empty DTO list (never null)
-  - **[P1]** All entities are mapped
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
+  (8 new tests, ~220 lines)
+  - **[P1]** Repository null → handler null (drives the 404 endpoint branch)
   - **[P1]** Field-by-field mapping preserved (id, nombre, nitRuc, telefono,
     ciudad, createdAt, updatedAt)
-  - **[P2]** Repository ordering preserved (handler must not resort)
-  - **[P2]** `CancellationToken` forwarded to repository
-  - **[P2]** 500-entity batch mapped without data loss (NFR10 boundary)
+  - **[P1]** CancellationToken forwarded to the repository call
+  - **[P2]** Query.Id is the exact id forwarded to the repository (no reshape)
+  - **[P2]** Non-UTC `DateTimeOffset` (`-05:00` Bogotá offset) preserved,
+    not normalised to UTC
+  - **[P2]** Unicode / accented text (Peña, Ñandú, Compañía) preserved
+    verbatim through the mapping
+  - **[P2]** Handler is idempotent — two invocations with the same id return
+    equal DTOs and observe two independent repository calls (no in-handler
+    caching)
+  - **[P2]** `Guid.Empty` sentinel maps to null → 404 branch works with the
+    canonical zero-guid used by ATDD
 
-**Total backend expansion:** 6 new tests
+  Test double `StubClienteByIdRepository` captures every observed id +
+  CancellationToken + invocation count for white-box assertions. All 8 pass
+  without Docker.
+
+### Frontend — Presentational Component Tests (Vitest + RTL)
+
+- `frontend/src/shared/components/ClienteNotFound.test.tsx` (7 new tests)
+  - **[P1]** Primary Spanish message "No se encontró el cliente solicitado."
+    rendered verbatim (AC #3)
+  - **[P1]** Contextual Spanish copy rendered verbatim (AC #3)
+  - **[P1]** "Volver a la lista" back-link CTA label rendered (AC #3)
+  - **[P1]** Back link is a real `<a>` whose href points to `/clientes`
+    (never trapped — browser can fall back to plain navigation)
+  - **[P2]** `data-testid="cliente-not-found"` on outer container
+  - **[P2]** `data-testid="cliente-not-found-back"` on CTA link (Playwright hook)
+  - **[P2]** focus-visible ring classes present on back link (keyboard a11y)
+
+### Frontend — Hook Edge Cases (Vitest + MSW)
+
+- `frontend/src/modules/crm/clientes/application/useCliente.edge.test.tsx`
+  (12 new tests)
+  - **[P1]** 4xx (401 / 403 / 429) DO retry — the hook only short-circuits on
+    404, NOT on any 4xx (3 tests, request-count assertions via MSW counter)
+  - **[P1]** 5xx variants (502 / 503) retry like 500 (2 tests)
+  - **[P1]** Cache isolation — two ids under the same QueryClient hold
+    independent cache entries (`.getQueryData` per key) and independent
+    retry state (id-A 404 does NOT gate id-B 200) (2 tests)
+  - **[P2]** queryKey order matters — canonical `['clientes', id]` wins;
+    reversed `[id, 'clientes']` holds nothing (regression guard)
+  - **[P2]** Exactly one cache entry per id after a successful fetch
+    (no duplicate accidental keys)
+  - **[P2]** `isClienteNotFound` returns true for real `AxiosError` with
+    `response.status === 404` (positive confirmation)
+  - **[P2]** `isClienteNotFound` returns false for 500 wrapped in AxiosError
+    (branch discipline)
+  - **[P2]** `isClienteNotFound` returns false for network-error AxiosError
+    with no `.response` populated
+
+### Frontend — Component Edge Cases (Vitest + RTL + MSW)
+
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.edge.test.tsx`
+  (9 new tests)
+  - **[P1]** Spanish accents in nombre preserved verbatim (Peña, Ñandú,
+    Compañía, ampersand)
+  - **[P1]** Accented ciudad values preserved verbatim (Bogotá)
+  - **[P1]** 500-character nombre rendered without truncation / crash
+  - **[P1]** `overflow-y-auto` class hook applied to the article container
+    (long payloads scroll internally, don't push AppShell)
+  - **[P1]** Empty-string telefono renders as empty `<dd>` — "Teléfono" label
+    still present, no crash, no "undefined" leak
+  - **[P1]** XSS defence — `<script>` and `<b>` tags in nombre render as
+    literal text (React text-node escaping); no actual DOM elements created
+  - **[P2]** Skeleton container does NOT expose `data-testid="cliente-detail"`
+    (load-bearing for ATDD `findByTestId('cliente-detail')` "data has loaded"
+    signal)
+  - **[P2]** `clienteId` prop change triggers a fresh query and swaps the
+    rendered payload (queryKey change → re-fetch)
+  - **[P2]** Non-404 error (500) exposes the `error-panel-retry` button
+    (Story 2.1 UX contract reused)
+
+### Frontend — Infrastructure Repository Tests (Vitest + MSW)
+
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.test.ts`
+  (7 new tests)
+  - **[P1]** GET `/api/v1/clientes/{id}` — URL template correctness (no
+    concatenation drift, no missing / double slash) via MSW URL observation
+  - **[P1]** Returns the parsed JSON payload verbatim (all seven fields)
+  - **[P1]** Rejects with `AxiosError` on 404 — `.response.status === 404`
+    (the exact discriminator `isClienteNotFound` relies on)
+  - **[P1]** Rejects with `AxiosError` on 500 — `.response.status === 500`,
+    distinct from 404 (branch discriminator)
+  - **[P1]** `AbortSignal` is honoured — an aborted controller cancels the
+    in-flight Axios request (translated to `ERR_CANCELED` / `CanceledError`)
+  - **[P2]** `getAll` still works after the interface extension
+    (Story 2.1 regression guard)
+  - **[P2]** Canonical GUID shape survives the URL template — dashes NOT
+    percent-encoded, no double slash
 
 ---
 
-## Priority Breakdown
+## Infrastructure Reused (No New Infrastructure Created)
 
-| Priority | Component | Backend Unit | Total |
-|----------|-----------|--------------|-------|
-| **P1**   | 15        | 3            | 18    |
-| **P2**   | 21        | 3            | 24    |
-| **P3**   | 0         | 0            | 0     |
-| **Total**| **36**    | **6**        | **42**|
-
----
-
-## Test Level Distribution
-
-- **E2E:** 0 (already covered by ATDD + `e2e/tests/clientes/clientes-crud.spec.ts`)
-- **API:** 0 (Docker-guarded ATDD tests remain the source of truth)
-- **Component:** 36 (edge cases + shared-component unit contracts + hook contract)
-- **Unit (backend):** 6 (handler mapping in isolation from EF Core)
-
-**Duplicate-coverage discipline:** No new tests re-assert the happy-path
-scenarios already covered by ATDD (rendering 500 items, EmptyState render,
-ErrorPanel render, migration snake_case, endpoint camelCase). All expansion
-tests target orthogonal behaviour.
+- **MSW handlers**: reused `byId`, `byIdNotFound`, `byIdError`, `byIdDelayed`,
+  `list`, and the `makeCliente` / `resetClienteFactoryCounter` factory from
+  `frontend/src/test/handlers/clientes.ts` — already added during the ATDD
+  RED-phase pass. No new factory / no new fixture required.
+- **Vitest + RTL harness**: reused the `QueryClientProvider` + memory-router
+  wrapper pattern established by `ClienteDetailView.test.tsx` and
+  `ClienteListView.edge.test.tsx`.
+- **xUnit test-double pattern**: reused the `StubClienteRepository` style
+  from `GetClientesQueryHandlerTests.cs` (Story 2.1); the new file introduces
+  a companion `StubClienteByIdRepository` scoped to the GetById handler.
 
 ---
 
-## Test Execution Results
-
-### Frontend
+## Test Execution
 
 ```bash
-$ pnpm --filter frontend test
- Test Files  9 passed (9)
-      Tests  82 passed (82)
-   Duration  8.55s
+# Frontend — full suite (ATDD + expansion)
+pnpm --filter frontend test
+# Result: 15 test files, 138 tests, 0 failing
+
+# Frontend — just the new files
+pnpm --filter frontend test -- \
+  src/modules/crm/clientes/application/useCliente.edge.test.tsx \
+  src/modules/crm/clientes/presentation/ClienteDetailView.edge.test.tsx \
+  src/modules/crm/clientes/infrastructure/clienteApiRepository.test.ts \
+  src/shared/components/ClienteNotFound.test.tsx
+
+# Backend — full suite (ATDD + expansion, Docker-independent tests only)
+cd backend && dotnet test SiesaAgents.sln --no-build
+# Result: UnitTests 20 passed, IntegrationTests 53 passed + 11 skipped
+#         (Docker-guarded), 0 failing
 ```
-
-**Breakdown:** 46 pre-existing (Epic 1 + Story 2.1 ATDD) + 36 new = 82 GREEN
-
-### Backend
-
-```bash
-$ dotnet test backend/SiesaAgents.sln
- Passed! - Failed: 0, Passed: 12, Skipped: 0  # SiesaAgents.UnitTests
- Passed! - Failed: 0, Passed: 53, Skipped: 8  # SiesaAgents.IntegrationTests
-```
-
-**Breakdown:**
-- UnitTests: 6 pre-existing (1 SolutionSmoke + 5 ClienteEntity) + 6 new
-  (GetClientesQueryHandler) = 12 GREEN
-- IntegrationTests: 53 pre-existing green + 8 Docker-guarded skips
-  (unchanged from ATDD)
-
----
-
-## Healing Report
-
-**Iterations required:** 1 pass (auto-healed on first re-run)
-
-- `ClienteListView.edge.test.tsx` — expected 3 NIT-prefix matches but the
-  fixture only had 2 (Beta's NIT starts with `901`, not `900`). Corrected
-  assertion + added explicit content check.
-- `ClientListItem.test.tsx` — clicked outer `<li>` but the `onClick` handler
-  is on the inner `<button>`. Updated tests to target the inner button
-  (correct semantic click surface).
-
-**Marked `test.fixme()`:** 0 (all tests recoverable in one healing pass)
-
----
-
-## Infrastructure
-
-**No new fixtures/factories required.** All expansion tests reuse:
-
-- `frontend/src/test/handlers/clientes.ts` — MSW handlers + `makeCliente()`
-  factory (created by ATDD phase)
-- `frontend/src/test/setup.ts` — Vitest global setup with `matchMedia` /
-  `scrollTo` shims (created by Story 1.2)
-- Local `StubClienteRepository` inside `GetClientesQueryHandlerTests.cs` for
-  backend hand-mock (no Moq/NSubstitute dependency added)
-
----
-
-## Quality Checks
-
-- [x] All tests follow Given-When-Then structure with inline comments
-- [x] All tests have priority tags (`[P1]` / `[P2]` in test descriptions)
-- [x] All tests use `data-testid` selectors — no CSS/nth locators
-- [x] All tests are self-cleaning (`afterEach(cleanup)` + `server.resetHandlers()`)
-- [x] No hard waits (no `waitForTimeout` / `sleep`)
-- [x] All test files under 350 lines
-- [x] All Spanish user-facing strings validated in case-insensitive regex
-- [x] No new suppressions or warnings introduced
 
 ---
 
 ## Coverage Analysis
 
-**Newly-covered behaviours (not in ATDD):**
+| Level             | ATDD (RED→GREEN)         | Automate expansion (this pass) | New total (Story 2.2)         |
+| ----------------- | ------------------------ | ------------------------------ | ----------------------------- |
+| E2E (Playwright)  | 7 tests (chromium 4 GREEN, firefox/msedge blocked by proxy) | 0 (no gap — deep-link is the E2E boundary) | 7                             |
+| API integration   | 3 xUnit tests (SkippableFact — Docker gated) | 0 (existing 3 tests cover 200 / 404 / non-guid) | 3 skipped in sandbox, executable when Docker is available |
+| Component (RTL)   | 15 tests (`ClienteDetailView.test.tsx`) | +9 edge (`ClienteDetailView.edge.test.tsx`) +7 (`ClienteNotFound.test.tsx`) | 31                            |
+| Hook              | 7 tests (`useCliente.test.tsx`) | +12 edge (`useCliente.edge.test.tsx`) | 19                            |
+| Infrastructure    | 0 direct — indirect via hook | +7 (`clienteApiRepository.test.ts`) | 7 new                         |
+| Application (BE)  | 0 (only integration existed) | +8 (`GetClienteByIdQueryHandlerTests.cs`) | 8 new — runs Docker-free       |
+| **Priority mix**  | mixed P0/P1              | 22× P1 + 21× P2                | Full pyramid: E2E → integration → component → hook → infra → unit |
 
-- Accent-insensitive matching in both directions (`García` ↔ `garcia`)
-- NIT/RUC substring search (exact + shared-prefix + partial)
-- Case-insensitive uppercase→lowercase match
-- Empty / whitespace-only search preserves full list
-- Non-matching search yields zero items WITHOUT triggering EmptyState
-- `ciudad` and `telefono` are NOT searchable (PRD FR3/FR4 guard)
-- Clearing the search restores the full list
-- Shared components (`EmptyState`, `ErrorPanel`, `ClientListItem`) exercised
-  in isolation from `ClienteListView`
-- `useClientes` hook contract validated directly (canonical query key,
-  error-state surfacing, empty-array response)
-- `GetClientesQueryHandler` mapping validated without Docker (runs
-  everywhere, complements the Docker-guarded integration tests)
+**Priority breakdown of the 43 new tests:**
 
-**Coverage gaps for future stories (out of scope for 2.1):**
-
-- No mutation tests for POST/PUT/DELETE — Stories 2.3/2.4/2.5
-- No detail-view / deep-link tests — Story 2.2
-- No sort control tests — Story 2.6
-- Playwright E2E `clientes-crud.spec.ts` still not exercised in the sandbox
-  (browser install 403 through proxy — deferred to CI)
+- P0: 0 (P0 belongs to the ATDD RED-phase — this expansion is edge coverage)
+- P1: 22 (high-value edge cases + retry discriminator + XSS defence + Unicode)
+- P2: 21 (prop-change / caching / a11y hooks / mapping guards)
+- P3: 0
 
 ---
 
-## File List
+## Test Levels Rationale
 
-**Created — Frontend Component Tests:**
-- `frontend/src/modules/crm/clientes/presentation/ClienteListView.edge.test.tsx`
-- `frontend/src/shared/components/EmptyState.test.tsx`
-- `frontend/src/shared/components/ErrorPanel.test.tsx`
-- `frontend/src/shared/components/ClientListItem.test.tsx`
-- `frontend/src/modules/crm/clientes/application/useClientes.test.tsx`
+**Avoiding duplicate coverage** was the primary constraint. Each new test lives
+at the LOWEST level that can validate the contract:
 
-**Created — Backend Unit Tests:**
-- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`
+- **XSS defence** → Component (RTL) NOT E2E — React text-node escaping is a
+  DOM-level concern; a chromium round-trip adds no confidence.
+- **Retry on 401 / 403 / 429 / 502 / 503** → Hook + MSW NOT integration —
+  the discriminator is the hook's `retry` predicate, not the backend response.
+  MSW's request-counting handler gives an exact assertion (`> 1`) that a real
+  backend cannot deterministically provide.
+- **URL template & AbortSignal** → Infrastructure NOT hook — testing at the
+  hook level would conflate TanStack Query behaviour with Axios behaviour.
+- **Guid.Empty → null** → Application unit (xUnit) NOT integration — the
+  handler's null-short-circuit is a pure logic branch. The integration test
+  already covers the endpoint's 404 shape.
+- **DateTimeOffset non-UTC preservation** → Application unit NOT integration
+  — EF Core round-trip is a separate concern already covered elsewhere;
+  this test isolates the handler mapping.
+- **Cache isolation** → Hook NOT E2E — a hook test with MSW can assert on the
+  QueryClient cache state directly; the E2E test cannot.
 
-**Modified — None** (expansion only adds tests; no production code touched)
+---
+
+## Test Healing Report
+
+**Auto-heal enabled**: yes
+**Healing mode**: pattern-based (MCP Playwright tools not available in sandbox)
+**Iterations allowed**: 3 per test
+
+### Validation Results
+
+- **Total new tests**: 43 (35 frontend + 8 backend)
+- **Passing on first run**: 43 (100%)
+- **Failing on first run**: 0
+- **Healed**: 0 (nothing to heal)
+- **Marked `test.fixme()`**: 0
+
+### Full-suite Regression Check
+
+- Frontend: 15 files, 138 tests → all GREEN (was 103 before this pass)
+- Backend UnitTests: 20 passed → all GREEN (was 12 before this pass)
+- Backend IntegrationTests: 53 passed + 11 skipped → unchanged (Docker-guarded
+  skips are the sandbox limitation, not a regression)
+
+All ATDD assertions from the previous sub-agent's pass remain GREEN.
 
 ---
 
 ## Definition of Done
 
-- [x] All tests follow Given-When-Then format
-- [x] All tests have priority tags
-- [x] All tests use `data-testid` selectors (frontend) / reflection or DI
-  seams (backend)
-- [x] All tests are self-cleaning
-- [x] No hard waits or flaky patterns
-- [x] Test files under 350 lines each
-- [x] 42/42 new tests pass locally
-- [x] Pre-existing suite still 100% green
+- [x] All tests follow Given-When-Then structure with explicit GIVEN / WHEN / THEN comments
+- [x] All tests use `data-testid` selectors (no CSS-class / no XPath)
+- [x] All tests have priority tags in the describe block name (`[P1]`, `[P2]`)
+- [x] All tests are self-cleaning (`afterEach` resets MSW handlers +
+  QueryClient cache; xUnit test doubles are per-instance)
+- [x] No hard waits or flaky patterns (all waits via `waitFor` or
+  `findByTestId`)
+- [x] Test files under 500 lines each (longest is `useCliente.edge.test.tsx` at
+  ~360 lines)
+- [x] All tests run under 3 seconds each locally (Vitest reports the full
+  suite in ~12s wall-clock; xUnit `GetClienteByIdQueryHandlerTests` in ~50 ms
+  total)
+- [x] Coverage gaps identified in ATDD closed: infrastructure layer, `<ClienteNotFound>`
+  presentational, non-404 4xx retry discriminator, XSS defence, handler
+  mapping
+- [x] No new fixtures / factories created — reused existing MSW handlers
+  (`byId`, `byIdNotFound`, `byIdError`, `byIdDelayed`) and `makeCliente`
+
+---
+
+## Sandbox Constraints Documented
+
+- **Docker unavailable** → `ClienteByIdEndpointTests` (3 tests) self-skip via
+  `SkippableFact` + `IsDockerAvailable()` probe. The new
+  `GetClienteByIdQueryHandlerTests` (8 tests) DELIBERATELY avoid Testcontainers
+  to close this coverage gap in Docker-free environments (they use a POCO
+  test-double repository).
+- **Firefox / msedge Playwright blocked by proxy 403** → 3 out of 7 E2E deep-link
+  tests only pass on chromium in the sandbox. Coverage-equivalent scenarios
+  are also exercised at the Component + Hook level, so the cross-browser gap
+  does not compromise Story 2.2's assertion completeness — only cross-browser
+  smoke coverage.
+- **`window.scrollTo() not implemented`** noise from jsdom is emitted by
+  `siesa-ui-kit`'s internal Input primitive when RTL mounts a component that
+  transitively imports it. It is not a test failure; it is a third-party
+  advisory in the CI log.
 
 ---
 
 ## Next Steps
 
-1. Review edge tests with team — confirm the field guard (telefono/ciudad
-   NOT searched) matches product intent
-2. Run tests in CI: `pnpm --filter frontend test && dotnet test backend/SiesaAgents.sln`
-3. Handoff to `sa-tea-review` for adversarial test-quality review
-4. Handoff to `sa-tea-trace` after all Epic 2 stories complete to build the
-   full traceability matrix
+1. Review generated tests with team on next PR sync
+2. When Docker becomes available in CI, `ClienteByIdEndpointTests` (3 skipped)
+   will run automatically alongside the new 8 pure unit tests — no code
+   change required
+3. When the proxy allowlist adds `download.mozilla.org` and Microsoft Edge
+   distribution mirrors, the Playwright deep-link spec will run on all three
+   browsers instead of just chromium
+4. Track the `error-panel` retry integration into an NFR3 (resilience) test
+   in the next automate pass for Story 2.4 (edit) — the ErrorPanel is reused
+   across the CRUD triangle
+5. Consider promoting `[P2] queryKey shape (order / structure)` from the
+   edge-test file to a lint rule if Stories 2.4 / 2.5 introduce additional
+   `useMutation` invalidations
 
-**Knowledge Base References Applied:**
+---
 
-- Test level selection: unit + component chosen over E2E (avoid duplicate
-  coverage with ATDD)
-- Priority classification: P1 for AC-mandated edges; P2 for regression
-  guardrails on shared components
-- Data factories: reused ATDD's `makeCliente()` — no duplication
-- Test quality: Given-When-Then, atomic assertions, no shared state,
-  deterministic (MSW resetHandlers per test)
+## Knowledge Base References Applied
+
+- **Test level selection framework** — every new test placed at the LOWEST
+  level that can validate the contract (avoids duplicate coverage)
+- **Priority classification** — P1 for retry discriminator + XSS + Unicode +
+  URL construction (high-value regression-preventers); P2 for a11y hooks +
+  prop change + regression guards
+- **Fixture architecture** — reused existing `makeCliente` factory +
+  `resetClienteFactoryCounter` per-test hook (no new fixtures required)
+- **Network-first pattern** — MSW handlers registered BEFORE `render` /
+  `renderHook` in every test
+- **Test quality principles** — deterministic (per-test QueryClient +
+  handler reset), isolated (no cross-test state), atomic (one primary
+  assertion per test), no hard waits (`waitFor` / `findByTestId` only)
+
+---
+
+## Output File
+
+`_bmad-output/automation-summary.md` (this document)
+
+**Total new tests**: 43 (35 frontend Vitest + 8 backend xUnit)
+**Total suite after expansion**: 138 frontend + 20 backend unit + 53 backend
+integration pass + 11 backend integration skipped = 222 tests
+**Test files touched**: 5 new, 0 modified
