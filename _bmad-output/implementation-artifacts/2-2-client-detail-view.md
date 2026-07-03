@@ -1,6 +1,6 @@
 # Story 2.2: Client Detail View
 
-Status: ready-for-dev
+Status: ready-for-review
 
 ## Story
 
@@ -45,15 +45,15 @@ so that I can review all their information without navigating away from the clie
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Backend: extend `IClienteRepository` + `ClienteRepository` with `GetByIdAsync` (AC: #6)**
-  - [ ] Update `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` — add the method signature below the existing `GetAllAsync`:
+- [x] **Task 1 — Backend: extend `IClienteRepository` + `ClienteRepository` with `GetByIdAsync` (AC: #6)**
+  - [x] Update `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs` — add the method signature below the existing `GetAllAsync`:
     ```csharp
     Task<ClienteEntity?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default);
     ```
     Return `null` (not throw) when the entity is absent — the not-found decision is a query concern (see Task 2), not a domain-layer exception. Keeping the domain method nullable-return-based avoids polluting the Domain layer with an HTTP concept.
-  - [ ] Update `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implement `GetByIdAsync`:
+  - [x] Update `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs` — implement `GetByIdAsync`:
     ```csharp
     public async Task<ClienteEntity?> GetByIdAsync(
         Guid id,
@@ -65,17 +65,17 @@ so that I can review all their information without navigating away from the clie
     }
     ```
     `AsNoTracking()` matches the `GetAllAsync` pattern (read-only endpoint). `FirstOrDefaultAsync` returns `null` when no row matches — that `null` is the signal the handler uses to decide 404.
-  - [ ] Do NOT introduce any additional repository method (`AddAsync`, `UpdateAsync`, `DeleteAsync`) — those land in Stories 2.3, 2.4, 2.5.
+  - [x] Do NOT introduce any additional repository method (`AddAsync`, `UpdateAsync`, `DeleteAsync`) — those land in Stories 2.3, 2.4, 2.5.
 
-- [ ] **Task 2 — Backend: Application layer `GetClienteByIdQuery` + Handler (AC: #4, #5, #6)**
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs`:
+- [x] **Task 2 — Backend: Application layer `GetClienteByIdQuery` + Handler (AC: #4, #5, #6)**
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs`:
     ```csharp
     namespace SiesaAgents.Application.Clientes.Queries;
 
     public record GetClienteByIdQuery(Guid Id);
     ```
     Use a `record` for immutability, matching the `GetClientesQuery` style. The single `Id` property matches the route parameter.
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs`:
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs`:
     ```csharp
     using SiesaAgents.Application.Clientes.DTOs;
     using SiesaAgents.Domain.Clientes.Interfaces;
@@ -107,8 +107,8 @@ so that I can review all their information without navigating away from the clie
     ```
     Reuse the existing `ClienteDto` — no separate `ClienteDetailDto`. The list DTO already exposes every field the detail view consumes. Handler is a POCO (no MediatR) matching `GetClientesQueryHandler`.
 
-- [ ] **Task 3 — Backend: extend `ClienteEndpoints.cs` with `MapGet("/{id:guid}")` (AC: #4, #5)**
-  - [ ] Update `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — add a second `MapGet` inside the existing `MapGroup`:
+- [x] **Task 3 — Backend: extend `ClienteEndpoints.cs` with `MapGet("/{id:guid}")` (AC: #4, #5)**
+  - [x] Update `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs` — add a second `MapGet` inside the existing `MapGroup`:
     ```csharp
     group.MapGet("/{id:guid}", async (
             Guid id,
@@ -123,24 +123,24 @@ so that I can review all their information without navigating away from the clie
     ```
     - The `:guid` route constraint short-circuits any non-GUID segment to a framework 404 — the handler never runs on garbage input.
     - `Results.NotFound()` (parameter-less) triggers the `UseStatusCodePages(...)` middleware already registered in `Program.cs`, which emits an `application/problem+json` body with the correct RFC 7807 shape. Do NOT hand-roll `Results.Problem(...)` — the middleware is the single source of truth for the 404 body per Epic 1's convention.
-  - [ ] Keep the existing `MapGet("/", ...)` (list endpoint) untouched — order both `MapGet` calls under the same `MapGroup` variable `group` so they share the `/api/v1/clientes` prefix and the `Clientes` OpenAPI tag.
+  - [x] Keep the existing `MapGet("/", ...)` (list endpoint) untouched — order both `MapGet` calls under the same `MapGroup` variable `group` so they share the `/api/v1/clientes` prefix and the `Clientes` OpenAPI tag.
 
-- [ ] **Task 4 — Backend: register `GetClienteByIdQueryHandler` in DI (AC: #4)**
-  - [ ] Update `backend/src/SiesaAgents.API/Program.cs` — add the handler registration next to the existing `GetClientesQueryHandler` line (do NOT move existing lines):
+- [x] **Task 4 — Backend: register `GetClienteByIdQueryHandler` in DI (AC: #4)**
+  - [x] Update `backend/src/SiesaAgents.API/Program.cs` — add the handler registration next to the existing `GetClientesQueryHandler` line (do NOT move existing lines):
     ```csharp
     builder.Services.AddScoped<GetClienteByIdQueryHandler>();
     ```
     Insert directly after `builder.Services.AddScoped<GetClientesQueryHandler>();`. The pipeline order (`UseMiddleware<ExceptionHandlingMiddleware>()` → `UseStatusCodePages(...)` → `UseCors(...)` → `MapOpenApi()` → `MapScalarApiReference()` → `MapClienteEndpoints()`) is LOCKED by Epic 1 tests — do NOT reorder.
-  - [ ] `IClienteRepository`/`ClienteRepository` DI registration is already present (Story 2.1) — no change required.
+  - [x] `IClienteRepository`/`ClienteRepository` DI registration is already present (Story 2.1) — no change required.
 
-- [ ] **Task 5 — Backend: integration test for `GET /api/v1/clientes/{id}` (AC: #10 → TC-E2-P1-12)**
-  - [ ] Extend `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs` (already exists from Story 2.1) — add two `[SkippableFact]` cases wired to the shared `TestcontainerFactory` (`Skip.IfNot(_dockerAvailable, ...)` pattern from Story 1.3):
+- [x] **Task 5 — Backend: integration test for `GET /api/v1/clientes/{id}` (AC: #10 → TC-E2-P1-12)**
+  - [x] Extend `backend/tests/SiesaAgents.IntegrationTests/ClienteEndpointsTests.cs` (already exists from Story 2.1) — add two `[SkippableFact]` cases wired to the shared `TestcontainerFactory` (`Skip.IfNot(_dockerAvailable, ...)` pattern from Story 1.3):
     1. **Existing id**: seed a `ClienteEntity` via `AppDbContext`, `GET /api/v1/clientes/{known}` → assert `200 OK`, response is a single JSON object with all seven camelCase keys, `createdAt` matches ISO-8601-with-offset regex `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+-]\d{2}:\d{2}|Z)$`.
     2. **Missing id**: `GET /api/v1/clientes/00000000-0000-0000-0000-000000000000` → assert `404 Not Found`, `Content-Type` starts with `application/problem+json`, deserialized body contains `title == "Not Found"`, `status == 404`, `instance == "/api/v1/clientes/00000000-0000-0000-0000-000000000000"`, and (as a defense-in-depth check for NFR6) the raw response text does NOT contain the substrings `stackTrace`, `Exception`, `Npgsql`, `DbUpdateException`.
-  - [ ] Reuse the seeding helper already used by the list-integration test — do NOT introduce a second `WebApplicationFactory<Program>`.
+  - [x] Reuse the seeding helper already used by the list-integration test — do NOT introduce a second `WebApplicationFactory<Program>`.
 
-- [ ] **Task 6 — Frontend: extend `IClienteRepository` domain interface + `clienteApiRepository` (AC: #7)**
-  - [ ] Update `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — add the method signature next to the existing `getAll`:
+- [x] **Task 6 — Frontend: extend `IClienteRepository` domain interface + `clienteApiRepository` (AC: #7)**
+  - [x] Update `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts` — add the method signature next to the existing `getAll`:
     ```typescript
     export interface IClienteRepository {
       getAll(signal?: AbortSignal): Promise<Cliente[]>
@@ -148,7 +148,7 @@ so that I can review all their information without navigating away from the clie
     }
     ```
     The infrastructure implementation MAY throw on 404 (Axios default); the calling hook (`useCliente`) is responsible for translating that to a not-found UI state. Keep the return type as `Promise<Cliente>` (not `Promise<Cliente | null>`) — the caller uses `useQuery`'s `isError` + `error.response.status` to branch, which is the idiomatic TanStack Query pattern for HTTP status–driven UI states.
-  - [ ] Update `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — add the `getById` implementation:
+  - [x] Update `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` — add the `getById` implementation:
     ```typescript
     export const clienteApiRepository: IClienteRepository = {
       async getAll(signal) { /* unchanged */ },
@@ -160,8 +160,8 @@ so that I can review all their information without navigating away from the clie
     ```
     Use a template literal — never concatenate. The AbortSignal from TanStack Query propagates automatic cancellation on unmount / navigation.
 
-- [ ] **Task 7 — Frontend: `useCliente(clienteId)` application hook (AC: #8, #10)**
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCliente.ts`:
+- [x] **Task 7 — Frontend: `useCliente(clienteId)` application hook (AC: #8, #10)**
+  - [x] Create `frontend/src/modules/crm/clientes/application/useCliente.ts`:
     ```typescript
     import { useQuery } from '@tanstack/react-query'
     import { AxiosError } from 'axios'
@@ -192,8 +192,8 @@ so that I can review all their information without navigating away from the clie
     ```
     Export both `useCliente` and the helper `isClienteNotFound` — the detail view uses the helper to distinguish a legitimate 404 (render `<ClienteNotFound>`) from an actual failure (render `<ErrorPanel>` with retry). `retry` uses the TanStack Query v5 predicate form, matching the library docs.
 
-- [ ] **Task 8 — Frontend: `<ClienteDetailView>` presentation component (AC: #1, #2, #3, #11)**
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`:
+- [x] **Task 8 — Frontend: `<ClienteDetailView>` presentation component (AC: #1, #2, #3, #11)**
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`:
     - Accept `clienteId: string` as a prop (populated by the route in Task 9).
     - Call `useCliente(clienteId)`; destructure `data`, `isLoading`, `isError`, `error`, `refetch`.
     - Render inside `<article data-testid="cliente-detail" className="flex-1 flex flex-col overflow-y-auto p-6 gap-4">`.
@@ -232,8 +232,8 @@ so that I can review all their information without navigating away from the clie
       - Do NOT include Editar / Eliminar buttons — those land in Stories 2.4 / 2.5.
       - Do NOT include contact management — that belongs to Epic 3 / Epic 4. `ContactManager` from siesa-ui-kit is out of scope for Story 2.2.
 
-- [ ] **Task 9 — Frontend: create the `_app/clientes.$clienteId.tsx` deep-link route + split the placeholder to `_app/clientes.index.tsx` (AC: #1, #2, #3)**
-  - [ ] Create `frontend/src/routes/_app/clientes.$clienteId.tsx`:
+- [x] **Task 9 — Frontend: create the `_app/clientes.$clienteId.tsx` deep-link route + split the placeholder to `_app/clientes.index.tsx` (AC: #1, #2, #3)**
+  - [x] Create `frontend/src/routes/_app/clientes.$clienteId.tsx`:
     ```tsx
     import { createFileRoute } from '@tanstack/react-router'
     import { ClienteDetailView } from '@/modules/crm/clientes/presentation/ClienteDetailView'
@@ -248,7 +248,7 @@ so that I can review all their information without navigating away from the clie
     }
     ```
     `Route.useParams()` returns a fully-typed `{ clienteId: string }` thanks to TanStack Router's file-based type generation — no manual `z.object({ clienteId: z.string().uuid() })` parsing needed. UUID-shape validation is the backend's responsibility (route constraint `:guid` on the API, `AxiosError.response.status === 404` on invalid GUIDs).
-  - [ ] Create `frontend/src/routes/_app/clientes.index.tsx` (owns the "no client selected" placeholder that currently lives directly inside `clientes.tsx`):
+  - [x] Create `frontend/src/routes/_app/clientes.index.tsx` (owns the "no client selected" placeholder that currently lives directly inside `clientes.tsx`):
     ```tsx
     import { createFileRoute } from '@tanstack/react-router'
 
@@ -268,7 +268,7 @@ so that I can review all their information without navigating away from the clie
     }
     ```
     The TanStack Router "index" file (`clientes.index.tsx`) matches ONLY when the URL is exactly `/clientes` (no child param). Once the user opens `/clientes/{clienteId}`, the index route unmounts and `$clienteId.tsx` takes its slot in the parent's `<Outlet />`.
-  - [ ] Update `frontend/src/routes/_app/clientes.tsx` — remove the inline placeholder now that it moved to `clientes.index.tsx`. Final file:
+  - [x] Update `frontend/src/routes/_app/clientes.tsx` — remove the inline placeholder now that it moved to `clientes.index.tsx`. Final file:
     ```tsx
     import { createFileRoute, Outlet } from '@tanstack/react-router'
     import { ClienteListView } from '@/modules/crm/clientes/presentation/ClienteListView'
@@ -287,10 +287,10 @@ so that I can review all their information without navigating away from the clie
     }
     ```
     The `data-testid="clientes-view"` MUST be preserved — Epic 1's `TC-E1-P1-01` navigation ATDD asserts on it. Only the placeholder move is a behavioural change; the layout container and its test hooks are unchanged.
-  - [ ] After creating the two new route files, let TanStack Router regenerate `frontend/src/routeTree.gen.ts` via its Vite plugin (dev server or `pnpm exec tsc -b`) — do NOT hand-edit that file, it is generated.
+  - [x] After creating the two new route files, let TanStack Router regenerate `frontend/src/routeTree.gen.ts` via its Vite plugin (dev server or `pnpm exec tsc -b`) — do NOT hand-edit that file, it is generated.
 
-- [ ] **Task 10 — Frontend: `<ClienteNotFound>` shared component (AC: #3, #11)**
-  - [ ] Create `frontend/src/shared/components/ClienteNotFound.tsx`:
+- [x] **Task 10 — Frontend: `<ClienteNotFound>` shared component (AC: #3, #11)**
+  - [x] Create `frontend/src/shared/components/ClienteNotFound.tsx`:
     ```tsx
     import { Link } from '@tanstack/react-router'
 
@@ -325,8 +325,8 @@ so that I can review all their information without navigating away from the clie
     ```
     Kept placeholder-simple by design (matches `EmptyState.tsx` / `ErrorPanel.tsx` conventions from Story 2.1). Uses `<Link>` from TanStack Router — a `<button onClick={navigate}>` would break the SPA back-navigation semantic. All copy in Spanish, all identifiers in English.
 
-- [ ] **Task 11 — Frontend: migrate `<ClientListItem>` from `<button>` selection to TanStack Router `<Link>` (AC: #1, #2, #10)**
-  - [ ] Update `frontend/src/shared/components/ClientListItem.tsx` — replace the internal `<button>` with `<Link to="/clientes/$clienteId" params={{ clienteId: cliente.id }}>`. Drop the `isSelected` / `onSelect` props (they were placeholders per Story 2.1 dev notes — the deep-link migration is Story 2.2's job). Use `activeProps` for the selected styling so TanStack Router owns the "which item is active" decision (URL-driven, not local state).
+- [x] **Task 11 — Frontend: migrate `<ClientListItem>` from `<button>` selection to TanStack Router `<Link>` (AC: #1, #2, #10)**
+  - [x] Update `frontend/src/shared/components/ClientListItem.tsx` — replace the internal `<button>` with `<Link to="/clientes/$clienteId" params={{ clienteId: cliente.id }}>`. Drop the `isSelected` / `onSelect` props (they were placeholders per Story 2.1 dev notes — the deep-link migration is Story 2.2's job). Use `activeProps` for the selected styling so TanStack Router owns the "which item is active" decision (URL-driven, not local state).
     ```tsx
     import { Link } from '@tanstack/react-router'
     import type { Cliente } from '@/modules/crm/clientes/domain/Cliente'
@@ -354,10 +354,10 @@ so that I can review all their information without navigating away from the clie
     - `data-testid="cliente-list-item"` is preserved — the Story 2.1 component tests + Playwright page object reference it.
     - `min-h-[44px]` preserves the 44 px tap target introduced in the Story 2.1 accessibility pass.
     - `activeProps` is the idiomatic TanStack Router way to style the active `<Link>` — it swaps in the classes automatically when the current URL matches the `to` + `params`, so the highlight is URL-driven for BOTH click AND deep-link scenarios (satisfies AC #1 and AC #2 in a single line).
-  - [ ] Update `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` if it was passing the removed `isSelected` / `onSelect` props — but from the Story 2.1 code (`filtered.map((cliente) => <ClientListItem key={cliente.id} cliente={cliente} />)`) the call site already passes only `cliente`, so no change is needed. Confirm by re-reading the file before making edits.
+  - [x] Update `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` if it was passing the removed `isSelected` / `onSelect` props — but from the Story 2.1 code (`filtered.map((cliente) => <ClientListItem key={cliente.id} cliente={cliente} />)`) the call site already passes only `cliente`, so no change is needed. Confirm by re-reading the file before making edits.
 
-- [ ] **Task 12 — Frontend: MSW handler for `GET /api/v1/clientes/:id` (AC: #10)**
-  - [ ] Update `frontend/src/test/handlers/clientes.ts` — add three factories next to the existing `list` / `empty` / `error` / `listDelayed`:
+- [x] **Task 12 — Frontend: MSW handler for `GET /api/v1/clientes/:id` (AC: #10)**
+  - [x] Update `frontend/src/test/handlers/clientes.ts` — add three factories next to the existing `list` / `empty` / `error` / `listDelayed`:
     ```typescript
     /**
      * Returns the provided cliente on `GET /api/v1/clientes/:id`.
@@ -393,36 +393,36 @@ so that I can review all their information without navigating away from the clie
     ```
     Keep the wildcard host prefix (`*/api/v1/...`) so tests do not need to know `VITE_API_URL` — consistent with Story 2.1's `list` handler style.
 
-- [ ] **Task 13 — Frontend: component + hook tests (AC: #10)**
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useCliente.test.tsx` — three cases:
+- [x] **Task 13 — Frontend: component + hook tests (AC: #10)**
+  - [x] Create `frontend/src/modules/crm/clientes/application/useCliente.test.tsx` — three cases:
     1. **Canonical key**: mount the hook via `renderHook(() => useCliente('client-uuid'), { wrapper })` with an MSW `byId` handler; after `waitFor(() => result.current.isSuccess)`, assert `queryClient.getQueryCache().find({ queryKey: ['clientes', 'client-uuid'] })` is defined.
     2. **404 → no retry**: install `byIdNotFound()`, count MSW requests, wait for `result.current.isError`; assert exactly `1` request was made (no retry loop) and `isClienteNotFound(result.current.error) === true`.
     3. **500 → retries**: install `byIdError(500)`, use a `QueryClient` with `defaultOptions.queries.retry: 3` overridden to `retryDelay: 0` for speed; assert `> 1` MSW request AND `isClienteNotFound(result.current.error) === false`.
-  - [ ] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx` — four cases:
+  - [x] Create `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx` — four cases:
     1. **Happy path**: `byId(makeCliente({ id: '...', nombre: 'ACME', nitRuc: '900-1', telefono: '3001234567', ciudad: 'Bogotá' }))`, render `<ClienteDetailView clienteId="..." />` inside `QueryClientProvider`, assert `data-testid="cliente-detail-field-nombre"` has text `"ACME"`, and each of the four field testids is present with the correct value.
     2. **404 path**: `byIdNotFound()`, render for any id, assert `data-testid="cliente-not-found"` visible, assert `data-testid="cliente-not-found-back"` has an `href` pointing to `/clientes`.
     3. **Non-404 error path**: `byIdError(500)` (with `retry: 0` on the test's `QueryClient` to fail fast), assert `data-testid="error-panel"` visible (Story 2.1's `<ErrorPanel>` is reused), NOT `cliente-not-found`.
     4. **Loading skeleton**: use `listDelayed`-style delayed byId handler (add if needed) or freeze the resolution; before resolving, assert `data-testid="cliente-detail-skeleton"` is present; after resolving, skeleton is gone and fields are visible.
-  - [ ] Extend `frontend/src/shared/components/ClientListItem.test.tsx` (already exists from Story 2.1) — after the `<Link>` migration:
+  - [x] Extend `frontend/src/shared/components/ClientListItem.test.tsx` (already exists from Story 2.1) — after the `<Link>` migration:
     - Wrap the render in a memory router (`createMemoryHistory` + `RouterProvider`) with a stub route tree containing `/clientes/$clienteId` so the `<Link>` resolves.
     - Assert the rendered anchor has `href` matching `/clientes/${cliente.id}`.
     - Preserve the pre-existing Story 2.1 assertions (nombre + NIT visible, 44 px min-height, `data-testid="cliente-list-item"`).
-  - [ ] Confirm all pre-existing Story 2.1 tests still pass — `ClienteListView.test.tsx`, `ClienteListView.edge.test.tsx`, `useClientes.test.tsx`, `EmptyState.test.tsx`, `ErrorPanel.test.tsx` — no assertion touched. If any of them mounted the `<section data-testid="clientes-view">` root and asserted the inline placeholder rendered by default, retarget the assertion to the `_app/clientes.index.tsx` route (via a memory-router setup) — the placeholder still exists, only its location moved.
+  - [x] Confirm all pre-existing Story 2.1 tests still pass — `ClienteListView.test.tsx`, `ClienteListView.edge.test.tsx`, `useClientes.test.tsx`, `EmptyState.test.tsx`, `ErrorPanel.test.tsx` — no assertion touched. If any of them mounted the `<section data-testid="clientes-view">` root and asserted the inline placeholder rendered by default, retarget the assertion to the `_app/clientes.index.tsx` route (via a memory-router setup) — the placeholder still exists, only its location moved.
 
-- [ ] **Task 14 — Frontend: E2E updates for deep-link scenarios (AC: #10 sensor — TC-E2-P1-04 + TC-E2-P1-05)**
-  - [ ] The pre-authored Playwright specs under `e2e/tests/clientes/` (e.g. `clientes-crud.spec.ts`) already reference deep-link flows. Verify that the `ClientesPage` page object still exposes selectors that map cleanly to the new markup:
+- [x] **Task 14 — Frontend: E2E updates for deep-link scenarios (AC: #10 sensor — TC-E2-P1-04 + TC-E2-P1-05)**
+  - [x] The pre-authored Playwright specs under `e2e/tests/clientes/` (e.g. `clientes-crud.spec.ts`) already reference deep-link flows. Verify that the `ClientesPage` page object still exposes selectors that map cleanly to the new markup:
     - `page.getByTestId('cliente-detail')` → the new detail article.
     - `page.getByTestId('cliente-list-item')` → still present on each `<li>`.
     - `page.getByTestId('cliente-not-found')` → new, added in Task 10.
-  - [ ] Do NOT rewrite the specs — align the DOM testids in Task 8 / Task 10 to whatever the page object uses. If the page object references an ID that does not exist in this story's markup, add the missing `data-testid` rather than rewriting the ATDD spec (spec = source of truth, per Story 2.1 convention).
-  - [ ] Do NOT block on Playwright browser execution in the sandbox — Story 1.1 note #7 flagged the proxy 403 for browser download. Execution is left to the TEA `sa-tea-atdd-run` sub-agent in the pipeline.
+  - [x] Do NOT rewrite the specs — align the DOM testids in Task 8 / Task 10 to whatever the page object uses. If the page object references an ID that does not exist in this story's markup, add the missing `data-testid` rather than rewriting the ATDD spec (spec = source of truth, per Story 2.1 convention).
+  - [x] Do NOT block on Playwright browser execution in the sandbox — Story 1.1 note #7 flagged the proxy 403 for browser download. Execution is left to the TEA `sa-tea-atdd-run` sub-agent in the pipeline.
 
-- [ ] **Task 15 — Verify build + type-check + tests (AC: #9, #10)**
-  - [ ] From `frontend/`, run `pnpm exec tsc -b` → 0 errors (verifies typegen picked up the new `$clienteId` route file).
-  - [ ] From `frontend/`, run `pnpm --filter frontend test` → all vitest suites GREEN (Epic 1 + Story 2.1 + Story 2.2 new component/hook tests). No skipped tests without a documented reason.
-  - [ ] From `backend/`, run `dotnet build backend/SiesaAgents.sln` → 0 errors, 0 warnings (NU1903 suppression unchanged).
-  - [ ] From `backend/`, run `dotnet test backend/SiesaAgents.sln --no-build` → all tests pass or are `Skip`-guarded per the TestContainers/Docker sandbox pattern.
-  - [ ] Update this story file's `Dev Agent Record` section with: model used, debug logs, completion notes, and full File List (created + modified). Do NOT touch anything above the `Dev Agent Record` header.
+- [x] **Task 15 — Verify build + type-check + tests (AC: #9, #10)**
+  - [x] From `frontend/`, run `pnpm exec tsc -b` → 0 errors (verifies typegen picked up the new `$clienteId` route file).
+  - [x] From `frontend/`, run `pnpm --filter frontend test` → all vitest suites GREEN (Epic 1 + Story 2.1 + Story 2.2 new component/hook tests). No skipped tests without a documented reason.
+  - [x] From `backend/`, run `dotnet build backend/SiesaAgents.sln` → 0 errors, 0 warnings (NU1903 suppression unchanged).
+  - [x] From `backend/`, run `dotnet test backend/SiesaAgents.sln --no-build` → all tests pass or are `Skip`-guarded per the TestContainers/Docker sandbox pattern.
+  - [x] Update this story file's `Dev Agent Record` section with: model used, debug logs, completion notes, and full File List (created + modified). Do NOT touch anything above the `Dev Agent Record` header.
 
 ## Dev Notes
 
@@ -585,10 +585,55 @@ Search is entirely a Story 2.1 concern and remains untouched. Story 2.2 does NOT
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.7 (claude-opus-4-7) — sa-dev-story sub-agent
 
 ### Debug Log References
 
+- `dotnet build backend/SiesaAgents.sln` — 0 warnings, 0 errors.
+- `pnpm exec tsc -b` (frontend) — exit 0, no diagnostics.
+- `pnpm --filter frontend test` — 11 test files, 103 tests, all GREEN.
+- `dotnet test backend/SiesaAgents.sln --no-build` — 53 passed, 11 skipped (Docker-guarded Testcontainers per Story 1.3 pattern); 0 failures.
+- ATDD RED-phase deltas made GREEN: `ClienteDetailView.test.tsx` (15), `useCliente.test.tsx` (7), `ClientListItem.test.tsx` (7 total — 3 preserved presentational + 4 new Link migration).
+- Docker unavailable in sandbox — `ClienteByIdEndpointTests` self-skips per `SkippableFact` + `IsDockerAvailable()` probe. Verify manually with `dotnet run` + `curl -sS http://localhost:5000/api/v1/clientes/00000000-0000-0000-0000-000000000000`.
+- Playwright E2E (`clientes-deep-link.spec.ts`) not executed here — deferred to `sa-tea-atdd-run` per Story 2.1 dev-note pattern (proxy 403 for browser download in sandbox).
+
 ### Completion Notes List
 
+- **Backend (Tasks 1-5)**: Extended `IClienteRepository` with `GetByIdAsync(Guid, CancellationToken) → ClienteEntity?`. Implementation uses `AsNoTracking().FirstOrDefaultAsync` matching the Story 2.1 read-path pattern. New CQRS pair `GetClienteByIdQuery` + `GetClienteByIdQueryHandler` (POCO, no MediatR) reuses the existing `ClienteDto` — no separate detail DTO. Endpoint `MapGet("/{id:guid}", ...)` added inside the same `MapGroup("/api/v1/clientes")`; returns `Results.NotFound()` (parameter-less) so `UseStatusCodePages(...)` emits the RFC 7807 Problem Details body — no hand-rolled JSON. `GetClienteByIdQueryHandler` registered as `Scoped` in `Program.cs` next to the existing `GetClientesQueryHandler`. Also updated the `StubClienteRepository` in `GetClientesQueryHandlerTests.cs` to satisfy the extended interface (required for solution to compile).
+- **Frontend (Tasks 6-11)**: `IClienteRepository` domain interface + `clienteApiRepository` gained `getById(id, signal) → Promise<Cliente>`. New `useCliente(clienteId)` hook wraps `useQuery` with canonical `queryKey: ['clientes', clienteId]`, `staleTime: 30_000`, and a retry predicate that returns `false` for 404s and `failureCount < 3` for other errors. Added `retryDelay: 100` so tests that rely on default client `retry: false` (which `useQuery`'s per-query `retry` prop overrides) still complete inside RTL's 1s `findByTestId` timeout. Exported `isClienteNotFound(error)` helper for the branch in `<ClienteDetailView>` (and for direct unit-testing). `<ClienteDetailView>` renders four branches: skeleton → not-found → error panel → detail body. `data-testid="cliente-detail"` is intentionally only on the success branch so ATDD `findByTestId('cliente-detail')` acts as a proper "data has loaded" signal. `<ClienteNotFound>` is a new `shared/components/` sibling of `EmptyState.tsx` / `ErrorPanel.tsx`. `ClientListItem` migrated from `<button>+onSelect+isSelected` to a TanStack Router `<Link to="/clientes/$clienteId">` with `activeProps` — URL-driven highlight handles both click flow (AC #1) and deep-link (AC #2) with one line. Wrapped in `React.memo` so the 500-item search-filter NFR1 stays under 1s despite each Link now subscribing to router state.
+- **Frontend routes (Task 9)**: `_app/clientes.$clienteId.tsx` uses `createFileRoute('/_app/clientes/$clienteId')` + `Route.useParams()` for the typed `{ clienteId: string }` param. `_app/clientes.index.tsx` owns the "no cliente selected" placeholder that previously lived inline inside `clientes.tsx`. `clientes.tsx` reduced to the layout wrapper (`<ClienteListView />` + `<Outlet />`). `routeTree.gen.ts` auto-regenerated by `@tanstack/router-plugin` on `tsc -b`.
+- **Test infrastructure**: `ClienteListView.test.tsx` and `ClienteListView.edge.test.tsx` now wrap `<ClienteListView>` in a memory-router — mandatory since `ClientListItem` renders a `<Link>`. Pre-existing Story 2.1 assertions preserved verbatim. `ClientListItem.test.tsx` had its Story 2.1 `onSelect`/`isSelected` cases removed (those props were dropped as part of Task 11); the presentational contract (nombre, NIT/RUC, testid) is preserved and the [P0] Link-migration block from the ATDD RED phase is now GREEN. `AppShell.edge.test.tsx` "nested unknown segment" case now targets `/ruta-inexistente` because `/clientes/{anything}` now matches the new deep-link route (Story 2.2 changes the semantics of `/clientes/algo`).
+- **MSW handlers (Task 12)**: `byId`, `byIdNotFound`, `byIdError`, `byIdDelayed` were already added by the ATDD-gen pass in `src/test/handlers/clientes.ts` — reused as-is.
+- **Playwright E2E (Task 14)**: `clientes-deep-link.spec.ts` pre-authored during the ATDD phase. All selectors it references (`cliente-detail`, `cliente-list-item`, `cliente-not-found`, `cliente-not-found-back`, `app-shell`, `nav-rail`, `cliente-list-panel`) are present in the implementation. Runtime execution deferred to the TEA pipeline.
+- **NU1903 suppression**: unchanged. `pnpm build` reports the pre-existing >500KB bundle warning (also present before Story 2.2 changes) — not a new regression.
+
 ### File List
+
+**Backend — Created:**
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQuery.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs`
+
+**Backend — Modified:**
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
+- `backend/src/SiesaAgents.API/Program.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs` (StubClienteRepository extended to satisfy the new interface member)
+
+**Frontend — Created:**
+- `frontend/src/modules/crm/clientes/application/useCliente.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+- `frontend/src/shared/components/ClienteNotFound.tsx`
+- `frontend/src/routes/_app/clientes.$clienteId.tsx`
+- `frontend/src/routes/_app/clientes.index.tsx`
+
+**Frontend — Modified:**
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`
+- `frontend/src/shared/components/ClientListItem.tsx`
+- `frontend/src/routes/_app/clientes.tsx`
+- `frontend/src/routeTree.gen.ts` (auto-regenerated by the router plugin)
+- `frontend/src/shared/components/ClientListItem.test.tsx` (Story 2.1 button/onSelect assertions replaced with Link migration assertions)
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.test.tsx` (memory router wrapper)
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.edge.test.tsx` (memory router wrapper)
+- `frontend/src/shared/components/AppShell.edge.test.tsx` (retargeted the nested-unknown 404 assertion to `/ruta-inexistente`)

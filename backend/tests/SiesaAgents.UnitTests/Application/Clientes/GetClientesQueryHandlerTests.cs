@@ -177,5 +177,13 @@ public class GetClientesQueryHandlerTests
             LastToken = cancellationToken;
             return Task.FromResult(_entities);
         }
+
+        public Task<ClienteEntity?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            LastToken = cancellationToken;
+            return Task.FromResult<ClienteEntity?>(_entities.FirstOrDefault(c => c.Id == id));
+        }
     }
 }

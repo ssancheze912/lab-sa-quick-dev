@@ -197,10 +197,12 @@ describe('AppShell edge — Nested unknown routes (404 fallback)', () => {
     setViewport(1280, 800);
   });
 
-  it('[P2] should render NotFoundView for a nested unknown segment (/clientes/algo)', async () => {
-    // GIVEN: A URL with an extra segment beneath /clientes (no matching route)
-    // WHEN: The router mounts at /clientes/algo
-    renderRouterAt('/clientes/algo');
+  it('[P2] should render NotFoundView for a completely unknown top-level segment (/ruta-inexistente)', async () => {
+    // GIVEN: A URL that does not match any route at all (Story 2.2 turned
+    // /clientes/{clienteId} into a matched dynamic route, so an unknown
+    // top-level segment is the reliable path to the 404 fallback).
+    // WHEN: The router mounts at /ruta-inexistente
+    renderRouterAt('/ruta-inexistente');
 
     // THEN: The not-found view is rendered
     const notFound = await screen.findByTestId('not-found-view');

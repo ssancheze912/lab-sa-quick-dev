@@ -6,4 +6,5 @@ import type { Cliente } from './Cliente'
  */
 export interface IClienteRepository {
   getAll(signal?: AbortSignal): Promise<Cliente[]>
+  getById(id: string, signal?: AbortSignal): Promise<Cliente>
 }

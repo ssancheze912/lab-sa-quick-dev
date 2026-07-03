@@ -25,6 +25,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Clientes module (Story 2.1) — repository + CQRS handler registrations.
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<GetClientesQueryHandler>();
+builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 
 // CORS — allow the frontend origin(s) configured in appsettings.
 var allowedOrigins = builder.Configuration

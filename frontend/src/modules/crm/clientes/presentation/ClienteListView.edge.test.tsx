@@ -22,6 +22,14 @@ import { render, screen, cleanup, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { setupServer } from 'msw/node'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  RouterProvider,
+} from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
 import { ClienteListView } from '@/modules/crm/clientes/presentation/ClienteListView'
@@ -53,8 +61,27 @@ function makeQueryClient(): QueryClient {
 
 function renderWithClient(ui: ReactNode) {
   const client = makeQueryClient()
+  // Story 2.2: ClientListItem uses a TanStack Router <Link>, so a router
+  // context is now mandatory even when unit-testing <ClienteListView>.
+  const rootRoute = createRootRoute({ component: () => <Outlet /> })
+  const clientesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/clientes',
+    component: () => <>{ui}</>,
+  })
+  const detailRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/clientes/$clienteId',
+    component: () => <>{ui}</>,
+  })
+  const router = createRouter({
+    routeTree: rootRoute.addChildren([clientesRoute, detailRoute]),
+    history: createMemoryHistory({ initialEntries: ['/clientes'] }),
+  })
   const utils = render(
-    <QueryClientProvider client={client}>{ui}</QueryClientProvider>,
+    <QueryClientProvider client={client}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
   )
   return { ...utils, client }
 }
