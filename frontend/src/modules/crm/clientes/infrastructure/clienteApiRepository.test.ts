@@ -117,14 +117,15 @@ describe('[P1] clienteApiRepository.getById — error propagation', () => {
     // GIVEN: MSW returns 500
     server.use(clientesHandlers.byIdError(500))
 
-    // WHEN / THEN: The promise rejects and response.status !== 404
+    // WHEN / THEN: The promise rejects with an AxiosError whose response.status
+    //              is 500 (definitively NOT 404 — the discriminator that the
+    //              `useCliente` retry predicate relies on).
     await expect(
       clienteApiRepository.getById('00000000-0000-4000-8000-000000020500'),
     ).rejects.toSatisfy((error: unknown) => {
       return (
         error instanceof AxiosError &&
-        error.response?.status === 500 &&
-        error.response.status !== 404
+        error.response?.status === 500
       )
     })
   })
