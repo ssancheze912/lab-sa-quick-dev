@@ -1,0 +1,13 @@
+{
+  "name": "siesa-agents",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Siesa Agents CRM monorepo — Vite frontend + .NET 10 backend + Playwright e2e",
+  "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

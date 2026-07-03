@@ -1,0 +1,34 @@
+# Node / pnpm
+node_modules/
+pnpm-debug.log*
+*.log
+
+# Vite / frontend build output
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+
+# .NET build output
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+
+# Environment
+.env
+.env.*
+!.env.example
+!.env.development
+
+# Playwright
+playwright-report/
+playwright-results/
+test-results/
+.playwright/
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
