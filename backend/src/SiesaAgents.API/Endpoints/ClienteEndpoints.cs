@@ -19,6 +19,22 @@ public static class ClienteEndpoints
                 CancellationToken cancellationToken) =>
             Results.Ok(await handler.HandleAsync(new GetClientesQuery(), cancellationToken)));
 
+        // Story 2.2 — GET /api/v1/clientes/{id:guid}. The :guid route constraint
+        // short-circuits any non-GUID segment to a framework 404 before the
+        // handler runs. `Results.NotFound()` (parameter-less) triggers the
+        // `UseStatusCodePages(...)` middleware in Program.cs, which emits the
+        // RFC 7807 Problem Details body — no hand-rolled JSON here.
+        group.MapGet("/{id:guid}", async (
+                Guid id,
+                GetClienteByIdQueryHandler handler,
+                CancellationToken cancellationToken) =>
+        {
+            var dto = await handler.HandleAsync(new GetClienteByIdQuery(id), cancellationToken);
+            return dto is null
+                ? Results.NotFound()
+                : Results.Ok(dto);
+        });
+
         return app;
     }
 }
