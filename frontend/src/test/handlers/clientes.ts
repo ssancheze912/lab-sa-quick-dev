@@ -43,6 +43,57 @@ export const clientesHandlers = {
       await new Promise((resolve) => setTimeout(resolve, delayMs))
       return HttpResponse.json(data)
     }),
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Story 2.2 — Client Detail View handlers
+  // ──────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Returns the provided cliente on `GET /api/v1/clientes/:id`.
+   * Used by <ClienteDetailView> happy-path tests + TC-E2-P1-04 deep-link.
+   */
+  byId: (cliente: Cliente) =>
+    http.get(`*/api/v1/clientes/${cliente.id}`, () =>
+      HttpResponse.json(cliente),
+    ),
+
+  /**
+   * Returns 404 Problem Details for any `GET /api/v1/clientes/:anything`.
+   * Exercises the <ClienteNotFound> render path (TC-E2-P1-05).
+   */
+  byIdNotFound: () =>
+    http.get('*/api/v1/clientes/:id', () =>
+      HttpResponse.json(
+        {
+          type: 'https://tools.ietf.org/html/rfc7231',
+          title: 'Not Found',
+          status: 404,
+          instance: '/api/v1/clientes/unknown',
+        },
+        { status: 404 },
+      ),
+    ),
+
+  /**
+   * Returns an HTTP error (default 500) on `GET /api/v1/clientes/:id`.
+   * Used to distinguish the generic error path (ErrorPanel) from the
+   * not-found path (ClienteNotFound).
+   */
+  byIdError: (status = 500) =>
+    http.get(
+      '*/api/v1/clientes/:id',
+      () => new HttpResponse(null, { status }),
+    ),
+
+  /**
+   * Delayed happy-path for a single cliente. Used to exercise the loading
+   * skeleton on the detail view before the query resolves.
+   */
+  byIdDelayed: (cliente: Cliente, delayMs: number) =>
+    http.get(`*/api/v1/clientes/${cliente.id}`, async () => {
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+      return HttpResponse.json(cliente)
+    }),
 }
 
 /**
