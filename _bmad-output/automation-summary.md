@@ -1,215 +1,248 @@
-# Automation Summary — Story 1.3: Backend Database Foundation
+# Automation Summary - Story 2.1 Client List & Search
 
 **Date:** 2026-07-03
-**Story:** 1.3 (Epic 1 — Project Foundation & Application Shell)
-**Mode:** BMad-Integrated
-**Coverage Target:** critical-paths + edge cases (post-ATDD expansion)
+**Mode:** BMad-Integrated (expansion over existing ATDD)
+**Story:** 2.1 — Client List & Search
+**Epic:** 2 — Client Management
+**Coverage Target:** critical-paths + edge cases + negative paths
 
 ---
 
 ## Context
 
-ATDD baseline (from `sa-tea-atdd`): **10 GREEN + 2 SKIP + 1 unit** = 13 tests total across
-`ProblemDetailsMiddlewareTests`, `EfCoreMigrationTests`, `AppDbContextConventionTests`. The
-2 skipped tests are `EfCoreMigrationTests.*` (Docker daemon unavailable in the sandbox).
+The ATDD sub-agent produced 21 GREEN tests + 6 Docker-skip guards covering the
+happy paths of Story 2.1. This automate expansion targets the coverage gaps
+that ATDD did not exercise: accent-insensitive matching, NIT/RUC substring
+search, negative / empty / whitespace queries, field-guard behaviour
+(telefono/ciudad NOT searchable), and unit-level contract tests for shared
+components + the query handler.
 
-This automate pass expands beyond the ATDD happy paths with edge cases, error
-paths, boundary conditions, static-analysis guards, and DI/runtime wiring
-assertions that ATDD did not exercise.
+**Approach:** No duplicate coverage. E2E-style flows (list render, retry
+loop) remain in ATDD. This expansion adds Component-level edge cases and
+Unit-level component tests only.
 
 ---
 
-## Tests Created (43 new)
+## Tests Created
 
-### Unit / Model-level (17 tests) — `SnakeCaseNamingConventionEdgeCaseTests.cs`
+### Component Tests (Vitest + RTL + MSW)
 
-Pure static-method invocations and in-memory `DbContext` inspections. Zero
-external dependencies.
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.edge.test.tsx`
+  (12 new tests, ~350 lines)
+  - **[P1]** Accent-insensitive matching: `"garcia" ↔ "García"` (3 tests)
+  - **[P1]** NIT/RUC substring search: exact prefix + shared prefix (2 tests)
+  - **[P2]** Case-insensitive substring match: `"CORP" ↔ "Corporación"` (1 test)
+  - **[P1]** Boundary queries: empty, whitespace-only, non-matching, cleared (4 tests)
+  - **[P1]** Field guard: `telefono` and `ciudad` are NOT searched (2 tests)
 
-- `ToSnakeCase_returns_empty_for_empty_input_P1`
-- `ToSnakeCase_returns_input_for_whitespace_P2`
-- `ToSnakeCase_is_idempotent_on_already_snake_case_input_P0` — Theory × 3
-- `ToSnakeCase_handles_digit_boundaries_P2` — Theory × 3
-- `ToSnakeCase_preserves_single_segment_tokens_P2` — Theory × 3
-- `ApplySnakeCaseNaming_renames_multiple_entity_tables_P1`
-- `ApplySnakeCaseNaming_renames_foreign_key_column_P1`
-- `ApplySnakeCaseNaming_uses_fk_prefix_for_foreign_key_constraints_P1`
-- `ApplySnakeCaseNaming_uses_uk_prefix_for_unique_indexes_P1`
-- `ApplySnakeCaseNaming_uses_ix_prefix_for_non_unique_indexes_P1`
-- `ApplySnakeCaseNaming_uses_pk_prefix_for_primary_keys_P1`
-- `ApplySnakeCaseNaming_is_safe_to_apply_twice_P0`
+- `frontend/src/shared/components/EmptyState.test.tsx` (4 new tests)
+  - **[P2]** Renders title, renders description (when passed), omits
+    description paragraph when prop absent, exposes `data-testid="empty-state"`
 
-**Rationale:** ATDD only covered PascalCase→snake_case for tables/columns
-(TC-E1-P2-04). None of the FK/PK/index-prefix branches or the empty/idempotency
-boundary conditions were tested — this suite closes those gaps.
+- `frontend/src/shared/components/ErrorPanel.test.tsx` (8 new tests)
+  - **[P1]** Default Spanish title / description / "Reintentar" label
+  - **[P2]** Custom title / description overrides win
+  - **[P1]** `onRetry` fires exactly once per click; multi-click preserves count
+  - **[P2]** Retry button is `type="button"` (never submits enclosing form)
 
-### API / Integration (10 tests) — `ProblemDetailsMiddlewareEdgeCaseTests.cs`
+- `frontend/src/shared/components/ClientListItem.test.tsx` (8 new tests)
+  - **[P2]** Renders `nombre`, `NIT/RUC:` prefix, and outer `<li>` hook
+  - **[P2]** 44 px tap-target class present (mobile accessibility)
+  - **[P2]** `onSelect(cliente.id)` fires on click; optional prop is safe
+  - **[P2]** Selected-state class hooks toggle correctly
 
-Uses `WebApplicationFactory<Program>` + `IStartupFilter` to preserve the Story
-1.1 middleware order while injecting test-only endpoints.
+- `frontend/src/modules/crm/clientes/application/useClientes.test.tsx` (4 new tests)
+  - **[P2]** Data returned unchanged from repository
+  - **[P2]** Canonical `queryKey: ['clientes']` observable via cache
+  - **[P2]** `isError=true` surfaces on 500 responses
+  - **[P2]** Empty API response yields `[]` (not `undefined`)
 
-- `Any_exception_type_produces_problem_details_500_P0` — Theory × 4 (Argument
-  Null, InvalidOperation, NullReference, Timeout)
-- `Response_does_not_leak_password_from_exception_message_P0`
-- `Response_does_not_leak_sql_fragments_from_exception_message_P0`
-- `Response_does_not_leak_stack_trace_frame_paths_P0`
-- `Response_contains_instance_field_with_request_path_P1`
-- `Response_type_field_is_a_reachable_uri_shape_P2`
-- `Missing_endpoint_returns_problem_details_404_P1`
+**Total frontend expansion:** 36 new tests
 
-**Rationale:** ATDD only asserted the happy path (single 500 → problem+json).
-This suite proves exception-type invariance, sensitive-data leak-proofing
-(password/SQL/stack-trace fragments), RFC 7807 shape (instance URI, type URI),
-and the framework 404 pathway through `UseStatusCodePages`.
+### Unit Tests (xUnit)
 
-### Static Analysis (9 tests) — `MigrationScopeGuardTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`
+  (6 new tests)
+  - **[P1]** Empty repo → empty DTO list (never null)
+  - **[P1]** All entities are mapped
+  - **[P1]** Field-by-field mapping preserved (id, nombre, nitRuc, telefono,
+    ciudad, createdAt, updatedAt)
+  - **[P2]** Repository ordering preserved (handler must not resort)
+  - **[P2]** `CancellationToken` forwarded to repository
+  - **[P2]** 500-entity batch mapped without data loss (NFR10 boundary)
 
-Reads the generated migration source files off disk. **Runs anywhere — no
-Docker, no Testcontainers required.** Docker-less alternative to the SKIPPED
-`EfCoreMigrationTests` for AC #2 enforcement.
-
-- `InitialCreate_migration_file_exists_P1`
-- `InitialCreate_migration_designer_and_snapshot_exist_P2`
-- `InitialCreate_Up_body_is_empty_P0`
-- `InitialCreate_Down_body_is_empty_P1`
-- `InitialCreate_contains_no_schema_builder_calls_P0` — Theory × 5 (CreateTable,
-  CreateIndex, EnsureSchema, AddForeignKey, AddPrimaryKey)
-- `ModelSnapshot_declares_no_entity_types_P1`
-
-**Rationale:** ATDD `EfCoreMigrationTests` are SKIPPED (Docker unavailable), so
-AC #2 (empty initial migration, no schema leaks) has no automated coverage on
-this environment. Static analysis over the emitted `.cs` files fills the gap.
-
-### API / DI Wiring (5 tests) — `AppDbContextDependencyInjectionTests.cs`
-
-- `AppDbContext_is_resolvable_from_the_service_provider_P0`
-- `AppDbContext_uses_the_npgsql_provider_P0`
-- `AppDbContext_lifetime_is_scoped_P1`
-- `AppDbContext_connection_string_matches_configuration_P1`
-- `AppDbContext_has_no_registered_entity_types_in_current_scope_P1`
-
-**Rationale:** ATDD only inspected `OnModelCreating` in isolation via a plain
-`DbContextOptionsBuilder`. This suite proves the runtime DI wiring in
-`Program.cs` (AC #6) — provider identity, lifetime, connection string,
-scope-note enforcement — none of which ATDD asserted.
+**Total backend expansion:** 6 new tests
 
 ---
 
 ## Priority Breakdown
 
-| Priority | Count | Examples                                                                 |
-|----------|-------|--------------------------------------------------------------------------|
-| **P0**   | 15    | Any exception → 500 + problem+json; sensitive-data leak guards; DI wiring; empty migration bodies; ToSnakeCase idempotency |
-| **P1**   | 21    | FK/PK/index naming; instance field; 404 problem+json; connection string; migration file existence |
-| **P2**   | 7     | type URI shape; single-segment tokens; digit boundaries; designer/snapshot file existence |
-| **P3**   | 0     | —                                                                        |
+| Priority | Component | Backend Unit | Total |
+|----------|-----------|--------------|-------|
+| **P1**   | 15        | 3            | 18    |
+| **P2**   | 21        | 3            | 24    |
+| **P3**   | 0         | 0            | 0     |
+| **Total**| **36**    | **6**        | **42**|
 
 ---
 
-## Test-Level Distribution
+## Test Level Distribution
 
-- **E2E:** 0 (backend infrastructure story — no user-facing UI)
-- **API / Integration:** 15 tests (10 middleware + 5 DI)
-- **Component:** 0 (no UI components in scope)
-- **Unit / Model-level:** 17 tests (SnakeCase edge cases via in-memory provider)
-- **Static Analysis:** 9 tests (migration source file inspection)
+- **E2E:** 0 (already covered by ATDD + `e2e/tests/clientes/clientes-crud.spec.ts`)
+- **API:** 0 (Docker-guarded ATDD tests remain the source of truth)
+- **Component:** 36 (edge cases + shared-component unit contracts + hook contract)
+- **Unit (backend):** 6 (handler mapping in isolation from EF Core)
 
----
-
-## Test-Healing Report
-
-**Auto-Heal Enabled:** true
-**Healing Mode:** Pattern-based
-**Iterations Allowed:** 3
-
-### Validation Results (post-generation)
-
-| Metric        | Count |
-|---------------|-------|
-| Total tests   | 55    |
-| Passing       | 53    |
-| Skipped       | 2 (Docker gate, unchanged from ATDD) |
-| Failing       | 0     |
-
-### Healing Outcomes
-
-**Iteration 1 — 1 healed (real production bug surfaced by new test):**
-
-- `ProblemDetailsMiddlewareEdgeCaseTests.Missing_endpoint_returns_problem_details_404_P1`
-  initially failed with:
-  `Expected "application/problem+json" but got "application/json"`.
-- **Root cause:** `Program.cs UseStatusCodePages` invoked
-  `response.WriteAsJsonAsync(problem)` without the explicit `contentType`
-  overload — the same regression Story 1.3 already fixed in
-  `ExceptionHandlingMiddleware.cs` (completion note #4). `WriteAsJsonAsync`
-  silently overwrites `Response.ContentType` with `"application/json"`, breaking
-  RFC 7807 for the framework 404/400/405 pathway.
-- **Fix applied:** Pass `contentType: "application/problem+json"` explicitly to
-  the `WriteAsJsonAsync` call in `Program.cs`. Mirrors the middleware fix.
-- **Impact:** AC #3 contract is now enforced on BOTH the unhandled-exception
-  pathway AND the framework status-code pathway. TC-E1-P0-05 sibling coverage
-  restored.
-
-**Unable to Heal:** 0 tests. No `test.fixme()` markers added.
+**Duplicate-coverage discipline:** No new tests re-assert the happy-path
+scenarios already covered by ATDD (rendering 500 items, EmptyState render,
+ErrorPanel render, migration snake_case, endpoint camelCase). All expansion
+tests target orthogonal behaviour.
 
 ---
 
-## Files Created (test project)
+## Test Execution Results
 
-- `backend/tests/SiesaAgents.IntegrationTests/SnakeCaseNamingConventionEdgeCaseTests.cs`
-- `backend/tests/SiesaAgents.IntegrationTests/ProblemDetailsMiddlewareEdgeCaseTests.cs`
-- `backend/tests/SiesaAgents.IntegrationTests/MigrationScopeGuardTests.cs`
-- `backend/tests/SiesaAgents.IntegrationTests/AppDbContextDependencyInjectionTests.cs`
+### Frontend
 
-## Files Modified (production — during healing)
+```bash
+$ pnpm --filter frontend test
+ Test Files  9 passed (9)
+      Tests  82 passed (82)
+   Duration  8.55s
+```
 
-- `backend/src/SiesaAgents.API/Program.cs` — `UseStatusCodePages` callback now
-  passes `contentType: "application/problem+json"` explicitly to
-  `WriteAsJsonAsync`. Sibling fix to the ATDD-surfaced middleware fix. No
-  reordering, no pipeline changes — only the JSON writer call site was updated.
+**Breakdown:** 46 pre-existing (Epic 1 + Story 2.1 ATDD) + 36 new = 82 GREEN
+
+### Backend
+
+```bash
+$ dotnet test backend/SiesaAgents.sln
+ Passed! - Failed: 0, Passed: 12, Skipped: 0  # SiesaAgents.UnitTests
+ Passed! - Failed: 0, Passed: 53, Skipped: 8  # SiesaAgents.IntegrationTests
+```
+
+**Breakdown:**
+- UnitTests: 6 pre-existing (1 SolutionSmoke + 5 ClienteEntity) + 6 new
+  (GetClientesQueryHandler) = 12 GREEN
+- IntegrationTests: 53 pre-existing green + 8 Docker-guarded skips
+  (unchanged from ATDD)
 
 ---
 
-## Coverage Analysis vs Acceptance Criteria
+## Healing Report
 
-| AC  | ATDD Coverage                        | Automate Coverage Added                              |
-|-----|--------------------------------------|------------------------------------------------------|
-| #1  | SKIPPED (Docker)                     | `MigrationScopeGuardTests.*_file_exists`             |
-| #2  | SKIPPED (Docker)                     | `MigrationScopeGuardTests.*_no_schema_builder_calls`, `*_Up_body_is_empty`, `*_Down_body_is_empty`, `ModelSnapshot_declares_no_entity_types` |
-| #3  | 1 test (happy path 500)              | +9 tests (4 exception types, leak guards, 404 pathway, instance URI, type URI) |
-| #4  | 3 tests (ApplySnakeCaseNaming, ToSnakeCase, no leak) | +17 tests (empty inputs, idempotency, FK/PK/index prefixes, multi-entity model) |
-| #5  | Implicit (build succeeded)           | Unchanged — enforced by `dotnet build`               |
-| #6  | Not directly tested                  | +5 tests (`AppDbContextDependencyInjectionTests`)    |
-| #7  | 10/12 GREEN + 2 SKIP                 | 53/55 GREEN + 2 SKIP (baseline preserved)            |
+**Iterations required:** 1 pass (auto-healed on first re-run)
+
+- `ClienteListView.edge.test.tsx` — expected 3 NIT-prefix matches but the
+  fixture only had 2 (Beta's NIT starts with `901`, not `900`). Corrected
+  assertion + added explicit content check.
+- `ClientListItem.test.tsx` — clicked outer `<li>` but the `onClick` handler
+  is on the inner `<button>`. Updated tests to target the inner button
+  (correct semantic click surface).
+
+**Marked `test.fixme()`:** 0 (all tests recoverable in one healing pass)
+
+---
+
+## Infrastructure
+
+**No new fixtures/factories required.** All expansion tests reuse:
+
+- `frontend/src/test/handlers/clientes.ts` — MSW handlers + `makeCliente()`
+  factory (created by ATDD phase)
+- `frontend/src/test/setup.ts` — Vitest global setup with `matchMedia` /
+  `scrollTo` shims (created by Story 1.2)
+- Local `StubClienteRepository` inside `GetClientesQueryHandlerTests.cs` for
+  backend hand-mock (no Moq/NSubstitute dependency added)
 
 ---
 
 ## Quality Checks
 
-- All tests follow Given-When-Then in comments
-- All tests have priority tags in names (`_P0`, `_P1`, `_P2`)
-- No hard waits / no `Thread.Sleep` / no `Task.Delay`
-- Self-contained (no shared state between tests)
-- Deterministic (no random ordering dependencies)
-- Fast: full suite runs in ~2 seconds
-- Zero warnings during `dotnet build`
-- Docker-less by default (Testcontainers tests self-skip)
-- Skipped tests remain gated by explicit `Skip.IfNot(...)` — no silent losses
+- [x] All tests follow Given-When-Then structure with inline comments
+- [x] All tests have priority tags (`[P1]` / `[P2]` in test descriptions)
+- [x] All tests use `data-testid` selectors — no CSS/nth locators
+- [x] All tests are self-cleaning (`afterEach(cleanup)` + `server.resetHandlers()`)
+- [x] No hard waits (no `waitForTimeout` / `sleep`)
+- [x] All test files under 350 lines
+- [x] All Spanish user-facing strings validated in case-insensitive regex
+- [x] No new suppressions or warnings introduced
+
+---
+
+## Coverage Analysis
+
+**Newly-covered behaviours (not in ATDD):**
+
+- Accent-insensitive matching in both directions (`García` ↔ `garcia`)
+- NIT/RUC substring search (exact + shared-prefix + partial)
+- Case-insensitive uppercase→lowercase match
+- Empty / whitespace-only search preserves full list
+- Non-matching search yields zero items WITHOUT triggering EmptyState
+- `ciudad` and `telefono` are NOT searchable (PRD FR3/FR4 guard)
+- Clearing the search restores the full list
+- Shared components (`EmptyState`, `ErrorPanel`, `ClientListItem`) exercised
+  in isolation from `ClienteListView`
+- `useClientes` hook contract validated directly (canonical query key,
+  error-state surfacing, empty-array response)
+- `GetClientesQueryHandler` mapping validated without Docker (runs
+  everywhere, complements the Docker-guarded integration tests)
+
+**Coverage gaps for future stories (out of scope for 2.1):**
+
+- No mutation tests for POST/PUT/DELETE — Stories 2.3/2.4/2.5
+- No detail-view / deep-link tests — Story 2.2
+- No sort control tests — Story 2.6
+- Playwright E2E `clientes-crud.spec.ts` still not exercised in the sandbox
+  (browser install 403 through proxy — deferred to CI)
+
+---
+
+## File List
+
+**Created — Frontend Component Tests:**
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.edge.test.tsx`
+- `frontend/src/shared/components/EmptyState.test.tsx`
+- `frontend/src/shared/components/ErrorPanel.test.tsx`
+- `frontend/src/shared/components/ClientListItem.test.tsx`
+- `frontend/src/modules/crm/clientes/application/useClientes.test.tsx`
+
+**Created — Backend Unit Tests:**
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`
+
+**Modified — None** (expansion only adds tests; no production code touched)
+
+---
+
+## Definition of Done
+
+- [x] All tests follow Given-When-Then format
+- [x] All tests have priority tags
+- [x] All tests use `data-testid` selectors (frontend) / reflection or DI
+  seams (backend)
+- [x] All tests are self-cleaning
+- [x] No hard waits or flaky patterns
+- [x] Test files under 350 lines each
+- [x] 42/42 new tests pass locally
+- [x] Pre-existing suite still 100% green
 
 ---
 
 ## Next Steps
 
-1. **Code review** should verify the `Program.cs` fix mirrors the middleware
-   fix and doesn't reorder the pipeline (it doesn't — only the WriteAsJsonAsync
-   call site was updated).
-2. In a Docker-enabled CI runner, `EfCoreMigrationTests.*` (currently SKIP)
-   will execute and complete AC #1 / AC #2 with runtime Postgres verification.
-3. When Epic 2 introduces `ClienteEntity`,
-   `AppDbContextDependencyInjectionTests.*_no_registered_entity_types` MUST be
-   updated to assert exactly one entity type — the scope guard flips from "zero"
-   to "expected set" at that point.
+1. Review edge tests with team — confirm the field guard (telefono/ciudad
+   NOT searched) matches product intent
+2. Run tests in CI: `pnpm --filter frontend test && dotnet test backend/SiesaAgents.sln`
+3. Handoff to `sa-tea-review` for adversarial test-quality review
+4. Handoff to `sa-tea-trace` after all Epic 2 stories complete to build the
+   full traceability matrix
 
----
+**Knowledge Base References Applied:**
 
-**Output File:** `_bmad-output/automation-summary.md`
+- Test level selection: unit + component chosen over E2E (avoid duplicate
+  coverage with ATDD)
+- Priority classification: P1 for AC-mandated edges; P2 for regression
+  guardrails on shared components
+- Data factories: reused ATDD's `makeCliente()` — no duplication
+- Test quality: Given-When-Then, atomic assertions, no shared state,
+  deterministic (MSW resetHandlers per test)
