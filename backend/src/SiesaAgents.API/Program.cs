@@ -35,6 +35,7 @@ builder.Services.AddScoped<IValidator<CreateClienteRequest>, CreateClienteReques
 builder.Services.AddScoped<CreateClienteCommandHandler>();
 builder.Services.AddScoped<IValidator<UpdateClienteRequest>, UpdateClienteRequestValidator>();
 builder.Services.AddScoped<UpdateClienteCommandHandler>();
+builder.Services.AddScoped<DeleteClienteCommandHandler>();
 
 builder.Services.AddCors(options =>
 {

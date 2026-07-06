@@ -54,6 +54,20 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
         }
     }
 
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var cliente = await dbContext.Clientes.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        if (cliente is null)
+        {
+            return false;
+        }
+
+        dbContext.Clientes.Remove(cliente);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     private static bool IsUniqueNitViolation(DbUpdateException ex) =>
         ex.InnerException is PostgresException
         {

@@ -87,5 +87,14 @@ public static class ClienteEndpoints
 
             return Results.Ok(result.Cliente);
         });
+
+        group.MapDelete("/{id:guid}", async (
+            Guid id,
+            DeleteClienteCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var deleted = await handler.Handle(new DeleteClienteCommand(id), cancellationToken);
+            return deleted ? Results.NoContent() : Results.NotFound();
+        });
     }
 }

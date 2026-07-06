@@ -5,8 +5,8 @@ namespace SiesaAgents.Domain.Clientes.Interfaces;
 /// <summary>
 /// Story 2.1 added read-only listing (<see cref="GetAllAsync"/>). Story 2.2 added
 /// single-record lookup (<see cref="GetByIdAsync"/>). Story 2.3 added insert
-/// (<see cref="AddAsync"/>). Story 2.4 added <see cref="UpdateAsync"/>. DeleteAsync is
-/// still out of scope — Story 2.5 extends this interface further.
+/// (<see cref="AddAsync"/>). Story 2.4 added <see cref="UpdateAsync"/>. Story 2.5 added
+/// <see cref="DeleteAsync"/> — the interface is now complete for Epic 2's CRUD scope.
 /// </summary>
 public interface IClienteRepository
 {
@@ -28,4 +28,12 @@ public interface IClienteRepository
     /// violation (e.g. the edited NIT collides with another client).
     /// </summary>
     Task<bool> UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Removes the client with the given <paramref name="id"/>. Returns <c>true</c> when a
+    /// matching client was found and removed, <c>false</c> when no client with that id
+    /// exists — simpler contract than <see cref="AddAsync"/>/<see cref="UpdateAsync"/>: a
+    /// delete has no unique-constraint conflict to report.
+    /// </summary>
+    Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken);
 }
