@@ -38,6 +38,22 @@ public class ClienteRepository(AppDbContext dbContext) : IClienteRepository
         }
     }
 
+    public async Task<bool> UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken)
+    {
+        dbContext.Clientes.Update(cliente);
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateException ex) when (IsUniqueNitViolation(ex))
+        {
+            dbContext.Entry(cliente).State = EntityState.Detached;
+            return false;
+        }
+    }
+
     private static bool IsUniqueNitViolation(DbUpdateException ex) =>
         ex.InnerException is PostgresException
         {
