@@ -158,4 +158,54 @@ test.describe('Ordenar Lista de Clientes', () => {
       clientesPage.clienteItems.filter({ hasText: data.nombre })
     ).toBeVisible();
   });
+
+  // Automation expansion (testarch-automate) — edge cases not covered by the ATDD RED phase,
+  // which only exercises single sort-option switches per test. These close a real full-stack
+  // gap: sequential sort changes and a zero-match search combined with a sort change.
+  test('[P2] ciclar secuencialmente por las 4 opciones de orden no produce errores ni pérdida de resultados', async ({}, testInfo) => {
+    // GIVEN two seeded clients sharing a unique, worker-scoped search token
+    const token = `SortCycle ${testInfo.project.name}-${testInfo.workerIndex}-${uniqueDigits(6)}`;
+    const dataBeta = buildCliente({ nombre: `Beta ${token}` });
+    const dataAlfa = buildCliente({ nombre: `Alfa ${token}` });
+    const clienteBeta = await apiHelper.createCliente(dataBeta);
+    createdIds.push(clienteBeta.id);
+    const clienteAlfa = await apiHelper.createCliente(dataAlfa);
+    createdIds.push(clienteAlfa.id);
+
+    await clientesPage.goto();
+    await clientesPage.buscar(token);
+    await expect(clientesPage.clienteItems).toHaveCount(2);
+
+    // WHEN the user cycles through every sort option in sequence, ending back on the default
+    await clientesPage.seleccionarOrden('Nombre A→Z');
+    await expect(clientesPage.clienteItems).toHaveCount(2);
+    await clientesPage.seleccionarOrden('Nombre Z→A');
+    await expect(clientesPage.clienteItems).toHaveCount(2);
+    await clientesPage.seleccionarOrden('Más antiguo');
+    await expect(clientesPage.clienteItems).toHaveCount(2);
+    await clientesPage.seleccionarOrden('Más reciente');
+
+    // THEN no client is lost or duplicated, and the search token is still applied
+    await expect(clientesPage.clienteItems).toHaveCount(2);
+    await expect(clientesPage.searchInput).toHaveValue(token);
+  });
+
+  test('[P2] cambiar el orden con una búsqueda que no arroja resultados no produce errores', async ({}, testInfo) => {
+    // GIVEN a seeded client and a search term that matches nothing
+    const token = `SortNoMatch ${testInfo.project.name}-${testInfo.workerIndex}-${uniqueDigits(6)}`;
+    const data = buildCliente({ nombre: `Cliente ${token}` });
+    const cliente = await apiHelper.createCliente(data);
+    createdIds.push(cliente.id);
+
+    await clientesPage.goto();
+    await clientesPage.buscar(`zzz-no-existe-${token}`);
+    await expect(clientesPage.clienteItems).toHaveCount(0);
+
+    // WHEN the user changes the sort order while the search yields zero results
+    await clientesPage.seleccionarOrden('Nombre A→Z');
+
+    // THEN the list remains empty (no crash) and the sort control stays interactable
+    await expect(clientesPage.clienteItems).toHaveCount(0);
+    await expect(clientesPage.sortControl).toBeVisible();
+  });
 });
