@@ -130,6 +130,7 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring; sa-dev-story sub
 - Frontend: `ClienteForm` is a plain Radix `Dialog` + React Hook Form + Zod (no MasterCrud, per Dev Notes rationale); `useCreateCliente` follows `architecture.md`'s canonical mutation pattern verbatim; `sonner`'s `<Toaster/>` is now mounted globally in `main.tsx` (unblocks all future stories' `toast.*` calls).
 - All backend ATDD tests (`CreateClienteRequestValidatorTests`, `CreateClienteCommandHandlerTests`, and the `CreateCliente*` cases in `ClienteEndpointsTests.cs`/`ClienteEndpointsEdgeCasesTests.cs`) and frontend ATDD tests (`ClienteForm.test.tsx`, the "Nuevo cliente" cases in `ClienteListView.test.tsx`) that were pre-authored in RED phase now pass GREEN with no modification to their assertions/locators.
 - Pre-existing E2E specs `e2e/tests/clientes/clientes-crud.spec.ts` (FR1, FR2×2, FR4, FR7, FR8) all pass against the implementation, confirming no regression to Stories 2.1/2.2 and unblocking FR4/FR7/FR8 as intended. (Note: `apiHelper.deleteCliente` in the E2E fixtures' `afterEach` silently no-ops today since `DELETE /api/v1/clientes/{id}` is out of scope until Story 2.5 — this is a known, pre-existing gap, not introduced by this story; test data created during manual verification runs was cleaned up directly in Postgres.)
+- **ATDD correction round (attempt 2/3):** the two `FR2` tests in `clientes-crud.spec.ts` used hardcoded literal test data (`nombre: 'Empresa Filtro Especial'`, `nit: '999888777'`) instead of unique generated values. Under `fullyParallel: true` with both `chromium` and `mobile-chrome` projects running concurrently against the same shared backend/DB, this caused two distinct workers to create clients with the identical literal name/NIT at nearly the same instant — a strict-mode double-match on the name filter, and a NIT-uniqueness (`uk_clientes_nit`) collision that silently broke the other test's setup. Fixed by generating unique search text (`Filtro Especial ${project.name}-${workerIndex}-${uniqueDigits(6)}`) and using the auto-generated unique NIT from `buildCliente()` instead of literals. Also hardened `e2e/helpers/data.helper.ts`'s `uniqueId()`/new `uniqueDigits()` to combine `process.pid` + a crypto-random suffix (previously a bare incrementing counter seeded from `Date.now()`, whose truncated tail via `slice(-N)` could theoretically collide across the separate OS processes Playwright spawns per project) — defense in depth, not the primary fix. Re-ran `npx playwright test e2e/tests/clientes/clientes-crud.spec.ts --project=chromium --project=mobile-chrome` (2 workers in parallel): 12/12 passed. Full suite (`npx playwright test`, all projects) also green.
 
 ### File List
 
@@ -155,6 +156,10 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring; sa-dev-story sub
 - `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts` (added `create`)
 - `frontend/src/modules/crm/clientes/presentation/ClienteListView.tsx` (added "Nuevo cliente" button + `ClienteForm` mount)
 - `frontend/src/main.tsx` (added `<Toaster/>`)
+
+**Modified files (ATDD correction round, attempt 2/3 — test isolation fix, no production code changed):**
+- `e2e/helpers/data.helper.ts` (`uniqueId()` now combines `process.pid` + crypto-random suffix instead of a bare counter; new exported `uniqueDigits()` used for NIT/telefono)
+- `e2e/tests/clientes/clientes-crud.spec.ts` (`FR2` name/NIT filter tests no longer use hardcoded literal test data)
 
 **Pre-existing test files (ATDD RED phase, authored ahead of this story, unmodified except as noted above):**
 - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteRequestValidatorTests.cs`
