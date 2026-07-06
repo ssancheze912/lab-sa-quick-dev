@@ -77,9 +77,22 @@ public class ExceptionHandlingMiddlewareEdgeCaseTests : IClassFixture<TestWebApp
         // WHEN an unhandled exception is thrown while processing the request
         var body = await GetResponseBodyAsync(client);
 
-        // THEN "detail" is a non-empty, generic message — never blank, never the raw exception text
+        // THEN "detail" is a non-empty, generic message — never blank
         var detail = body.GetProperty("detail").GetString();
         Assert.False(string.IsNullOrWhiteSpace(detail));
+    }
+
+    [Fact]
+    public async Task GetTestError_DetailFieldDoesNotContainRawExceptionMessage()
+    {
+        // GIVEN a running API host with the guarded test-error endpoint mapped
+        var client = _factory.CreateClient();
+
+        // WHEN an unhandled exception is thrown while processing the request
+        var body = await GetResponseBodyAsync(client);
+
+        // THEN "detail" never leaks the raw exception text
+        var detail = body.GetProperty("detail").GetString();
         Assert.DoesNotContain("test error", detail, StringComparison.OrdinalIgnoreCase);
     }
 

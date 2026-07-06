@@ -61,7 +61,7 @@ public class ModelBuilderExtensionsTests
     }
 
     [Fact]
-    public void ApplySnakeCaseNaming_WithPrimaryKey_SetsSnakeCaseKeyName()
+    public void ApplySnakeCaseNaming_WithPrimaryKey_KeyNameIsLowerCase()
     {
         // GIVEN a model where the primary key is built from a PascalCase property name
         using var context = new SampleModelDbContext();
@@ -72,8 +72,21 @@ public class ModelBuilderExtensionsTests
         var keyName = key.GetName()!;
 
         // THEN the key constraint name is converted to snake_case: entirely lower-case
-        // and actually derived from the entity (not just coincidentally already lower-case)
         Assert.Equal(keyName.ToLowerInvariant(), keyName);
+    }
+
+    [Fact]
+    public void ApplySnakeCaseNaming_WithPrimaryKey_KeyNameIsDerivedFromEntity()
+    {
+        // GIVEN a model where the primary key is built from a PascalCase property name
+        using var context = new SampleModelDbContext();
+        var entity = context.Model.FindEntityType(typeof(SampleParent))!;
+
+        // WHEN the model is built
+        var key = entity.FindPrimaryKey()!;
+        var keyName = key.GetName()!;
+
+        // THEN the key name is actually derived from the entity (not just coincidentally already lower-case)
         Assert.Contains("sample_parent", keyName);
     }
 
