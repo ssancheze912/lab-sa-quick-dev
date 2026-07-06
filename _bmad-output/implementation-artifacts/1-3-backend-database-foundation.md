@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: review
+Status: done
 
 ## Story
 
@@ -223,10 +223,22 @@ Claude Sonnet 5 (sa-dev-story sub-agent)
 - `backend/src/SiesaAgents.Infrastructure/Migrations/20260706051420_InitialCreate.cs`
 - `backend/src/SiesaAgents.Infrastructure/Migrations/20260706051420_InitialCreate.Designer.cs`
 - `backend/src/SiesaAgents.Infrastructure/Migrations/AppDbContextModelSnapshot.cs`
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/Data/Extensions/ModelBuilderExtensionsTests.cs` (added by Automate sub-agent pass)
+- `backend/tests/SiesaAgents.UnitTests/Infrastructure/Migrations/InitialCreateMigrationTests.cs` (added by Automate sub-agent pass)
+- `backend/tests/SiesaAgents.IntegrationTests/AppDbContextConfigurationTests.cs` (added by Automate sub-agent pass)
+- `backend/tests/SiesaAgents.IntegrationTests/ExceptionHandlingMiddlewareEdgeCaseTests.cs` (added by Automate sub-agent pass)
+- `backend/tests/SiesaAgents.IntegrationTests/RequiresPostgresFactAttribute.cs` (added by Code Review — see Review Follow-ups)
 
 **Modified:**
 - `backend/src/SiesaAgents.API/Program.cs` (registered `AddDbContext<AppDbContext>` with `UseNpgsql` + `MigrationsHistoryTable("__ef_migrations_history")` + `ReplaceService<IHistoryRepository, SnakeCaseHistoryRepository>()`)
 - `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` (fixed `Content-Type` override bug and missing `detail` field — see Completion Notes)
+- `backend/tests/SiesaAgents.IntegrationTests/AppDbContextMigrationTests.cs` (Code Review fix: replaced `[Fact]` + silent-return soft-skip with `[RequiresPostgresFact]` — see Review Follow-ups)
+
+## Review Follow-ups (AI)
+
+- [x] [AI-Review][Medium] `AppDbContextMigrationTests.cs` silently reported "Passed" (zero assertions) when PostgreSQL was unreachable, masking missing AC #1/#3 validation in CI. Fixed by introducing `RequiresPostgresFactAttribute` (TCP reachability probe at test-discovery time, sets `Skip` reason) and removing the internal early-`return` guards. Verified empirically: Skipped when DB down, genuinely Passed (35/35 suite) when DB up. See `_bmad-output/review-1-3-backend-database-foundation.md`.
+- [ ] [AI-Review][Low] Integration tests depend on a locally-running PostgreSQL instance rather than Testcontainers, per `company-standards.md`'s "PostgreSQL Test Containers (integration)". Already flagged transparently by the story's own Dev Notes/Environment Limitations; deferred to a dedicated test-framework story (out of scope here).
+- [ ] [AI-Review][Low] No `[Trait]`-based test-ID/priority convention (project-wide gap, not Story-1.3-specific) — deferred to backlog per prior test-review report.
 
 **Pre-existing, unmodified this story (from the prior ATDD sub-agent run, verified in place):**
 - `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` (`Microsoft.EntityFrameworkCore.Design` package reference already added)

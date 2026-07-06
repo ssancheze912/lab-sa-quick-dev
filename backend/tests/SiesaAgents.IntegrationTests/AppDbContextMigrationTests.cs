@@ -21,9 +21,11 @@ namespace SiesaAgents.IntegrationTests;
 /// does not exist yet (Story 1.3 Task 2) and is not registered in DI (Task 4).
 ///
 /// Per Story 1.3 Task 7, these tests require `dotnet ef database update` to have already
-/// been run against a locally reachable PostgreSQL instance. If PostgreSQL is not
-/// reachable in the execution environment, each test soft-skips (returns without
-/// asserting) rather than failing the whole suite on infra absence.
+/// been run against a locally reachable PostgreSQL instance. Each test is decorated with
+/// [RequiresPostgresFact] instead of [Fact]: when PostgreSQL is not reachable, xUnit reports
+/// the test as "Skipped" (not a false "Passed") rather than failing the whole suite on infra
+/// absence — see RequiresPostgresFactAttribute for why the previous "soft-skip via early
+/// return" approach was a masking anti-pattern and was replaced.
 /// </summary>
 public class AppDbContextMigrationTests : IClassFixture<TestWebApplicationFactory>
 {
@@ -35,34 +37,24 @@ public class AppDbContextMigrationTests : IClassFixture<TestWebApplicationFactor
         _factory = factory;
     }
 
-    [Fact]
+    [RequiresPostgresFact]
     public async Task Database_CanConnect_AfterMigrationApplied()
     {
         // GIVEN AppDbContext is resolved from the test host's DI container
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        if (!await TryConnectAsync(dbContext))
-        {
-            return; // Soft-skip: PostgreSQL not reachable in this environment.
-        }
-
         // WHEN Database.CanConnectAsync() is called
         // THEN the connection to siesa_agents_db succeeds
         Assert.True(await dbContext.Database.CanConnectAsync());
     }
 
-    [Fact]
+    [RequiresPostgresFact]
     public async Task EfMigrationsHistoryTable_HasSnakeCaseMigrationIdColumn()
     {
         // GIVEN the __ef_migrations_history table exists after `dotnet ef database update`
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        if (!await TryConnectAsync(dbContext))
-        {
-            return; // Soft-skip: PostgreSQL not reachable in this environment.
-        }
 
         // WHEN information_schema.columns is queried for that table
         var columnNames = await GetColumnNamesAsync(dbContext, EfMigrationsHistoryTable);
@@ -71,17 +63,12 @@ public class AppDbContextMigrationTests : IClassFixture<TestWebApplicationFactor
         Assert.Contains("migration_id", columnNames);
     }
 
-    [Fact]
+    [RequiresPostgresFact]
     public async Task EfMigrationsHistoryTable_HasSnakeCaseProductVersionColumn()
     {
         // GIVEN the __ef_migrations_history table exists after `dotnet ef database update`
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        if (!await TryConnectAsync(dbContext))
-        {
-            return; // Soft-skip: PostgreSQL not reachable in this environment.
-        }
 
         // WHEN information_schema.columns is queried for that table
         var columnNames = await GetColumnNamesAsync(dbContext, EfMigrationsHistoryTable);
@@ -90,17 +77,12 @@ public class AppDbContextMigrationTests : IClassFixture<TestWebApplicationFactor
         Assert.Contains("product_version", columnNames);
     }
 
-    [Fact]
+    [RequiresPostgresFact]
     public async Task EfMigrationsHistoryTable_HasNoPascalCaseColumns()
     {
         // GIVEN the __ef_migrations_history table exists after `dotnet ef database update`
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        if (!await TryConnectAsync(dbContext))
-        {
-            return; // Soft-skip: PostgreSQL not reachable in this environment.
-        }
 
         // WHEN information_schema.columns is queried for that table
         var columnNames = await GetColumnNamesAsync(dbContext, EfMigrationsHistoryTable);
@@ -109,17 +91,12 @@ public class AppDbContextMigrationTests : IClassFixture<TestWebApplicationFactor
         Assert.DoesNotContain("MigrationId", columnNames);
     }
 
-    [Fact]
+    [RequiresPostgresFact]
     public async Task Database_ContainsOnlyMigrationsHistoryTable_NoDomainTables()
     {
         // GIVEN `dotnet ef database update` has applied only the empty InitialCreate migration
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        if (!await TryConnectAsync(dbContext))
-        {
-            return; // Soft-skip: PostgreSQL not reachable in this environment.
-        }
 
         // WHEN information_schema.tables is queried for the public schema
         var tableNames = await QueryStringColumnAsync(
@@ -129,18 +106,6 @@ public class AppDbContextMigrationTests : IClassFixture<TestWebApplicationFactor
 
         // THEN only __ef_migrations_history exists — no domain tables (clientes, contactos, etc.)
         Assert.Equal(new[] { EfMigrationsHistoryTable }, tableNames);
-    }
-
-    private static async Task<bool> TryConnectAsync(AppDbContext dbContext)
-    {
-        try
-        {
-            return await dbContext.Database.CanConnectAsync();
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     private static Task<List<string>> GetColumnNamesAsync(AppDbContext dbContext, string tableName) =>
