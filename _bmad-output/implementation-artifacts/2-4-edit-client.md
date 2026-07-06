@@ -1,6 +1,6 @@
 # Story 2.4: Edit Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -183,6 +183,7 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring; sa-dev-story sub
 - `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsTests.cs` (now inherits `ClienteEndpointsTestBase`)
 - `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsEdgeCasesTests.cs` (now inherits `ClienteEndpointsTestBase`)
 - `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsUpdateTests.cs` (CreatedAt assertion tolerance fix)
+- `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsUpdateEdgeCasesTests.cs` (new file, added by TEA test-automation expansion — `automation-summary-2-4-edit-client.md`; 9 edge-case tests: self-NIT resubmission, Id boundary conditions, whitespace-only field, MaximumLength boundary, script-injection payload)
 - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs` (fake `UpdateAsync`)
 - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs` (fake `UpdateAsync`)
 - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs` (fake `UpdateAsync`)
