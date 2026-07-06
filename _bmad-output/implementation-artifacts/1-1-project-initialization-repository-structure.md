@@ -190,6 +190,7 @@ claude-sonnet-4-6
 - Ran the full ATDD suite (`e2e/tests/foundation/project-initialization.spec.ts` + `e2e/tests/api/backend-initialization.api.spec.ts`, chromium project): **16/16 passed**.
 - `dotnet build SiesaAgents.sln`: 0 errors, 0 warnings (all 5 projects). `dotnet test`: 1/1 passed (default xUnit template test, left in place; UnitTests project has no story-specific logic to test yet).
 - `tsc -b --noEmit` on the frontend: 0 errors with `strict`, `noImplicitAny`, `strictNullChecks` all active.
+- **ATDD correction (attempt 2/3)**: root `playwright.config.ts` only declared a `webServer` for the Vite frontend (`pnpm --filter frontend dev`), so the ATDD run never started the .NET backend — every AC2/AC5 test and the backend-dependent half of AC3 failed with `ECONNREFUSED 127.0.0.1:5000` / `Failed to fetch` (54/64 RED). Fixed by changing `webServer` to an array with a second entry: `command: 'dotnet run --project backend/src/SiesaAgents.API'`, `url: 'http://localhost:5000/scalar'`, `reuseExistingServer: !process.env.CI`, `timeout: 120_000` — Playwright now boots both servers before the suite and tears them down after (verified no leftover listeners on 5000/5173 post-run). Re-ran `e2e/tests/foundation/project-initialization.spec.ts` + `e2e/tests/api/backend-initialization.api.spec.ts` on `chromium` + `mobile-chrome` (both Chromium-based, the only browser binary pre-cached in this sandbox — see `cdn.playwright.dev` block noted above): **32/32 passed**. `firefox`/`edge` projects still fail in this sandbox with `browserType.launch: ... distribution not found` (pre-existing, unrelated to the backend fix — those binaries require a `cdn.playwright.dev` download that the sandbox proxy blocks, and were never installed even before this correction).
 
 ### Completion Notes List
 
@@ -225,4 +226,5 @@ claude-sonnet-4-6
 - `backend/src/SiesaAgents.Domain/SiesaAgents.Domain.csproj` (new)
 - `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` (new)
 - `backend/tests/SiesaAgents.UnitTests/*` (new)
+- `playwright.config.ts` (modified — `webServer` changed to an array so the .NET backend on port 5000 is started alongside the Vite frontend during the ATDD run)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` (modified — status → review)
