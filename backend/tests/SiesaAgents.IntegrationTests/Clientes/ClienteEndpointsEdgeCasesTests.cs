@@ -1,0 +1,184 @@
+using System.Net.Mime;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using SiesaAgents.Domain.Clientes.Entities;
+using SiesaAgents.Infrastructure.Data;
+
+namespace SiesaAgents.IntegrationTests.Clientes;
+
+/// <summary>
+/// Story 2.1 (Epic 2: Client Management) — Automation Expansion (testarch-automate).
+///
+/// Edge cases NOT covered by the ATDD RED-phase suite (<see cref="ClienteEndpointsTests"/>):
+/// response Content-Type, full-field round-trip (Telefono/Ciudad were seeded but never
+/// asserted), Unicode/special-character preservation (accents, ñ, apostrophes), and a
+/// larger record count sanity check. Same seed-via-<c>AppDbContext</c> approach as the ATDD
+/// suite (Story 2.1 Dev Notes — POST is out of scope until Story 2.3), same
+/// <see cref="RequiresPostgresFactAttribute"/> soft-skip convention.
+/// </summary>
+public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFactory>
+{
+    private readonly TestWebApplicationFactory _factory;
+    private readonly HttpClient _client;
+
+    public ClienteEndpointsEdgeCasesTests(TestWebApplicationFactory factory)
+    {
+        _factory = factory;
+        _client = factory.CreateClient();
+    }
+
+    [RequiresPostgresFact]
+    public async Task GetClientes_ReturnsJsonContentType()
+    {
+        // GIVEN the clientes table has no rows
+        await ClearClientesTableAsync();
+
+        // WHEN GET /api/v1/clientes is called
+        var response = await _client.GetAsync("/api/v1/clientes");
+
+        // THEN the response declares a JSON content type
+        Assert.NotNull(response.Content.Headers.ContentType);
+        Assert.Equal(MediaTypeNames.Application.Json, response.Content.Headers.ContentType!.MediaType);
+    }
+
+    [RequiresPostgresFact]
+    public async Task GetClientes_ReturnsTelefonoAndCiudad_WhenDataExists()
+    {
+        // GIVEN a client seeded with known Telefono/Ciudad values, directly via AppDbContext
+        var cliente = ClienteEntity.Create("Acme Corp", UniqueNit(), "3005551234", "Cartagena");
+        await SeedClientesAsync(cliente);
+
+        try
+        {
+            // WHEN GET /api/v1/clientes is called
+            var clientes = await GetClientesAsync();
+
+            // THEN the full record round-trips correctly, including fields the ATDD suite
+            // did not assert on (Telefono, Ciudad)
+            var found = Assert.Single(clientes, c => c.Id == cliente.Id);
+            Assert.Equal("3005551234", found.Telefono);
+            Assert.Equal("Cartagena", found.Ciudad);
+        }
+        finally
+        {
+            await DeleteClientesAsync(cliente.Id);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task GetClientes_PreservesAccentsAndSpecialCharacters_InNombre()
+    {
+        // GIVEN a client with a Nombre containing Spanish accents, ñ, and an apostrophe
+        const string nombreConCaracteresEspeciales = "Compañía Ñoño & O'Brien S.A.S.";
+        var cliente = ClienteEntity.Create(
+            nombreConCaracteresEspeciales, UniqueNit(), "3001234567", "Bogotá");
+        await SeedClientesAsync(cliente);
+
+        try
+        {
+            // WHEN GET /api/v1/clientes is called
+            var clientes = await GetClientesAsync();
+
+            // THEN the Nombre round-trips through PostgreSQL/JSON without corruption
+            Assert.Contains(clientes, c => c.Nombre == nombreConCaracteresEspeciales);
+        }
+        finally
+        {
+            await DeleteClientesAsync(cliente.Id);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task GetClientes_ReturnsNonDefaultCreatedAt_WhenDataExists()
+    {
+        // GIVEN a client seeded directly via AppDbContext
+        var cliente = ClienteEntity.Create("Acme Corp", UniqueNit(), "3001234567", "Bogotá");
+        await SeedClientesAsync(cliente);
+
+        try
+        {
+            // WHEN GET /api/v1/clientes is called
+            var clientes = await GetClientesAsync();
+
+            // THEN CreatedAt is present and deserializes to a real, non-default timestamp
+            var found = Assert.Single(clientes, c => c.Id == cliente.Id);
+            Assert.NotEqual(default, found.CreatedAt);
+        }
+        finally
+        {
+            await DeleteClientesAsync(cliente.Id);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task GetClientes_ReturnsAllSeededRecords_WhenMoreThanTwoExist()
+    {
+        // GIVEN ten clients seeded directly via AppDbContext (sanity check beyond the ATDD
+        // suite's two-record case)
+        var clientes = Enumerable.Range(1, 10)
+            .Select(i => ClienteEntity.Create($"Cliente {i}", UniqueNit(), "3000000000", "Bogotá"))
+            .ToArray();
+        await SeedClientesAsync(clientes);
+
+        try
+        {
+            // WHEN GET /api/v1/clientes is called
+            var response = await GetClientesAsync();
+
+            // THEN all ten seeded records are present in the response
+            var seededIds = clientes.Select(c => c.Id).ToHashSet();
+            var returnedIds = response.Select(c => c.Id).ToHashSet();
+            Assert.True(seededIds.IsSubsetOf(returnedIds));
+        }
+        finally
+        {
+            await DeleteClientesAsync(clientes.Select(c => c.Id).ToArray());
+        }
+    }
+
+    private static string UniqueNit() =>
+        $"9{DateTimeOffset.UtcNow.Ticks % 100_000_000:D8}";
+
+    private async Task SeedClientesAsync(params ClienteEntity[] clientes)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        dbContext.Clientes.AddRange(clientes);
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task DeleteClientesAsync(params Guid[] ids)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var toRemove = await dbContext.Clientes.Where(c => ids.Contains(c.Id)).ToListAsync();
+        dbContext.Clientes.RemoveRange(toRemove);
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task ClearClientesTableAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM clientes");
+    }
+
+    private async Task<List<ClienteApiResponse>> GetClientesAsync()
+    {
+        var response = await _client.GetAsync("/api/v1/clientes");
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<ClienteApiResponse>>(
+                   json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+               ?? [];
+    }
+
+    private sealed record ClienteApiResponse(
+        Guid Id,
+        string Nombre,
+        string Nit,
+        string Telefono,
+        string Ciudad,
+        DateTimeOffset CreatedAt);
+}
