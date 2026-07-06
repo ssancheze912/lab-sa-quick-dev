@@ -11,5 +11,8 @@ export function useDeleteCliente() {
       queryClient.invalidateQueries({ queryKey: ['clientes'] })
       toast.success('Cliente eliminado correctamente')
     },
+    onError: () => {
+      toast.error('No se pudo eliminar el cliente. Intenta de nuevo.')
+    },
   })
 }
