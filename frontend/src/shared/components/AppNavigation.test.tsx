@@ -13,8 +13,12 @@
  * Required data-testid attributes (documented for DEV team, see ATDD checklist):
  *   - `nav-rail-container` — wrapper around the desktop NavigationRail (classes: hidden lg:flex)
  *   - `nav-bar-container`  — wrapper around the mobile NavigationBar (classes: lg:hidden)
- *   NOTE: siesa-ui-kit's NavigationRailItem already renders its own
- *   `data-testid="navigation-rail-item-{id}"` — no extra work needed for rail items.
+ *   NOTE (verified against the installed siesa-ui-kit@1.0.256 build): items composed via the
+ *   `NavigationRail`/`NavigationBar` container components render plain `<button>` elements with
+ *   `aria-label`/`aria-current` but WITHOUT a `data-testid` (the `data-testid="navigation-rail-item-{id}"`
+ *   only exists on the standalone, separately-exported `NavigationRailItem` component, which this
+ *   story does not use). Rail/bar items are therefore queried here by accessible role + name,
+ *   the same approach already used for the NavigationBar assertions.
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
@@ -71,8 +75,8 @@ describe('AC1 — NavigationRail visible on desktop with Clientes/Contactos entr
     expect(railContainer).toHaveClass('lg:flex')
 
     // AND: it contains the siesa-ui-kit NavigationRail items for Clientes and Contactos
-    expect(within(railContainer).getByTestId('navigation-rail-item-clientes')).toBeInTheDocument()
-    expect(within(railContainer).getByTestId('navigation-rail-item-contactos')).toBeInTheDocument()
+    expect(within(railContainer).getByRole('button', { name: /clientes/i })).toBeInTheDocument()
+    expect(within(railContainer).getByRole('button', { name: /contactos/i })).toBeInTheDocument()
   })
 })
 
@@ -109,6 +113,7 @@ describe('AC1 — Navigation triggers TanStack Router, never a full page reload'
   })
 
   afterEach(() => {
+    // @ts-expect-error -- restoring the original Location object after stubbing it above
     window.location = originalLocation
   })
 
@@ -118,7 +123,7 @@ describe('AC1 — Navigation triggers TanStack Router, never a full page reload'
     const railContainer = await screen.findByTestId('nav-rail-container')
 
     // WHEN: the user clicks the "Contactos" nav item
-    fireEvent.click(within(railContainer).getByTestId('navigation-rail-item-contactos'))
+    fireEvent.click(within(railContainer).getByRole('button', { name: /contactos/i }))
 
     // THEN: the router's location updates to /contactos (client-side navigation)
     await waitFor(() => expect(router.state.location.pathname).toBe('/contactos'))
@@ -136,8 +141,8 @@ describe('AC6 — Active nav item reflects the current route', () => {
     const railContainer = await screen.findByTestId('nav-rail-container')
 
     // WHEN: inspecting the rail items
-    const contactosItem = within(railContainer).getByTestId('navigation-rail-item-contactos')
-    const clientesItem = within(railContainer).getByTestId('navigation-rail-item-clientes')
+    const contactosItem = within(railContainer).getByRole('button', { name: /contactos/i })
+    const clientesItem = within(railContainer).getByRole('button', { name: /clientes/i })
 
     // THEN: only the Contactos item is marked as the current page
     expect(contactosItem).toHaveAttribute('aria-current', 'page')
