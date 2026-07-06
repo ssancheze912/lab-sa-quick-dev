@@ -20,6 +20,12 @@
  *               shown when the query resolves 404, instead of a crash/blank screen; the raw
  *               backend error is never rendered (NFR6) when the query resolves 500.
  *
+ * Story 2.4 (Edit Client) addition — ATDD Acceptance Tests, RED phase:
+ *   AC1 — an "Editar" button renders once the client loads, and clicking it opens the
+ *         `ClienteForm` dialog (in edit mode) with the loaded client's Nombre already visible.
+ *         RED phase: fails today because `ClienteDetailView` renders no "Editar" button and
+ *         mounts no `ClienteForm` yet (Story 2.4 Task 5).
+ *
  * Required data-testid attributes (documented for DEV team, see ATDD checklist):
  *   - `cliente-detail-panel`    — wrapper around the whole detail view
  *   - `cliente-detail-nombre`   — Nombre value
@@ -35,7 +41,7 @@
  */
 
 import { describe, test, expect, beforeAll, afterEach, afterAll } from 'vitest'
-import { render, screen, within, waitFor } from '@testing-library/react'
+import { render, screen, within, waitFor, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
@@ -192,5 +198,51 @@ describe('AC — ErrorPanel displayed on a genuine load failure, distinct from n
 
     // THEN the not-found EmptyState variant (reserved for 404) does not also render
     expect(screen.queryByTestId('cliente-not-found')).not.toBeInTheDocument()
+  })
+})
+
+describe('Story 2.4 AC1 — "Editar" button opens the edit dialog pre-filled with the client', () => {
+  test('[P0] renders an "Editar" button once the client loads', async () => {
+    // GIVEN the backend returns a client
+    const cliente = createCliente({ nombre: 'Acme Corp' })
+    server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente)))
+
+    // WHEN ClienteDetailView mounts and the query resolves
+    renderClienteDetailView(cliente.id)
+
+    // THEN an "Editar" button is rendered
+    expect(await screen.findByRole('button', { name: /editar/i })).toBeInTheDocument()
+  })
+
+  test('[P0] clicking "Editar" opens a dialog', async () => {
+    // GIVEN the backend returns a client and the detail view has loaded
+    const cliente = createCliente({ nombre: 'Acme Corp' })
+    server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente)))
+    renderClienteDetailView(cliente.id)
+    const editButton = await screen.findByRole('button', { name: /editar/i })
+
+    // WHEN the user clicks "Editar"
+    fireEvent.click(editButton)
+
+    // THEN the ClienteForm dialog opens
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+  })
+
+  test('[P0] the opened dialog shows the loaded client\'s Nombre already filled in', async () => {
+    // GIVEN the backend returns a client named "Acme Corp" and the detail view has loaded
+    const cliente = createCliente({ nombre: 'Acme Corp' })
+    server.use(http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente)))
+    renderClienteDetailView(cliente.id)
+    const editButton = await screen.findByRole('button', { name: /editar/i })
+
+    // WHEN the user clicks "Editar"
+    fireEvent.click(editButton)
+    await screen.findByRole('dialog')
+
+    // THEN the corresponding Nombre input already shows the loaded client's current value
+    // (AC #1 — pre-filled with the client's current values)
+    await waitFor(() => {
+      expect(screen.getByLabelText(/nombre/i)).toHaveValue('Acme Corp')
+    })
   })
 })

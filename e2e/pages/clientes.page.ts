@@ -26,6 +26,7 @@ export class ClientesPage {
   readonly detailTelefono: Locator;
   readonly detailCiudad: Locator;
   readonly notFoundMessage: Locator;
+  readonly btnEditar: Locator;
 
   // Form (dialog/drawer)
   readonly form: Locator;
@@ -56,6 +57,7 @@ export class ClientesPage {
     this.detailTelefono = page.getByTestId('cliente-detail-telefono');
     this.detailCiudad = page.getByTestId('cliente-detail-ciudad');
     this.notFoundMessage = page.getByTestId('cliente-not-found');
+    this.btnEditar = page.getByRole('button', { name: /editar/i });
 
     this.form = page.getByRole('dialog');
     this.inputNombre = page.getByLabel(/nombre/i);
@@ -75,6 +77,11 @@ export class ClientesPage {
 
   async abrirFormularioNuevo() {
     await this.btnNuevoCliente.click();
+    await expect(this.form).toBeVisible();
+  }
+
+  async abrirFormularioEdicion() {
+    await this.btnEditar.click();
     await expect(this.form).toBeVisible();
   }
 
