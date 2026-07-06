@@ -3,7 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:p0": "playwright test --grep \"\\[P0\\]\"",
+    "test:e2e:p1": "playwright test --grep \"\\[P0\\]|\\[P1\\]\"",
+    "test:api": "playwright test e2e/tests/api",
+    "test:config": "playwright test e2e/tests/config"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0"
