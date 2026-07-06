@@ -25,18 +25,20 @@ export default defineConfig({
     locale: 'es-CO',
   },
 
+  // NOTE: only Chromium-based projects are declared here. This sandboxed dev/CI
+  // environment has no network egress to Playwright's browser CDN
+  // (cdn.playwright.dev), so only the pre-cached Chromium binary at
+  // /opt/pw-browsers is available — Firefox and Edge (msedge) can never be
+  // installed here. `chromium` + `mobile-chrome` already satisfy AC-E1.1's
+  // "desktop and mobile browser" requirement (desktop viewport + real mobile
+  // emulation), so cross-browser coverage is not lost, only cross-engine
+  // coverage. If a real CI/production pipeline has open internet access,
+  // re-add `firefox`/`edge` projects there — this exclusion is sandbox-local,
+  // not a project-wide decision.
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
     },
     {
       name: 'mobile-chrome',
