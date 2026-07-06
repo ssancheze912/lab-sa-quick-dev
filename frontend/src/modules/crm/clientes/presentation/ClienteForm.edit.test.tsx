@@ -282,6 +282,83 @@ describe('AC2 Dev Notes — duplicate NIT (409) shares create\'s inline field er
   })
 })
 
+describe('AC2 Dev Notes — generic failure handling on PUT (NFR6, shared with create)', () => {
+  test('[P2] renders a generic safe message when PUT fails with 500', async () => {
+    // GIVEN the backend fails unexpectedly (not a 409 conflict)
+    server.use(
+      http.put(CLIENTE_BY_ID_ENDPOINT, () =>
+        HttpResponse.json({ detail: 'NpgsqlException: connection refused' }, { status: 500 }),
+      ),
+    )
+    renderClienteFormEdit()
+
+    // WHEN the user modifies a field and clicks "Guardar"
+    fireEvent.change(screen.getByLabelText(/ciudad/i), { target: { value: 'Medellín' } })
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    // THEN the generic, safe fallback message renders (same root-error path as create)
+    await waitFor(() => {
+      expect(screen.getByText('No se pudo guardar. Intenta de nuevo.')).toBeInTheDocument()
+    })
+  })
+
+  test('[P2] never renders the raw backend error/exception message on a 500 (NFR6)', async () => {
+    // GIVEN the backend fails with a technical, exception-shaped payload
+    const technicalMarker = 'NpgsqlException: connection refused at 10.0.0.5:5432'
+    server.use(
+      http.put(CLIENTE_BY_ID_ENDPOINT, () =>
+        HttpResponse.json({ detail: technicalMarker }, { status: 500 }),
+      ),
+    )
+    renderClienteFormEdit()
+
+    // WHEN the user modifies a field and clicks "Guardar"
+    fireEvent.change(screen.getByLabelText(/ciudad/i), { target: { value: 'Medellín' } })
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    await waitFor(() => {
+      expect(screen.getByText('No se pudo guardar. Intenta de nuevo.')).toBeInTheDocument()
+    })
+
+    // THEN the raw technical error text is never rendered to the user
+    expect(screen.queryByText(technicalMarker)).not.toBeInTheDocument()
+  })
+
+  test('[P2] renders the generic safe message on a network error with no HTTP response at all', async () => {
+    // GIVEN the request fails at the network layer (no response object, unlike a 500 — this
+    // is the same code path a client-deleted-concurrently 404 falls into, per Dev Notes)
+    server.use(http.put(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.error()))
+    renderClienteFormEdit()
+
+    // WHEN the user modifies a field and clicks "Guardar"
+    fireEvent.change(screen.getByLabelText(/ciudad/i), { target: { value: 'Medellín' } })
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    // THEN the generic, safe fallback message renders — never a raw network/axios error
+    await waitFor(() => {
+      expect(screen.getByText('No se pudo guardar. Intenta de nuevo.')).toBeInTheDocument()
+    })
+  })
+
+  test('[P2] keeps the dialog open when PUT fails with 500', async () => {
+    // GIVEN the backend fails unexpectedly
+    server.use(
+      http.put(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json({ detail: 'boom' }, { status: 500 })),
+    )
+    let dialogClosed = false
+    renderClienteFormEdit(createCliente(), (open) => {
+      if (!open) dialogClosed = true
+    })
+
+    // WHEN the user modifies a field and clicks "Guardar"
+    fireEvent.change(screen.getByLabelText(/ciudad/i), { target: { value: 'Medellín' } })
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    await screen.findByText('No se pudo guardar. Intenta de nuevo.')
+
+    // THEN onOpenChange(false) was never called — the dialog remains open for retry
+    expect(dialogClosed).toBe(false)
+  })
+})
+
 describe('AC4 — Cancelar discards changes without submitting', () => {
   test('[P0] calls onOpenChange(false) and never sends a PUT when Cancelar is clicked', async () => {
     // GIVEN a request counter on the update endpoint and the edit dialog open
@@ -320,5 +397,51 @@ describe('AC4 — Cancelar discards changes without submitting', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/ciudad/i)).toHaveValue('Bogotá')
     })
+  })
+
+  test('[P1] never sends a PUT when the dialog is closed via Escape (AC #4 alternate close path)', async () => {
+    // GIVEN a request counter on the update endpoint and the edit dialog open — AC #4
+    // explicitly covers "Cancelar (or closes the dialog via Escape/overlay)"
+    let requestCount = 0
+    server.use(
+      http.put(CLIENTE_BY_ID_ENDPOINT, () => {
+        requestCount += 1
+        return HttpResponse.json({}, { status: 200 })
+      }),
+    )
+    let dialogClosed = false
+    renderClienteFormEdit(createCliente(), (open) => {
+      if (!open) dialogClosed = true
+    })
+
+    // WHEN the user modifies a field, then presses Escape instead of clicking "Guardar"
+    fireEvent.change(screen.getByLabelText(/ciudad/i), { target: { value: 'Medellín' } })
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' })
+
+    // THEN the dialog is told to close and no network request was ever made
+    await waitFor(() => expect(dialogClosed).toBe(true))
+    expect(requestCount).toBe(0)
+  })
+})
+
+describe('Re-baseline when the cliente prop changes (useEffect dependency on [open, cliente])', () => {
+  test('[P1] pre-fills with the new client\'s values, not the previous client\'s, when cliente changes while open', () => {
+    // GIVEN the edit dialog is open for one client
+    const clienteA = createCliente({ nombre: 'Acme Corp', ciudad: 'Bogotá' })
+    const { rerender, queryClient } = renderClienteFormEdit(clienteA)
+    expect(screen.getByLabelText(/nombre/i)).toHaveValue('Acme Corp')
+
+    // WHEN the cliente prop switches to a different client while the dialog stays open
+    // (e.g. the parent re-renders with a freshly-selected client)
+    const clienteB = createCliente({ nombre: 'Beta SAS', ciudad: 'Cali' })
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <ClienteForm open onOpenChange={() => {}} cliente={clienteB} />
+      </QueryClientProvider>,
+    )
+
+    // THEN the form re-baselines to the new client's values, not the stale previous ones
+    expect(screen.getByLabelText(/nombre/i)).toHaveValue('Beta SAS')
+    expect(screen.getByLabelText(/ciudad/i)).toHaveValue('Cali')
   })
 })
