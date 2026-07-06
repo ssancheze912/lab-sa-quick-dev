@@ -63,7 +63,7 @@ function renderAppNavigationAt(initialPath: string) {
 }
 
 describe('AC1 — NavigationRail visible on desktop with Clientes/Contactos entries', () => {
-  test('renders a desktop nav container (hidden lg:flex) containing NavigationRail Clientes/Contactos items', async () => {
+  test('[P2] renders a desktop nav container (hidden lg:flex) containing NavigationRail Clientes/Contactos items', async () => {
     // GIVEN: the app shell is rendered
     renderAppNavigationAt('/clientes')
 
@@ -81,7 +81,7 @@ describe('AC1 — NavigationRail visible on desktop with Clientes/Contactos entr
 })
 
 describe('AC2 — NavigationBar visible on mobile with tappable, labeled items', () => {
-  test('renders a mobile nav container (lg:hidden) containing NavigationBar Clientes/Contactos items', async () => {
+  test('[P2] renders a mobile nav container (lg:hidden) containing NavigationBar Clientes/Contactos items', async () => {
     // GIVEN: the app shell is rendered
     renderAppNavigationAt('/clientes')
 
@@ -117,7 +117,7 @@ describe('AC1 — Navigation triggers TanStack Router, never a full page reload'
     window.location = originalLocation
   })
 
-  test('clicking the Contactos rail item navigates via the router with no window.location call', async () => {
+  test('[P1] clicking the Contactos rail item navigates via the router with no window.location call', async () => {
     // GIVEN: the app is on /clientes and the desktop rail is rendered
     const router = renderAppNavigationAt('/clientes')
     const railContainer = await screen.findByTestId('nav-rail-container')
@@ -135,7 +135,7 @@ describe('AC1 — Navigation triggers TanStack Router, never a full page reload'
 })
 
 describe('AC6 — Active nav item reflects the current route', () => {
-  test('marks the Contactos rail item as selected (aria-current="page") when route is /contactos', async () => {
+  test('[P1] marks the Contactos rail item as selected (aria-current="page") when route is /contactos', async () => {
     // GIVEN: the app is rendered directly at /contactos
     renderAppNavigationAt('/contactos')
     const railContainer = await screen.findByTestId('nav-rail-container')
@@ -149,7 +149,7 @@ describe('AC6 — Active nav item reflects the current route', () => {
     expect(clientesItem).not.toHaveAttribute('aria-current', 'page')
   })
 
-  test('marks the Contactos bar item as selected (aria-current="page") when route is /contactos', async () => {
+  test('[P1] marks the Contactos bar item as selected (aria-current="page") when route is /contactos', async () => {
     // GIVEN: the app is rendered directly at /contactos
     renderAppNavigationAt('/contactos')
     const barContainer = await screen.findByTestId('nav-bar-container')
