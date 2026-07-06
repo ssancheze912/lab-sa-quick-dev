@@ -146,4 +146,77 @@ public class CreateClienteRequestValidatorTests
         // THEN validation succeeds — NotEmpty only rejects blank strings, not padded ones
         Assert.True(result.IsValid);
     }
+
+    // ── MaximumLength coverage (code-review finding) ────────────────────────────────────────
+    // testarch-automate's integration suite documented that neither this validator nor
+    // `clienteSchema.ts` enforced the DB's `ClienteConfiguration.HasMaxLength` limits
+    // (200/50/30/100), so an over-length submission only failed once it hit the database's
+    // `character varying` constraint (a generic 500 via `ExceptionHandlingMiddleware` instead
+    // of a clean 400). These tests lock in the fix at the unit level, mirroring each field's
+    // configured limit.
+
+    [Fact]
+    public void Validate_Fails_WhenNombreExceedsMaxLength()
+    {
+        // GIVEN a Nombre one character past the 200-character DB column limit
+        var request = ValidRequest() with { Nombre = new string('A', 201) };
+
+        // WHEN the request is validated
+        var result = _validator.Validate(request);
+
+        // THEN validation fails on the Nombre property
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateClienteRequest.Nombre));
+    }
+
+    [Fact]
+    public void Validate_Succeeds_WhenNombreIsExactlyAtMaxLength()
+    {
+        // GIVEN a Nombre exactly at the 200-character DB column limit
+        var request = ValidRequest() with { Nombre = new string('A', 200) };
+
+        // WHEN the request is validated
+        var result = _validator.Validate(request);
+
+        // THEN validation succeeds — the boundary value fits exactly
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public void Validate_Fails_WhenNitExceedsMaxLength()
+    {
+        // GIVEN a Nit one character past the 50-character DB column limit
+        var request = ValidRequest() with { Nit = new string('9', 51) };
+
+        // WHEN the request is validated
+        var result = _validator.Validate(request);
+
+        // THEN validation fails on the Nit property
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateClienteRequest.Nit));
+    }
+
+    [Fact]
+    public void Validate_Fails_WhenTelefonoExceedsMaxLength()
+    {
+        // GIVEN a Telefono one character past the 30-character DB column limit
+        var request = ValidRequest() with { Telefono = new string('3', 31) };
+
+        // WHEN the request is validated
+        var result = _validator.Validate(request);
+
+        // THEN validation fails on the Telefono property
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateClienteRequest.Telefono));
+    }
+
+    [Fact]
+    public void Validate_Fails_WhenCiudadExceedsMaxLength()
+    {
+        // GIVEN a Ciudad one character past the 100-character DB column limit
+        var request = ValidRequest() with { Ciudad = new string('B', 101) };
+
+        // WHEN the request is validated
+        var result = _validator.Validate(request);
+
+        // THEN validation fails on the Ciudad property
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateClienteRequest.Ciudad));
+    }
 }

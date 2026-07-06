@@ -1,6 +1,6 @@
 # Story 2.3: Create Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -162,9 +162,23 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring; sa-dev-story sub
 - `e2e/tests/clientes/clientes-crud.spec.ts` (`FR2` name/NIT filter tests no longer use hardcoded literal test data)
 
 **Pre-existing test files (ATDD RED phase, authored ahead of this story, unmodified except as noted above):**
-- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteRequestValidatorTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteRequestValidatorTests.cs` (code review round: extended with `MaximumLength` boundary tests, see below)
 - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs`
 - `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsTests.cs` (extended with `CreateCliente*` cases prior to this story)
-- `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsEdgeCasesTests.cs` (extended with malicious-input `CreateCliente*` cases prior to this story)
+- `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsEdgeCasesTests.cs` (extended with malicious-input `CreateCliente*` cases prior to this story; code review round: stale comment on `CreateCliente_NombreExceedsMaxLength_DoesNotReturnSuccessOrLeakTechnicalDetail` corrected, no assertion changes)
 - `frontend/src/modules/crm/clientes/presentation/ClienteForm.test.tsx`
 - `frontend/src/modules/crm/clientes/presentation/ClienteListView.test.tsx` (extended with "Nuevo cliente" cases prior to this story)
+
+**Modified files (Code Review round — real validation gap fix):**
+- `backend/src/SiesaAgents.Application/Clientes/Validators/CreateClienteRequestValidator.cs` (added `MaximumLength(200/50/30/100)` per field, matching `ClienteConfiguration`'s DB column limits — closes the gap `testarch-automate` documented: an over-length submission previously only failed at the DB constraint as a generic 500, now fails fast with a clean 400)
+- `frontend/src/modules/crm/clientes/application/clienteSchema.ts` (added matching Zod `.max(200/50/30/100)` rules with Spanish messages)
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteRequestValidatorTests.cs` (added 5 `MaximumLength` boundary tests, one per field + the Nombre exact-boundary case)
+
+**New files (Code Review round):**
+- `frontend/src/modules/crm/clientes/application/clienteSchema.test.ts` (dedicated unit test for the new max-length rules, kept out of the already-oversized `ClienteForm.test.tsx`)
+
+## Review Follow-ups (AI)
+
+- [x] [AI-Review][High] Add `MaximumLength` validation matching `ClienteConfiguration`'s DB column limits (200/50/30/100) to `CreateClienteRequestValidator` and `clienteSchema.ts` — real gap found by `testarch-automate`'s boundary tests (over-length input previously surfaced only as a generic 500 at the DB constraint). Fixed in this code review round; covered by new unit tests in `CreateClienteRequestValidatorTests.cs` and `clienteSchema.test.ts`.
+- [ ] [AI-Review][Medium] `ClienteEndpointsTests.cs` (584 lines) and `ClienteEndpointsEdgeCasesTests.cs` (508 lines) have crossed the >500-line FAIL threshold from Story 2.1/2.2/2.3 accretion, with duplicated `UniqueNit()`/`SeedClientesAsync`/`DeleteClientesAsync`/`DeleteClienteByNitAsync`/response-record boilerplate between them (flagged by Story 2.2's review and repeated by Story 2.3's `test-review-2-3-create-client.md`). NOT fixed in this review round: splitting these multi-story shared files and extracting a shared fixture/helper class is a structural refactor with real regression risk across Stories 2.1-2.3's coverage if rushed inside a single story's review — schedule as a dedicated refactor task before Story 2.4 (`PUT`) adds another section to the same files.
+- [ ] [AI-Review][Low] `ClienteForm.test.tsx`'s `fillValidForm()` hardcodes literal values (`'Acme Corp'`, `'900123456'`, …) instead of the project's `createCliente()` factory already used by `ClienteListView.test.tsx`. Not fixed: purely cosmetic (MSW mocks the response independent of submitted values) and the literals are referenced consistently across ~12 test cases in an already-oversized file — safer as part of the same follow-up refactor as the item above.

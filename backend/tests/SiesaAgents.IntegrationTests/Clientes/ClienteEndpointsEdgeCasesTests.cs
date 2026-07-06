@@ -393,9 +393,9 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
     public async Task CreateCliente_NombreExceedsMaxLength_DoesNotReturnSuccessOrLeakTechnicalDetail()
     {
         // GIVEN a Nombre one character past the `ClienteConfiguration.HasMaxLength(200)`
-        // database column limit — neither `CreateClienteRequestValidator` (FluentValidation)
-        // nor `clienteSchema.ts` (Zod) currently enforce a max length, so this request only
-        // fails once it reaches the database's `character varying(200)` constraint
+        // database column limit — `CreateClienteRequestValidator` now enforces a matching
+        // `MaximumLength(200)` (code-review fix for the gap this test originally documented),
+        // so this request is rejected with a clean 400 before ever reaching the database
         var nit = UniqueNit();
         var nombreExceedingMaxLength = new string('A', 201);
         var request = new CreateClienteApiRequest(nombreExceedingMaxLength, nit, "3001234567", "Bogotá");
