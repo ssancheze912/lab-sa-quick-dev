@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using SiesaAgents.Application.Clientes.DTOs;
 using SiesaAgents.Application.Clientes.Queries;
 using SiesaAgents.Domain.Clientes.Entities;
 using SiesaAgents.Domain.Clientes.Interfaces;
@@ -42,18 +43,15 @@ public class GetClientesQueryHandlerTests
         // GIVEN a repository containing one fully-populated entity
         var entity = ClienteEntity.Create("Acme Corp", "900123456", "3001234567", "Bogotá");
         var handler = new GetClientesQueryHandler(new FakeClienteRepository(entity));
+        var expectedDto = new ClienteDto(entity.Id, entity.Nombre, entity.Nit, entity.Telefono, entity.Ciudad, entity.CreatedAt);
 
         // WHEN the query is handled
         var result = await handler.Handle(new GetClientesQuery(), CancellationToken.None);
 
-        // THEN every field is mapped verbatim onto the DTO
-        var dto = Assert.Single(result);
-        Assert.Equal(entity.Id, dto.Id);
-        Assert.Equal(entity.Nombre, dto.Nombre);
-        Assert.Equal(entity.Nit, dto.Nit);
-        Assert.Equal(entity.Telefono, dto.Telefono);
-        Assert.Equal(entity.Ciudad, dto.Ciudad);
-        Assert.Equal(entity.CreatedAt, dto.CreatedAt);
+        // THEN every field is mapped verbatim onto the DTO — a single atomic value-equality
+        // assertion, since ClienteDto is a record with structural equality (TEA Review:
+        // replaces 6 independent per-field Assert.Equal calls with one atomic assertion)
+        Assert.Equal(expectedDto, Assert.Single(result));
     }
 
     [Fact]
