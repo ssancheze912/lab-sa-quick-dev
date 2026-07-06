@@ -71,13 +71,19 @@ public class ClienteEndpointsUpdateTests : ClienteEndpointsTestBase
 
             // THEN the response body reflects the new field values, while Id and CreatedAt
             // remain unchanged from the seeded original (AC #2 — Id/CreatedAt are never
-            // touched by Update, per ClienteEntity.Update's contract)
+            // touched by Update, per ClienteEntity.Update's contract). CreatedAt is compared
+            // with a small tolerance, not exact equality, since PostgreSQL's `timestamptz`
+            // column stores microsecond precision while .NET's DateTimeOffset ticks carry
+            // 100ns precision — the same round-trip caveat already documented on
+            // `GetClienteById_ReturnsCorrectDto_WhenClienteExists` in ClienteEndpointsTests.
             Assert.NotNull(updated);
             Assert.Equal(existing.Id, updated!.Id);
             Assert.Equal("Acme Corp Updated", updated.Nombre);
             Assert.Equal("3009999999", updated.Telefono);
             Assert.Equal("Cali", updated.Ciudad);
-            Assert.Equal(existing.CreatedAt, updated.CreatedAt);
+            Assert.True(
+                (existing.CreatedAt - updated.CreatedAt).Duration() < TimeSpan.FromMilliseconds(1),
+                $"Expected CreatedAt to be preserved (within 1ms), but was {existing.CreatedAt} vs {updated.CreatedAt}.");
         }
         finally
         {

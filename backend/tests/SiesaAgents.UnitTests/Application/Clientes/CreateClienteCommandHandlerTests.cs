@@ -119,6 +119,9 @@ public class CreateClienteCommandHandlerTests
 
         public Task<bool> AddAsync(ClienteEntity cliente, CancellationToken cancellationToken) =>
             Task.FromResult(addSucceeds);
+
+        public Task<bool> UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken) =>
+            Task.FromResult(true);
     }
 
     /// <summary>
@@ -141,5 +144,8 @@ public class CreateClienteCommandHandlerTests
             LastAddedCliente = cliente;
             return Task.FromResult(true);
         }
+
+        public Task<bool> UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken) =>
+            Task.FromResult(true);
     }
 }

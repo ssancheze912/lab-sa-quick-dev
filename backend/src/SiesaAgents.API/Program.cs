@@ -33,6 +33,8 @@ builder.Services.AddScoped<GetClientesQueryHandler>();
 builder.Services.AddScoped<GetClienteByIdQueryHandler>();
 builder.Services.AddScoped<IValidator<CreateClienteRequest>, CreateClienteRequestValidator>();
 builder.Services.AddScoped<CreateClienteCommandHandler>();
+builder.Services.AddScoped<IValidator<UpdateClienteRequest>, UpdateClienteRequestValidator>();
+builder.Services.AddScoped<UpdateClienteCommandHandler>();
 
 builder.Services.AddCors(options =>
 {

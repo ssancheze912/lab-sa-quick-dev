@@ -2,10 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using SiesaAgents.Domain.Clientes.Entities;
-using SiesaAgents.Infrastructure.Data;
 
 namespace SiesaAgents.IntegrationTests.Clientes;
 
@@ -18,18 +15,14 @@ namespace SiesaAgents.IntegrationTests.Clientes;
 /// larger record count sanity check. Same seed-via-<c>AppDbContext</c> approach as the ATDD
 /// suite (Story 2.1 Dev Notes — POST is out of scope until Story 2.3), same
 /// <see cref="RequiresPostgresFactAttribute"/> soft-skip convention.
+///
+/// Shared fixture/helpers (Client, UniqueNit(), SeedClientesAsync, DeleteClientesAsync,
+/// DeleteClienteByNitAsync, ClearClientesTableAsync, GetClientesAsync, ClienteApiResponse)
+/// live in <see cref="ClienteEndpointsTestBase"/> (Story 2.4 Task 3 — extracted to remove
+/// duplication with <see cref="ClienteEndpointsTests"/>).
 /// </summary>
-public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFactory>
+public class ClienteEndpointsEdgeCasesTests(TestWebApplicationFactory factory) : ClienteEndpointsTestBase(factory)
 {
-    private readonly TestWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ClienteEndpointsEdgeCasesTests(TestWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateClient();
-    }
-
     [RequiresPostgresFact]
     public async Task GetClientes_ReturnsJsonContentType()
     {
@@ -37,7 +30,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         await ClearClientesTableAsync();
 
         // WHEN GET /api/v1/clientes is called
-        var response = await _client.GetAsync("/api/v1/clientes");
+        var response = await Client.GetAsync("/api/v1/clientes");
 
         // THEN the response declares a JSON content type
         Assert.NotNull(response.Content.Headers.ContentType);
@@ -154,7 +147,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         const string malformedId = "not-a-valid-guid";
 
         // WHEN GET /api/v1/clientes/{id} is called with the malformed segment
-        var response = await _client.GetAsync($"/api/v1/clientes/{malformedId}");
+        var response = await Client.GetAsync($"/api/v1/clientes/{malformedId}");
 
         // THEN the request falls through to ASP.NET's default 404 (AC #3)
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -172,7 +165,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         try
         {
             // WHEN GET /api/v1/clientes/{id} is called
-            var response = await _client.GetAsync($"/api/v1/clientes/{cliente.Id}");
+            var response = await Client.GetAsync($"/api/v1/clientes/{cliente.Id}");
 
             // THEN the response declares a JSON content type (mirrors the list endpoint's
             // already-asserted convention, now verified for the single-record lookup too)
@@ -197,7 +190,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         try
         {
             // WHEN GET /api/v1/clientes/{id} is called with that client's Id
-            var response = await _client.GetAsync($"/api/v1/clientes/{cliente.Id}");
+            var response = await Client.GetAsync($"/api/v1/clientes/{cliente.Id}");
             var json = await response.Content.ReadAsStringAsync();
             var found = JsonSerializer.Deserialize<ClienteApiResponse>(
                 json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -225,7 +218,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
             // WHEN GET /api/v1/clientes/{id} is called with the Id formatted in uppercase
             // (ASP.NET's `:guid` route constraint parses case-insensitively)
             var uppercaseId = cliente.Id.ToString().ToUpperInvariant();
-            var response = await _client.GetAsync($"/api/v1/clientes/{uppercaseId}");
+            var response = await Client.GetAsync($"/api/v1/clientes/{uppercaseId}");
 
             // THEN the request still resolves to 200 OK — case must not affect route matching
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -247,7 +240,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         try
         {
             // WHEN GET /api/v1/clientes/{id} is called with clienteA's Id
-            var response = await _client.GetAsync($"/api/v1/clientes/{clienteA.Id}");
+            var response = await Client.GetAsync($"/api/v1/clientes/{clienteA.Id}");
             var json = await response.Content.ReadAsStringAsync();
             var found = JsonSerializer.Deserialize<ClienteApiResponse>(
                 json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -273,7 +266,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         var emptyId = Guid.Empty;
 
         // WHEN GET /api/v1/clientes/{id} is called with Guid.Empty
-        var response = await _client.GetAsync($"/api/v1/clientes/{emptyId}");
+        var response = await Client.GetAsync($"/api/v1/clientes/{emptyId}");
 
         // THEN it is treated like any other well-formed-but-missing Id — 404, not a crash
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -295,7 +288,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         try
         {
             // WHEN POST /api/v1/clientes is called
-            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
 
             // THEN the payload is treated as ordinary text and the client is created (NFR5) —
             // it is not rejected, sanitized-away, or does it crash the server
@@ -317,7 +310,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         try
         {
             // WHEN POST /api/v1/clientes is called
-            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
 
             // THEN EF Core's parameterized queries make the value inert — the client is
             // created normally, the payload is stored as plain text (NFR5)
@@ -338,7 +331,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         var request = new CreateClienteApiRequest("   ", nit, "3001234567", "Bogotá");
 
         // WHEN POST /api/v1/clientes is called
-        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+        var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
 
         // THEN the response is 400 Bad Request, same as a fully empty Nombre
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -354,7 +347,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         try
         {
             // WHEN POST /api/v1/clientes is called
-            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
 
             // THEN the response declares a JSON content type, mirroring the GET endpoints'
             // already-asserted convention
@@ -378,7 +371,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         try
         {
             // WHEN POST /api/v1/clientes is called
-            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
 
             // THEN the boundary value is accepted — 200 characters fits exactly in the column
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -403,7 +396,7 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         try
         {
             // WHEN POST /api/v1/clientes is called
-            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
             var body = await response.Content.ReadAsStringAsync();
 
             // THEN the request is not silently accepted as if it were valid data, and
@@ -434,8 +427,8 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         try
         {
             // WHEN POST /api/v1/clientes is submitted with the malicious payload
-            await _client.PostAsJsonAsync("/api/v1/clientes", request);
-            var response = await _client.GetAsync("/api/v1/clientes");
+            await Client.PostAsJsonAsync("/api/v1/clientes", request);
+            var response = await Client.GetAsync("/api/v1/clientes");
 
             // THEN the clientes table still exists and the pre-existing record is intact —
             // no 500, no dropped table
@@ -450,59 +443,5 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         }
     }
 
-    private static string UniqueNit() =>
-        $"9{DateTimeOffset.UtcNow.Ticks % 100_000_000:D8}";
-
-    private async Task DeleteClienteByNitAsync(string nit)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var toRemove = await dbContext.Clientes.Where(c => c.Nit == nit).ToListAsync();
-        dbContext.Clientes.RemoveRange(toRemove);
-        await dbContext.SaveChangesAsync();
-    }
-
     private sealed record CreateClienteApiRequest(string Nombre, string Nit, string Telefono, string Ciudad);
-
-    private async Task SeedClientesAsync(params ClienteEntity[] clientes)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        dbContext.Clientes.AddRange(clientes);
-        await dbContext.SaveChangesAsync();
-    }
-
-    private async Task DeleteClientesAsync(params Guid[] ids)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var toRemove = await dbContext.Clientes.Where(c => ids.Contains(c.Id)).ToListAsync();
-        dbContext.Clientes.RemoveRange(toRemove);
-        await dbContext.SaveChangesAsync();
-    }
-
-    private async Task ClearClientesTableAsync()
-    {
-        using var scope = _factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM clientes");
-    }
-
-    private async Task<List<ClienteApiResponse>> GetClientesAsync()
-    {
-        var response = await _client.GetAsync("/api/v1/clientes");
-        response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<ClienteApiResponse>>(
-                   json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-               ?? [];
-    }
-
-    private sealed record ClienteApiResponse(
-        Guid Id,
-        string Nombre,
-        string Nit,
-        string Telefono,
-        string Ciudad,
-        DateTimeOffset CreatedAt);
 }

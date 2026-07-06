@@ -1,10 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using SiesaAgents.Domain.Clientes.Entities;
-using SiesaAgents.Infrastructure.Data;
 
 namespace SiesaAgents.IntegrationTests.Clientes;
 
@@ -27,18 +24,14 @@ namespace SiesaAgents.IntegrationTests.Clientes;
 /// `fixture-architecture.md`) so tests remain isolated and re-runnable against a shared
 /// local database, and generates a unique NIT per test run to avoid colliding with the
 /// `uk_clientes_nit` unique index if a previous run's cleanup was interrupted.
+///
+/// Shared fixture/helpers (Client, UniqueNit(), SeedClientesAsync, DeleteClientesAsync,
+/// DeleteClienteByNitAsync, ClearClientesTableAsync, GetClientesAsync, ClienteApiResponse)
+/// live in <see cref="ClienteEndpointsTestBase"/> (Story 2.4 Task 3 — extracted to remove
+/// duplication with <see cref="ClienteEndpointsEdgeCasesTests"/>).
 /// </summary>
-public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
+public class ClienteEndpointsTests(TestWebApplicationFactory factory) : ClienteEndpointsTestBase(factory)
 {
-    private readonly TestWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ClienteEndpointsTests(TestWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateClient();
-    }
-
     [RequiresPostgresFact]
     public async Task GetClientes_ReturnsOk_WhenTableIsEmpty()
     {
@@ -46,7 +39,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         await ClearClientesTableAsync();
 
         // WHEN GET /api/v1/clientes is called
-        var response = await _client.GetAsync("/api/v1/clientes");
+        var response = await Client.GetAsync("/api/v1/clientes");
 
         // THEN the response status is 200 OK
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -72,7 +65,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         await ClearClientesTableAsync();
 
         // WHEN GET /api/v1/clientes is called
-        var response = await _client.GetAsync("/api/v1/clientes");
+        var response = await Client.GetAsync("/api/v1/clientes");
         var json = await response.Content.ReadAsStringAsync();
         using var document = JsonDocument.Parse(json);
 
@@ -165,7 +158,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         try
         {
             // WHEN GET /api/v1/clientes/{id} is called with the seeded client's Id
-            var response = await _client.GetAsync($"/api/v1/clientes/{cliente.Id}");
+            var response = await Client.GetAsync($"/api/v1/clientes/{cliente.Id}");
 
             // THEN the response status is 200 OK
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -187,7 +180,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         try
         {
             // WHEN GET /api/v1/clientes/{id} is called with the seeded client's Id
-            var response = await _client.GetAsync($"/api/v1/clientes/{cliente.Id}");
+            var response = await Client.GetAsync($"/api/v1/clientes/{cliente.Id}");
             var json = await response.Content.ReadAsStringAsync();
             var found = JsonSerializer.Deserialize<ClienteApiResponse>(
                 json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -217,7 +210,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var nonExistentId = Guid.NewGuid();
 
         // WHEN GET /api/v1/clientes/{id} is called
-        var response = await _client.GetAsync($"/api/v1/clientes/{nonExistentId}");
+        var response = await Client.GetAsync($"/api/v1/clientes/{nonExistentId}");
 
         // THEN the response status is 404 Not Found (AC #3)
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -240,7 +233,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         try
         {
             // WHEN POST /api/v1/clientes is called
-            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
 
             // THEN the response status is 201 Created (AC #2)
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -261,7 +254,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         try
         {
             // WHEN POST /api/v1/clientes is called
-            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
             var created = await response.Content.ReadFromJsonAsync<ClienteApiResponse>(
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
@@ -289,10 +282,10 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         try
         {
             // WHEN POST /api/v1/clientes is called, then GET /api/v1/clientes/{id} for the created Id
-            var createResponse = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var createResponse = await Client.PostAsJsonAsync("/api/v1/clientes", request);
             var created = await createResponse.Content.ReadFromJsonAsync<ClienteApiResponse>(
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            var getResponse = await _client.GetAsync($"/api/v1/clientes/{created!.Id}");
+            var getResponse = await Client.GetAsync($"/api/v1/clientes/{created!.Id}");
 
             // THEN the created record is genuinely persisted, not just echoed in the response
             Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
@@ -315,7 +308,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         try
         {
             // WHEN POST /api/v1/clientes is called with the same NIT
-            var response = await _client.PostAsJsonAsync("/api/v1/clientes", duplicateRequest);
+            var response = await Client.PostAsJsonAsync("/api/v1/clientes", duplicateRequest);
 
             // THEN the response is 409 Conflict (AC #4) — the DB-level uk_clientes_nit
             // constraint is the source of truth
@@ -339,7 +332,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         try
         {
             // WHEN POST /api/v1/clientes is called with the same NIT
-            var response = await _client.PostAsJsonAsync("/api/v1/clientes", duplicateRequest);
+            var response = await Client.PostAsJsonAsync("/api/v1/clientes", duplicateRequest);
             var body = await response.Content.ReadAsStringAsync();
 
             // THEN the response body never exposes a stack trace/exception type string (NFR6)
@@ -360,7 +353,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var request = new CreateClienteApiRequest("", nit, "3001234567", "Bogotá");
 
         // WHEN POST /api/v1/clientes is called
-        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+        var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
 
         // THEN the response is 400 Bad Request (AC #3's server-side defense-in-depth)
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -374,7 +367,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var request = new CreateClienteApiRequest("", nit, "3001234567", "Bogotá");
 
         // WHEN POST /api/v1/clientes is called
-        await _client.PostAsJsonAsync("/api/v1/clientes", request);
+        await Client.PostAsJsonAsync("/api/v1/clientes", request);
         var clientes = await GetClientesAsync();
 
         // THEN no record with that NIT was persisted
@@ -393,7 +386,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var request = new CreateClienteApiRequest("Acme Corp", "", "3001234567", "Bogotá");
 
         // WHEN POST /api/v1/clientes is called
-        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+        var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
 
         // THEN the response is 400 Bad Request
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -407,7 +400,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var request = new CreateClienteApiRequest("Acme Corp", nit, "", "Bogotá");
 
         // WHEN POST /api/v1/clientes is called
-        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+        var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
 
         // THEN the response is 400 Bad Request
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -421,7 +414,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var request = new CreateClienteApiRequest("Acme Corp", nit, "3001234567", "");
 
         // WHEN POST /api/v1/clientes is called
-        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+        var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
 
         // THEN the response is 400 Bad Request
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -436,7 +429,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         try
         {
             // WHEN POST /api/v1/clientes is called
-            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
             var json = await response.Content.ReadAsStringAsync();
             using var document = JsonDocument.Parse(json);
 
@@ -461,7 +454,7 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         try
         {
             // WHEN POST /api/v1/clientes is called
-            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var response = await Client.PostAsJsonAsync("/api/v1/clientes", request);
             var created = await response.Content.ReadFromJsonAsync<ClienteApiResponse>(
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
@@ -488,8 +481,8 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         try
         {
             // WHEN both requests are submitted, one after the other
-            var firstResponse = await _client.PostAsJsonAsync("/api/v1/clientes", firstRequest);
-            var secondResponse = await _client.PostAsJsonAsync("/api/v1/clientes", secondRequest);
+            var firstResponse = await Client.PostAsJsonAsync("/api/v1/clientes", firstRequest);
+            var secondResponse = await Client.PostAsJsonAsync("/api/v1/clientes", secondRequest);
 
             // THEN exactly one succeeds (201) and the other conflicts (409)
             var statuses = new[] { firstResponse.StatusCode, secondResponse.StatusCode };
@@ -513,8 +506,8 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         try
         {
             // WHEN both requests are submitted, one after the other
-            await _client.PostAsJsonAsync("/api/v1/clientes", firstRequest);
-            await _client.PostAsJsonAsync("/api/v1/clientes", secondRequest);
+            await Client.PostAsJsonAsync("/api/v1/clientes", firstRequest);
+            await Client.PostAsJsonAsync("/api/v1/clientes", secondRequest);
             var clientes = await GetClientesAsync();
 
             // THEN GET /api/v1/clientes shows exactly one record with that NIT
@@ -526,59 +519,5 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         }
     }
 
-    private static string UniqueNit() =>
-        $"9{DateTimeOffset.UtcNow.Ticks % 100_000_000:D8}";
-
-    private async Task DeleteClienteByNitAsync(string nit)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var toRemove = await dbContext.Clientes.Where(c => c.Nit == nit).ToListAsync();
-        dbContext.Clientes.RemoveRange(toRemove);
-        await dbContext.SaveChangesAsync();
-    }
-
     private sealed record CreateClienteApiRequest(string Nombre, string Nit, string Telefono, string Ciudad);
-
-    private async Task SeedClientesAsync(params ClienteEntity[] clientes)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        dbContext.Clientes.AddRange(clientes);
-        await dbContext.SaveChangesAsync();
-    }
-
-    private async Task DeleteClientesAsync(params Guid[] ids)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var toRemove = await dbContext.Clientes.Where(c => ids.Contains(c.Id)).ToListAsync();
-        dbContext.Clientes.RemoveRange(toRemove);
-        await dbContext.SaveChangesAsync();
-    }
-
-    private async Task ClearClientesTableAsync()
-    {
-        using var scope = _factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM clientes");
-    }
-
-    private async Task<List<ClienteApiResponse>> GetClientesAsync()
-    {
-        var response = await _client.GetAsync("/api/v1/clientes");
-        response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<ClienteApiResponse>>(
-                   json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-               ?? [];
-    }
-
-    private sealed record ClienteApiResponse(
-        Guid Id,
-        string Nombre,
-        string Nit,
-        string Telefono,
-        string Ciudad,
-        DateTimeOffset CreatedAt);
 }

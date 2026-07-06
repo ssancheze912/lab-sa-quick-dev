@@ -52,5 +52,40 @@ public static class ClienteEndpoints
 
             return Results.Created($"/api/v1/clientes/{result.Cliente!.Id}", result.Cliente);
         });
+
+        group.MapPut("/{id:guid}", async (
+            Guid id,
+            UpdateClienteRequest request,
+            IValidator<UpdateClienteRequest> validator,
+            UpdateClienteCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var validation = await validator.ValidateAsync(request, cancellationToken);
+            if (!validation.IsValid)
+            {
+                return Results.ValidationProblem(validation.ToDictionary());
+            }
+
+            var result = await handler.Handle(
+                new UpdateClienteCommand(id, request.Nombre, request.Nit, request.Telefono, request.Ciudad),
+                cancellationToken);
+
+            if (result.IsNotFound)
+            {
+                return Results.NotFound();
+            }
+
+            if (result.IsConflict)
+            {
+                return Results.Conflict(new ProblemDetails
+                {
+                    Status = StatusCodes.Status409Conflict,
+                    Title = "Conflict",
+                    Detail = "El NIT/RUC ya está registrado.",
+                });
+            }
+
+            return Results.Ok(result.Cliente);
+        });
     }
 }

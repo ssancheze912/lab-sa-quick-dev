@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { isAxiosError } from 'axios'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button, Input } from 'siesa-ui-kit'
 import {
@@ -10,15 +11,20 @@ import {
   DialogTitle,
 } from '@/shared/components/ui/dialog'
 import { useCreateCliente } from '@/modules/crm/clientes/application/useCreateCliente'
+import { useUpdateCliente } from '@/modules/crm/clientes/application/useUpdateCliente'
 import { clienteSchema, type ClienteFormValues } from '@/modules/crm/clientes/application/clienteSchema'
+import type { Cliente } from '@/modules/crm/clientes/domain/Cliente'
 
 interface ClienteFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  cliente?: Cliente | null
 }
 
-export function ClienteForm({ open, onOpenChange }: ClienteFormProps) {
+export function ClienteForm({ open, onOpenChange, cliente }: ClienteFormProps) {
+  const isEditMode = !!cliente
   const createCliente = useCreateCliente()
+  const updateCliente = useUpdateCliente()
   const {
     register,
     handleSubmit,
@@ -30,10 +36,23 @@ export function ClienteForm({ open, onOpenChange }: ClienteFormProps) {
     defaultValues: { nombre: '', nit: '', telefono: '', ciudad: '' },
   })
 
+  useEffect(() => {
+    if (open) {
+      reset(
+        cliente
+          ? { nombre: cliente.nombre, nit: cliente.nit, telefono: cliente.telefono, ciudad: cliente.ciudad }
+          : { nombre: '', nit: '', telefono: '', ciudad: '' },
+      )
+    }
+  }, [open, cliente, reset])
+
   const onSubmit = handleSubmit(async (values) => {
     try {
-      await createCliente.mutateAsync(values)
-      reset()
+      if (isEditMode) {
+        await updateCliente.mutateAsync({ id: cliente!.id, data: values })
+      } else {
+        await createCliente.mutateAsync(values)
+      }
       onOpenChange(false)
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 409) {
@@ -53,7 +72,7 @@ export function ClienteForm({ open, onOpenChange }: ClienteFormProps) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nuevo cliente</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Editar cliente' : 'Nuevo cliente'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
@@ -96,7 +115,7 @@ export function ClienteForm({ open, onOpenChange }: ClienteFormProps) {
             <Button type="outline" htmlType="button" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
-            <Button htmlType="submit" disabled={createCliente.isPending}>
+            <Button htmlType="submit" disabled={isEditMode ? updateCliente.isPending : createCliente.isPending}>
               Guardar
             </Button>
           </DialogFooter>
