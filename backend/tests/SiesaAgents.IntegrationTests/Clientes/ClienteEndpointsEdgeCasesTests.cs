@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -278,8 +279,97 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    // ── Story 2.3 (AC #2) — ATDD Acceptance Tests, RED phase (TC-E2-P2-05, NFR5) ───────────
+    // RED phase: fails to compile today because `POST /api/v1/clientes` doesn't exist yet
+    // (Story 2.3 Task 1). Proves EF Core's parameterized queries make script/SQL-injection
+    // payloads inert free text — they are legitimate input, not something FluentValidation's
+    // `NotEmpty()` should reject.
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_WithScriptTagInNombre_ReturnsCreated()
+    {
+        // GIVEN a create request whose Nombre contains a script-injection payload
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("<script>alert(1)</script>", nit, "3001234567", "Bogotá");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called
+            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+            // THEN the payload is treated as ordinary text and the client is created (NFR5) —
+            // it is not rejected, sanitized-away, or does it crash the server
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_WithSqlInjectionAttemptInNombre_ReturnsCreated()
+    {
+        // GIVEN a create request whose Nombre contains a SQL-injection payload
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("'; DROP TABLE clientes;--", nit, "3001234567", "Bogotá");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called
+            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+            // THEN EF Core's parameterized queries make the value inert — the client is
+            // created normally, the payload is stored as plain text (NFR5)
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_WithSqlInjectionAttemptInNombre_DoesNotDropClientesTable()
+    {
+        // GIVEN a pre-existing client and a create request with a SQL-injection payload
+        var preExisting = ClienteEntity.Create("Acme Corp", UniqueNit(), "3001234567", "Bogotá");
+        await SeedClientesAsync(preExisting);
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("'; DROP TABLE clientes;--", nit, "3001234567", "Bogotá");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is submitted with the malicious payload
+            await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var response = await _client.GetAsync("/api/v1/clientes");
+
+            // THEN the clientes table still exists and the pre-existing record is intact —
+            // no 500, no dropped table
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var clientes = await GetClientesAsync();
+            Assert.Contains(clientes, c => c.Id == preExisting.Id);
+        }
+        finally
+        {
+            await DeleteClientesAsync(preExisting.Id);
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
     private static string UniqueNit() =>
         $"9{DateTimeOffset.UtcNow.Ticks % 100_000_000:D8}";
+
+    private async Task DeleteClienteByNitAsync(string nit)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var toRemove = await dbContext.Clientes.Where(c => c.Nit == nit).ToListAsync();
+        dbContext.Clientes.RemoveRange(toRemove);
+        await dbContext.SaveChangesAsync();
+    }
+
+    private sealed record CreateClienteApiRequest(string Nombre, string Nit, string Telefono, string Ciudad);
 
     private async Task SeedClientesAsync(params ClienteEntity[] clientes)
     {

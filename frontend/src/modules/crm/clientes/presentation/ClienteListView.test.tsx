@@ -336,3 +336,37 @@ describe('ClientListItem — links to the deep-linkable detail route (Story 2.2,
     await waitFor(() => expect(router.state.location.pathname).toBe(`/clientes/${cliente.id}`))
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Story 2.3 (AC #1, Task 6): "Nuevo cliente" button opens the create-client dialog.
+// ATDD Acceptance Tests — RED Phase. These fail today because `ClienteListView` does not
+// yet render a "Nuevo cliente" button nor mount `ClienteForm` (Story 2.3 Task 5).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('"Nuevo cliente" button opens the create-client dialog (Story 2.3, AC #1)', () => {
+  test('[P0] renders a "Nuevo cliente" button', async () => {
+    // GIVEN: the backend returns an empty client list
+    server.use(http.get(CLIENTES_ENDPOINT, () => HttpResponse.json([])))
+
+    // WHEN: ClienteListView mounts
+    renderClienteListView()
+
+    // THEN: a "Nuevo cliente" button is rendered
+    expect(await screen.findByRole('button', { name: /nuevo cliente/i })).toBeInTheDocument()
+  })
+
+  test('[P0] clicking "Nuevo cliente" opens a dialog', async () => {
+    // GIVEN: the backend returns an empty client list and ClienteListView has mounted
+    server.use(http.get(CLIENTES_ENDPOINT, () => HttpResponse.json([])))
+    renderClienteListView()
+    const btnNuevoCliente = await screen.findByRole('button', { name: /nuevo cliente/i })
+
+    // WHEN: the user clicks "Nuevo cliente"
+    fireEvent.click(btnNuevoCliente)
+
+    // THEN: a modal dialog opens (AC #1)
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+  })
+})

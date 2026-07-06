@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -222,8 +223,228 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    // ── Story 2.3 (AC #2, #3, #4) — ATDD Acceptance Tests, RED phase ──────────────────────
+    // RED phase: fails to compile today because `POST /api/v1/clientes`
+    // (`ClienteEndpoints.MapClienteEndpoints`), `CreateClienteCommandHandler` and
+    // `CreateClienteRequest` do not exist yet (Story 2.3 Task 1). Per Story 2.3 Task 2,
+    // these extend the existing ATDD file rather than creating a new one, reusing the
+    // established `UniqueNit()`/`DeleteClientesAsync` helpers.
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_ReturnsCreated_WithValidData()
+    {
+        // GIVEN a well-formed create request with a fresh, never-used NIT
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("Acme Corp", nit, "3001234567", "Bogotá");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called
+            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+            // THEN the response status is 201 Created (AC #2)
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_ReturnsCreatedCliente_WithValidData()
+    {
+        // GIVEN a well-formed create request with a fresh, never-used NIT
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("Acme Corp", nit, "3001234567", "Bogotá");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called
+            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var created = await response.Content.ReadFromJsonAsync<ClienteApiResponse>(
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            // THEN the response body echoes every submitted field and assigns a non-empty Id
+            Assert.NotNull(created);
+            Assert.NotEqual(Guid.Empty, created!.Id);
+            Assert.Equal("Acme Corp", created.Nombre);
+            Assert.Equal(nit, created.Nit);
+            Assert.Equal("3001234567", created.Telefono);
+            Assert.Equal("Bogotá", created.Ciudad);
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_PersistsCliente_WithValidData()
+    {
+        // GIVEN a well-formed create request with a fresh, never-used NIT
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("Acme Corp", nit, "3001234567", "Bogotá");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called, then GET /api/v1/clientes/{id} for the created Id
+            var createResponse = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var created = await createResponse.Content.ReadFromJsonAsync<ClienteApiResponse>(
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var getResponse = await _client.GetAsync($"/api/v1/clientes/{created!.Id}");
+
+            // THEN the created record is genuinely persisted, not just echoed in the response
+            Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_DuplicateNit_Returns409()
+    {
+        // GIVEN a client already seeded with a known NIT
+        var nit = UniqueNit();
+        var existing = ClienteEntity.Create("Acme Corp", nit, "3001234567", "Bogotá");
+        await SeedClientesAsync(existing);
+        var duplicateRequest = new CreateClienteApiRequest("Empresa Diferente", nit, "3009999999", "Cali");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called with the same NIT
+            var response = await _client.PostAsJsonAsync("/api/v1/clientes", duplicateRequest);
+
+            // THEN the response is 409 Conflict (AC #4) — the DB-level uk_clientes_nit
+            // constraint is the source of truth
+            Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        }
+        finally
+        {
+            await DeleteClientesAsync(existing.Id);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_DuplicateNit_ResponseBodyContainsNoTechnicalDetail()
+    {
+        // GIVEN a client already seeded with a known NIT
+        var nit = UniqueNit();
+        var existing = ClienteEntity.Create("Acme Corp", nit, "3001234567", "Bogotá");
+        await SeedClientesAsync(existing);
+        var duplicateRequest = new CreateClienteApiRequest("Empresa Diferente", nit, "3009999999", "Cali");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called with the same NIT
+            var response = await _client.PostAsJsonAsync("/api/v1/clientes", duplicateRequest);
+            var body = await response.Content.ReadAsStringAsync();
+
+            // THEN the response body never exposes a stack trace/exception type string (NFR6)
+            Assert.DoesNotContain("Npgsql", body);
+            Assert.DoesNotContain("Exception", body);
+        }
+        finally
+        {
+            await DeleteClientesAsync(existing.Id);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_MissingRequiredFields_Returns400()
+    {
+        // GIVEN a request with an empty Nombre
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("", nit, "3001234567", "Bogotá");
+
+        // WHEN POST /api/v1/clientes is called
+        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+        // THEN the response is 400 Bad Request (AC #3's server-side defense-in-depth)
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_MissingRequiredFields_DoesNotPersistAnything()
+    {
+        // GIVEN a request with an empty Nombre and a fresh NIT
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("", nit, "3001234567", "Bogotá");
+
+        // WHEN POST /api/v1/clientes is called
+        await _client.PostAsJsonAsync("/api/v1/clientes", request);
+        var clientes = await GetClientesAsync();
+
+        // THEN no record with that NIT was persisted
+        Assert.DoesNotContain(clientes, c => c.Nit == nit);
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_ConcurrentDuplicateNit_OnlyOnePersists()
+    {
+        // GIVEN two create requests sharing the same NIT (TC-E2-P0-06 — the DB-level unique
+        // constraint must hold even bypassing the frontend/handler pre-check race; sequential
+        // requests are sufficient to prove the invariant without adding flakiness)
+        var nit = UniqueNit();
+        var firstRequest = new CreateClienteApiRequest("Acme Corp", nit, "3001234567", "Bogotá");
+        var secondRequest = new CreateClienteApiRequest("Acme Corp Duplicado", nit, "3009999999", "Cali");
+
+        try
+        {
+            // WHEN both requests are submitted, one after the other
+            var firstResponse = await _client.PostAsJsonAsync("/api/v1/clientes", firstRequest);
+            var secondResponse = await _client.PostAsJsonAsync("/api/v1/clientes", secondRequest);
+
+            // THEN exactly one succeeds (201) and the other conflicts (409)
+            var statuses = new[] { firstResponse.StatusCode, secondResponse.StatusCode };
+            Assert.Contains(HttpStatusCode.Created, statuses);
+            Assert.Contains(HttpStatusCode.Conflict, statuses);
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_ConcurrentDuplicateNit_OnlyOneRecordExistsWithThatNit()
+    {
+        // GIVEN two create requests sharing the same NIT
+        var nit = UniqueNit();
+        var firstRequest = new CreateClienteApiRequest("Acme Corp", nit, "3001234567", "Bogotá");
+        var secondRequest = new CreateClienteApiRequest("Acme Corp Duplicado", nit, "3009999999", "Cali");
+
+        try
+        {
+            // WHEN both requests are submitted, one after the other
+            await _client.PostAsJsonAsync("/api/v1/clientes", firstRequest);
+            await _client.PostAsJsonAsync("/api/v1/clientes", secondRequest);
+            var clientes = await GetClientesAsync();
+
+            // THEN GET /api/v1/clientes shows exactly one record with that NIT
+            Assert.Single(clientes, c => c.Nit == nit);
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
     private static string UniqueNit() =>
         $"9{DateTimeOffset.UtcNow.Ticks % 100_000_000:D8}";
+
+    private async Task DeleteClienteByNitAsync(string nit)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var toRemove = await dbContext.Clientes.Where(c => c.Nit == nit).ToListAsync();
+        dbContext.Clientes.RemoveRange(toRemove);
+        await dbContext.SaveChangesAsync();
+    }
+
+    private sealed record CreateClienteApiRequest(string Nombre, string Nit, string Telefono, string Ciudad);
 
     private async Task SeedClientesAsync(params ClienteEntity[] clientes)
     {
