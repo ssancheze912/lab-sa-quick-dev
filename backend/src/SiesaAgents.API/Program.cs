@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Middleware;
 using SiesaAgents.Infrastructure.Data;
@@ -9,8 +10,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 
+// EF Core's migrations history table is built outside AppDbContext.OnModelCreating, so
+// ApplySnakeCaseNaming() never touches it. MigrationsHistoryTable renames the table itself
+// to snake_case; SnakeCaseHistoryRepository renames its two columns (migration_id,
+// product_version) to keep the whole schema consistently snake_case (AC #3).
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+            builder.Configuration.GetConnectionString("DefaultConnection"),
+            npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__ef_migrations_history"))
+        .ReplaceService<IHistoryRepository, SnakeCaseHistoryRepository>());
 
 builder.Services.AddCors(options =>
 {

@@ -1,6 +1,6 @@
 # Story 1.3: Backend Database Foundation
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -20,39 +20,39 @@ so that subsequent stories can define entities and run migrations against a work
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — EF Core design-time tooling (AC: #1)
-  - [ ] Add `Microsoft.EntityFrameworkCore.Design` package to `SiesaAgents.API` (design-time package must live in the startup project, not `Infrastructure`)
-  - [ ] Verify `Npgsql.EntityFrameworkCore.PostgreSQL` (already added to `SiesaAgents.Infrastructure` in Story 1.1) — do not re-add
-  - [ ] Verify/install the `dotnet-ef` global tool: `dotnet tool install --global dotnet-ef` (skip if `dotnet ef --version` already resolves)
+- [x] Task 1 — EF Core design-time tooling (AC: #1)
+  - [x] Add `Microsoft.EntityFrameworkCore.Design` package to `SiesaAgents.API` (design-time package must live in the startup project, not `Infrastructure`) — already added by the ATDD sub-agent pass; verified present in `SiesaAgents.API.csproj`
+  - [x] Verify `Npgsql.EntityFrameworkCore.PostgreSQL` (already added to `SiesaAgents.Infrastructure` in Story 1.1) — do not re-add — confirmed present, unchanged
+  - [x] Verify/install the `dotnet-ef` global tool: `dotnet tool install --global dotnet-ef` (skip if `dotnet ef --version` already resolves) — installed (`dotnet-ef 10.0.9`), not previously present in this environment
 
-- [ ] Task 2 — Create `AppDbContext` (AC: #1, #3)
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`: `public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)`
-  - [ ] Override `OnModelCreating(ModelBuilder modelBuilder)` — no `DbSet<>` properties yet (no domain entities exist; see scope note); call `base.OnModelCreating(modelBuilder)` first, then `modelBuilder.ApplySnakeCaseNaming()` as the LAST line
+- [x] Task 2 — Create `AppDbContext` (AC: #1, #3)
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`: `public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)`
+  - [x] Override `OnModelCreating(ModelBuilder modelBuilder)` — no `DbSet<>` properties yet (no domain entities exist; see scope note); call `base.OnModelCreating(modelBuilder)` first, then `modelBuilder.ApplySnakeCaseNaming()` as the LAST line
 
-- [ ] Task 3 — Implement the `ApplySnakeCaseNaming()` extension (AC: #3)
-  - [ ] Create `backend/src/SiesaAgents.Infrastructure/Data/Extensions/ModelBuilderExtensions.cs` — static class with `public static void ApplySnakeCaseNaming(this ModelBuilder modelBuilder)`
-  - [ ] Implement a private `ToSnakeCase(string input)` helper (regex-based PascalCase/camelCase → snake_case, e.g. `ClienteId` → `cliente_id`)
-  - [ ] Iterate `modelBuilder.Model.GetEntityTypes()` and rename: table name (`SetTableName`), every property's column name (`SetColumnName`), every key name (`SetName`), every foreign key constraint name (`SetConstraintName`), every index database name (`SetDatabaseName`)
-  - [ ] Method must be safe to call with zero entity types registered (this story has none) — no-op, no exceptions
+- [x] Task 3 — Implement the `ApplySnakeCaseNaming()` extension (AC: #3)
+  - [x] Create `backend/src/SiesaAgents.Infrastructure/Data/Extensions/ModelBuilderExtensions.cs` — static class with `public static void ApplySnakeCaseNaming(this ModelBuilder modelBuilder)`
+  - [x] Implement a private `ToSnakeCase(string input)` helper (regex-based PascalCase/camelCase → snake_case, e.g. `ClienteId` → `cliente_id`)
+  - [x] Iterate `modelBuilder.Model.GetEntityTypes()` and rename: table name (`SetTableName`), every property's column name (`SetColumnName`), every key name (`SetName`), every foreign key constraint name (`SetConstraintName`), every index database name (`SetDatabaseName`)
+  - [x] Method must be safe to call with zero entity types registered (this story has none) — no-op, no exceptions (verified: `modelBuilder.Model.GetEntityTypes()` returns empty, loop body never executes, migration generation and `database update` succeed without error)
 
-- [ ] Task 4 — Register `AppDbContext` and the connection string (AC: #1)
-  - [ ] In `backend/src/SiesaAgents.API/Program.cs`, add: `builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));`
-  - [ ] Verify `ConnectionStrings:DefaultConnection` already exists in `appsettings.Development.json` (added in Story 1.1 Task 5: `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres`) — do not duplicate or overwrite
+- [x] Task 4 — Register `AppDbContext` and the connection string (AC: #1)
+  - [x] In `backend/src/SiesaAgents.API/Program.cs`, add: `builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));` — implemented, plus `npgsqlOptions.MigrationsHistoryTable("__ef_migrations_history")` and `.ReplaceService<IHistoryRepository, SnakeCaseHistoryRepository>()` (see Completion Notes — required for AC #3's `__ef_migrations_history` snake_case verification, since that table is built outside `OnModelCreating`'s model)
+  - [x] Verify `ConnectionStrings:DefaultConnection` already exists in `appsettings.Development.json` (added in Story 1.1 Task 5: `Host=localhost;Database=siesa_agents_db;Username=postgres;Password=postgres`) — do not duplicate or overwrite — confirmed present, unchanged
 
-- [ ] Task 5 — Create and apply the initial empty migration (AC: #1)
-  - [ ] From `backend/src/SiesaAgents.API`: `dotnet ef migrations add InitialCreate --project ../SiesaAgents.Infrastructure --startup-project .`
-  - [ ] Verify `backend/src/SiesaAgents.Infrastructure/Migrations/` is created with `*_InitialCreate.cs`, `*_InitialCreate.Designer.cs`, `AppDbContextModelSnapshot.cs` — the migration's `Up()`/`Down()` bodies must be empty (no `MigrationBuilder.CreateTable` calls) since there are no domain entities yet
-  - [ ] Run `dotnet ef database update --project ../SiesaAgents.Infrastructure --startup-project .` against a locally running PostgreSQL instance — verify `siesa_agents_db` is created with only the `__ef_migrations_history` table (snake_case columns: `migration_id`, `product_version`)
+- [x] Task 5 — Create and apply the initial empty migration (AC: #1)
+  - [x] From `backend/src/SiesaAgents.API`: `dotnet ef migrations add InitialCreate --project ../SiesaAgents.Infrastructure --startup-project .`
+  - [x] Verify `backend/src/SiesaAgents.Infrastructure/Migrations/` is created with `*_InitialCreate.cs`, `*_InitialCreate.Designer.cs`, `AppDbContextModelSnapshot.cs` — the migration's `Up()`/`Down()` bodies must be empty (no `MigrationBuilder.CreateTable` calls) since there are no domain entities yet — verified, both bodies are empty
+  - [x] Run `dotnet ef database update --project ../SiesaAgents.Infrastructure --startup-project .` against a locally running PostgreSQL instance — verify `siesa_agents_db` is created with only the `__ef_migrations_history` table (snake_case columns: `migration_id`, `product_version`) — verified via `psql`: only `__ef_migrations_history` exists in the `public` schema, with columns `migration_id`/`product_version`
 
-- [ ] Task 6 — Verify Problem Details middleware compliance (AC: #2)
-  - [ ] Confirm `ExceptionHandlingMiddleware` (created in Story 1.1 Task 4) is registered before `UseCors`/endpoint mapping in `Program.cs` — already true, do not reorder
-  - [ ] Confirm the middleware's JSON response contains only `status`, `title`, `detail` (already `null`) — no `stackTrace`/`exception` keys — already true, no code change expected here, only verification
+- [x] Task 6 — Verify Problem Details middleware compliance (AC: #2)
+  - [x] Confirm `ExceptionHandlingMiddleware` (created in Story 1.1 Task 4) is registered before `UseCors`/endpoint mapping in `Program.cs` — already true, do not reorder — confirmed, unchanged
+  - [x] Confirm the middleware's JSON response contains only `status`, `title`, `detail` (already `null`) — no `stackTrace`/`exception` keys — **defect found and fixed**, not a pure verification (see Completion Notes): the response `Content-Type` was silently downgraded to `application/json` and the `detail` key was omitted entirely by the framework's default `ProblemDetails` JSON serialization; both are now fixed and covered by the integration tests
 
-- [ ] Task 7 — Backend integration test project (AC: #1, #2, #3)
-  - [ ] Create `backend/tests/SiesaAgents.IntegrationTests` (`dotnet new xunit -o backend/tests/SiesaAgents.IntegrationTests`), add to `SiesaAgents.sln` under the existing `tests` solution folder
-  - [ ] Add package `Microsoft.AspNetCore.Mvc.Testing` and project reference to `SiesaAgents.API`
-  - [ ] `ExceptionHandlingMiddlewareTests.cs` (TC-E1-P0-05): register a test-only minimal endpoint that throws `new Exception("test error")` (map it only when `builder.Environment.IsEnvironment("Testing")`, guarded so it never exists in Development/Production), call it via `WebApplicationFactory<Program>`, assert `Content-Type: application/problem+json`, status 500, body has `status`/`title`/`detail`, and the response body does NOT contain `"stackTrace"`, `"exception"`, or the raw message `"test error"`
-  - [ ] `AppDbContextMigrationTests.cs` (TC-E1-P1-05, TC-E1-P2-04): resolve `AppDbContext` from the test host's DI container, assert it can connect (`Database.CanConnectAsync()`) after `dotnet ef database update` has been run locally, and query `information_schema.columns` for `__ef_migrations_history` to assert `migration_id`/`product_version` column names are snake_case — skip/document if no local PostgreSQL is reachable in the execution environment (do not fail the whole suite on infra absence; use a fact-level guard or `TestContainers` if available)
+- [x] Task 7 — Backend integration test project (AC: #1, #2, #3)
+  - [x] Create `backend/tests/SiesaAgents.IntegrationTests` (`dotnet new xunit -o backend/tests/SiesaAgents.IntegrationTests`), add to `SiesaAgents.sln` under the existing `tests` solution folder — already created by the ATDD sub-agent pass; verified present and correctly wired
+  - [x] Add package `Microsoft.AspNetCore.Mvc.Testing` and project reference to `SiesaAgents.API` — already present, verified
+  - [x] `ExceptionHandlingMiddlewareTests.cs` (TC-E1-P0-05): register a test-only minimal endpoint that throws `new Exception("test error")` (map it only when `builder.Environment.IsEnvironment("Testing")`, guarded so it never exists in Development/Production), call it via `WebApplicationFactory<Program>`, assert `Content-Type: application/problem+json`, status 500, body has `status`/`title`/`detail`, and the response body does NOT contain `"stackTrace"`, `"exception"`, or the raw message `"test error"` — all 8 tests GREEN
+  - [x] `AppDbContextMigrationTests.cs` (TC-E1-P1-05, TC-E1-P2-04): resolve `AppDbContext` from the test host's DI container, assert it can connect (`Database.CanConnectAsync()`) after `dotnet ef database update` has been run locally, and query `information_schema.columns` for `__ef_migrations_history` to assert `migration_id`/`product_version` column names are snake_case — skip/document if no local PostgreSQL is reachable in the execution environment (do not fail the whole suite on infra absence; use a fact-level guard or `TestContainers` if available) — PostgreSQL 16 started locally in this session; all 5 tests GREEN against the real database (soft-skip guards not triggered)
 
 ## Dev Notes
 
@@ -192,8 +192,53 @@ app.Run();
 
 ### Agent Model Used
 
+Claude Sonnet 5 (sa-dev-story sub-agent)
+
 ### Debug Log References
+
+- **Local environment setup** (per the story's "Local environment note", PostgreSQL 16 was installed but stopped): started it with `sudo service postgresql start` (`pg_lsclusters` confirmed `16 main 5432 online` after) and set the `postgres` role password to match the connection string with `ALTER USER postgres PASSWORD 'postgres';`.
+- Installed the global `dotnet-ef` tool (`dotnet tool install --global dotnet-ef` → `10.0.9`); added `/root/.dotnet/tools` to `PATH` for the session (not previously on `PATH` in this sandbox).
+- `dotnet build` (full solution) — 0 warnings, 0 errors after all changes (the one `EF1001` warning from using the internal `NpgsqlHistoryRepository` extension point is suppressed with a scoped `#pragma warning disable/restore EF1001` and a comment explaining why).
+- `dotnet ef migrations add InitialCreate --project ../SiesaAgents.Infrastructure --startup-project .` (from `SiesaAgents.API`) — succeeded; generated migration has empty `Up()`/`Down()` bodies (verified by reading the generated file) since `AppDbContext` has zero entity types.
+- `dotnet ef database update` (twice: once before, once after adding `SnakeCaseHistoryRepository` — see Completion Notes) — succeeded both times; `siesa_agents_db` created with no errors.
+- Verified database state directly via `psql`: `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'` → only `__ef_migrations_history`; `SELECT column_name FROM information_schema.columns WHERE table_name = '__ef_migrations_history'` → `migration_id`, `product_version` (both snake_case, no `MigrationId`/`ProductVersion`).
+- `dotnet test SiesaAgents.sln` — `SiesaAgents.UnitTests`: 0 tests (expected — no domain entities in this story, matches prior stories' state). `SiesaAgents.IntegrationTests`: **13/13 passing** (8 `ExceptionHandlingMiddlewareTests` + 5 `AppDbContextMigrationTests`), run against the real local PostgreSQL instance (soft-skip guards in `AppDbContextMigrationTests` were not triggered).
+- Manually verified the fixed middleware end-to-end: ran the API with `ASPNETCORE_ENVIRONMENT=Testing`, `curl -D - http://localhost:5299/api/v1/test-error` → `HTTP/1.1 500`, `Content-Type: application/problem+json; charset=utf-8`, body `{"title":"An unexpected error occurred.","status":500,"detail":"An unexpected error occurred. Please contact support if the problem persists."}` — no `stackTrace`, `exception`, or the raw `"test error"` message.
 
 ### Completion Notes List
 
+- Tasks 1 and 7 (EF Core Design package, `dotnet-ef`-driven scaffolding expectations, and the entire `SiesaAgents.IntegrationTests` project with both test files) had already been created by the preceding ATDD sub-agent pass (commit "Add ATDD tests for story 1.3"), correctly in RED state (compile error: `AppDbContext` did not exist). This session's work made them pass without modifying test intent.
+- Implemented `AppDbContext` (`backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`) and `ModelBuilderExtensions.ApplySnakeCaseNaming()` (`backend/src/SiesaAgents.Infrastructure/Data/Extensions/ModelBuilderExtensions.cs`) exactly per the Dev Notes code samples — no domain `DbSet<>` properties, `ApplySnakeCaseNaming()` called as the last statement in `OnModelCreating`.
+- **Defect discovered via AC #3's own test and fixed (not anticipated in the story's Dev Notes)**: EF Core's `__ef_migrations_history` table is generated by a separate internal model built by `IHistoryRepository`, entirely outside `AppDbContext.OnModelCreating`'s `ModelBuilder` — so `ApplySnakeCaseNaming()` never touches it, and by default it is created as `__EFMigrationsHistory` with `MigrationId`/`ProductVersion` columns (verified empirically: first `dotnet ef database update` run produced exactly this PascalCase table). Since AC #3 explicitly requires verifying snake_case via this exact table/columns, added `backend/src/SiesaAgents.Infrastructure/Data/SnakeCaseHistoryRepository.cs` (a minimal `NpgsqlHistoryRepository` subclass renaming the two columns) and wired it up in `Program.cs` via `npgsqlOptions.MigrationsHistoryTable("__ef_migrations_history")` (table name) + `.ReplaceService<IHistoryRepository, SnakeCaseHistoryRepository>()` (column names) — both are EF Core/Npgsql's documented, supported extension points for this exact customization (the `EF1001` "internal API" warning on `NpgsqlHistoryRepository` is expected and suppressed with a scoped pragma and explanatory comment). Dropped and recreated the local database (`dotnet ef database update`) after this change and re-verified column/table names via `psql`.
+- **Defect discovered via AC #2's own test and fixed** (Task 6 predicted "no code change expected here, only verification" — the verification instead surfaced two real bugs): (1) the middleware set `context.Response.ContentType = "application/problem+json"` manually, but the subsequent `await context.Response.WriteAsJsonAsync(...)` call silently overwrote it back to `application/json; charset=utf-8` (ASP.NET Core's `WriteAsJsonAsync` always sets the response `Content-Type` itself unless a `contentType` argument is passed); (2) `Detail = null` combined with the framework's built-in `ProblemDetails` JSON converter (which omits any null RFC 7807 field, e.g. `type`/`detail`/`instance`, from the serialized body) meant the `detail` key was entirely absent from the response, violating AC #2's "body containing `status`, `title`, and `detail` fields". Fixed both in `ExceptionHandlingMiddleware.cs`: pass `contentType: "application/problem+json"` explicitly to `WriteAsJsonAsync` (with an explicit `null` `JsonSerializerOptions` argument, required because no overload accepts `(value, contentType, cancellationToken)` directly), and changed `Detail` from `null` to a fixed, generic, non-sensitive string ("An unexpected error occurred. Please contact support if the problem persists.") — still never the raw exception message/stack trace, preserving NFR6.
+- No domain entities, `ClienteEntity`/`ContactoEntity`, repositories, or configurations were added — fully in scope per the story's scope note.
+- `appsettings.Development.json`/`appsettings.json` were not modified — the existing `ConnectionStrings:DefaultConnection` from Story 1.1 was reused as-is.
+
 ### File List
+
+**Created:**
+- `backend/src/SiesaAgents.Infrastructure/Data/AppDbContext.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/Extensions/ModelBuilderExtensions.cs`
+- `backend/src/SiesaAgents.Infrastructure/Data/SnakeCaseHistoryRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Migrations/20260706051420_InitialCreate.cs`
+- `backend/src/SiesaAgents.Infrastructure/Migrations/20260706051420_InitialCreate.Designer.cs`
+- `backend/src/SiesaAgents.Infrastructure/Migrations/AppDbContextModelSnapshot.cs`
+
+**Modified:**
+- `backend/src/SiesaAgents.API/Program.cs` (registered `AddDbContext<AppDbContext>` with `UseNpgsql` + `MigrationsHistoryTable("__ef_migrations_history")` + `ReplaceService<IHistoryRepository, SnakeCaseHistoryRepository>()`)
+- `backend/src/SiesaAgents.API/Middleware/ExceptionHandlingMiddleware.cs` (fixed `Content-Type` override bug and missing `detail` field — see Completion Notes)
+
+**Pre-existing, unmodified this story (from the prior ATDD sub-agent run, verified in place):**
+- `backend/src/SiesaAgents.API/SiesaAgents.API.csproj` (`Microsoft.EntityFrameworkCore.Design` package reference already added)
+- `backend/tests/SiesaAgents.IntegrationTests/SiesaAgents.IntegrationTests.csproj`
+- `backend/tests/SiesaAgents.IntegrationTests/TestWebApplicationFactory.cs`
+- `backend/tests/SiesaAgents.IntegrationTests/ExceptionHandlingMiddlewareTests.cs`
+- `backend/tests/SiesaAgents.IntegrationTests/AppDbContextMigrationTests.cs`
+- `backend/SiesaAgents.sln` (`SiesaAgents.IntegrationTests` already added under the `tests` solution folder)
+- `backend/src/SiesaAgents.Infrastructure/SiesaAgents.Infrastructure.csproj` (`Npgsql.EntityFrameworkCore.PostgreSQL` already present from Story 1.1)
+- `backend/src/SiesaAgents.API/appsettings.Development.json` (`ConnectionStrings:DefaultConnection` already present from Story 1.1)
+
+### Environment Limitations
+
+- PostgreSQL 16 was installed but stopped by default in this sandbox (`pg_lsclusters` → `16 main 5432 down`), consistent with the story's own "Local environment note" and with Story 1.1's Debug Log. Unlike a fully sandboxed/CI environment, this session was able to start the local cluster (`sudo service postgresql start`) and set the `postgres` role password, so — unlike the ATDD RED-phase run — **all 13 integration tests were executed against a real PostgreSQL 18-compatible-enough (actual: 16) instance with true GREEN assertions**, not soft-skips. `dotnet ef database update` was run for real and independently verified via `psql`.
+- Note: the company standard specifies PostgreSQL 18+; only PostgreSQL 16 is available as an OS package in this sandbox. This does not affect AC compliance (no version-specific SQL features are used), but is flagged for awareness — production/CI environments should provision PostgreSQL 18+ per company-standards.md.
