@@ -1,6 +1,6 @@
 # Story 2.1: Client List & Search
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -182,7 +182,26 @@ Claude Sonnet 5 (sa-create-story sub-agent for story creation; sa-dev-story sub-
 - `frontend/src/modules/crm/clientes/presentation/ClienteListView.test.tsx`
 - `frontend/src/modules/crm/clientes/presentation/ClienteListView.perf.test.tsx`
 - `frontend/src/test/factories/cliente.factory.ts`
+- `frontend/src/test/msw/server.ts`
 - `e2e/pages/clientes.page.ts`, `e2e/tests/clientes/clientes-crud.spec.ts` (verified alignment only, not modified)
+
+**Added by later pipeline phases (testarch-automate / testarch-review), not present at dev-story time — recorded here during code-review for File List completeness:**
+- `backend/tests/SiesaAgents.IntegrationTests/AssemblyInfo.cs` (assembly-level `DisableTestParallelization` guard)
+- `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsEdgeCasesTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Domain/Clientes/ClienteEntityEdgeCasesTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`
+- `frontend/src/modules/crm/clientes/presentation/ClienteListView.edge-cases.test.tsx`
+- `_bmad-output/atdd-checklist-2-1-client-list-search.md`, `_bmad-output/automation-summary-2-1-client-list-search.md`, `_bmad-output/implementation-artifacts/test-review-2-1-client-list-search.md`
+
+**Modified by code-review (this pass):**
+- `frontend/src/shared/components/ErrorPanel.tsx` (added `aria-live="polite"` — see Senior Developer Review)
+
+## Review Follow-ups (AI)
+
+- [x] [AI-Review][Medium] `ErrorPanel` had no ARIA live region, so screen-reader users were never notified when it dynamically replaced the client list on a load failure (AC4) — inconsistent with the sibling `EmptyState` component, which correctly implements this for the identical "state replaces list content" scenario (`ux-design-specification.md` Accessibility, WCAG 2.1 AA). **Fixed**: added `aria-live="polite"` to `ErrorPanel.tsx`. Verified: full `ClienteListView` suite (19/19) still green after the change.
+- [x] [AI-Review][Medium] File List (Dev Agent Record) was missing 6 files that exist in git for this story's slice (`AssemblyInfo.cs`, `ClienteEndpointsEdgeCasesTests.cs`, `ClienteEntityEdgeCasesTests.cs`, `GetClientesQueryHandlerTests.cs`, `ClienteListView.edge-cases.test.tsx`, plus the ATDD/automation/test-review markdown artifacts) — added by the `testarch-automate`/`testarch-review` pipeline phases after `dev-story` ran, not developer omission. **Fixed**: File List updated above to document them.
+- [ ] [AI-Review][Low] No loading-state visual feedback (skeleton) while the initial `GET /api/v1/clientes` is pending — company-standards.md specifies "skeleton screens, not spinners" for loading states, and `react-loading-skeleton` is already an installed dependency but unused project-wide. Current blank-panel behavior during loading is intentional and covered by `ClienteListView.edge-cases.test.tsx` ("renders no list items, no EmptyState, and no ErrorPanel while the query is pending"), and no AC in this story requires a loading indicator. Deferred as a follow-up enhancement, not blocking — introducing it now would also require wiring the library's global CSS import for the first time in the codebase, which exceeds this story's minimal-complexity scope.
+- [ ] [AI-Review][Low] `ClientListItem` renders `cursor-pointer` and a hover background with no `onClick` handler yet, implying interactivity that isn't wired until Story 2.2 (client detail view). Intentional per this story's scope (detail panel is explicitly out of scope), but flagged so Story 2.2 wires the click handler rather than leaving the affordance dead.
 
 **Auto-generated (gitignored, not committed):**
 - `frontend/src/routeTree.gen.ts` (regenerated to reflect no structural change — `/_app/clientes` route id unchanged)
