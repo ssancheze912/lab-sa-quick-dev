@@ -147,8 +147,11 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring)
 - `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
 - `frontend/src/routes/_app/clientes.$clienteId.tsx`
 
-**Frontend — pre-existing (authored by ATDD phase, unmodified in this pass):**
-- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx`
+**Frontend — pre-existing (authored by ATDD phase, split by TEA test-quality review):**
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx` (256 lines, was 471 — Story 2.5's delete-flow tests extracted to the new sibling file below, no assertion/behavior changes)
+
+**Frontend — new (added by TEA test-quality review, `testarch-test-review`):**
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.delete.test.tsx` (268 lines — extracted from `ClienteDetailView.test.tsx`, which had crossed the project's <300-line-per-file standard; mirrors the `ClienteForm.edit.test.tsx`/`ClienteForm.edit.submit.test.tsx` split from Story 2.4's review)
 
 **E2E — pre-existing (authored by ATDD phase, unmodified in this pass):**
 - `e2e/tests/clientes/clientes-delete.spec.ts`
