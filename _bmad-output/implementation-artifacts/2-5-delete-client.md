@@ -1,6 +1,6 @@
 # Story 2.5: Delete Client
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -117,6 +117,8 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring)
 - No `DeleteClienteResult` wrapper type was introduced (handler returns `bool` directly) and no new generic `ConfirmDialog` abstraction was built — both deliberate per Dev Notes/minimal-complexity principle.
 - AC #4 (contacts survive with `clienteId = null`) is out of scope per the story's explicit scope note — `Contacto` entity doesn't exist yet (Story 3.1) and the FK is added in Epic 4; no `Contacto`-related code was touched.
 - E2E spec (`clientes-delete.spec.ts`) was not executed in this pass (requires the full app stack + Playwright browsers running); the implementation was manually cross-checked against every locator, dialog copy, and toast string it asserts on.
+- **Code-review fix (post-dev-pass)**: `testarch-automate` had found and fixed a production defect — `ClienteDetailView.handleConfirmDelete` left a failed `DELETE` completely silent to the user (dialog just stays open, no toast/message), unlike the sibling create/update flows which both surface an error on failure — but explicitly deferred adding user-facing error feedback as "a UX/product decision, out of scope for a test-automation pass" (`automation-summary-2-5-delete-client.md`, "Production Defect Found and Fixed"). Code review judged this in-scope for Story 2.5 itself (AC #2 already governs the delete mutation's user feedback, and NFR6/the `ClienteForm` precedent both require a failure to be visibly communicated, not silent) and added `onError: () => toast.error('No se pudo eliminar el cliente. Intenta de nuevo.')` to `useDeleteCliente.ts` — one line, mirrors the existing `toast.success`/`toast.error` (sonner) pattern already used by `useCreateCliente`/`useUpdateCliente`'s sibling mutations for the success side. Verified: full `clientes` module suite 95/95 passing (including both `ClienteDetailView.edge-cases.test.tsx` delete tests, which do not assert toast absence), `tsc -b` clean, `oxlint` clean on the changed file.
+- **Code-review fix (post-dev-pass)**: two files added by the `testarch-automate`/`testarch-test-review` phases after this story's dev pass were missing from the File List below (an "undocumented changes" gap, same category as Story 2.4's review finding) — `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsDeleteEdgeCasesTests.cs` and `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.edge-cases.test.tsx` (Story 2.5's 2 new tests within it). Both now added to the File List.
 
 ### File List
 
@@ -138,8 +140,11 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring)
 - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/DeleteClienteCommandHandlerTests.cs`
 - `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsDeleteTests.cs`
 
+**Backend — new (added by TEA test-automation expansion, `testarch-automate` — see `automation-summary-2-5-delete-client.md`):**
+- `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsDeleteEdgeCasesTests.cs` (4 tests — malformed/empty/uppercase Guid route boundaries, same-id double-delete idempotency)
+
 **Frontend — new:**
-- `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts`
+- `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts` (code-review fix: added `onError` handler — see Completion Notes List)
 
 **Frontend — modified:**
 - `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
@@ -152,6 +157,9 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring)
 
 **Frontend — new (added by TEA test-quality review, `testarch-test-review`):**
 - `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.delete.test.tsx` (268 lines — extracted from `ClienteDetailView.test.tsx`, which had crossed the project's <300-line-per-file standard; mirrors the `ClienteForm.edit.test.tsx`/`ClienteForm.edit.submit.test.tsx` split from Story 2.4's review)
+
+**Frontend — modified (added by TEA test-automation expansion, `testarch-automate` — see `automation-summary-2-5-delete-client.md`):**
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.edge-cases.test.tsx` (2 new tests — Escape-close alternate path, DELETE-500-failure path)
 
 **E2E — pre-existing (authored by ATDD phase, unmodified in this pass):**
 - `e2e/tests/clientes/clientes-delete.spec.ts`
