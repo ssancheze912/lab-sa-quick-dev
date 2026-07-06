@@ -5,20 +5,25 @@ import { ClientListItem } from '@/shared/components/ClientListItem'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
 import { ClienteForm } from '@/modules/crm/clientes/presentation/ClienteForm'
+import { SortControl, sortClientes, type SortOption } from '@/shared/components/SortControl'
 
 export function ClienteListView() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [sortOption, setSortOption] = useState<SortOption>('fecha-desc')
   const { data: clientes = [], isError, isSuccess, refetch } = useClientes()
 
-  const filteredClientes = useMemo(() => {
+  const sortedClientes = useMemo(() => {
     const term = searchTerm.trim().toLowerCase()
-    if (!term) return clientes
-    return clientes.filter(
-      (cliente) =>
-        cliente.nombre.toLowerCase().includes(term) || cliente.nit.toLowerCase().includes(term),
-    )
-  }, [clientes, searchTerm])
+    const filtered = !term
+      ? clientes
+      : clientes.filter(
+          (cliente) =>
+            cliente.nombre.toLowerCase().includes(term) ||
+            cliente.nit.toLowerCase().includes(term),
+        )
+    return sortClientes(filtered, sortOption)
+  }, [clientes, searchTerm, sortOption])
 
   return (
     <div data-testid="clientes-list-panel" className="flex h-full w-[280px] flex-col border-r border-slate-200">
@@ -37,10 +42,14 @@ export function ClienteListView() {
         />
       </div>
 
+      <div className="px-3 pb-3">
+        <SortControl value={sortOption} onChange={setSortOption} />
+      </div>
+
       <div className="flex-1 overflow-y-auto px-2 pb-2">
         {isError && <ErrorPanel message="No se pudo cargar" onRetry={() => refetch()} />}
 
-        {!isError && isSuccess && filteredClientes.length === 0 && searchTerm === '' && (
+        {!isError && isSuccess && sortedClientes.length === 0 && searchTerm === '' && (
           <EmptyState
             title="No hay clientes registrados"
             subtitle="Crea el primer cliente del sistema"
@@ -48,7 +57,7 @@ export function ClienteListView() {
         )}
 
         {!isError &&
-          filteredClientes.map((cliente) => <ClientListItem key={cliente.id} cliente={cliente} />)}
+          sortedClientes.map((cliente) => <ClientListItem key={cliente.id} cliente={cliente} />)}
       </div>
 
       <ClienteForm open={isFormOpen} onOpenChange={setIsFormOpen} />
