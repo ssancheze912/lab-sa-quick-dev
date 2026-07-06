@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios'
 import { apiClient } from '@/shared/lib/apiClient'
-import type { Cliente } from '@/modules/crm/clientes/domain/Cliente'
+import type { Cliente, CreateClienteInput } from '@/modules/crm/clientes/domain/Cliente'
 import type { IClienteRepository } from '@/modules/crm/clientes/domain/IClienteRepository'
 
 class ClienteApiRepository implements IClienteRepository {
@@ -19,6 +19,11 @@ class ClienteApiRepository implements IClienteRepository {
       }
       throw error
     }
+  }
+
+  async create(data: CreateClienteInput): Promise<Cliente> {
+    const response = await apiClient.post<Cliente>('/api/v1/clientes', data)
+    return response.data
   }
 }
 

@@ -6,3 +6,5 @@ export interface Cliente {
   ciudad: string
   createdAt: string
 }
+
+export type CreateClienteInput = Pick<Cliente, 'nombre' | 'nit' | 'telefono' | 'ciudad'>

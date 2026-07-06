@@ -130,6 +130,9 @@ public class GetClienteByIdQueryHandlerTests
 
         public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
             Task.FromResult(clienteToReturn);
+
+        public Task<bool> AddAsync(ClienteEntity cliente, CancellationToken cancellationToken) =>
+            Task.FromResult(true);
     }
 
     /// <summary>
@@ -151,5 +154,8 @@ public class GetClienteByIdQueryHandlerTests
             LastCancellationToken = cancellationToken;
             return Task.FromResult(clienteToReturn);
         }
+
+        public Task<bool> AddAsync(ClienteEntity cliente, CancellationToken cancellationToken) =>
+            Task.FromResult(true);
     }
 }

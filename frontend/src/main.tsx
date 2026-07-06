@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { Toaster } from 'sonner'
 import 'siesa-ui-kit/styles.css'
 import './index.css'
 import { QueryProvider } from '@/app/providers/QueryProvider'
@@ -17,6 +18,7 @@ declare module '@tanstack/react-router' {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryProvider>
+      <Toaster richColors position="top-right" />
       <RouterProvider router={router} />
     </QueryProvider>
   </StrictMode>,

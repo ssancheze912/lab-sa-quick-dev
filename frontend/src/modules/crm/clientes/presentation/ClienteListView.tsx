@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
-import { Input } from 'siesa-ui-kit'
+import { Button, Input } from 'siesa-ui-kit'
 import { useClientes } from '@/modules/crm/clientes/application/useClientes'
 import { ClientListItem } from '@/shared/components/ClientListItem'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
+import { ClienteForm } from '@/modules/crm/clientes/presentation/ClienteForm'
 
 export function ClienteListView() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const { data: clientes = [], isError, isSuccess, refetch } = useClientes()
 
   const filteredClientes = useMemo(() => {
@@ -20,7 +22,13 @@ export function ClienteListView() {
 
   return (
     <div data-testid="clientes-list-panel" className="flex h-full w-[280px] flex-col border-r border-slate-200">
-      <div role="search" className="p-3">
+      <div className="p-3">
+        <Button htmlType="button" size="sm" fullWidth onClick={() => setIsFormOpen(true)}>
+          Nuevo cliente
+        </Button>
+      </div>
+
+      <div role="search" className="p-3 pt-0">
         <Input
           placeholder="Buscar cliente..."
           aria-label="Buscar clientes"
@@ -42,6 +50,8 @@ export function ClienteListView() {
         {!isError &&
           filteredClientes.map((cliente) => <ClientListItem key={cliente.id} cliente={cliente} />)}
       </div>
+
+      <ClienteForm open={isFormOpen} onOpenChange={setIsFormOpen} />
     </div>
   )
 }
