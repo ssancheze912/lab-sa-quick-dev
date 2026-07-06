@@ -1,6 +1,6 @@
 # Story 1.2: Frontend Navigation Shell
 
-Status: review
+Status: done
 
 ## Story
 
@@ -190,3 +190,16 @@ Claude Sonnet 5 (sa-dev-story sub-agent)
 - `frontend/src/app/routing.test.tsx`
 - `e2e/tests/foundation/navigation-shell.spec.ts`
 - `frontend/vitest.config.ts`, `frontend/src/test/setup.ts`, `frontend/package.json` (`test` script) — Task 4 prerequisites, already in place
+
+**Added by the Automate/Test-Review sub-agent phases (post dev-story, pre code-review):**
+- `frontend/src/app/routing.edge-cases.test.tsx` (created — AC3/AC4/AC5 edge cases; originally included one `test.skip()` documenting the AC5 nested-route gap, fixed and un-skipped in Code Review — see below)
+- `frontend/src/shared/components/AppNavigation.edge-cases.test.tsx` (created — AC2/AC6 edge cases)
+- `e2e/tests/foundation/navigation-shell-edge-cases.spec.ts` (created — AC1/AC2/AC5/AC6 real-browser edge cases)
+- `_bmad-output/implementation-artifacts/automation-summary-1-2-frontend-navigation-shell.md` (created)
+- `_bmad-output/implementation-artifacts/test-review-1-2-frontend-navigation-shell.md` (created)
+
+### Code Review Fixes (2026-07-06)
+
+- `frontend/src/routes/_app.tsx` (modified — added `notFoundComponent: NotFoundView` to the `/_app` route. Root cause: TanStack Router's `notFoundMode: 'fuzzy'` resolves the not-found UI at the *nearest matched ancestor route*, not always the root. A fully-unmatched path like `/ruta-que-no-existe` matches only the root, so the root's `notFoundComponent` fired correctly; but a nested unknown path like `/clientes/no-existe` matches into the `/_app` branch, which had no `notFoundComponent` of its own, so it fell back to TanStack's untranslated default instead of the Spanish `NotFoundView` — an AC5 violation for nested unknown routes. `AppLayout` already wraps `<Outlet />` in `<AppShell>`, so no further change was needed to keep the nav visible.)
+- `frontend/src/app/routing.edge-cases.test.tsx` (modified — un-skipped the `test.skip()` that documented the above gap, removed the now-inaccurate companion assertion checking for the framework-default English text; both tests now assert the Spanish `NotFoundView` copy and pass)
+- `_bmad-output/review-1-2-frontend-navigation-shell.md` (new — full code review report)
