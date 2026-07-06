@@ -1,6 +1,6 @@
 # Story 2.2: Client Detail View
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -144,7 +144,6 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring; Claude Sonnet 5 
 - `backend/src/SiesaAgents.Application/Clientes/Queries/GetClienteByIdQueryHandler.cs`
 
 **Backend — pre-existing (ATDD RED-phase, unmodified, now GREEN):**
-- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
 - `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsTests.cs` (Story 2.2 sections)
 - `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsEdgeCasesTests.cs` (Story 2.2 section)
 
@@ -167,9 +166,46 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring; Claude Sonnet 5 
 **Frontend — pre-existing (ATDD RED-phase, unmodified, now GREEN):**
 - `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx`
 
+**Frontend — new (testarch-automate phase, added after dev-story):**
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.edge-cases.test.tsx` (query-key-driven refetch, `enabled` guard, Unicode rendering, pending state, genuine network failure — flagged by code review as missing from this File List, added here)
+
+**Backend — modified (testarch-automate phase, added after dev-story):**
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs` (gained a "Test Automation Expansion" section — Id/CancellationToken propagation, `Guid.Empty`, independent-field-mapping cases — after the ATDD phase; corrected here from the previous "unmodified" listing above, which only reflected the file's state as of dev-story)
+
 **E2E — pre-existing (ATDD RED-phase, unmodified):**
 - `e2e/pages/clientes.page.ts` (detail-field + not-found locators already present)
 - `e2e/tests/clientes/clientes-detalle.spec.ts` (TC-E2-P1-07/08/09 already authored)
 
 **Not modified (auto-generated, gitignored):**
 - `frontend/src/routeTree.gen.ts` (regenerated locally by the TanStack Router Vite plugin during `tsc -b`/`vite build`/`pnpm dev`; not committed per project convention)
+
+## Senior Developer Review (AI)
+
+- **Reviewer**: SiesaTeam (AI Agent, adversarial code review)
+- **Date**: 2026-07-06
+- **Outcome**: **Approve** (issues found were documentation-only / cosmetic; both auto-fixed)
+
+### Verification performed
+
+- `dotnet build SiesaAgents.sln` → 0 warnings, 0 errors.
+- `dotnet test tests/SiesaAgents.UnitTests` → 43/43 passed.
+- `pnpm exec tsc -b` → 0 type errors.
+- `pnpm test -- --run` → 9 files, 52/52 passed.
+- Read every file in the git diff (`681b6a2..6104d14`) against the story's AC1-AC3, cross-checked route params, DTO field-name casing (PascalCase C# → camelCase JSON → matches frontend `Cliente` type), `ProblemDetails`/`UseStatusCodePages` wiring (Story's `Results.NotFound()` correctly surfaces as RFC 7807 given the app's global `AddProblemDetails()`), and the `:guid` route-constraint + `enabled: !!clienteId` + `data === null` not-found flow end-to-end.
+- Verified the stale "do NOT add GetByIdAsync yet" XML doc comment on `IClienteRepository` was actually corrected as Task 1 required (it was).
+
+### Findings
+
+1. **[MEDIUM] File List documentation gap (fixed)** — `frontend/.../ClienteDetailView.edge-cases.test.tsx` is a real file added to git by the testarch-automate phase but was absent from every File List section (not listed as new, modified, or pre-existing). Additionally, `GetClienteByIdQueryHandlerTests.cs` was listed as "pre-existing, unmodified" even though it gained a "Test Automation Expansion" section after the ATDD phase. Fixed by adding both files to accurate File List entries.
+2. **[LOW] Redundant `!isError &&` guards (fixed)** — `ClienteDetailView.tsx`'s `isSuccess`-branch conditions were prefixed with a redundant `!isError &&` even though TanStack Query's `isError`/`isSuccess` are mutually exclusive query-status booleans (never both true). Harmless, but simplified for clarity per the "no dead conditions" maintainability check.
+3. **[LOW] E2E `POST`-dependent tests remain non-gating (accepted, no action)** — TC-E2-P1-07/08 in `clientes-detalle.spec.ts` cannot pass until Story 2.3 ships `POST /api/v1/clientes`. This is explicitly documented in the story and mirrors the identical, already-accepted pattern from Story 2.1 — confirmed as a real, pre-existing cross-story dependency rather than a gap introduced by this story, so no fix applied.
+
+### Acceptance Criteria coverage
+
+- AC1 (click → detail panel + URL update, no reload): implemented via `ClientListItem`'s `Link` + `clientes.$clienteId.tsx`; covered by component tests, `ClienteListView.test.tsx` link-navigation cases, and E2E TC-E2-P1-07 (authored, blocked on Story 2.3 seeding).
+- AC2 (direct URL / fresh load): implemented via the same route resolving independently of prior navigation; covered by component tests and E2E TC-E2-P1-08 (authored, blocked on Story 2.3 seeding).
+- AC3 (graceful not-found, NFR6): implemented via `data === null` → `EmptyState testId="cliente-not-found"` and `isError` → `ErrorPanel` (never raw error text); covered by component tests, backend 404 integration tests, malformed-GUID integration test, and E2E TC-E2-P1-09 (passes today, no blocker).
+
+### Change Log
+
+- 2026-07-06: Code review (AI) — fixed File List documentation gaps and simplified redundant conditions in `ClienteDetailView.tsx`; story status → `done`.

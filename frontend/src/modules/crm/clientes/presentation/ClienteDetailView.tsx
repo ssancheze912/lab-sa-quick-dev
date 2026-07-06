@@ -13,7 +13,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
     <div data-testid="cliente-detail-panel" className="flex flex-1 flex-col p-6">
       {isError && <ErrorPanel message="No se pudo cargar" onRetry={() => refetch()} />}
 
-      {!isError && isSuccess && data === null && (
+      {isSuccess && data === null && (
         <EmptyState
           title="Cliente no encontrado"
           subtitle="Verifica el enlace o vuelve a la lista de clientes"
@@ -21,7 +21,7 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
         />
       )}
 
-      {!isError && isSuccess && data && (
+      {isSuccess && data && (
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3">
           <dt className="text-sm font-medium text-slate-500">Nombre</dt>
           <dd data-testid="cliente-detail-nombre" className="text-sm text-slate-900 dark:text-white">
