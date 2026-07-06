@@ -36,9 +36,18 @@
 import { describe, test, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  createMemoryHistory,
+  RouterProvider,
+} from '@tanstack/react-router'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import { createCliente, createClientes } from '@/test/factories/cliente.factory'
+import type { Cliente } from '@/modules/crm/clientes/domain/Cliente'
+import { ClientListItem } from '@/shared/components/ClientListItem'
 import { ClienteListView } from './ClienteListView'
 
 // Wildcard origin match: robust regardless of how VITE_API_URL resolves in the test env
@@ -251,5 +260,61 @@ describe('AC4 — ErrorPanel displayed when the initial fetch fails', () => {
 
     // THEN: a second request fires and the list eventually renders successfully
     await waitFor(() => expect(requestCount).toBe(2))
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Story 2.2 (Task 6): `ClientListItem` becomes a `Link` to the deep-linkable
+// `/clientes/$clienteId` route, wiring up the click navigation required by AC #1.
+// No dedicated `ClientListItem.test.tsx` file exists yet, so these cases are added
+// here per the story's own guidance. A minimal router harness (mirrors
+// `AppNavigation.test.tsx`'s pattern) gives `Link` a real router context to resolve
+// `to`/`params` against, without needing MSW (ClientListItem performs no network I/O).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('ClientListItem — links to the deep-linkable detail route (Story 2.2, AC #1)', () => {
+  function renderClientListItemInRouter(cliente: Cliente) {
+    const rootRoute = createRootRoute({
+      component: () => <ClientListItem cliente={cliente} />,
+    })
+    const detailRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: '/clientes/$clienteId',
+      component: () => <div>Detail</div>,
+    })
+    const routeTree = rootRoute.addChildren([detailRoute])
+
+    const router = createRouter({
+      routeTree,
+      history: createMemoryHistory({ initialEntries: ['/'] }),
+    })
+
+    render(<RouterProvider router={router} />)
+    return router
+  }
+
+  test('[P0] renders cliente-list-item as a link with an href pointing to /clientes/{clienteId}', async () => {
+    // GIVEN a client to render
+    const cliente = createCliente()
+
+    // WHEN ClientListItem is rendered inside a router
+    renderClientListItemInRouter(cliente)
+
+    // THEN it renders as a link resolving to that client's detail route
+    const link = await screen.findByTestId('cliente-list-item')
+    expect(link).toHaveAttribute('href', `/clientes/${cliente.id}`)
+  })
+
+  test('[P1] clicking the item navigates the router to /clientes/{clienteId} (no full page reload)', async () => {
+    // GIVEN a client rendered inside a router
+    const cliente = createCliente()
+    const router = renderClientListItemInRouter(cliente)
+    const link = await screen.findByTestId('cliente-list-item')
+
+    // WHEN the user clicks the item
+    fireEvent.click(link)
+
+    // THEN the router's location updates to the client's detail route (client-side navigation)
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/clientes/${cliente.id}`))
   })
 })

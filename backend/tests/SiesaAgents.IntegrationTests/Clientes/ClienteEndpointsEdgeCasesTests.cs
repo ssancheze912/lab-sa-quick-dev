@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -135,6 +136,27 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         {
             await DeleteClientesAsync(clientes.Select(c => c.Id).ToArray());
         }
+    }
+
+    // ── Story 2.2 (AC #3) — ATDD Acceptance Tests, RED phase ──────────────────────────────
+    // Proves the `:guid` route constraint documented in Story 2.2 Task 1: a malformed
+    // (non-UUID) path segment never reaches `GetClienteByIdQueryHandler`, falling through to
+    // ASP.NET's default 404 instead. This already returns 404 today (no route matches the
+    // path at all pre-implementation) and continues to return 404 once the `{id:guid}` route
+    // is mapped — this test guards that framework-level behavior stays true across the
+    // implementation, complementing `ClienteEndpointsTests`'s well-formed-but-missing-Id case.
+
+    [RequiresPostgresFact]
+    public async Task GetClienteById_ReturnsNotFound_WhenIdIsMalformedGuid()
+    {
+        // GIVEN a path segment that is not a valid GUID
+        const string malformedId = "not-a-valid-guid";
+
+        // WHEN GET /api/v1/clientes/{id} is called with the malformed segment
+        var response = await _client.GetAsync($"/api/v1/clientes/{malformedId}");
+
+        // THEN the request falls through to ASP.NET's default 404 (AC #3)
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     private static string UniqueNit() =>

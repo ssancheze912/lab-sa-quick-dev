@@ -20,6 +20,13 @@ export class ClientesPage {
   readonly detailPanel: Locator;
   readonly emptyState: Locator;
 
+  // Detail panel — client fields (Story 2.2)
+  readonly detailNombre: Locator;
+  readonly detailNit: Locator;
+  readonly detailTelefono: Locator;
+  readonly detailCiudad: Locator;
+  readonly notFoundMessage: Locator;
+
   // Form (dialog/drawer)
   readonly form: Locator;
   readonly inputNombre: Locator;
@@ -43,6 +50,12 @@ export class ClientesPage {
 
     this.detailPanel = page.getByTestId('cliente-detail-panel');
     this.emptyState = page.getByTestId('empty-state');
+
+    this.detailNombre = page.getByTestId('cliente-detail-nombre');
+    this.detailNit = page.getByTestId('cliente-detail-nit');
+    this.detailTelefono = page.getByTestId('cliente-detail-telefono');
+    this.detailCiudad = page.getByTestId('cliente-detail-ciudad');
+    this.notFoundMessage = page.getByTestId('cliente-not-found');
 
     this.form = page.getByRole('dialog');
     this.inputNombre = page.getByLabel(/nombre/i);

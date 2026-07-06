@@ -145,6 +145,83 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         }
     }
 
+    // ── Story 2.2 (AC #1, #2, #3) — ATDD Acceptance Tests, RED phase ──────────────────────
+    // RED phase: fails to compile today because `GET /api/v1/clientes/{id:guid}` does not
+    // exist yet (Story 2.2 Task 1). The "not found" test below will coincidentally return
+    // 404 even before implementation, since no route currently matches this path segment
+    // at all — that overlap is expected and documented in Story 2.2 Task 1 (the `:guid`
+    // route constraint intentionally reuses ASP.NET's default 404 for both malformed and
+    // well-formed-but-missing IDs); the sibling "returns Ok"/"returns correct Dto" tests
+    // below are the true RED signal for this endpoint's happy path.
+
+    [RequiresPostgresFact]
+    public async Task GetClienteById_ReturnsOk_WhenClienteExists()
+    {
+        // GIVEN a client seeded directly via AppDbContext
+        var cliente = ClienteEntity.Create("Acme Corp", UniqueNit(), "3001234567", "Bogotá");
+        await SeedClientesAsync(cliente);
+
+        try
+        {
+            // WHEN GET /api/v1/clientes/{id} is called with the seeded client's Id
+            var response = await _client.GetAsync($"/api/v1/clientes/{cliente.Id}");
+
+            // THEN the response status is 200 OK
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+        finally
+        {
+            await DeleteClientesAsync(cliente.Id);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task GetClienteById_ReturnsCorrectDto_WhenClienteExists()
+    {
+        // GIVEN a client seeded directly via AppDbContext with known field values
+        var nit = UniqueNit();
+        var cliente = ClienteEntity.Create("Acme Corp", nit, "3001234567", "Bogotá");
+        await SeedClientesAsync(cliente);
+
+        try
+        {
+            // WHEN GET /api/v1/clientes/{id} is called with the seeded client's Id
+            var response = await _client.GetAsync($"/api/v1/clientes/{cliente.Id}");
+            var json = await response.Content.ReadAsStringAsync();
+            var found = JsonSerializer.Deserialize<ClienteApiResponse>(
+                json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            // THEN the response body matches every seeded field (CreatedAt is asserted only
+            // for non-default-ness, not exact equality, since Postgres/JSON round-tripping
+            // may lose sub-tick precision — same convention as
+            // `GetClientes_ReturnsNonDefaultCreatedAt_WhenDataExists`)
+            Assert.NotNull(found);
+            Assert.Equal(cliente.Id, found!.Id);
+            Assert.Equal("Acme Corp", found.Nombre);
+            Assert.Equal(nit, found.Nit);
+            Assert.Equal("3001234567", found.Telefono);
+            Assert.Equal("Bogotá", found.Ciudad);
+            Assert.NotEqual(default, found.CreatedAt);
+        }
+        finally
+        {
+            await DeleteClientesAsync(cliente.Id);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task GetClienteById_ReturnsNotFound_WhenClienteDoesNotExist()
+    {
+        // GIVEN a well-formed Id that does not correspond to any seeded client
+        var nonExistentId = Guid.NewGuid();
+
+        // WHEN GET /api/v1/clientes/{id} is called
+        var response = await _client.GetAsync($"/api/v1/clientes/{nonExistentId}");
+
+        // THEN the response status is 404 Not Found (AC #3)
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
     private static string UniqueNit() =>
         $"9{DateTimeOffset.UtcNow.Ticks % 100_000_000:D8}";
 
