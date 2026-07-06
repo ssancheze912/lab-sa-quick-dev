@@ -15,6 +15,7 @@ export class ClientesPage {
   readonly searchInput: Locator;
   readonly clienteItems: Locator;
   readonly btnNuevoCliente: Locator;
+  readonly sortControl: Locator;
 
   // Detail panel
   readonly detailPanel: Locator;
@@ -48,6 +49,7 @@ export class ClientesPage {
     this.searchInput = page.getByPlaceholder(/buscar cliente/i);
     this.clienteItems = page.getByTestId('cliente-list-item');
     this.btnNuevoCliente = page.getByRole('button', { name: /nuevo cliente/i });
+    this.sortControl = page.getByTestId('sort-control');
 
     this.detailPanel = page.getByTestId('cliente-detail-panel');
     this.emptyState = page.getByTestId('empty-state');
@@ -115,5 +117,18 @@ export class ClientesPage {
 
   async limpiarBusqueda() {
     await this.searchInput.clear();
+  }
+
+  /**
+   * Opens the SortControl's Select menu and picks the option by its visible Spanish label.
+   * Mirrors the existing `seleccionarCliente(nombre)` filter-by-text convention: click the
+   * trigger to open the menu, then click the option by text (siesa-ui-kit's `Select` wraps
+   * Headless UI's Listbox — trigger is a native `<button>`, options render with role="option").
+   */
+  async seleccionarOrden(
+    opcion: 'Nombre A→Z' | 'Nombre Z→A' | 'Más reciente' | 'Más antiguo'
+  ) {
+    await this.sortControl.getByRole('button').click();
+    await this.page.getByRole('option', { name: opcion, exact: true }).click();
   }
 }
