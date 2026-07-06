@@ -9,8 +9,9 @@ namespace SiesaAgents.IntegrationTests;
 /// TC-E1-P1-05 / TC-E1-P2-04 — Story 1.3 AC #1 and AC #3.
 ///
 /// AC #1: given PostgreSQL is running locally, after `dotnet ef database update` runs,
-/// `siesa_agents_db` exists with no domain tables (only EF Core's own
-/// __ef_migrations_history table).
+/// `siesa_agents_db` exists with EF Core's own __ef_migrations_history table (plus, from
+/// Story 2.1 onward, the `clientes` domain table — the assertion below was updated when
+/// Story 2.1 introduced the first domain table).
 ///
 /// AC #3: given AppDbContext.OnModelCreating runs, modelBuilder.ApplySnakeCaseNaming()
 /// converts all EF-managed identifiers to snake_case, verified here via the
@@ -92,9 +93,9 @@ public class AppDbContextMigrationTests : IClassFixture<TestWebApplicationFactor
     }
 
     [RequiresPostgresFact]
-    public async Task Database_ContainsOnlyMigrationsHistoryTable_NoDomainTables()
+    public async Task Database_ContainsOnlyExpectedTables_NoUnrelatedDomainTables()
     {
-        // GIVEN `dotnet ef database update` has applied only the empty InitialCreate migration
+        // GIVEN `dotnet ef database update` has applied InitialCreate + CreateClientesTable
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -104,8 +105,11 @@ public class AppDbContextMigrationTests : IClassFixture<TestWebApplicationFactor
             "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'",
             "table_name");
 
-        // THEN only __ef_migrations_history exists — no domain tables (clientes, contactos, etc.)
-        Assert.Equal(new[] { EfMigrationsHistoryTable }, tableNames);
+        // THEN only __ef_migrations_history and clientes exist — no other domain tables
+        // (contactos, etc. — those belong to later epics)
+        Assert.Equal(
+            new[] { EfMigrationsHistoryTable, "clientes" }.OrderBy(n => n),
+            tableNames.OrderBy(n => n));
     }
 
     private static Task<List<string>> GetColumnNamesAsync(AppDbContext dbContext, string tableName) =>

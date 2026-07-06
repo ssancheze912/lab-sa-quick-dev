@@ -17,14 +17,23 @@
 import { describe, test, expect } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { createRouter, createMemoryHistory, RouterProvider } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { routeTree } from '../routeTree.gen'
 
+// Story 2.1 wires `/clientes` to `ClienteListView`, which reads `useClientes()`
+// (TanStack Query) — a QueryClientProvider is now required for the route tree to
+// render without crashing, same as the real app shell (see main.tsx).
 function renderAppAt(initialPath: string) {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [initialPath] }),
   })
-  render(<RouterProvider router={router} />)
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  )
   return router
 }
 

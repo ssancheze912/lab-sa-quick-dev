@@ -1,16 +1,20 @@
 using Microsoft.EntityFrameworkCore;
+using SiesaAgents.Domain.Clientes.Entities;
+using SiesaAgents.Infrastructure.Data.Configurations;
 using SiesaAgents.Infrastructure.Data.Extensions;
 
 namespace SiesaAgents.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    // No DbSet<> properties yet — domain entities are added starting Epic 2 (ClienteEntity)
-    // and Epic 3 (ContactoEntity). Do not add them in this story.
+    // ContactoEntity is added starting Epic 3. Do not add it in this story.
+    public DbSet<ClienteEntity> Clientes => Set<ClienteEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.ApplyConfiguration(new ClienteConfiguration());
 
         // MUST remain the last call — converts all EF-managed identifiers to snake_case
         modelBuilder.ApplySnakeCaseNaming();

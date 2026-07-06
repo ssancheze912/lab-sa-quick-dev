@@ -1,8 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Scalar.AspNetCore;
+using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
+using SiesaAgents.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +23,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
             builder.Configuration.GetConnectionString("DefaultConnection"),
             npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__ef_migrations_history"))
         .ReplaceService<IHistoryRepository, SnakeCaseHistoryRepository>());
+
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<GetClientesQueryHandler>();
 
 builder.Services.AddCors(options =>
 {
@@ -43,6 +50,8 @@ app.UseCors("DevCors");
 
 app.MapOpenApi();
 app.MapScalarApiReference();
+
+app.MapClienteEndpoints();
 
 // Test-only endpoint used by SiesaAgents.IntegrationTests to exercise ExceptionHandlingMiddleware
 // (TC-E1-P0-05). Guarded so it never exists outside the "Testing" hosting environment.
