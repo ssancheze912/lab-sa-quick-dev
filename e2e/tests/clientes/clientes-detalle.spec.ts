@@ -88,4 +88,26 @@ test.describe('Detalle de Cliente', () => {
     await expect(clientesPage.detailNombre).toHaveText(data.nombre);
     await expect(clientesPage.listPanel).toBeVisible();
   });
+
+  // ── Test Automation Expansion (testarch-automate) — edge case beyond the ATDD RED phase ──
+  // Not blocked on Story 2.3's POST endpoint (no seeding required), so this runs today
+  // alongside TC-E2-P1-09, unlike TC-E2-P1-07/08 above.
+
+  test('[P2] muestra un mensaje de no encontrado cuando el clienteId en la URL no es un GUID valido', async ({
+    page,
+  }) => {
+    // GIVEN: a clienteId path segment that is syntactically not a GUID at all (a user
+    // mistyping/truncating a shared link, as opposed to TC-E2-P1-09's well-formed-but-
+    // missing UUID case)
+    const malformedId = 'not-a-valid-guid';
+
+    // WHEN: the user navigates directly to /clientes/{malformedId}
+    await page.goto('/clientes/' + malformedId);
+
+    // THEN: the same graceful not-found message is displayed — the backend's `:guid` route
+    // constraint falls through to 404 for malformed ids exactly as it does for missing ones
+    // (AC #3), and the split-panel layout (list still visible) is preserved
+    await expect(clientesPage.notFoundMessage).toBeVisible();
+    await expect(clientesPage.listPanel).toBeVisible();
+  });
 });

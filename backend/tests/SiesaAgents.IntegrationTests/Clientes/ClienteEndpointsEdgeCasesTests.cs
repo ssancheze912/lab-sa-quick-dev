@@ -159,6 +159,125 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    // ── Test Automation Expansion (testarch-automate) — Story 2.2 edge cases beyond ATDD ────
+
+    [RequiresPostgresFact]
+    public async Task GetClienteById_ReturnsJsonContentType_WhenClienteExists()
+    {
+        // GIVEN a client seeded directly via AppDbContext
+        var cliente = ClienteEntity.Create("Acme Corp", UniqueNit(), "3001234567", "Bogotá");
+        await SeedClientesAsync(cliente);
+
+        try
+        {
+            // WHEN GET /api/v1/clientes/{id} is called
+            var response = await _client.GetAsync($"/api/v1/clientes/{cliente.Id}");
+
+            // THEN the response declares a JSON content type (mirrors the list endpoint's
+            // already-asserted convention, now verified for the single-record lookup too)
+            Assert.NotNull(response.Content.Headers.ContentType);
+            Assert.Equal(MediaTypeNames.Application.Json, response.Content.Headers.ContentType!.MediaType);
+        }
+        finally
+        {
+            await DeleteClientesAsync(cliente.Id);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task GetClienteById_PreservesAccentsAndSpecialCharacters_InNombre()
+    {
+        // GIVEN a client with a Nombre containing Spanish accents, ñ, and an apostrophe
+        const string nombreConCaracteresEspeciales = "Compañía Ñoño & O'Brien S.A.S.";
+        var cliente = ClienteEntity.Create(
+            nombreConCaracteresEspeciales, UniqueNit(), "3001234567", "Bogotá");
+        await SeedClientesAsync(cliente);
+
+        try
+        {
+            // WHEN GET /api/v1/clientes/{id} is called with that client's Id
+            var response = await _client.GetAsync($"/api/v1/clientes/{cliente.Id}");
+            var json = await response.Content.ReadAsStringAsync();
+            var found = JsonSerializer.Deserialize<ClienteApiResponse>(
+                json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            // THEN the Nombre round-trips through PostgreSQL/JSON without corruption, same
+            // as the list endpoint's already-asserted single-record guarantee
+            Assert.NotNull(found);
+            Assert.Equal(nombreConCaracteresEspeciales, found!.Nombre);
+        }
+        finally
+        {
+            await DeleteClientesAsync(cliente.Id);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task GetClienteById_ReturnsUppercaseGuid_AsOk()
+    {
+        // GIVEN a client seeded directly via AppDbContext
+        var cliente = ClienteEntity.Create("Acme Corp", UniqueNit(), "3001234567", "Bogotá");
+        await SeedClientesAsync(cliente);
+
+        try
+        {
+            // WHEN GET /api/v1/clientes/{id} is called with the Id formatted in uppercase
+            // (ASP.NET's `:guid` route constraint parses case-insensitively)
+            var uppercaseId = cliente.Id.ToString().ToUpperInvariant();
+            var response = await _client.GetAsync($"/api/v1/clientes/{uppercaseId}");
+
+            // THEN the request still resolves to 200 OK — case must not affect route matching
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+        finally
+        {
+            await DeleteClientesAsync(cliente.Id);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task GetClienteById_ReturnsOnlyTheRequestedRecord_WhenMultipleClientsExist()
+    {
+        // GIVEN two distinct clients seeded directly via AppDbContext
+        var clienteA = ClienteEntity.Create("Acme Corp", UniqueNit(), "3001234567", "Bogotá");
+        var clienteB = ClienteEntity.Create("Beta SAS", UniqueNit(), "3019876543", "Medellín");
+        await SeedClientesAsync(clienteA, clienteB);
+
+        try
+        {
+            // WHEN GET /api/v1/clientes/{id} is called with clienteA's Id
+            var response = await _client.GetAsync($"/api/v1/clientes/{clienteA.Id}");
+            var json = await response.Content.ReadAsStringAsync();
+            var found = JsonSerializer.Deserialize<ClienteApiResponse>(
+                json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            // THEN only clienteA's fields are returned — clienteB's data never leaks into
+            // the single-record lookup, even though both rows exist in the table
+            Assert.NotNull(found);
+            Assert.Equal(clienteA.Id, found!.Id);
+            Assert.Equal("Acme Corp", found.Nombre);
+            Assert.NotEqual(clienteB.Id, found.Id);
+        }
+        finally
+        {
+            await DeleteClientesAsync(clienteA.Id, clienteB.Id);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task GetClienteById_ReturnsNotFound_WhenIdIsEmptyGuid()
+    {
+        // GIVEN Guid.Empty, a well-formed but degenerate Id that is never assigned to a
+        // real client (ClienteEntity.Create always generates a fresh Guid.NewGuid())
+        var emptyId = Guid.Empty;
+
+        // WHEN GET /api/v1/clientes/{id} is called with Guid.Empty
+        var response = await _client.GetAsync($"/api/v1/clientes/{emptyId}");
+
+        // THEN it is treated like any other well-formed-but-missing Id — 404, not a crash
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
     private static string UniqueNit() =>
         $"9{DateTimeOffset.UtcNow.Ticks % 100_000_000:D8}";
 
