@@ -18,6 +18,13 @@
 import { describe, test, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  createMemoryHistory,
+  RouterProvider,
+} from '@tanstack/react-router'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import { createClientes } from '@/test/factories/cliente.factory'
@@ -40,9 +47,25 @@ describe('NFR1 — search filter stays under 1s at 500 records', () => {
     server.use(http.get(CLIENTES_ENDPOINT, () => HttpResponse.json([target, ...noise])))
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    // Story 2.2: `ClientListItem` (rendered by `ClienteListView`) wraps each row in a
+    // TanStack Router `Link` — a router context is required for it to resolve without crashing.
+    const rootRoute = createRootRoute({
+      component: () => <ClienteListView />,
+    })
+    const detailRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: '/clientes/$clienteId',
+      component: () => <div>Detail</div>,
+    })
+    const routeTree = rootRoute.addChildren([detailRoute])
+    const router = createRouter({
+      routeTree,
+      history: createMemoryHistory({ initialEntries: ['/'] }),
+    })
+
     render(
       <QueryClientProvider client={queryClient}>
-        <ClienteListView />
+        <RouterProvider router={router} />
       </QueryClientProvider>,
     )
     const panel = await screen.findByTestId('clientes-list-panel')

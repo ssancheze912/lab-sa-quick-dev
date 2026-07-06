@@ -13,5 +13,11 @@ public static class ClienteEndpoints
             var clientes = await handler.Handle(new GetClientesQuery(), cancellationToken);
             return Results.Ok(clientes);
         });
+
+        group.MapGet("/{id:guid}", async (Guid id, GetClienteByIdQueryHandler handler, CancellationToken cancellationToken) =>
+        {
+            var cliente = await handler.Handle(new GetClienteByIdQuery(id), cancellationToken);
+            return cliente is null ? Results.NotFound() : Results.Ok(cliente);
+        });
     }
 }

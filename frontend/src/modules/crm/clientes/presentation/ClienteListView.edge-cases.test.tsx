@@ -18,6 +18,13 @@
 import { describe, test, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  createMemoryHistory,
+  RouterProvider,
+} from '@tanstack/react-router'
 import { http, HttpResponse, delay } from 'msw'
 import { server } from '@/test/msw/server'
 import { createCliente, createClientes } from '@/test/factories/cliente.factory'
@@ -25,13 +32,29 @@ import { ClienteListView } from './ClienteListView'
 
 const CLIENTES_ENDPOINT = '*/api/v1/clientes'
 
+// Story 2.2: `ClientListItem` (rendered by `ClienteListView`) now wraps each row in a
+// TanStack Router `Link` — a router context is required for it to resolve without crashing.
 function renderClienteListView() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
+  const rootRoute = createRootRoute({
+    component: () => <ClienteListView />,
+  })
+  const detailRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/clientes/$clienteId',
+    component: () => <div>Detail</div>,
+  })
+  const routeTree = rootRoute.addChildren([detailRoute])
+  const router = createRouter({
+    routeTree,
+    history: createMemoryHistory({ initialEntries: ['/'] }),
+  })
+
   return render(
     <QueryClientProvider client={queryClient}>
-      <ClienteListView />
+      <RouterProvider router={router} />
     </QueryClientProvider>,
   )
 }

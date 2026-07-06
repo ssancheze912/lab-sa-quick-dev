@@ -58,10 +58,18 @@ describe('AC5 — Nested unknown path sharing a route prefix still renders NotFo
   // Fixed by registering `notFoundComponent: NotFoundView` on the `/_app` route
   // (frontend/src/routes/_app.tsx), mirroring the root route's registration for the
   // fully-unmatched-path case. Un-skipped now that the product behavior is correct.
-  test('[P2] navigating to "/clientes/no-existe" (partial prefix match) shows the not-found message', async () => {
-    // GIVEN/WHEN: the user navigates to a path that shares a prefix with a real route
+  //
+  // Story 2.2 update: `/clientes/$clienteId` is now a real, deep-linkable route (FR30),
+  // so a single-segment path like "/clientes/no-existe" legitimately matches it (rendering
+  // the `cliente-not-found` EmptyState inside the detail panel per AC #3 — that is the
+  // correct product behavior now, not a bug). This test is updated to use a two-segment
+  // path instead, which still shares the "/clientes" prefix but matches no leaf route
+  // (`$clienteId` only captures a single path segment), preserving the original edge case's
+  // intent of "nested unknown path sharing a route prefix".
+  test('[P2] navigating to "/clientes/no-existe/extra" (nested, non-matching path) shows the not-found message', async () => {
+    // GIVEN/WHEN: the user navigates to a nested path that shares a prefix with a real route
     // but does not itself match any leaf route
-    renderAppAt('/clientes/no-existe')
+    renderAppAt('/clientes/no-existe/extra')
 
     // THEN: a graceful not-found view is displayed, matching the fully-unmatched-path case
     expect(await screen.findByText(/página no encontrada/i)).toBeInTheDocument()
@@ -69,7 +77,7 @@ describe('AC5 — Nested unknown path sharing a route prefix still renders NotFo
 
   test('[P2] the navigation shell remains mounted for a nested unknown path', async () => {
     // GIVEN/WHEN: the user navigates to a nested unknown path
-    renderAppAt('/clientes/no-existe')
+    renderAppAt('/clientes/no-existe/extra')
     await screen.findByText(/página no encontrada/i)
 
     // THEN: the desktop navigation container is still present (shell layout persists)

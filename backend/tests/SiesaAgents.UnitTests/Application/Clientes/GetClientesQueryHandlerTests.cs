@@ -84,5 +84,8 @@ public class GetClientesQueryHandlerTests
 
         public Task<IReadOnlyList<ClienteEntity>> GetAllAsync(CancellationToken cancellationToken) =>
             Task.FromResult(_clientes);
+
+        public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
+            Task.FromResult(_clientes.FirstOrDefault(c => c.Id == id));
     }
 }

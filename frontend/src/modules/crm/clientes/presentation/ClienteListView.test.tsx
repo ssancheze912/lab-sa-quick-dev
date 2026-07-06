@@ -56,13 +56,31 @@ import { ClienteListView } from './ClienteListView'
 // `network-first.md` without coupling the test to a specific origin.
 const CLIENTES_ENDPOINT = '*/api/v1/clientes'
 
+// Story 2.2: `ClienteListView` renders `ClientListItem`, which now wraps each row in a
+// TanStack Router `Link` (deep-linkable detail route, AC #1) — a router context is required
+// for it to resolve `to`/`params` without crashing, same rationale as the dedicated
+// `ClientListItem` describe block below.
 function renderClienteListView() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
+  const rootRoute = createRootRoute({
+    component: () => <ClienteListView />,
+  })
+  const detailRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/clientes/$clienteId',
+    component: () => <div>Detail</div>,
+  })
+  const routeTree = rootRoute.addChildren([detailRoute])
+  const router = createRouter({
+    routeTree,
+    history: createMemoryHistory({ initialEntries: ['/'] }),
+  })
+
   return render(
     <QueryClientProvider client={queryClient}>
-      <ClienteListView />
+      <RouterProvider router={router} />
     </QueryClientProvider>,
   )
 }
