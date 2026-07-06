@@ -45,19 +45,24 @@ test.describe('AC1 — Frontend static assets and mobile rendering (edge cases)'
   test('[P1] should render the app root without errors on a mobile viewport', async ({ browser }) => {
     // GIVEN: A mobile browser context (Pixel 5 emulation)
     const context = await browser.newContext({ ...devices['Pixel 5'] });
-    const page = await context.newPage();
 
-    const runtimeErrors: string[] = [];
-    page.on('pageerror', (err) => runtimeErrors.push(err.message));
+    try {
+      const page = await context.newPage();
 
-    // WHEN: The app loads on the mobile viewport
-    await page.goto('/');
+      const runtimeErrors: string[] = [];
+      page.on('pageerror', (err) => runtimeErrors.push(err.message));
 
-    // THEN: The app root is visible and no runtime errors occurred
-    await expect(page.locator('[data-testid="app-root"]')).toBeVisible();
-    expect(runtimeErrors).toHaveLength(0);
+      // WHEN: The app loads on the mobile viewport
+      await page.goto('/');
 
-    await context.close();
+      // THEN: The app root is visible and no runtime errors occurred
+      await expect(page.locator('[data-testid="app-root"]')).toBeVisible();
+      expect(runtimeErrors).toHaveLength(0);
+    } finally {
+      // Auto-cleanup: guarantee context teardown even if an assertion above throws,
+      // preventing leaked browser contexts across the suite (isolation/perf risk).
+      await context.close();
+    }
   });
 });
 
