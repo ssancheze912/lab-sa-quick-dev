@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { XIcon } from 'lucide-react'
+import { XMarkIcon } from '@heroicons/react/24/outline'
 
 import { cn } from '@/shared/lib/utils'
 
@@ -58,7 +58,7 @@ function DialogContent({
             data-slot="dialog-close"
             className="ring-offset-white focus:ring-slate-950 data-[state=open]:bg-slate-100 absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none"
           >
-            <XIcon />
+            <XMarkIcon className="size-4" />
             <span className="sr-only">Cerrar</span>
           </DialogPrimitive.Close>
         )}

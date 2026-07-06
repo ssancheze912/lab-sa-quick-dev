@@ -1,6 +1,6 @@
 # Story 1.1: Project Initialization & Repository Structure
 
-Status: review
+Status: done
 
 ## Story
 
@@ -229,3 +229,12 @@ claude-sonnet-4-6
 - `backend/tests/SiesaAgents.UnitTests/*` (new)
 - `playwright.config.ts` (modified — `webServer` changed to an array so the .NET backend on port 5000 is started alongside the Vite frontend during the ATDD run; `projects` reduced to `chromium` + `mobile-chrome` only, since `firefox`/`edge` binaries cannot be installed in this sandbox — see Debug Log attempt 3/3)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` (modified — status → review)
+
+### Code Review Fixes (2026-07-06)
+
+- `frontend/package.json` (modified — added `@heroicons/react`, removed `lucide-react`)
+- `frontend/src/shared/components/ui/dialog.tsx` (modified — `XIcon` (lucide-react) → `XMarkIcon` (`@heroicons/react/24/outline`) per company Icons standard)
+- `frontend/src/shared/components/ui/breadcrumb.tsx` (modified — `ChevronRightIcon`/`MoreHorizontalIcon` (lucide-react) → `ChevronRightIcon`/`EllipsisHorizontalIcon` (`@heroicons/react/24/outline`))
+- `frontend/index.html` (modified — added Google Fonts `preconnect` + stylesheet `<link>` for Inter 300/400/700, previously declared in CSS but never loaded)
+- `backend/tests/SiesaAgents.UnitTests/UnitTest1.cs` (deleted — vacuous placeholder test with no assertions, provided no real coverage signal)
+- `_bmad-output/review-1-1-project-initialization-repository-structure.md` (new — full code review report)
