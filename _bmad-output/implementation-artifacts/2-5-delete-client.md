@@ -1,6 +1,6 @@
 # Story 2.5: Delete Client
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,36 +22,36 @@ so that the client list only contains active and relevant records.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Backend: `IClienteRepository.DeleteAsync` + `ClienteRepository` implementation (AC: #2)
-  - [ ] In `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`, add `Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)` — returns `true` when a matching client was found and removed, `false` when no client with that `id` exists (simpler contract than `AddAsync`/`UpdateAsync`: delete has no unique-constraint conflict to report, so no `bool` "conflict" overload is needed). Update the interface's XML doc comment (currently ends "DeleteAsync is still out of scope — Story 2.5 extends this interface further") to say `DeleteAsync` now exists and the interface is complete for Epic 2's CRUD scope.
-  - [ ] Implement in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`: `var cliente = await dbContext.Clientes.FirstOrDefaultAsync(c => c.Id == id, cancellationToken); if (cliente is null) return false; dbContext.Clientes.Remove(cliente); await dbContext.SaveChangesAsync(cancellationToken); return true;` — a tracked fetch (no `AsNoTracking()`, unlike `GetByIdAsync`) so `Remove` can mark it `Deleted` directly.
+- [x] Task 1 — Backend: `IClienteRepository.DeleteAsync` + `ClienteRepository` implementation (AC: #2)
+  - [x] In `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`, add `Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)` — returns `true` when a matching client was found and removed, `false` when no client with that `id` exists (simpler contract than `AddAsync`/`UpdateAsync`: delete has no unique-constraint conflict to report, so no `bool` "conflict" overload is needed). Update the interface's XML doc comment (currently ends "DeleteAsync is still out of scope — Story 2.5 extends this interface further") to say `DeleteAsync` now exists and the interface is complete for Epic 2's CRUD scope.
+  - [x] Implement in `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`: `var cliente = await dbContext.Clientes.FirstOrDefaultAsync(c => c.Id == id, cancellationToken); if (cliente is null) return false; dbContext.Clientes.Remove(cliente); await dbContext.SaveChangesAsync(cancellationToken); return true;` — a tracked fetch (no `AsNoTracking()`, unlike `GetByIdAsync`) so `Remove` can mark it `Deleted` directly.
 
-- [ ] Task 2 — Backend: `DeleteCliente` command + handler + `DELETE /api/v1/clientes/{id}` endpoint (AC: #2)
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommand.cs`: `public sealed record DeleteClienteCommand(Guid Id);`
-  - [ ] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommandHandler.cs`: `public class DeleteClienteCommandHandler(IClienteRepository clienteRepository) { public Task<bool> Handle(DeleteClienteCommand command, CancellationToken cancellationToken) => clienteRepository.DeleteAsync(command.Id, cancellationToken); }` — **no `DeleteClienteResult` wrapper type**, unlike `CreateClienteResult`/`UpdateClienteResult`: delete has exactly one binary outcome (found-and-deleted vs. not-found), so the handler returning `bool` directly (mirroring `GetByIdAsync`'s nullable-return simplicity) avoids an unnecessary abstraction layer.
-  - [ ] In `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`, add to the existing `group`: `group.MapDelete("/{id:guid}", async (Guid id, DeleteClienteCommandHandler handler, CancellationToken cancellationToken) => { var deleted = await handler.Handle(new DeleteClienteCommand(id), cancellationToken); return deleted ? Results.NoContent() : Results.NotFound(); });` — `204 No Content` on success matches `architecture.md`'s documented `DELETE → 204 No Content` format pattern; `404` when the id doesn't exist (already-deleted / stale client, e.g. a second tab).
-  - [ ] Register in `backend/src/SiesaAgents.API/Program.cs`: `builder.Services.AddScoped<DeleteClienteCommandHandler>();` next to the existing `Create*`/`Update*` handler registrations. No new validator/DTO is needed — `DeleteClienteCommand` takes only the route-bound `id`, nothing to validate.
+- [x] Task 2 — Backend: `DeleteCliente` command + handler + `DELETE /api/v1/clientes/{id}` endpoint (AC: #2)
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommand.cs`: `public sealed record DeleteClienteCommand(Guid Id);`
+  - [x] Create `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommandHandler.cs`: `public class DeleteClienteCommandHandler(IClienteRepository clienteRepository) { public Task<bool> Handle(DeleteClienteCommand command, CancellationToken cancellationToken) => clienteRepository.DeleteAsync(command.Id, cancellationToken); }` — **no `DeleteClienteResult` wrapper type**, unlike `CreateClienteResult`/`UpdateClienteResult`: delete has exactly one binary outcome (found-and-deleted vs. not-found), so the handler returning `bool` directly (mirroring `GetByIdAsync`'s nullable-return simplicity) avoids an unnecessary abstraction layer.
+  - [x] In `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`, add to the existing `group`: `group.MapDelete("/{id:guid}", async (Guid id, DeleteClienteCommandHandler handler, CancellationToken cancellationToken) => { var deleted = await handler.Handle(new DeleteClienteCommand(id), cancellationToken); return deleted ? Results.NoContent() : Results.NotFound(); });` — `204 No Content` on success matches `architecture.md`'s documented `DELETE → 204 No Content` format pattern; `404` when the id doesn't exist (already-deleted / stale client, e.g. a second tab).
+  - [x] Register in `backend/src/SiesaAgents.API/Program.cs`: `builder.Services.AddScoped<DeleteClienteCommandHandler>();` next to the existing `Create*`/`Update*` handler registrations. No new validator/DTO is needed — `DeleteClienteCommand` takes only the route-bound `id`, nothing to validate.
 
-- [ ] Task 3 — Backend tests (AC: #2)
-  - [ ] Extend the fake `IClienteRepository` implementations in `GetClientesQueryHandlerTests.cs`, `GetClienteByIdQueryHandlerTests.cs`, `CreateClienteCommandHandlerTests.cs` and `UpdateClienteCommandHandlerTests.cs`'s `FakeClienteRepository`/`RecordingClienteRepository` with a no-op-compatible `DeleteAsync` implementation (`Task.FromResult(true)`), the same mechanical step Story 2.4 performed for `UpdateAsync` — required to keep them compiling against the now-larger `IClienteRepository` interface.
-  - [ ] Add `DeleteClienteCommandHandlerTests.cs` to `backend/tests/SiesaAgents.UnitTests/Application/Clientes/` (hand-rolled fake, no mocking framework, mirroring `UpdateClienteCommandHandlerTests.cs`'s convention): `Handle` returns `true` when the fake repository's `DeleteAsync` returns `true`; `Handle` returns `false` when it returns `false`; a recording fake asserts the handler forwards `command.Id` verbatim to `clienteRepository.DeleteAsync`.
-  - [ ] Extend `ClienteEndpointsTests.cs` (inherits `ClienteEndpointsTestBase`) with: `DeleteCliente_ReturnsNoContent_WhenClienteExists` (`204`); `DeleteCliente_RemovesFromDatabase` (a follow-up `GET /api/v1/clientes/{id}` on the same id now returns `404`); `DeleteCliente_ReturnsNotFound_WhenClienteDoesNotExist` (random `Guid`, assert `404`); `DeleteCliente_DoesNotAffectOtherClientes` (seed two clients via `SeedClientesAsync`, delete one, assert the other still appears in `GetClientesAsync()`).
+- [x] Task 3 — Backend tests (AC: #2)
+  - [x] Extend the fake `IClienteRepository` implementations in `GetClientesQueryHandlerTests.cs`, `GetClienteByIdQueryHandlerTests.cs`, `CreateClienteCommandHandlerTests.cs` and `UpdateClienteCommandHandlerTests.cs`'s `FakeClienteRepository`/`RecordingClienteRepository` with a no-op-compatible `DeleteAsync` implementation (`Task.FromResult(true)`), the same mechanical step Story 2.4 performed for `UpdateAsync` — required to keep them compiling against the now-larger `IClienteRepository` interface.
+  - [x] Add `DeleteClienteCommandHandlerTests.cs` to `backend/tests/SiesaAgents.UnitTests/Application/Clientes/` (hand-rolled fake, no mocking framework, mirroring `UpdateClienteCommandHandlerTests.cs`'s convention): `Handle` returns `true` when the fake repository's `DeleteAsync` returns `true`; `Handle` returns `false` when it returns `false`; a recording fake asserts the handler forwards `command.Id` verbatim to `clienteRepository.DeleteAsync`. (Already authored by the ATDD phase; verified GREEN against this story's implementation.)
+  - [x] Extend `ClienteEndpointsTests.cs` (inherits `ClienteEndpointsTestBase`) with: `DeleteCliente_ReturnsNoContent_WhenClienteExists` (`204`); `DeleteCliente_RemovesFromDatabase` (a follow-up `GET /api/v1/clientes/{id}` on the same id now returns `404`); `DeleteCliente_ReturnsNotFound_WhenClienteDoesNotExist` (random `Guid`, assert `404`); `DeleteCliente_DoesNotAffectOtherClientes` (seed two clients via `SeedClientesAsync`, delete one, assert the other still appears in `GetClientesAsync()`). (Already authored by the ATDD phase as `ClienteEndpointsDeleteTests.cs`; verified GREEN.)
 
-- [ ] Task 4 — Frontend data layer: `delete` on the client repository + `useDeleteCliente` mutation hook (AC: #2)
-  - [ ] Extend `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`: add `delete(id: string): Promise<void>`.
-  - [ ] Extend `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: `async delete(id: string): Promise<void> { await apiClient.delete(\`/api/v1/clientes/${id}\`) }`.
-  - [ ] Create `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts`: `export function useDeleteCliente() { const queryClient = useQueryClient(); return useMutation({ mutationFn: (id: string) => clienteApiRepository.delete(id), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['clientes'] }); toast.success('Cliente eliminado correctamente') } }) }` — invalidates only `['clientes']` (the list). Deliberately does **not** invalidate `['clientes', id]`: the record no longer exists, and refetching it would just produce a `404`/`null`, rendering the "Cliente no encontrado" not-found branch instead of AC #2's required default empty state — navigation (Task 5) is what achieves the correct UX, not cache invalidation.
+- [x] Task 4 — Frontend data layer: `delete` on the client repository + `useDeleteCliente` mutation hook (AC: #2)
+  - [x] Extend `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`: add `delete(id: string): Promise<void>`.
+  - [x] Extend `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`: `async delete(id: string): Promise<void> { await apiClient.delete(\`/api/v1/clientes/${id}\`) }`.
+  - [x] Create `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts`: `export function useDeleteCliente() { const queryClient = useQueryClient(); return useMutation({ mutationFn: (id: string) => clienteApiRepository.delete(id), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['clientes'] }); toast.success('Cliente eliminado correctamente') } }) }` — invalidates only `['clientes']` (the list). Deliberately does **not** invalidate `['clientes', id]`: the record no longer exists, and refetching it would just produce a `404`/`null`, rendering the "Cliente no encontrado" not-found branch instead of AC #2's required default empty state — navigation (Task 5) is what achieves the correct UX, not cache invalidation.
 
-- [ ] Task 5 — Frontend: confirmation dialog + "Eliminar" trigger in `ClienteDetailView`; wire post-delete navigation from the route (AC: #1, #2, #3)
-  - [ ] **Critical constraint**: `ClienteDetailView.test.tsx` (Story 2.2/2.4, unchanged by this story) renders `ClienteDetailView` standalone inside only a `QueryClientProvider` — **no router context**. Calling `useNavigate()` directly inside `ClienteDetailView` would throw in every one of those existing tests. Instead, add an **optional** prop `onDeleted?: () => void` to `ClienteDetailViewProps`; the component calls `onDeleted?.()` after a successful delete instead of navigating itself. Existing tests that don't pass the prop are unaffected (it's simply `undefined` and never invoked).
-  - [ ] In `frontend/src/routes/_app/clientes.$clienteId.tsx` (`ClienteDetailRoute`), add `const navigate = useNavigate()` (from `@tanstack/react-router`, same import already used in `AppNavigation.tsx`) and pass `onDeleted={() => navigate({ to: '/clientes' })}` to `<ClienteDetailView clienteId={clienteId} onDeleted={...} />`. Navigating to `/clientes` unmounts the `$clienteId` route and renders `clientes.index.tsx`'s `ClientesIndexView` in the `Outlet` — this **is** AC #2's "right panel returns to empty/default state".
-  - [ ] In `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`: add `const [isDeleteOpen, setIsDeleteOpen] = useState(false)` and `const deleteCliente = useDeleteCliente()`. Add an "Eliminar" `Button` (`htmlType="button"`, `size="sm"`, `type="outline"`) next to the existing "Editar" button, `onClick={() => setIsDeleteOpen(true)}`.
-  - [ ] Add a second `Dialog` (reuse `@/shared/components/ui/dialog`, same primitives as `ClienteForm`) controlled by `isDeleteOpen`: `DialogTitle` reads **"¿Eliminar este cliente?"**; `DialogFooter` has a "Cancelar" `Button` (`type="outline"`, `onClick={() => setIsDeleteOpen(false)}`) and a "Confirmar" `Button` (`disabled={deleteCliente.isPending}`, `onClick={handleConfirmDelete}`).
-  - [ ] Implement `const handleConfirmDelete = async () => { await deleteCliente.mutateAsync(clienteId); setIsDeleteOpen(false); onDeleted?.() }`. Both new elements (Eliminar button + confirmation `Dialog`) are mounted only inside the existing `isSuccess && data` branch, same placement rule Story 2.4 established for "Editar"/`ClienteForm`.
+- [x] Task 5 — Frontend: confirmation dialog + "Eliminar" trigger in `ClienteDetailView`; wire post-delete navigation from the route (AC: #1, #2, #3)
+  - [x] **Critical constraint**: `ClienteDetailView.test.tsx` (Story 2.2/2.4, unchanged by this story) renders `ClienteDetailView` standalone inside only a `QueryClientProvider` — **no router context**. Calling `useNavigate()` directly inside `ClienteDetailView` would throw in every one of those existing tests. Instead, add an **optional** prop `onDeleted?: () => void` to `ClienteDetailViewProps`; the component calls `onDeleted?.()` after a successful delete instead of navigating itself. Existing tests that don't pass the prop are unaffected (it's simply `undefined` and never invoked).
+  - [x] In `frontend/src/routes/_app/clientes.$clienteId.tsx` (`ClienteDetailRoute`), add `const navigate = useNavigate()` (from `@tanstack/react-router`, same import already used in `AppNavigation.tsx`) and pass `onDeleted={() => navigate({ to: '/clientes' })}` to `<ClienteDetailView clienteId={clienteId} onDeleted={...} />`. Navigating to `/clientes` unmounts the `$clienteId` route and renders `clientes.index.tsx`'s `ClientesIndexView` in the `Outlet` — this **is** AC #2's "right panel returns to empty/default state".
+  - [x] In `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`: add `const [isDeleteOpen, setIsDeleteOpen] = useState(false)` and `const deleteCliente = useDeleteCliente()`. Add an "Eliminar" `Button` (`htmlType="button"`, `size="sm"`, `type="outline"`) next to the existing "Editar" button, `onClick={() => setIsDeleteOpen(true)}`.
+  - [x] Add a second `Dialog` (reuse `@/shared/components/ui/dialog`, same primitives as `ClienteForm`) controlled by `isDeleteOpen`: `DialogTitle` reads **"¿Eliminar este cliente?"**; `DialogFooter` has a "Cancelar" `Button` (`type="outline"`, `onClick={() => setIsDeleteOpen(false)}`) and a "Confirmar" `Button` (`disabled={deleteCliente.isPending}`, `onClick={handleConfirmDelete}`).
+  - [x] Implement `const handleConfirmDelete = async () => { await deleteCliente.mutateAsync(clienteId); setIsDeleteOpen(false); onDeleted?.() }`. Both new elements (Eliminar button + confirmation `Dialog`) are mounted only inside the existing `isSuccess && data` branch, same placement rule Story 2.4 established for "Editar"/`ClienteForm`.
 
-- [ ] Task 6 — Tests (AC: #1, #2, #3)
-  - [ ] Extend `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx` (MSW, network-first pattern — register handlers via `server.use(...)` before rendering): renders an "Eliminar" button once the client loads; clicking it opens a dialog showing the text "¿Eliminar este cliente?"; clicking "Cancelar" closes the dialog and asserts zero `DELETE` requests were made (MSW handler spy/call-count); clicking "Confirmar" against a mocked `204` response calls the mocked `DELETE /api/v1/clientes/:id` exactly once, shows the toast "Cliente eliminado correctamente", and calls the `onDeleted` prop (pass a `vi.fn()` as `onDeleted` and assert it was called) — do **not** assert real router navigation at this component-test level, since the component itself only calls `onDeleted`; the route-level wiring (Task 5's second subtask) is covered by the E2E spec instead.
-  - [ ] Do not add new E2E specs in this story — per the project's established ATDD convention (Stories 2.1-2.4), `e2e/tests/clientes/clientes-delete.spec.ts` is authored ahead of implementation by the ATDD phase, and `e2e/pages/clientes.page.ts` **already contains** the `btnEliminar` (`getByRole('button', { name: /eliminar/i })`) and `btnConfirmarEliminar` (`getByRole('button', { name: /confirmar/i })`) locators pre-added for this story. It covers `test-design-epic-2.md`'s TC-E2-P0-05 (**Cliente-only portion**: client row removed, list updated, toast shown — the contacts-cascade portion of that test case is out of scope per AC #4/Dev Notes) and TC-E2-P1-10 (cancel preserves the record). Run it once available to confirm this story's implementation makes it pass.
+- [x] Task 6 — Tests (AC: #1, #2, #3)
+  - [x] Extend `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx` (MSW, network-first pattern — register handlers via `server.use(...)` before rendering): renders an "Eliminar" button once the client loads; clicking it opens a dialog showing the text "¿Eliminar este cliente?"; clicking "Cancelar" closes the dialog and asserts zero `DELETE` requests were made (MSW handler spy/call-count); clicking "Confirmar" against a mocked `204` response calls the mocked `DELETE /api/v1/clientes/:id` exactly once, shows the toast "Cliente eliminado correctamente", and calls the `onDeleted` prop (pass a `vi.fn()` as `onDeleted` and assert it was called) — do **not** assert real router navigation at this component-test level, since the component itself only calls `onDeleted`; the route-level wiring (Task 5's second subtask) is covered by the E2E spec instead. (Already authored by the ATDD phase; verified GREEN — all 22 tests in the file pass.)
+  - [x] Do not add new E2E specs in this story — per the project's established ATDD convention (Stories 2.1-2.4), `e2e/tests/clientes/clientes-delete.spec.ts` is authored ahead of implementation by the ATDD phase, and `e2e/pages/clientes.page.ts` **already contains** the `btnEliminar` (`getByRole('button', { name: /eliminar/i })`) and `btnConfirmarEliminar` (`getByRole('button', { name: /confirmar/i })`) locators pre-added for this story. It covers `test-design-epic-2.md`'s TC-E2-P0-05 (**Cliente-only portion**: client row removed, list updated, toast shown — the contacts-cascade portion of that test case is out of scope per AC #4/Dev Notes) and TC-E2-P1-10 (cancel preserves the record). Not re-run in this dev pass (requires the full app + Playwright browsers running); implementation matches every locator/copy string the spec asserts on.
 
 ## Dev Notes
 
@@ -103,6 +103,53 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring)
 
 ### Debug Log References
 
+- `dotnet build` (backend): 0 errors, 0 warnings.
+- `dotnet test tests/SiesaAgents.UnitTests`: 92/92 passed.
+- `dotnet test tests/SiesaAgents.IntegrationTests --filter FullyQualifiedName~Clientes`: 62/62 passed (includes the 4 new `ClienteEndpointsDeleteTests` cases).
+- `npx vitest run` (frontend, full suite): 13 files / 110 tests passed, including all 22 tests in `ClienteDetailView.test.tsx` (Story 2.5's delete-flow tests were already authored RED by the ATDD phase and are now GREEN).
+- `npx tsc -b` (frontend): clean, no type errors.
+- `npx oxlint` (frontend): only pre-existing `react(only-export-components)` warnings on route files, unrelated to this story.
+
 ### Completion Notes List
 
+- ATDD phase had already authored failing tests for this story (backend: `DeleteClienteCommandHandlerTests.cs`, `ClienteEndpointsDeleteTests.cs`; frontend: the "Story 2.5" describe blocks in `ClienteDetailView.test.tsx`; E2E: `clientes-delete.spec.ts` with `btnEliminar`/`btnConfirmarEliminar` locators pre-added to `clientes.page.ts`). This dev pass implemented production code only, no test files were authored from scratch — all pre-existing tests now pass.
+- Implemented exactly per Tasks 1-6: `IClienteRepository.DeleteAsync` + `ClienteRepository` implementation, `DeleteClienteCommand`/`DeleteClienteCommandHandler`, `DELETE /api/v1/clientes/{id:guid}` endpoint (204/404), DI registration, the 6 fake-repository `DeleteAsync` no-ops needed to keep existing unit test doubles compiling against the extended interface, frontend `delete()` on the repository, `useDeleteCliente` mutation hook, the "Eliminar" button + confirmation `Dialog` + `onDeleted` prop in `ClienteDetailView`, and `useNavigate()` wiring in `clientes.$clienteId.tsx`.
+- No `DeleteClienteResult` wrapper type was introduced (handler returns `bool` directly) and no new generic `ConfirmDialog` abstraction was built — both deliberate per Dev Notes/minimal-complexity principle.
+- AC #4 (contacts survive with `clienteId = null`) is out of scope per the story's explicit scope note — `Contacto` entity doesn't exist yet (Story 3.1) and the FK is added in Epic 4; no `Contacto`-related code was touched.
+- E2E spec (`clientes-delete.spec.ts`) was not executed in this pass (requires the full app stack + Playwright browsers running); the implementation was manually cross-checked against every locator, dialog copy, and toast string it asserts on.
+
 ### File List
+
+**Backend — new:**
+- `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommand.cs`
+- `backend/src/SiesaAgents.Application/Clientes/Commands/DeleteClienteCommandHandler.cs`
+
+**Backend — modified:**
+- `backend/src/SiesaAgents.Domain/Clientes/Interfaces/IClienteRepository.cs`
+- `backend/src/SiesaAgents.Infrastructure/Repositories/ClienteRepository.cs`
+- `backend/src/SiesaAgents.API/Endpoints/ClienteEndpoints.cs`
+- `backend/src/SiesaAgents.API/Program.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClientesQueryHandlerTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/GetClienteByIdQueryHandlerTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/CreateClienteCommandHandlerTests.cs`
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/UpdateClienteCommandHandlerTests.cs`
+
+**Backend — pre-existing (authored by ATDD phase, unmodified in this pass):**
+- `backend/tests/SiesaAgents.UnitTests/Application/Clientes/DeleteClienteCommandHandlerTests.cs`
+- `backend/tests/SiesaAgents.IntegrationTests/Clientes/ClienteEndpointsDeleteTests.cs`
+
+**Frontend — new:**
+- `frontend/src/modules/crm/clientes/application/useDeleteCliente.ts`
+
+**Frontend — modified:**
+- `frontend/src/modules/crm/clientes/domain/IClienteRepository.ts`
+- `frontend/src/modules/crm/clientes/infrastructure/clienteApiRepository.ts`
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.tsx`
+- `frontend/src/routes/_app/clientes.$clienteId.tsx`
+
+**Frontend — pre-existing (authored by ATDD phase, unmodified in this pass):**
+- `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx`
+
+**E2E — pre-existing (authored by ATDD phase, unmodified in this pass):**
+- `e2e/tests/clientes/clientes-delete.spec.ts`
+- `e2e/pages/clientes.page.ts`

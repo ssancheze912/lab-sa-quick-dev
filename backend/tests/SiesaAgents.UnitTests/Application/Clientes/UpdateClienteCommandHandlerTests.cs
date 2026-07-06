@@ -190,6 +190,9 @@ public class UpdateClienteCommandHandlerTests
 
         public Task<bool> UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken) =>
             Task.FromResult(updateSucceeds);
+
+        public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken) =>
+            Task.FromResult(true);
     }
 
     /// <summary>
@@ -215,5 +218,8 @@ public class UpdateClienteCommandHandlerTests
             LastUpdatedCliente = cliente;
             return Task.FromResult(true);
         }
+
+        public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken) =>
+            Task.FromResult(true);
     }
 }

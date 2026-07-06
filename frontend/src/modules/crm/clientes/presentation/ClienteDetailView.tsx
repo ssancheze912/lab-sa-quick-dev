@@ -1,17 +1,34 @@
 import { useState } from 'react'
 import { Button } from 'siesa-ui-kit'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog'
 import { useCliente } from '@/modules/crm/clientes/application/useCliente'
+import { useDeleteCliente } from '@/modules/crm/clientes/application/useDeleteCliente'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
 import { ClienteForm } from '@/modules/crm/clientes/presentation/ClienteForm'
 
 interface ClienteDetailViewProps {
   clienteId: string
+  onDeleted?: () => void
 }
 
-export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
+export function ClienteDetailView({ clienteId, onDeleted }: ClienteDetailViewProps) {
   const { data, isError, isSuccess, refetch } = useCliente(clienteId)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const deleteCliente = useDeleteCliente()
+
+  const handleConfirmDelete = async () => {
+    await deleteCliente.mutateAsync(clienteId)
+    setIsDeleteOpen(false)
+    onDeleted?.()
+  }
 
   return (
     <div data-testid="cliente-detail-panel" className="flex flex-1 flex-col p-6">
@@ -49,13 +66,37 @@ export function ClienteDetailView({ clienteId }: ClienteDetailViewProps) {
             </dd>
           </dl>
 
-          <div className="mt-4">
+          <div className="mt-4 flex gap-2">
             <Button htmlType="button" size="sm" onClick={() => setIsEditOpen(true)}>
               Editar
+            </Button>
+            <Button htmlType="button" size="sm" type="outline" onClick={() => setIsDeleteOpen(true)}>
+              Eliminar
             </Button>
           </div>
 
           <ClienteForm open={isEditOpen} onOpenChange={setIsEditOpen} cliente={data} />
+
+          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>¿Eliminar este cliente?</DialogTitle>
+              </DialogHeader>
+
+              <DialogFooter>
+                <Button type="outline" htmlType="button" onClick={() => setIsDeleteOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  htmlType="button"
+                  disabled={deleteCliente.isPending}
+                  onClick={handleConfirmDelete}
+                >
+                  Confirmar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </div>
