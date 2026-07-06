@@ -381,6 +381,100 @@ public class ClienteEndpointsTests : IClassFixture<TestWebApplicationFactory>
         Assert.DoesNotContain(clientes, c => c.Nit == nit);
     }
 
+    // ── Test Automation Expansion (testarch-automate) — Story 2.3 edge cases beyond ATDD ────
+    // The ATDD suite above only exercises the missing-Nombre case for AC #3's server-side
+    // defense-in-depth. These extend the same 400 contract to the other three required
+    // fields, plus assert the Location header the endpoint's `Results.Created` call sets.
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_MissingNit_Returns400()
+    {
+        // GIVEN a request with an empty Nit
+        var request = new CreateClienteApiRequest("Acme Corp", "", "3001234567", "Bogotá");
+
+        // WHEN POST /api/v1/clientes is called
+        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+        // THEN the response is 400 Bad Request
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_MissingTelefono_Returns400()
+    {
+        // GIVEN a request with an empty Telefono
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("Acme Corp", nit, "", "Bogotá");
+
+        // WHEN POST /api/v1/clientes is called
+        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+        // THEN the response is 400 Bad Request
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_MissingCiudad_Returns400()
+    {
+        // GIVEN a request with an empty Ciudad
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("Acme Corp", nit, "3001234567", "");
+
+        // WHEN POST /api/v1/clientes is called
+        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+        // THEN the response is 400 Bad Request
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_MissingAllFields_ReturnsValidationProblemWithFourErrors()
+    {
+        // GIVEN a request with every required field empty
+        var request = new CreateClienteApiRequest("", "", "", "");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called
+            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var json = await response.Content.ReadAsStringAsync();
+            using var document = JsonDocument.Parse(json);
+
+            // THEN the ValidationProblem body reports one error entry per empty field
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var errors = document.RootElement.GetProperty("errors");
+            Assert.Equal(4, errors.EnumerateObject().Count());
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(request.Nit);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_ReturnsLocationHeader_WithValidData()
+    {
+        // GIVEN a well-formed create request with a fresh, never-used NIT
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("Acme Corp", nit, "3001234567", "Bogotá");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called
+            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var created = await response.Content.ReadFromJsonAsync<ClienteApiResponse>(
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            // THEN a Location header pointing to the new resource is set (Results.Created)
+            Assert.NotNull(response.Headers.Location);
+            Assert.Contains($"/api/v1/clientes/{created!.Id}", response.Headers.Location!.ToString());
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
     [RequiresPostgresFact]
     public async Task CreateCliente_ConcurrentDuplicateNit_OnlyOnePersists()
     {

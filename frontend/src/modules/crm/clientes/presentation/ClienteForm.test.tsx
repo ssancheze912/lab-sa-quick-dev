@@ -273,4 +273,131 @@ describe('Non-409 failures render a safe, generic message (NFR6)', () => {
     // THEN: the raw technical error text is never rendered to the user
     expect(screen.queryByText(technicalMarker)).not.toBeInTheDocument()
   })
+
+  test('[P2] renders the generic safe message on a network error with no HTTP response at all', async () => {
+    // GIVEN: the request fails at the network layer (no response object, unlike a 500)
+    server.use(http.post(CLIENTES_ENDPOINT, () => HttpResponse.error()))
+    renderClienteForm()
+
+    // WHEN: the user fills all fields with valid data and clicks "Guardar"
+    await fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    // THEN: the same generic, safe error path renders (isAxiosError without error.response
+    // must not throw or leave the form in a broken/uncaught state)
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+    })
+  })
+})
+
+describe('AC3 edge case — partial validation only flags the fields left empty', () => {
+  test('[P1] shows exactly one inline "requerido" message when only Ciudad is left empty', async () => {
+    // GIVEN: the dialog is open with three of the four fields filled in
+    renderClienteForm()
+    fireEvent.change(screen.getByLabelText(/nombre/i), { target: { value: 'Acme Corp' } })
+    fireEvent.change(screen.getByLabelText(/nit/i), { target: { value: '900123456' } })
+    fireEvent.change(screen.getByLabelText(/teléfono/i), { target: { value: '3001234567' } })
+
+    // WHEN: the user clicks "Guardar" with only Ciudad left empty
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    // THEN: exactly one inline "requerido" message appears — filled fields are not
+    // incorrectly flagged as errors too
+    await waitFor(() => {
+      expect(screen.getAllByText(/requerido/i)).toHaveLength(1)
+    })
+  })
+
+  test('[P2] treats whitespace-only values the same as empty values (Zod .trim())', async () => {
+    // GIVEN: the dialog is open with all four fields filled with whitespace only
+    renderClienteForm()
+    fireEvent.change(screen.getByLabelText(/nombre/i), { target: { value: '   ' } })
+    fireEvent.change(screen.getByLabelText(/nit/i), { target: { value: '   ' } })
+    fireEvent.change(screen.getByLabelText(/teléfono/i), { target: { value: '   ' } })
+    fireEvent.change(screen.getByLabelText(/ciudad/i), { target: { value: '   ' } })
+
+    // WHEN: the user clicks "Guardar"
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    // THEN: all four fields are blocked as if they were empty
+    await waitFor(() => {
+      expect(screen.getAllByText(/requerido/i)).toHaveLength(4)
+    })
+  })
+})
+
+describe('Cancelar closes the dialog without submitting or persisting data', () => {
+  test('[P1] calls onOpenChange(false) and never sends a POST when Cancelar is clicked', async () => {
+    // GIVEN: a request counter on the create endpoint and the dialog open with valid data
+    let requestCount = 0
+    server.use(
+      http.post(CLIENTES_ENDPOINT, () => {
+        requestCount += 1
+        return HttpResponse.json({}, { status: 201 })
+      }),
+    )
+    let dialogClosed = false
+    renderClienteForm((open) => {
+      if (!open) dialogClosed = true
+    })
+    await fillValidForm()
+
+    // WHEN: the user clicks "Cancelar" instead of "Guardar"
+    fireEvent.click(screen.getByRole('button', { name: /cancelar/i }))
+
+    // THEN: the dialog is told to close and no network request was ever made
+    await waitFor(() => expect(dialogClosed).toBe(true))
+    expect(requestCount).toBe(0)
+  })
+
+  test('[P2] resets filled-in field values back to blank when Cancelar is clicked', async () => {
+    // GIVEN: the dialog is open with data typed into every field
+    renderClienteForm()
+    await fillValidForm()
+
+    // WHEN: the user clicks "Cancelar"
+    fireEvent.click(screen.getByRole('button', { name: /cancelar/i }))
+
+    // THEN: the form fields are reset to blank, so a future re-open never leaks stale data
+    await waitFor(() => {
+      expect(screen.getByLabelText(/nombre/i)).toHaveValue('')
+      expect(screen.getByLabelText(/nit/i)).toHaveValue('')
+      expect(screen.getByLabelText(/teléfono/i)).toHaveValue('')
+      expect(screen.getByLabelText(/ciudad/i)).toHaveValue('')
+    })
+  })
+})
+
+describe('Guardar button reflects the in-flight mutation state', () => {
+  test('[P2] disables Guardar while the create request is pending, then re-enables it', async () => {
+    // GIVEN: a create request that only resolves once the test explicitly releases it
+    let releaseResponse: () => void = () => {}
+    const pending = new Promise<void>((resolve) => {
+      releaseResponse = resolve
+    })
+    server.use(
+      http.post(CLIENTES_ENDPOINT, async () => {
+        await pending
+        return HttpResponse.json(
+          { id: 'new-id', nombre: 'Acme Corp', nit: '900123456', telefono: '3001234567', ciudad: 'Bogotá' },
+          { status: 201 },
+        )
+      }),
+    )
+    renderClienteForm()
+    await fillValidForm()
+
+    // WHEN: the user clicks "Guardar" while the request is still in flight
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    // THEN: the button becomes disabled to prevent duplicate submissions
+    await waitFor(() => expect(screen.getByRole('button', { name: /guardar/i })).toBeDisabled())
+
+    // WHEN: the request finally resolves
+    releaseResponse()
+
+    // THEN: the button is re-enabled again (mutation settled)
+    await waitFor(() => expect(screen.getByRole('button', { name: /guardar/i })).not.toBeDisabled())
+  })
 })

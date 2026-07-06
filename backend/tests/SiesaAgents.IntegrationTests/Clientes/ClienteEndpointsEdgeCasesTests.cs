@@ -330,6 +330,99 @@ public class ClienteEndpointsEdgeCasesTests : IClassFixture<TestWebApplicationFa
     }
 
     [RequiresPostgresFact]
+    public async Task CreateCliente_WhitespaceOnlyNombre_Returns400()
+    {
+        // GIVEN a request whose Nombre is whitespace-only (distinct boundary from a fully
+        // empty string — FluentValidation's NotEmpty() must reject both identically)
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("   ", nit, "3001234567", "Bogotá");
+
+        // WHEN POST /api/v1/clientes is called
+        var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+        // THEN the response is 400 Bad Request, same as a fully empty Nombre
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_ReturnsJsonContentType_WithValidData()
+    {
+        // GIVEN a well-formed create request with a fresh, never-used NIT
+        var nit = UniqueNit();
+        var request = new CreateClienteApiRequest("Acme Corp", nit, "3001234567", "Bogotá");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called
+            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+            // THEN the response declares a JSON content type, mirroring the GET endpoints'
+            // already-asserted convention
+            Assert.NotNull(response.Content.Headers.ContentType);
+            Assert.Equal(MediaTypeNames.Application.Json, response.Content.Headers.ContentType!.MediaType);
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_NombreAtMaxLength_ReturnsCreated()
+    {
+        // GIVEN a Nombre exactly at the `ClienteConfiguration.HasMaxLength(200)` boundary
+        var nit = UniqueNit();
+        var nombreAtMaxLength = new string('A', 200);
+        var request = new CreateClienteApiRequest(nombreAtMaxLength, nit, "3001234567", "Bogotá");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called
+            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+
+            // THEN the boundary value is accepted — 200 characters fits exactly in the column
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
+    [RequiresPostgresFact]
+    public async Task CreateCliente_NombreExceedsMaxLength_DoesNotReturnSuccessOrLeakTechnicalDetail()
+    {
+        // GIVEN a Nombre one character past the `ClienteConfiguration.HasMaxLength(200)`
+        // database column limit — neither `CreateClienteRequestValidator` (FluentValidation)
+        // nor `clienteSchema.ts` (Zod) currently enforce a max length, so this request only
+        // fails once it reaches the database's `character varying(200)` constraint
+        var nit = UniqueNit();
+        var nombreExceedingMaxLength = new string('A', 201);
+        var request = new CreateClienteApiRequest(nombreExceedingMaxLength, nit, "3001234567", "Bogotá");
+
+        try
+        {
+            // WHEN POST /api/v1/clientes is called
+            var response = await _client.PostAsJsonAsync("/api/v1/clientes", request);
+            var body = await response.Content.ReadAsStringAsync();
+
+            // THEN the request is not silently accepted as if it were valid data, and
+            // regardless of the exact status code returned, no stack trace or exception
+            // type is ever exposed to the client (NFR6) and nothing is persisted under
+            // that NIT
+            Assert.NotEqual(HttpStatusCode.Created, response.StatusCode);
+            Assert.DoesNotContain("Npgsql", body);
+            Assert.DoesNotContain("Exception", body);
+            var clientes = await GetClientesAsync();
+            Assert.DoesNotContain(clientes, c => c.Nit == nit);
+        }
+        finally
+        {
+            await DeleteClienteByNitAsync(nit);
+        }
+    }
+
+    [RequiresPostgresFact]
     public async Task CreateCliente_WithSqlInjectionAttemptInNombre_DoesNotDropClientesTable()
     {
         // GIVEN a pre-existing client and a create request with a SQL-injection payload

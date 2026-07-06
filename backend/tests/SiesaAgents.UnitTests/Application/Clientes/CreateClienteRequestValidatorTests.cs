@@ -95,4 +95,55 @@ public class CreateClienteRequestValidatorTests
         // THEN validation fails on the Ciudad property
         Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateClienteRequest.Ciudad));
     }
+
+    // ── Test Automation Expansion (testarch-automate) — edge cases beyond ATDD ─────────────
+
+    [Fact]
+    public void Validate_Fails_WithOneErrorPerField_WhenAllFourFieldsAreEmpty()
+    {
+        // GIVEN a request where every required field is empty simultaneously (not just one
+        // at a time, as the ATDD suite above exercises independently)
+        var request = new CreateClienteRequest(string.Empty, string.Empty, string.Empty, string.Empty);
+
+        // WHEN the request is validated
+        var result = _validator.Validate(request);
+
+        // THEN validation reports exactly one error per field — no cross-field interference
+        // and no duplicate errors for the same property
+        Assert.False(result.IsValid);
+        Assert.Equal(4, result.Errors.Count);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateClienteRequest.Nombre));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateClienteRequest.Nit));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateClienteRequest.Telefono));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateClienteRequest.Ciudad));
+    }
+
+    [Fact]
+    public void Validate_Fails_OnlyOnNombre_WhenOnlyNombreIsEmptyAndOthersAreValid()
+    {
+        // GIVEN a request where only Nombre is blank and the other three fields are valid
+        var request = ValidRequest() with { Nombre = "   " };
+
+        // WHEN the request is validated
+        var result = _validator.Validate(request);
+
+        // THEN exactly one error is reported, scoped to Nombre only — a blank field never
+        // triggers a false-positive error on a sibling field
+        var error = Assert.Single(result.Errors);
+        Assert.Equal(nameof(CreateClienteRequest.Nombre), error.PropertyName);
+    }
+
+    [Fact]
+    public void Validate_Succeeds_WhenFieldsContainLeadingOrTrailingWhitespaceAroundValidText()
+    {
+        // GIVEN a request whose fields have surrounding whitespace but non-blank content
+        // (the backend validator does not trim; it only rejects fully empty/whitespace values)
+        var request = new CreateClienteRequest("  Acme Corp  ", " 900123456 ", " 3001234567 ", " Bogotá ");
+
+        // WHEN the request is validated
+        var result = _validator.Validate(request);
+
+        // THEN validation succeeds — NotEmpty only rejects blank strings, not padded ones
+        Assert.True(result.IsValid);
+    }
 }
