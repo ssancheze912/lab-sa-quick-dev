@@ -199,7 +199,10 @@ Claude Sonnet 5 (sa-create-story sub-agent for story authoring; sa-dev-story sub
 **Pre-existing (ATDD-authored, no changes needed beyond the one noted fix):**
 - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/UpdateClienteCommandHandlerTests.cs`
 - `backend/tests/SiesaAgents.UnitTests/Application/Clientes/UpdateClienteRequestValidatorTests.cs`
-- `frontend/src/modules/crm/clientes/presentation/ClienteForm.edit.test.tsx`
+- `frontend/src/modules/crm/clientes/presentation/ClienteForm.edit.test.tsx` (split by TEA test-quality review — see below)
 - `frontend/src/modules/crm/clientes/presentation/ClienteDetailView.test.tsx`
 - `e2e/tests/clientes/clientes-edit.spec.ts`
 - `e2e/pages/clientes.page.ts`
+
+**New (frontend, added by TEA test-quality review — `test-review-2-4-edit-client.md`):**
+- `frontend/src/modules/crm/clientes/presentation/ClienteForm.edit.submit.test.tsx` — extracted from `ClienteForm.edit.test.tsx` (AC2 success/409/500 submission-outcome tests) because the original file was 447 lines, over the project's 300-line-per-file test standard. Pure extraction, zero assertion changes; both files verified green after the split (33/33 tests passing across `ClienteForm.edit.test.tsx` + `ClienteForm.edit.submit.test.tsx` + `ClienteDetailView.test.tsx`).
