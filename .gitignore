@@ -1,0 +1,17 @@
+# Node
+node_modules/
+*.log
+
+# .NET
+bin/
+obj/
+*.user
+
+# Playwright
+/playwright-report/
+/playwright-results/
+/test-results/
+/blob-report/
+
+# Editor / OS
+.DS_Store
