@@ -1,7 +1,7 @@
 import { test, expect } from '../../fixtures/base.fixture';
 import { ClientesPage } from '../../pages/clientes.page';
 import { ApiHelper } from '../../helpers/api.helper';
-import { buildCliente } from '../../helpers/data.helper';
+import { buildCliente, uniqueDigits } from '../../helpers/data.helper';
 
 /**
  * E2E tests: Gestión de Clientes (FR1–FR8)
@@ -46,26 +46,33 @@ test.describe('Gestión de Clientes', () => {
     ).toBeVisible();
   });
 
-  test('FR2 — debe filtrar clientes por nombre', async () => {
-    const data = buildCliente({ nombre: 'Empresa Filtro Especial' });
+  test('FR2 — debe filtrar clientes por nombre', async ({}, testInfo) => {
+    // El texto de búsqueda debe ser único por worker/proyecto: chromium y
+    // mobile-chrome corren en paralelo contra la misma DB compartida, y un
+    // literal fijo aquí produciría dos clientes distintos con el mismo
+    // nombre (strict mode violation al filtrar).
+    const filtro = `Filtro Especial ${testInfo.project.name}-${testInfo.workerIndex}-${uniqueDigits(6)}`;
+    const data = buildCliente({ nombre: `Empresa ${filtro}` });
     const cliente = await apiHelper.createCliente(data);
     createdIds.push(cliente.id);
 
     await clientesPage.page.reload();
-    await clientesPage.buscar('Filtro Especial');
+    await clientesPage.buscar(filtro);
 
     await expect(
-      clientesPage.clienteItems.filter({ hasText: 'Filtro Especial' })
+      clientesPage.clienteItems.filter({ hasText: filtro })
     ).toBeVisible();
   });
 
   test('FR2 — debe filtrar clientes por NIT', async () => {
-    const data = buildCliente({ nit: '999888777' });
+    // NIT único por ejecución: un literal fijo colisiona con FR7 (NIT único)
+    // cuando chromium y mobile-chrome corren este mismo test en paralelo.
+    const data = buildCliente();
     const cliente = await apiHelper.createCliente(data);
     createdIds.push(cliente.id);
 
     await clientesPage.page.reload();
-    await clientesPage.buscar('999888777');
+    await clientesPage.buscar(data.nit);
 
     await expect(
       clientesPage.clienteItems.filter({ hasText: data.nombre })
