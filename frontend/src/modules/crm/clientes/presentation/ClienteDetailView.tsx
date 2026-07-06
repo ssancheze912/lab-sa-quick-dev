@@ -25,9 +25,14 @@ export function ClienteDetailView({ clienteId, onDeleted }: ClienteDetailViewPro
   const deleteCliente = useDeleteCliente()
 
   const handleConfirmDelete = async () => {
-    await deleteCliente.mutateAsync(clienteId)
-    setIsDeleteOpen(false)
-    onDeleted?.()
+    try {
+      await deleteCliente.mutateAsync(clienteId)
+      setIsDeleteOpen(false)
+      onDeleted?.()
+    } catch {
+      // Delete failed (e.g. 500/network error): keep the dialog open so the user can retry.
+      // Surfaced via `deleteCliente.isPending` resetting to false, re-enabling "Confirmar".
+    }
   }
 
   return (

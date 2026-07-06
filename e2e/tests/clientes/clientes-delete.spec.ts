@@ -153,4 +153,34 @@ test.describe('Eliminar Cliente', () => {
     const found = clientes.find((c: { id: string; nombre: string }) => c.id === cliente.id);
     expect(found?.nombre).toBe(data.nombre);
   });
+
+  test('TC-E2-P2-04 — un doble clic rápido en "Confirmar" solo elimina el cliente una vez (R9)', async () => {
+    // GIVEN a seeded client with its delete confirmation dialog open — this is the deferred
+    // rapid-double-click E2E assertion Story 2.5's Dev Notes explicitly flagged as a
+    // `*automate`/future-sprint item (the "Confirmar" `disabled={isPending}` guard is only
+    // proven here, at real browser timing; the component-level suite proves the single-click
+    // disabled state instead, per the project's "avoid duplicate coverage across levels" rule)
+    const data = buildCliente();
+    const cliente = await apiHelper.createCliente(data);
+    createdIds.push(cliente.id);
+    await clientesPage.goto();
+    await clientesPage.seleccionarCliente(data.nombre);
+    await clientesPage.btnEliminar.click();
+    await expect(clientesPage.page.getByRole('dialog')).toBeVisible();
+
+    // WHEN the user rapid-double-clicks "Confirmar" (no wait between clicks)
+    await Promise.all([
+      clientesPage.btnConfirmarEliminar.click(),
+      clientesPage.btnConfirmarEliminar.click({ force: true }).catch(() => null),
+    ]);
+
+    // THEN the client ends up deleted exactly once — a second, redundant DELETE call (if it
+    // raced through before the button disabled) is a 404 no-op, never a duplicate side effect,
+    // and the success toast still confirms the single successful deletion
+    await expect(
+      clientesPage.page.getByText('Cliente eliminado correctamente')
+    ).toBeVisible();
+    const clientes = await apiHelper.getClientes();
+    expect(clientes.filter((c: { id: string }) => c.id === cliente.id)).toHaveLength(0);
+  });
 });

@@ -12,10 +12,16 @@
  *
  * Same network-first pattern as the ATDD suite: MSW handlers registered via `server.use(...)`
  * before rendering, `onUnhandledRequest: 'error'`.
+ *
+ * Story 2.5 (Delete Client) addition — Test Automation Expansion:
+ * expands the ATDD delete suite with the alternate dialog-close path AC #3 explicitly names
+ * ("Cancelar (or closes the dialog via Escape/overlay)") and the DELETE-failure path (never
+ * exercised by ATDD, which only mocks a 204 success/408 timeout). Mirrors the exact Escape
+ * pattern already established for the edit dialog in `ClienteForm.edit.test.tsx`.
  */
 
-import { describe, test, expect, beforeAll, afterEach, afterAll } from 'vitest'
-import { render, screen, within, waitFor } from '@testing-library/react'
+import { describe, test, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
+import { render, screen, within, waitFor, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse, delay } from 'msw'
 import { server } from '@/test/msw/server'
@@ -24,13 +30,13 @@ import { ClienteDetailView } from './ClienteDetailView'
 
 const CLIENTE_BY_ID_ENDPOINT = '*/api/v1/clientes/:id'
 
-function renderClienteDetailView(clienteId: string) {
+function renderClienteDetailView(clienteId: string, onDeleted?: () => void) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
   const utils = render(
     <QueryClientProvider client={queryClient}>
-      <ClienteDetailView clienteId={clienteId} />
+      <ClienteDetailView clienteId={clienteId} onDeleted={onDeleted} />
     </QueryClientProvider>,
   )
   return { ...utils, queryClient }
@@ -152,5 +158,65 @@ describe('Genuine network failure (no HTTP response) — distinct from a 404/500
     const errorPanel = await screen.findByTestId('error-panel')
     expect(within(errorPanel).getByText('No se pudo cargar')).toBeInTheDocument()
     expect(screen.queryByTestId('cliente-not-found')).not.toBeInTheDocument()
+  })
+})
+
+describe('Story 2.5 AC3 — delete dialog closes via Escape without sending DELETE (alternate close path)', () => {
+  test('[P1] closes the dialog, sends zero DELETE requests, and leaves the record unchanged when Escape is pressed', async () => {
+    // GIVEN a request counter on the delete endpoint and an open confirmation dialog — AC #3
+    // explicitly covers "Cancelar (or closes the dialog via Escape/overlay)", which the ATDD
+    // suite only exercises via the "Cancelar" button click
+    const cliente = createCliente({ nombre: 'Acme Corp' })
+    let deleteRequestCount = 0
+    server.use(
+      http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente)),
+      http.delete(CLIENTE_BY_ID_ENDPOINT, () => {
+        deleteRequestCount += 1
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    renderClienteDetailView(cliente.id)
+    const deleteButton = await screen.findByRole('button', { name: /eliminar/i })
+    fireEvent.click(deleteButton)
+    const dialog = await screen.findByRole('dialog')
+
+    // WHEN the user presses Escape instead of clicking "Cancelar" or "Confirmar"
+    fireEvent.keyDown(dialog, { key: 'Escape', code: 'Escape' })
+
+    // THEN the dialog closes, no DELETE request was ever sent, and the client record is
+    // still rendered unchanged in the panel
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(deleteRequestCount).toBe(0)
+    expect(screen.getByTestId('cliente-detail-nombre')).toHaveTextContent('Acme Corp')
+  })
+})
+
+describe('Story 2.5 AC2 — DELETE failure (500) leaves the dialog open and the record intact', () => {
+  test('[P1] keeps the confirmation dialog open and never calls onDeleted when the delete request fails', async () => {
+    // GIVEN the backend rejects the delete request with a 500 error — a path the ATDD suite
+    // never exercises (it only mocks a 204 success or a still-pending request)
+    const cliente = createCliente({ nombre: 'Acme Corp' })
+    server.use(
+      http.get(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json(cliente)),
+      http.delete(CLIENTE_BY_ID_ENDPOINT, () => HttpResponse.json({ detail: 'boom' }, { status: 500 })),
+    )
+    const onDeleted = vi.fn()
+    renderClienteDetailView(cliente.id, onDeleted)
+    const deleteButton = await screen.findByRole('button', { name: /eliminar/i })
+    fireEvent.click(deleteButton)
+    const dialog = await screen.findByRole('dialog')
+
+    // WHEN the user clicks "Confirmar" and the request rejects
+    fireEvent.click(within(dialog).getByRole('button', { name: /confirmar/i }))
+
+    // THEN the mutation settles (its pending state clears) without ever reaching the
+    // post-success code path — the dialog stays open, onDeleted is never invoked, and the
+    // client record remains visible and unchanged, giving the user a chance to retry
+    await waitFor(() => {
+      expect(within(dialog).getByRole('button', { name: /confirmar/i })).not.toBeDisabled()
+    })
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(onDeleted).not.toHaveBeenCalled()
+    expect(screen.getByTestId('cliente-detail-nombre')).toHaveTextContent('Acme Corp')
   })
 })
