@@ -1,0 +1,30 @@
+# Node / pnpm
+node_modules/
+dist/
+.env
+.env.local
+frontend/.env.development.local
+frontend/.env.production.local
+
+# Vite
+frontend/dist/
+
+# .NET
+backend/**/bin/
+backend/**/obj/
+*.user
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.vs/
+.idea/
