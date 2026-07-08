@@ -19,8 +19,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SiesaAgents.API\SiesaAgents.API.csproj" />
     <ProjectReference Include="..\..\src\SiesaAgents.Application\SiesaAgents.Application.csproj" />
     <ProjectReference Include="..\..\src\SiesaAgents.Domain\SiesaAgents.Domain.csproj" />
+  </ItemGroup>
+
+  <!--
+    Referencing SiesaAgents.API (Sdk.Web) transitively pulls in Microsoft.OpenApi,
+    which trips NU1903 (GHSA-v5pm-xwqc-g5wc) here too. Same suppression rationale
+    as SiesaAgents.API.csproj — see that file for the upstream tracking note.
+  -->
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-v5pm-xwqc-g5wc" />
   </ItemGroup>
 
 </Project>

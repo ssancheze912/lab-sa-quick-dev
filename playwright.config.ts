@@ -44,12 +44,20 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'pnpm --filter frontend dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  webServer: [
+    {
+      command: 'pnpm --filter frontend dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+    {
+      command: 'dotnet run --project backend/src/SiesaAgents.API/SiesaAgents.API.csproj --urls http://localhost:5000',
+      url: 'http://localhost:5000/scalar',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+  ],
 
   outputDir: 'playwright-results/',
 });
