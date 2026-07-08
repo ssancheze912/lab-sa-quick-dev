@@ -17,6 +17,7 @@ backend/**/obj/
 # Playwright
 /test-results/
 /playwright-report/
+/playwright-results/
 /blob-report/
 /playwright/.cache/
 

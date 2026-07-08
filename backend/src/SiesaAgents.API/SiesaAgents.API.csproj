@@ -7,8 +7,18 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
-    <PackageReference Include="Microsoft.OpenApi" Version="3.8.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.16.10" />
+  </ItemGroup>
+
+  <!--
+    Microsoft.OpenApi 2.x (transitive via Microsoft.AspNetCore.OpenApi 10.0.9) is flagged by
+    NU1903 for GHSA-v5pm-xwqc-g5wc. Microsoft.AspNetCore.OpenApi has not yet released a build
+    referencing a patched Microsoft.OpenApi, and upgrading to Microsoft.OpenApi 3.x breaks the
+    OpenApi source generator (IOpenApiMediaType.Example became read-only). Suppressed pending
+    an upstream Microsoft.AspNetCore.OpenApi release; revisit when upgrading this package.
+  -->
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-v5pm-xwqc-g5wc" />
   </ItemGroup>
 
   <PropertyGroup>
