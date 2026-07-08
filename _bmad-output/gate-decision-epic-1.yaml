@@ -1,0 +1,147 @@
+# Quality Gate Decision — Epic 1 (Project Foundation & Application Shell)
+# Workflow: testarch-trace (Phase 2)
+# Mode:     deterministic
+# Scope:    epic
+# Date:     2026-07-08
+
+gate:
+  epic: 1
+  epic_title: "Project Foundation & Application Shell"
+  stories: ["1.1", "1.2", "1.3"]
+  gate_type: "epic"
+  decision_mode: "deterministic"
+  decision: "CONCERNS"
+  status_icon: "warning"
+  date: "2026-07-08"
+  evaluator: "TEA Agent (testarch-trace)"
+
+  summary: |
+    All P0 tests and all 131 executed tests pass (100% pass rate). Overall coverage
+    is 94.7%. Gate is CONCERNS solely because P1 coverage is 87.5% (below the 90%
+    threshold by 2.5 points) due to one PARTIAL criterion — AC-1.3.a live PostgreSQL
+    migration application — that was validated at the migration-metadata level but
+    not against a real database (sandbox limitation, documented). Mitigation:
+    Testcontainers-PostgreSql harness scoped for Epic 2 Sprint 1.
+
+  criteria:
+    p0_coverage_pct: 100
+    p0_pass_rate_pct: 100
+    p1_coverage_pct: 87.5
+    p1_pass_rate_pct: 100
+    p2_coverage_pct: 100
+    p2_pass_rate_pct: 100
+    p3_coverage_pct: 100
+    p3_pass_rate_pct: 100
+    overall_coverage_pct: 94.7
+    overall_pass_rate_pct: 100
+    security_issues: 0
+    critical_nfrs_fail: 0
+    flaky_tests: 0
+
+  thresholds:
+    min_p0_coverage_pct: 100
+    min_p0_pass_rate_pct: 100
+    min_p1_coverage_pct: 90
+    min_p1_pass_rate_pct: 95
+    min_overall_pass_rate_pct: 90
+    min_coverage_pct: 80
+    max_security_issues: 0
+    max_critical_nfrs_fail: 0
+    max_flaky_tests: 0
+
+  test_totals:
+    total: 131
+    passed: 131
+    failed: 0
+    skipped: 0
+    duration_sec: 11
+    by_priority:
+      p0: { total: 15, passed: 15 }
+      p1: { total: 60, passed: 60 }
+      p2: { total: 45, passed: 45 }
+      p3: { total: 11, passed: 11 }
+    by_level:
+      e2e_playwright: 10          # foundation/*.spec.ts + api/*.api.spec.ts (Epic 1 slice)
+      api_integration_xunit: 15   # ProblemDetails + Migration expanded + Program
+      component_vitest: 65
+      unit_vitest_and_xunit: 41
+
+  gaps:
+    critical: 0
+    high: 1
+    medium: 0
+    low: 0
+    detail:
+      - id: "GAP-EPIC1-1"
+        priority: P1
+        criterion: "AC-1.3.a — Live PostgreSQL migration application"
+        status: "PARTIAL"
+        current_coverage: "Migration metadata + options plugin verified via MigrationTests.cs + AppDbContextExpandedTests.cs"
+        missing: "Live `dotnet ef database update` against real PostgreSQL 18+ verifying `__ef_migrations_history` table creation with snake_case columns"
+        recommendation: "Add Testcontainers-PostgreSql harness in Epic 2 Sprint 1 (co-located with story 2.1 clientes migration)"
+        risk_score: "LOW (probability=Low × impact=Medium)"
+        deferred_to: "Epic 2 Sprint 1"
+
+  nfrs:
+    security: { status: "PASS", note: "1 documented + suppressed NU1903 on transitive Microsoft.OpenApi (upstream-only fix)" }
+    performance: { status: "NOT_ASSESSED", note: "No domain surface in Epic 1; deferred to Epic 2+" }
+    reliability: { status: "PASS", note: "Middleware ordering, application/problem+json media-type preserved, concurrent-throw race-free" }
+    maintainability: { status: "PASS", note: "Clean Architecture skeleton, strict TS, no any types" }
+    nfr6_no_stack_traces: { status: "PASS", tests: ["ProblemDetailsMiddlewareTests", "ProblemDetailsExpandedTests"] }
+
+  quality:
+    blocker_issues: 0
+    warning_issues: 1
+    warnings:
+      - "MobileShell container asserts both min-h-dvh and pt-16 — mild duplicate assertion smell (Story 1.2 review low)"
+    tests_meeting_dod: 131
+    tests_total: 131
+    dod_pct: 100
+
+  evidence:
+    epic_source: "_bmad-output/planning-artifacts/epics/epic-01-foundation.md"
+    test_design: "_bmad-output/implementation-artifacts/test-design-epic-1.md"
+    traceability_matrix: "_bmad-output/traceability-matrix-epic-1.md"
+    automation_summary: "_bmad-output/automation-summary.md"
+    stories:
+      - path: "_bmad-output/implementation-artifacts/1-1-project-initialization-repository-structure.md"
+        status: "done"
+        review: "_bmad-output/review-1-1-project-initialization-repository-structure.md"
+      - path: "_bmad-output/implementation-artifacts/1-2-frontend-navigation-shell.md"
+        status: "done"
+        review: "inline (Senior Developer Review section)"
+      - path: "_bmad-output/implementation-artifacts/1-3-backend-database-foundation.md"
+        status: "done"
+        review: "_bmad-output/review-1-3-backend-database-foundation.md"
+    test_run_backend: "Story 1.3 Review Log 2026-07-08 — dotnet test SiesaAgents.sln → 44 passed / 0 failed"
+    test_run_frontend: "Story 1.2 Review 2026-07-08 — pnpm test → 18 files / 87 tests passed"
+
+  rationale:
+    reason_for_concerns: |
+      P1 coverage 87.5% is below the 90% threshold — this is the only decision-rule
+      trigger. All other criteria are green. The single PARTIAL AC (AC-1.3.a) is
+      accepted per the deterministic 80-89% CONCERNS band.
+    reason_not_pass: "P1 coverage 87.5% < 90% (deterministic threshold)."
+    reason_not_fail: "P0 coverage 100%, P0 pass rate 100%, P1 pass rate 100%, overall coverage 94.7%, overall pass rate 100%, no critical NFR failures, no security issues, no flaky tests."
+
+  next_steps:
+    immediate:
+      - "Append this gate result to bmm-workflow-status.md → Gate History"
+      - "Create Epic 2 backlog item: 'Add Testcontainers-PostgreSql harness + live migration test' (P1)"
+      - "Document dotnet ef database update runbook step for dev machines"
+    epic_2_sprint_1:
+      - "Add Testcontainers.PostgreSql NuGet package to SiesaAgents.UnitTests"
+      - "Author MigrationIntegrationTests.cs that spins Postgres container and runs dotnet ef database update programmatically"
+      - "Re-run testarch-trace at end of Epic 2 to lift Epic 1 gate to PASS"
+
+  waiver:
+    required: false
+    note: "CONCERNS does not require waiver — mitigation is scoped and non-blocking."
+
+  history_append_template: |
+    ### Epic 1 - Project Foundation & Application Shell (2026-07-08)
+    - **Decision**: CONCERNS
+    - **Reason**: P1 coverage 87.5% (below 90%) — one PARTIAL AC (AC-1.3.a live DB)
+    - **Document**: [traceability-matrix-epic-1.md](_bmad-output/traceability-matrix-epic-1.md)
+    - **YAML**: [gate-decision-epic-1.yaml](_bmad-output/gate-decision-epic-1.yaml)
+    - **Action**: Proceed to Epic 2; add Testcontainers-PostgreSql harness in Sprint 1

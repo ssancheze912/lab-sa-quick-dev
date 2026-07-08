@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@import "siesa-ui-kit/styles.css";
+
+@theme {
+  --color-primary: #0e79fd;
+  --color-secondary: #000000;
+  --color-tertiary: #154ca9;
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light dark;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}
+
+#root {
+  min-height: 100dvh;
+}
