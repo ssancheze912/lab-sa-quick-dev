@@ -21,8 +21,12 @@ function nextId(): number {
 export function buildCliente(overrides: Partial<Cliente> = {}): Cliente {
   const id = nextId()
   const now = new Date().toISOString()
+  // Produce a valid 8-4-4-4-12 hex-formatted UUID string. `nextId()` returns
+  // Date.now()-based numbers that can exceed 12 digits in 2026+, so we render
+  // in base-16 and slice to the last 12 hex chars to keep the shape correct.
+  const suffix = id.toString(16).padStart(12, '0').slice(-12)
   return {
-    id: `00000000-0000-0000-0000-${String(id).padStart(12, '0')}`,
+    id: `00000000-0000-0000-0000-${suffix}`,
     nombre: `Empresa ${id}`,
     nit: `${9_000_000_00 + (id % 1_000_000_00)}`,
     telefono: `300${String(id).padStart(7, '0').slice(-7)}`,

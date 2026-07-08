@@ -51,18 +51,19 @@ public sealed class ClienteEndpointsEdgeTests : IClassFixture<WebApplicationFact
         });
     }
 
-    // [P1] POST /api/v1/clientes — not implemented in Story 2.1 → expect 404 or 405.
+    // Story 2.3 replaced the "POST not implemented" assertion with a positive-shape check:
+    // POST with an invalid payload MUST return the RFC 7807 400 ValidationProblem shape (not a 404/405).
     [Fact]
-    public async Task Post_ToClientesRoute_ReturnsNotFoundOr405()
+    public async Task Post_ToClientesRoute_ReturnsValidationProblem_WhenBodyIsInvalid()
     {
         using var factory = FactoryWithSeed();
         using var client = factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/v1/clientes", new { nombre = "X" });
+        var response = await client.PostAsJsonAsync("/api/v1/clientes", new { nombre = "" });
 
-        Assert.True(
-            response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed,
-            $"Expected 404 or 405 for unsupported POST, got {(int)response.StatusCode}");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
+        Assert.StartsWith("application/problem+json", contentType);
     }
 
     // [P1] PUT /api/v1/clientes — not implemented → 404 or 405.
@@ -206,5 +207,12 @@ public sealed class ClienteEndpointsEdgeTests : IClassFixture<WebApplicationFact
 
         public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
             => Task.FromResult(_items.FirstOrDefault(e => e.Id == id));
+
+        // Story 2.3 additions — this fake is only used by read tests.
+        public Task AddAsync(ClienteEntity cliente, CancellationToken ct) => Task.CompletedTask;
+        public Task<bool> NitExistsAsync(string nit, CancellationToken ct) => Task.FromResult(false);
+        // Story 2.4 additions — this fake is only used by read tests.
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct) => Task.CompletedTask;
+        public Task<bool> NitExistsForAnotherAsync(Guid id, string nit, CancellationToken ct) => Task.FromResult(false);
     }
 }

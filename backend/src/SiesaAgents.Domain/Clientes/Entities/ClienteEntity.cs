@@ -45,4 +45,25 @@ public class ClienteEntity
             UpdatedAt = now,
         };
     }
+
+    /// <summary>
+    /// Mutates the entity's editable fields (Story 2.4). Refreshes
+    /// <see cref="UpdatedAt"/>; <see cref="CreatedAt"/> is NEVER touched
+    /// (audit-trail immutability, AC #9). Same defensive guards as
+    /// <see cref="Create"/> — the application layer validates via
+    /// FluentValidation, but the entity stays authoritative.
+    /// </summary>
+    public void Update(string nombre, string nit, string telefono, string ciudad)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(nombre);
+        ArgumentException.ThrowIfNullOrWhiteSpace(nit);
+        ArgumentException.ThrowIfNullOrWhiteSpace(telefono);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ciudad);
+
+        Nombre = nombre;
+        Nit = nit;
+        Telefono = telefono;
+        Ciudad = ciudad;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }

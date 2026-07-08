@@ -124,6 +124,13 @@ public sealed class GetClientesQueryHandlerEdgeTests
 
         public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
             => Task.FromResult(_items.FirstOrDefault(e => e.Id == id));
+
+        // Story 2.3 additions — this fake is only used by read tests.
+        public Task AddAsync(ClienteEntity cliente, CancellationToken ct) => Task.CompletedTask;
+        public Task<bool> NitExistsAsync(string nit, CancellationToken ct) => Task.FromResult(false);
+        // Story 2.4 additions — this fake is only used by read tests.
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct) => Task.CompletedTask;
+        public Task<bool> NitExistsForAnotherAsync(Guid id, string nit, CancellationToken ct) => Task.FromResult(false);
     }
 
     private sealed class ThrowingCancellationRepository : IClienteRepository
@@ -138,6 +145,31 @@ public sealed class GetClientesQueryHandlerEdgeTests
         {
             ct.ThrowIfCancellationRequested();
             return Task.FromResult<ClienteEntity?>(null);
+        }
+
+        public Task AddAsync(ClienteEntity cliente, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
+        }
+
+        public Task<bool> NitExistsAsync(string nit, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            return Task.FromResult(false);
+        }
+
+        // Story 2.4 additions — throwing fake mirrors cancellation semantics.
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
+        }
+
+        public Task<bool> NitExistsForAnotherAsync(Guid id, string nit, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            return Task.FromResult(false);
         }
     }
 }

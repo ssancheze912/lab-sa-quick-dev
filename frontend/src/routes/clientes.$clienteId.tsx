@@ -1,18 +1,18 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useParams } from '@tanstack/react-router'
+import { ClienteDetailView } from '@/modules/crm/clientes/presentation/ClienteDetailView'
 
 /**
- * Placeholder route for /clientes/$clienteId (Story 2.1).
- *
- * Story 2.1 only needs the URL to change on selection so the list item shows
- * as selected — the right-panel detail view is Story 2.2's scope. This file
- * exists solely so TanStack Router can resolve the navigation target and so
- * `useParams({ strict: false }).clienteId` yields the URL segment inside the
- * parent's Outlet.
+ * /clientes/$clienteId route (Story 2.2).
+ * Renders inside the `<Outlet />` established by Story 2.1's clientes.tsx
+ * layout route — the right panel of the split view. `useParams({ from: ... })`
+ * returns a typed non-nullable `clienteId: string`; the view itself validates
+ * the UUID shape and branches to `ClienteNotFound` when malformed.
  */
 export const Route = createFileRoute('/clientes/$clienteId')({
-  component: ClienteDetailPlaceholder,
+  component: ClienteDetailRoute,
 })
 
-function ClienteDetailPlaceholder() {
-  return null
+function ClienteDetailRoute() {
+  const { clienteId } = useParams({ from: '/clientes/$clienteId' })
+  return <ClienteDetailView clienteId={clienteId} />
 }

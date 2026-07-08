@@ -10,7 +10,8 @@
  *   * Case-insensitive uppercase input matches lowercase nombre.
  *   * Whitespace-only search is treated as an "empty" search (no-clients if
  *     data is empty; full list if data is present).
- *   * Nuevo cliente button is present but disabled.
+ *   * Nuevo cliente button is enabled and opens the create dialog (Story 2.3
+ *     activation — previously asserted as disabled in Story 2.1).
  *   * Loading skeletons are hidden from AT (aria-hidden).
  *
  * [P1] tag — presentation-integration boundary: filter bugs are visible.
@@ -129,15 +130,20 @@ describe('ClienteListView — case & combined matching (edge)', () => {
   })
 })
 
-describe('ClienteListView — Nuevo cliente button (edge)', () => {
-  it('renders a "Nuevo cliente" button that is disabled in Story 2.1 (Story 2.3 will wire it)', async () => {
+describe('ClienteListView — Nuevo cliente button (Story 2.3)', () => {
+  it('renders an ENABLED "Nuevo cliente" button that opens the dialog when clicked', async () => {
     server.use(
       http.get(`${API_BASE}/api/v1/clientes`, () => HttpResponse.json([], { status: 200 })),
     )
     mountApp()
 
     const nuevo = await screen.findByRole('button', { name: /nuevo cliente/i })
-    expect(nuevo).toBeDisabled()
+    expect(nuevo).not.toBeDisabled()
+
+    fireEvent.click(nuevo)
+    await waitFor(() =>
+      expect(screen.getByTestId('cliente-form-dialog')).toBeInTheDocument(),
+    )
   })
 })
 

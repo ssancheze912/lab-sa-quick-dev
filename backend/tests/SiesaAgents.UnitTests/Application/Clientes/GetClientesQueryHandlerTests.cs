@@ -119,5 +119,12 @@ public sealed class GetClientesQueryHandlerTests
 
         public Task<ClienteEntity?> GetByIdAsync(Guid id, CancellationToken ct)
             => Task.FromResult(_items.FirstOrDefault(e => e.Id == id));
+
+        // Story 2.3 additions — this fake is only used by read tests.
+        public Task AddAsync(ClienteEntity cliente, CancellationToken ct) => Task.CompletedTask;
+        public Task<bool> NitExistsAsync(string nit, CancellationToken ct) => Task.FromResult(false);
+        // Story 2.4 additions — this fake is only used by read tests.
+        public Task UpdateAsync(ClienteEntity cliente, CancellationToken ct) => Task.CompletedTask;
+        public Task<bool> NitExistsForAnotherAsync(Guid id, string nit, CancellationToken ct) => Task.FromResult(false);
     }
 }

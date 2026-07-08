@@ -8,6 +8,7 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { ErrorPanel } from '@/shared/components/ErrorPanel'
 import { useClientes } from '../application/useClientes'
 import { useDebouncedValue } from '../application/useDebouncedValue'
+import { ClienteFormDialog } from './ClienteFormDialog'
 
 /**
  * Case- and accent-insensitive lowercase transform used by the client-side
@@ -33,6 +34,7 @@ function norm(s: string): string {
 export function ClienteListView() {
   const { data, isLoading, isError, isFetching, refetch } = useClientes()
   const [search, setSearch] = useState('')
+  const [dialogOpen, setDialogOpen] = useState(false)
   const debouncedSearch = useDebouncedValue(search, 150)
   const navigate = useNavigate()
   const params = useParams({ strict: false }) as { clienteId?: string }
@@ -67,9 +69,8 @@ export function ClienteListView() {
         <Button
           type="default"
           color="primary"
-          disabled
           fullWidth
-          title="Disponible en Story 2.3"
+          onClick={() => setDialogOpen(true)}
         >
           Nuevo cliente
         </Button>
@@ -122,6 +123,8 @@ export function ClienteListView() {
           </ul>
         )}
       </div>
+
+      <ClienteFormDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </aside>
   )
 }

@@ -1,10 +1,13 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SiesaAgents.API.Endpoints;
 using SiesaAgents.API.Middleware;
+using SiesaAgents.Application.Clientes.Commands;
 using SiesaAgents.Application.Clientes.Queries;
+using SiesaAgents.Application.Clientes.Validators;
 using SiesaAgents.Domain.Clientes.Interfaces;
 using SiesaAgents.Infrastructure.Data;
 using SiesaAgents.Infrastructure.Repositories;
@@ -38,6 +41,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Story 2.1 — Clientes domain wiring.
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<GetClientesQueryHandler>();
+// Story 2.2 — Cliente detail view handler.
+builder.Services.AddScoped<GetClienteByIdQueryHandler>();
+// Story 2.3 — Cliente creation: handler + FluentValidation validators from the Application assembly.
+builder.Services.AddScoped<CreateClienteCommandHandler>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateClienteRequestValidator>();
+// Story 2.4 — Cliente edit.
+builder.Services.AddScoped<UpdateClienteCommandHandler>();
 
 var app = builder.Build();
 
